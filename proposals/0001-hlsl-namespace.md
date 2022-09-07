@@ -1,4 +1,4 @@
-# Feature name
+# HLSL Namespace
 
 * Proposal: [0001](0001-hlsl-namespace.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
