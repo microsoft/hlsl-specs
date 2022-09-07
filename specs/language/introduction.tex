@@ -1,0 +1,159 @@
+\chapter{Introduction} \label{ch:Intro}
+
+\p The \acrfull{hlsl} is the GPU programming language provided in conjunction
+with the \gls{dx} runtime. Over many years its use has expanded to cover every
+major rendering API across all major development platforms. Despite its
+popularity and long history \acrshort{hlsl} has never had a formal language
+specification. This document seeks to change that.
+
+\p \acrshort{hlsl} has two reference implementations which this specification
+draws heavily from. The original reference implementation \acrfull{fxc} has been
+in use since \gls{dx} 9. The more recent reference implementation \acrfull{dxc}
+has been the primary shader compiler since \gls{dx} 12.
+
+\p In writing this specification bias is leaned toward the language
+behavior of \acrshort{dxc} rather than the behavior of \acrshort{fxc}, although
+that can vary by context.
+
+\p In places this spec will be aspirational, and diverge from both reference
+implementation behaviors. In particular in cases where the two implementations
+disagree the spec written may choose a third option.
+
+\section{Scope} \label{sec:Scope}
+
+\p This document specifies the requirements for implementations of
+\acrshort{hlsl}. The \acrshort{hlsl} specification is based on and highly
+influenced by the specifications for the \acrfull{c} and the \acrfull{cpp}.
+
+\p This document covers both describing the language grammar and semantics for
+\acrshort{hlsl}, and (in later sections) the standard library of data types used
+in shader programming.
+
+\section{Normative References} \label{sec:Refs}
+
+\p The following referenced documents provide significant influence on this
+document and should be used in conjunction with interpreting this standard.
+
+\begin{itemize}
+  \item \gls{isoC}, \textit{Programming languages - C}
+  \item \gls{isoCPP}, \textit{Programming languages - C++}
+  \item \gls{dx} Specifications, \textit{https://microsoft.github.io/DirectX-Specs/}
+  \item \gls{oglsl} Specification, \textit{https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf}
+\end{itemize}
+
+\section{Terms and definitions} \label{sec:Terms}
+
+\p This document aims to use terms consistent with their definitions in
+\gls{isoC} and \gls{isoCPP}. In cases where the definitions are unclear, or
+where this document diverges this section, the remaining sections in this
+chapter, and the attached \ref{glossaries}.
+
+\section{Runtime Targeting} \label{sec:Runtime}
+
+\p \acrshort{hlsl} evolved out of \gls{dx} and gained popularity because it
+targeted a common hardware description which all conforming drivers were
+required to support. This common hardware description, called a \gls{sm}, is an
+integral part of the description for \acrshort{hlsl} . Some \acrshort{hlsl}
+features require specific \gls{sm} features, and are only supported by compilers
+when targeting those \gls{sm} versions or later.
+
+\section{\acrfull{spmd} Programming Model} \label{sec:Model}
+
+\p \acrshort{hlsl} uses a \acrfull{spmd} programming model where a program
+describes operations on a single element of data, but when the program executes
+it executes across more than one element at a time. This programming model is
+useful due to GPUs largely being \acrfull{simd} hardware architectures where
+each instruction natively executes across multiple data elements at the same
+time.
+
+\p There are many different terms of art for describing the elements of a GPU
+architecture and the way they relate to the \acrshort{spmd} program model. In
+this document we will use the terms as defined in the following subsections.
+
+\subsection{\gls{lane}} \label{subsection:Lane}
+
+\p A \gls{lane} represents a single computed element in an \acrshort{spmd}
+program. In a traditional programming model it would be analogous to a thread of
+execution, however it differs in one key way. In multi-threaded programming
+threads advance independent of each other. In \acrshort{spmd} programs, a group
+of \gls{lane}s execute instructions in lock step because each instruction is a
+\acrshort{simd} instruction computing the results for multiple \gls{lane}s
+simultaneously.
+
+\subsection{\gls{wave}} \label{subsection:Wave}
+
+\p A grouping of \gls{lane}s for execution is called a \gls{wave}. \gls{wave}
+sizes vary by hardware architecture. Some hardware implementations support
+multiple wave sizes. Generally wave sizes are powers of two, but there is no
+requirement that be the case. \acrshort{hlsl} is explicitly designed to run on
+hardware with arbitrary \gls{wave} sizes.
+
+\subsection{\gls{quad}} \label{subsection:Quad}
+
+\p A \gls{quad} is a subdivision of four \gls{lane}s in a \gls{wave} which are
+computing adjacent values. In pixel shaders a \gls{quad} may represent four
+adjacent pixels and \gls{quad} operations allow passing data between adjacent
+lanes. In compute shaders quads may be one or two dimensional depending on the
+workload dimensionality described in the \texttt{numthreads} attribute on the
+entry function. (FIXME: Add reference to attribute)
+
+\subsection{\gls{threadgroup}} \label{subsection:Group}
+
+\p A grouping of \gls{wave}s executing the same shader to produce a combined
+result is called a \gls{threadgroup}. \gls{threadgroup}s are executed on
+separate \acrshort{simd} hardware and are not instruction locked with other
+\gls{threadgroup}s.
+
+\subsection{\gls{dispatch}} \label{subsection:Dispatch}
+
+\p A grouping of \gls{threadgroup}s which represents the full execution of a
+\acrshort{hlsl} program and results in a completed result for all input data
+elements.
+
+\section{\acrshort{hlsl} Memory Models} \label{sec:Memory}
+
+\p Memory accesses for \gls{sm} 5.0 and earlier operate on 128-bit slots aligned
+on 128-bit boundaries. This optimized for the common case in early shaders where
+data being processed on the GPU was usually 4-element vectors of 32-bit data
+types.
+
+\p On modern hardware memory access restrictions are loosened, and reads of
+32-bit multiples are supported starting with \gls{sm} 5.1 and reads of 16-bit
+multiples are supported with \gls{sm} 6.0. \gls{sm} features are fully
+documented in the \gls{dx} Specifications, and this document will not attempt to
+elaborate further.
+
+\section{Common Definitions} \label{sec:Definitions}
+
+\p The following definitions are consistent between \acrshort{hlsl} and the
+\gls{isoC} and \gls{isoCPP} specifications, however they are included here for
+reader convenience.
+
+\subsection{Diagnostic Message}
+\p An implementation defined message belonging to a subset of the
+implementation's output messages which communicates diagnostic information to
+the user.
+
+\subsection{Ill-formed Program}
+\p A program that is not well formed, for which the implementation is expected
+to return unsuccessfully and produce one or more diagnostic messages.
+
+\subsection{Implementation-defined Behavior}
+\p Behavior of a well formed program and correct data which may vary by the
+implementation, and the implementation is expected to document the behavior.
+
+\subsection{Implementation Limits}
+\p Restrictions imposed upon programs by the implementation.
+
+\subsection{Undefined Behavior}
+
+\p Behavior of invalid program constructs or incorrect data which this standard
+imposes no requirements, or does not sufficiently detail.
+
+\subsection{Unspecified Behavior}
+\p Behavior of a well formed program and correct data which may vary by the
+implementation, and the implementation is not expected to document the behavior.
+
+\subsection{Well-formed Program}
+\p An HLSL program constructed according to the syntax rules, diagnosable
+semantic rules, and the One Definition Rule.
