@@ -6,6 +6,11 @@ major rendering API across all major development platforms. Despite its
 popularity and long history \acrshort{hlsl} has never had a formal language
 specification. This document seeks to change that.
 
+\p \acrshort{hlsl} draws heavy inspiration originally from \gls{isoC} and later
+from \gls{isoCPP} with additions specific to graphics and parallel computation
+programming. The language is also influenced to a lesser degree by other popular
+graphics and parallel programming languages.
+
 \p \acrshort{hlsl} has two reference implementations which this specification
 draws heavily from. The original reference implementation \acrfull{fxc} has been
 in use since \gls{dx} 9. The more recent reference implementation \acrfull{dxc}
@@ -15,9 +20,11 @@ has been the primary shader compiler since \gls{dx} 12.
 behavior of \acrshort{dxc} rather than the behavior of \acrshort{fxc}, although
 that can vary by context.
 
-\p In places this spec will be aspirational, and diverge from both reference
-implementation behaviors. In particular in cases where the two implementations
-disagree the spec written may choose a third option.
+\p In very rare instances this spec will be aspirational, and may diverge from
+both reference implementation behaviors. This will only be done in instances
+where there is an intent to alter implementation behavior in the future. Since
+this document and the implementations are living sources, one or the other may
+be ahead in different regards at any point in time.
 
 \section{Scope} \label{sec:Scope}
 
@@ -38,7 +45,6 @@ document and should be used in conjunction with interpreting this standard.
   \item \gls{isoC}, \textit{Programming languages - C}
   \item \gls{isoCPP}, \textit{Programming languages - C++}
   \item \gls{dx} Specifications, \textit{https://microsoft.github.io/DirectX-Specs/}
-  \item \gls{oglsl} Specification, \textit{https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf}
 \end{itemize}
 
 \section{Terms and definitions} \label{sec:Terms}
