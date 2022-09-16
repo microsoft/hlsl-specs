@@ -1,12 +1,27 @@
 # Proposal Process
 
-The HLSL feature process is not open to public contribution. This repository
-exists in order to provide visibility and solicit feedback.
+The primary purpose of this repository is to provide visibility into the feature
+development process for HLSL and solicit feedback from the wider community.
+Despite the openness of this process there are three significant caveats that
+should be noted:
+
+1. Final decisions about what features are included or excluded from HLSL are
+  made by the MSFT HLSL Team.
+2. This process cannot be used for features that require Shader Model changes
+  because Shader Model collaboration with hardware vendors occurs in private
+  under NDA.
+3. Some HLSL features may not go through this process, and may be kept secret
+  during development. We will try to restrict this only to features that require
+  NDAs with hardware vendors, but that may not always be the reason.
 
 Feature proposals from outside the HLSL team will be interpreted as requests,
-and may be considered or rejected based on team and release priorities. The best
-way for users to request features for HLSL is to file GitHub issues rather than
-creating pull requests against this repository.
+and may be considered or rejected based on team and release priorities. You
+should not create a pull request against this repository if you're not committed
+to at least making a best effort to navigate the process as described below.
+
+If you want to request a feature but not get involved in the process, the best
+way to request features for HLSL is to file GitHub issues rather than creating
+pull requests against this repository.
 
 This process draws heavily from
 [Rust's RFC process](https://github.com/rust-lang/rfcs), and from
