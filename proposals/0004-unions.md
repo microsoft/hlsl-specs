@@ -12,7 +12,50 @@ Introduce C++ Union data types into HLSL.
 
 ## Motivation
 
-Unions were planned for HLSL 2021 but missed the feature window.
+Unions in C++ are used in a wide array of cases.
+
+One common case is when the layout of data matches between two data types and
+the user wants to be able to access the data interchangeably as the two types.
+This is frequently used in C++ SIMD code in conjunction with anonymous data
+structures to implement vector objects. For example:
+
+```
+struct vector {
+  union {
+    struct {
+      float x;
+      float y;
+      float z;
+      float w;
+    };
+    struct {
+      float r;
+      float g;
+      float b;
+      float a;
+    };
+    float f[4];
+  };
+};
+```
+
+Additionally, unions are often used to reduce the storage requirements when a
+data structure may contain one of a exclusive set of objects. The example below
+is a common tagged union:
+
+```
+struct FloatOrBool {
+  enum Format {
+    Invalid,
+    Float,
+    Bool
+  } F;
+  union {
+    float f;
+    bool b;
+  };
+};
+```
 
 ## Proposed solution
 
