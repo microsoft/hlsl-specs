@@ -20,6 +20,10 @@ begin to conflict with C++ names which mean very different things (i.e.
 ambiguity and will prevent common errors in the future as HLSL becomes more
 C++-like.
 
+We have also received requests in the past to allow developers to
+define their own versions of built-in functions. Moving the built-in versions
+into a namespace will enable this use case as well.
+
 ## Proposed solution
 
 Each HLSL data type and builtin function will be moved from global scope to the
