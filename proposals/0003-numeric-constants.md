@@ -30,10 +30,15 @@ the proposed interface for the `hlsl::numeric_limits` class:
   public:
     static Ty min();
     static Ty max();
+    static Ty lowest();
+    static Ty denorm_min();
 
     // Implement infinity in terms of __builtin_huge_val
     static Ty infinity();
     static Ty negative_infinity();
+
+    static Ty quiet_NaN();
+    static Ty signaling_NaN();
   }
 ```
 
