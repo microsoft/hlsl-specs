@@ -1,4 +1,4 @@
-\chapter{Introduction} \label{ch:Intro}
+\Ch{Introduction}{Intro}
 
 \p The \acrfull{hlsl} is the GPU programming language provided in conjunction
 with the \gls{dx} runtime. Over many years its use has expanded to cover every
@@ -26,7 +26,7 @@ where there is an intent to alter implementation behavior in the future. Since
 this document and the implementations are living sources, one or the other may
 be ahead in different regards at any point in time.
 
-\section{Scope} \label{sec:Scope}
+\Sec{Scope}{Intro.Scope}
 
 \p This document specifies the requirements for implementations of
 \acrshort{hlsl}. The \acrshort{hlsl} specification is based on and highly
@@ -36,7 +36,7 @@ influenced by the specifications for the \acrfull{c} and the \acrfull{cpp}.
 \acrshort{hlsl}, and (in later sections) the standard library of data types used
 in shader programming.
 
-\section{Normative References} \label{sec:Refs}
+\Sec{Normative References}{Intro.Refs}
 
 \p The following referenced documents provide significant influence on this
 document and should be used in conjunction with interpreting this standard.
@@ -47,14 +47,14 @@ document and should be used in conjunction with interpreting this standard.
   \item \gls{dx} Specifications, \textit{https://microsoft.github.io/DirectX-Specs/}
 \end{itemize}
 
-\section{Terms and definitions} \label{sec:Terms}
+\Sec{Terms and definitions}{Intro.Terms}
 
 \p This document aims to use terms consistent with their definitions in
 \gls{isoC} and \gls{isoCPP}. In cases where the definitions are unclear, or
 where this document diverges this section, the remaining sections in this
 chapter, and the attached \ref{glossaries}.
 
-\section{Runtime Targeting} \label{sec:Runtime}
+\Sec{Runtime Targeting}{Intro.Runtime}
 
 \p \acrshort{hlsl} evolved out of \gls{dx} and gained popularity because it
 targeted a common hardware description which all conforming drivers were
@@ -63,7 +63,7 @@ integral part of the description for \acrshort{hlsl} . Some \acrshort{hlsl}
 features require specific \gls{sm} features, and are only supported by compilers
 when targeting those \gls{sm} versions or later.
 
-\section{\acrfull{spmd} Programming Model} \label{sec:Model}
+\Sec{\acrfull{spmd} Programming Model}{Intro.Model}
 
 \p \acrshort{hlsl} uses a \acrfull{spmd} programming model where a program
 describes operations on a single element of data, but when the program executes
@@ -76,7 +76,7 @@ time.
 architecture and the way they relate to the \acrshort{spmd} program model. In
 this document we will use the terms as defined in the following subsections.
 
-\subsection{\gls{lane}} \label{subsection:Lane}
+\Sub{\gls{lane}}{Intro.Model.Lane}
 
 \p A \gls{lane} represents a single computed element in an \acrshort{spmd}
 program. In a traditional programming model it would be analogous to a thread of
@@ -86,7 +86,7 @@ of \gls{lane}s execute instructions in lock step because each instruction is a
 \acrshort{simd} instruction computing the results for multiple \gls{lane}s
 simultaneously.
 
-\subsection{\gls{wave}} \label{subsection:Wave}
+\Sub{\gls{wave}}{Intro.Model.Wave}
 
 \p A grouping of \gls{lane}s for execution is called a \gls{wave}. \gls{wave}
 sizes vary by hardware architecture. Some hardware implementations support
@@ -94,7 +94,7 @@ multiple wave sizes. Generally wave sizes are powers of two, but there is no
 requirement that be the case. \acrshort{hlsl} is explicitly designed to run on
 hardware with arbitrary \gls{wave} sizes.
 
-\subsection{\gls{quad}} \label{subsection:Quad}
+\Sub{\gls{quad}}{Intro.Model.Quad}
 
 \p A \gls{quad} is a subdivision of four \gls{lane}s in a \gls{wave} which are
 computing adjacent values. In pixel shaders a \gls{quad} may represent four
@@ -103,20 +103,20 @@ lanes. In compute shaders quads may be one or two dimensional depending on the
 workload dimensionality described in the \texttt{numthreads} attribute on the
 entry function. (FIXME: Add reference to attribute)
 
-\subsection{\gls{threadgroup}} \label{subsection:Group}
+\Sub{\gls{threadgroup}}{Intro.Model.Group}
 
 \p A grouping of \gls{wave}s executing the same shader to produce a combined
 result is called a \gls{threadgroup}. \gls{threadgroup}s are executed on
 separate \acrshort{simd} hardware and are not instruction locked with other
 \gls{threadgroup}s.
 
-\subsection{\gls{dispatch}} \label{subsection:Dispatch}
+\Sub{\gls{dispatch}}{Intro.Model.Dispatch}
 
 \p A grouping of \gls{threadgroup}s which represents the full execution of a
 \acrshort{hlsl} program and results in a completed result for all input data
 elements.
 
-\section{\acrshort{hlsl} Memory Models} \label{sec:Memory}
+\Sec{\acrshort{hlsl} Memory Models}{Intro.Memory}
 
 \p Memory accesses for \gls{sm} 5.0 and earlier operate on 128-bit slots aligned
 on 128-bit boundaries. This optimized for the common case in early shaders where
@@ -129,37 +129,37 @@ multiples are supported with \gls{sm} 6.0. \gls{sm} features are fully
 documented in the \gls{dx} Specifications, and this document will not attempt to
 elaborate further.
 
-\section{Common Definitions} \label{sec:Definitions}
+\Sec{Common Definitions}{Intro.Defs}
 
 \p The following definitions are consistent between \acrshort{hlsl} and the
 \gls{isoC} and \gls{isoCPP} specifications, however they are included here for
 reader convenience.
 
-\subsection{Diagnostic Message}
+\Sub{Diagnostic Message}{Intro.Defs.Diags}
 \p An implementation defined message belonging to a subset of the
 implementation's output messages which communicates diagnostic information to
 the user.
 
-\subsection{Ill-formed Program}
+\Sub{Ill-formed Program}{Intro.Defs.IllFormed}
 \p A program that is not well formed, for which the implementation is expected
 to return unsuccessfully and produce one or more diagnostic messages.
 
-\subsection{Implementation-defined Behavior}
+\Sub{Implementation-defined Behavior}{Intro.Defs.ImpDef}
 \p Behavior of a well formed program and correct data which may vary by the
 implementation, and the implementation is expected to document the behavior.
 
-\subsection{Implementation Limits}
+\Sub{Implementation Limits}{Intro.Defs.ImpLimits}
 \p Restrictions imposed upon programs by the implementation.
 
-\subsection{Undefined Behavior}
+\Sub{Undefined Behavior}{Intro.Defs.Undefined}
 
 \p Behavior of invalid program constructs or incorrect data which this standard
 imposes no requirements, or does not sufficiently detail.
 
-\subsection{Unspecified Behavior}
+\Sub{Unspecified Behavior}{Intro.Defs.Unspecified}
 \p Behavior of a well formed program and correct data which may vary by the
 implementation, and the implementation is not expected to document the behavior.
 
-\subsection{Well-formed Program}
+\Sub{Well-formed Program}{Intro.Defs.WellFormed}
 \p An HLSL program constructed according to the syntax rules, diagnosable
 semantic rules, and the One Definition Rule.
