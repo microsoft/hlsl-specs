@@ -34,6 +34,10 @@ be casted between address spaces, however data from a reference in one address
 space can be loaded and stored to an object through a reference in another
 address space.
 
+References declared without an address space annotation will be references to
+the default address space (0), which corresponds to thread-local addresses.
+References to any other address space will need explicit annotation.
+
 ### Expanded Operator Overloading
 
 Along with the introduction of references we can expand operator overloading to
