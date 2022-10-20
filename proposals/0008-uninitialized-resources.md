@@ -58,12 +58,6 @@ code changes to impact code correctness.
 
 ## Proposed solution
 
-Describe your solution to the problem. Provide examples and describe how they
-work. Show how your solution is better than current workarounds: is it cleaner,
-safer, or more efficient?
-
-## Detailed design
-
 Building off clang's existing support for uninitialized variable analysis, we
 can move this analysis into the Clang control flow graph (CFG) instead of post
 optimization, which enables more robust diagnostic generation.
@@ -96,5 +90,27 @@ uninitialized use, or potential uninitialized use, of resource variables an
 error during compilation. Making this always an error removes the ability for
 seemingly unrelated changes to cascade resulting in unexpected compiler errors.
 
-A potential implementation of this change is posted on LLVM's
-[Phabricator](https://reviews.llvm.org/D130055).
+A potential starting point for an implementation of this change is posted on
+LLVM's [Phabricator](https://reviews.llvm.org/D130055).
+
+A complete implementation requires an IPC analysis to ensure that any code paths
+that initialize a local resource based on a parameter can determine the value of
+the parameter at compile time.
+
+For example:
+
+```c++
+RWBuffer<int> In;
+RWBuffer<int> Out[2];
+void fn(bool Cond) {
+  RWBuffer<int> O = Out[0]; // warning: local resource not guaranteed to resolve to a unique global resource.
+  if (Cond) // note: if statement here is not compile-time resolved
+    O = Out[1];
+  O[0] = In[0]; // note: unresolved use occurs here
+}
+
+[numthreads(1,1,1)]
+void main() {
+  fn(In[0]);
+}
+```
