@@ -1,6 +1,6 @@
 # `const`-qualified Instance Methods
 
-* Proposal: [0010](0010-const-instance-methods.md)
+* Proposal: [0007](0007-const-instance-methods.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
 * Status: **Under Consideration**
