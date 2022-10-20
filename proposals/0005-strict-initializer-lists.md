@@ -49,5 +49,25 @@ into conformant initializer lists.
 
 ## Proposed solution
 
-Adopt C & C++ initializer list rules, and disallow implicit vector splatting in
+Adopt C & C++ initializer list rules, and remove HLSL-specific initialization
+list behaviors. Specifically, this will remove implicit vector and structure
+element extraction, and enforce type system rules for data types passed into
 initializer lists.
+
+This will also introduce C rules for zero-initialization including zero
+initialization for structure members omitted from the initialization list.
+
+This change will be forward source breaking, and backwards compatible with some
+caveats. Current code that takes advantage of HLSL initialization semantics will
+produce an error that the compiler can generate a Fix-It for. Code with applied
+Fix-It will be backwards compatible to prior HLSL versions.
+
+New code that takes advantage of C & C++'s zero-initialization behavior, will
+not be backwards compatible to older HLSL versions.
+
+## Unanswered Questions
+
+### Should we support initialization constructors (i.e. `uint4 i4{}`)?
+
+This syntax conflicts with the effects annotation syntax which DXC supports
+parsing but is unsupported in code generation. Should we just stop parsing it?
