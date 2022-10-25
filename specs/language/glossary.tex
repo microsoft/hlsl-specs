@@ -1,0 +1,76 @@
+\makeglossaries
+
+\newacronym{hlsl}{HLSL}{High Level Shader Language}
+\newacronym{dxc}{DXC}{DirectX Shader Compiler}
+\newacronym{fxc}{FXC}{Legacy DirectX Shader Compiler}
+\newacronym{c}{C}{C Programming Language}
+\newacronym{cpp}{C++}{C++ Programming Language}
+\newacronym{api}{API}{Application Programming Interface}
+\newacronym{spmd}{SPMD}{Single Program Multiple Data}
+\newacronym{simd}{SIMD}{Single Instruction Multiple Data}
+
+\newglossaryentry{spirv}
+{
+  name={SPIR-V},
+  description={SPIR-V is a portable intermediate representation designed by the
+  Khronos Group for representing GPU programs}
+}
+
+\newglossaryentry{dx}
+{
+  name={DirectX},
+  description={DirectX is the multimedia \acrshort{api} introduced with Windows
+  95.}
+}
+
+\newglossaryentry{isoC}
+{
+  name={ISO/IEC 9899:2018},
+  description={ISO C standard}
+}
+
+\newglossaryentry{isoCPP}
+{
+  name={ISO/IEC 14882:2020},
+  description={ISO C++ standard}
+}
+
+\newglossaryentry{sm}
+{
+  name={Shader Model},
+  description={Versioned hardware description included as part of the DirectX
+  specification, which is used for code generation of GPU code to a common set
+  of features across a range of vendors.}
+}
+
+\newglossaryentry{lane}{
+  name={Lane},
+  description={The computation performed on a single element as described in the
+  \acrshort{spmd} program. Also called: thread.}
+}
+
+\newglossaryentry{wave}{
+  name={Wave},
+  description={A group of \gls{lane}s which execute together. The number of
+  \gls{lane}s in a Wave varies by hardware implementation. Also called: warp,
+  SIMD-group, subgroup, or wavefront.}
+}
+
+\newglossaryentry{quad}{
+  name={Quad},
+  description={A group of four \gls{lane}s which form a cluster of adjacent
+  computations in the data topology. Also called: quad-group or quad-wave. }
+}
+
+\newglossaryentry{threadgroup}{
+  name={Thread Group},
+  description={A group of one or more \gls{wave}s which comprise a larger
+  computation. Also known as: group, workgroup, block or thread block.}
+}
+
+\newglossaryentry{dispatch}{
+  name={Dispatch},
+  description={A group of one or more \gls{threadgroup}s which comprise the
+  largest unit of a shader execution. Also called: grid, compute space or index
+  space.}
+}

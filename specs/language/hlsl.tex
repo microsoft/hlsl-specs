@@ -1,0 +1,74 @@
+\documentclass[oneside]{book}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[acronym]{glossaries}
+\usepackage{multicol}
+\usepackage[marginparwidth=75pt, margin=2cm]{geometry}
+\usepackage{listings}
+\usepackage{marginnote}
+\usepackage{parskip}
+\usepackage{titlesec}
+
+\titleformat{\chapter}
+  {\LARGE\bfseries}{\thechapter}{10pt}{}
+\titlespacing{\chapter}{0pt}{0pt}{10pt}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\newcommand{\Ch}[2]{\chapter[#1]{#1\hfill[#2]}\label{#2}}
+\newcommand{\Sec}[2]{\section[#1]{#1\hfill[#2]}\label{#2}}
+\newcommand{\Sub}[2]{\subsection[#1]{#1\hfill[#2]}\label{#2}}
+
+\input{glossary}
+
+\title{High-Level Shader Language Specification\\
+       \normalsize{Working Draft}}
+
+
+\newenvironment{note}
+    {\begin{center}
+    \begin{tabular}{|p{0.9\textwidth}|}
+    \hline\\ 
+    }
+    { 
+    \\\\\hline
+    \end{tabular} 
+    \end{center}
+    }
+
+\usepackage{titleps}
+\newpagestyle{body}{
+  \sethead{}{}{\sectiontitle}
+  \setfoot{}{}{Working Draft}
+}
+\pagestyle{body}
+
+\newcommand{\parnum}{\textbf{\arabic{parcount}}}
+
+\setlength\parindent{0cm}
+
+\newcounter{parcount}
+\counterwithin{parcount}{subsection}
+\newcommand\p{%
+    \stepcounter{parcount}%
+    \parnum \hspace{1em}%
+}
+
+\newenvironment{parnumbers}{%
+   \par%
+   \everypar{\noindent \stepcounter{parcount}\parnum \hspace{1em}}%
+}{}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\input{introduction}
+
+\clearpage
+
+\label{glossaries}
+\printglossary[type=\acronymtype]
+\printglossary
+
+\end{document}
