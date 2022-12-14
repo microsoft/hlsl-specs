@@ -5,6 +5,7 @@
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
 * Planned Version: 202x
+* Dependencies: [0002 C++ Attributes](0002-cxx-attributes.md)
 
 ## Introduction
 
