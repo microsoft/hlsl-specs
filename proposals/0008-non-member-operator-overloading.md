@@ -2,7 +2,7 @@
 
 ## Instructions
 
-* Proposal: [NNNN](NNNN-non-member-operator-overloading.md)
+* Proposal: [0008](0008-non-member-operator-overloading.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
@@ -11,7 +11,7 @@
 
 ## Introduction
 
-HLSL 202x introduced operator overloading for member operators of user defined
+HLSL 2021 introduced operator overloading for member operators of user defined
 data types. Only supporting member operators has some drawbacks, specifically
 defining binary operators where the LHS is a built-in type is impossible,
 additionally scoping operators to namespaces is also impossible.
@@ -40,9 +40,16 @@ non-member operators as well unless the restrictions are lifted as proposed in
 [0006 Reference Types](0006-reference types.md).
 
 Because this solution should not break existing code, it could also be enabled
-under HLSL 2021 as an extension.
+under HLSL 2021 as an extension. Using the feature in HLSL 2021 mode as an
+extension will produce warnings so that users can be aware of portability issues
+that may arise between compiler versions.
 
 ## Alternatives considered
+
+Non-member operator overloading is a feature that is generally useful, an no
+alternatives have been considered to the feature itself. Reflecting on the
+problems caused by HLSL 2021 removing boolean operators from vector types other
+options were considered.
 
 One considered option was to roll back the HLSL 2021 removal of vector
 operators. Operator short circuiting was introduced in HLSL 2021 to reduce
@@ -58,7 +65,9 @@ conditionals with different behavior.
 
 For these reasons, this proposal posits that HLSL 2021's decision is the correct
 approach for the language. This proposal gives users the ability to introduce
-source compatibility if they choose, but at their own maintenance expense.
+source compatibility if they choose, but at their own maintenance expense. It
+also adopts behavior that is consistent with C++ for evaluation of logical
+operators.
 
 ## Acknowledgments
 
