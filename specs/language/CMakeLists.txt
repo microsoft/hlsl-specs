@@ -12,6 +12,10 @@ if (NOT MAKEGLOSSARIES_COMPILER)
   message(FATAL_ERROR "Could not find makeglossaries")
 endif()
 
+if (NOT PANDOC_COMPILER)
+  find_program(PANDOC_COMPILER pandoc)
+endif()
+
 set(intermediate_dir ${CMAKE_BINARY_DIR}/tmp/)
 
 message(STATUS "Generating targets for: ${PROJECT_NAME}")
@@ -19,7 +23,7 @@ set(main_file ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.tex)
 set(out_dir ${CMAKE_BINARY_DIR})
 
 add_custom_target(${PROJECT_NAME}-dirs
-                  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}
+                  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/html
                   COMMENT "Creating directories for ${PROJECT_NAME}")
 
 add_custom_target(${PROJECT_NAME}-prebuild
@@ -43,3 +47,8 @@ add_custom_target(pdf
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries)
 
+add_custom_target(html
+                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t html -s -o ${CMAKE_BINARY_DIR}/html/hlsl.html
+                  COMMENT "Generating HTML"
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries ${PROJECT_NAME}-dirs)

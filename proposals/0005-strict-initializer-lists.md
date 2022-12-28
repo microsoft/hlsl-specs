@@ -33,11 +33,13 @@ In HLSL the following code is valid:
     A a[2];
     int c;
   };
+  {% raw %}
   B b = {{1, 1.2}, {2, 2.2}, 3};   // Array elements specified as members
   B b2 = {1, 2, 3, 4, 5};          // each field initialized separately
   B b3 = {{1, {2, 3}}, {4, 5}};    // Completely random grouping of arguments
   int4 i4 = {1,2,3,4};             // valid int4 in C-syntax
   B b4 = {i4, 5};                  // int4 implicitly expanded to 4 arguments
+  {% endraw %}
 ```
 
 Formalizing this code to comply with C/C++ initializer list rules will likely
