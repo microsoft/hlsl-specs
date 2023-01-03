@@ -1,3 +1,5 @@
+<!-- {% raw %} -->
+
 # Feature name
 
 ## Instructions
@@ -72,3 +74,5 @@ reviewing.
 
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
+
+<!-- {% endraw %} -->

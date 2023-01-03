@@ -1,3 +1,4 @@
+<!-- {% raw %} -->
 # C++ Attributes
 
 * Proposal: [0002](0002-cxx-attributes.md)
@@ -64,8 +65,8 @@ code is ambiguous and currently _not_ interpreted as a bitfield declaration:
 If we wish to add source annotations to more grammatical elements in the future
 we will encounter more ambiguities because the `:` character has other meanings
 in C and modern C++ as well. to name a few examples: the ternary operator
-(`<boolean> ? <a> : <b>`), range-based for syntax (`for (<var> :
-<collection>)`), and switch label marking (`case 1:`).
+(`condition ? a : b`), range-based for syntax (`for (variable : collection)`),
+and switch label marking (`case 1:`).
 
 We will also encounter ambiguities with the `[]` syntax. We may encounter issues
 with array indexing which valid in contexts where we may wish to annotate
@@ -97,7 +98,6 @@ statements, declarations and expressions.
 Below are a few more examples of C++ attributes that we could support:
 
 ```c++
-{% raw %}
   [[hlsl::layout_attribute]] // applies to the struct type
   struct {
     int x;
@@ -123,5 +123,5 @@ Below are a few more examples of C++ attributes that we could support:
       ...
     }
   }
-{% endraw %}
 ```
+<!-- {% endraw %} -->
