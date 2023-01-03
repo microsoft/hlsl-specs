@@ -32,8 +32,7 @@ parameter declarations using a `:` to separate the name from the specifier:
 SamplerState samp1 : register(s5);
 Texture2D<float4> text1 : register(t3);
 
-float4 main(float2 a : A) : SV_Target
-{
+float4 main(float2 a : A) : SV_Target {
   ...
 }
 ```
@@ -98,6 +97,7 @@ statements, declarations and expressions.
 Below are a few more examples of C++ attributes that we could support:
 
 ```c++
+{% raw %}
   [[hlsl::layout_attribute]] // applies to the struct type
   struct {
     int x;
@@ -119,6 +119,9 @@ Below are a few more examples of C++ attributes that we could support:
     float f = [[hlsl::strict]](1.0 * 2.0); // applies to the parenthesis expression `(...)`.
 
     [[hlsl::unroll]] // applies to the for-loop expression.
-    for (int x = 0; x < 10; ++x) {}
+    for (int x = 0; x < 10; ++x) {
+      ...
+    }
   }
+{% endraw %}
 ```
