@@ -1,3 +1,5 @@
+<!-- {% raw %} -->
+
 # Strict Initializer Lists
 
 * Proposal: [0005](0005-strict-initializer-lists.md)
@@ -71,3 +73,5 @@ not be backwards compatible to older HLSL versions.
 
 This syntax conflicts with the effects annotation syntax which DXC supports
 parsing but is unsupported in code generation. Should we just stop parsing it?
+
+<!-- {% endraw %} -->
