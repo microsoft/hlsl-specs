@@ -1,3 +1,4 @@
+<!-- {% raw %} -->
 # `const`-qualified Instance Methods
 
 * Proposal: [0007](0007-const-instance-methods.md)
@@ -148,3 +149,5 @@ overload resolution and standard argument conversions.
 This change should have no impact on code generation through SPIR-V or DXIL
 assuming that the existing parameter mangling for constant implicit object
 parameters works as expected.
+
+<!-- {% endraw %} -->
