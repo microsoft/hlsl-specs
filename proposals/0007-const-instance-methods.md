@@ -9,7 +9,8 @@
 ## Introduction
 
 HLSL does not currently support `const` instance methods for user-defined data
-types. This proposal seeks to add support for `const` instance methods.
+types. This proposal seeks to add support for `const` instance methods, and to
+adopt const-correct behaviors across the HLSL library objects.
 
 ## Motivation
 
@@ -34,9 +35,116 @@ instances of `const`-qualified user-defined types are unusable.
 
 ## Proposed solution
 
-Following C++, we should enable support for `const` instance methods and
-operator overloads. When a method is marked `const`, the implicit `this`
-parameter should become a `const &`.
+Following C++, HLSL will enable support for `const` instance methods and
+instance operator overloads (henceforth collectively referred to as constant
+member functions) to allow execution of member functions on `const` objects and
+preserve `const` qualifiers.
 
-This change should not introduce any syntactic ambiguities or have any
-incompatibilities with existing HLSL code.
+Updates to HLSL's built-in data types to observe best practices in
+const-correctness will follow the introduction of language support. Functions
+which return mutable lvalue references will become non-constant member
+functions, and method which return constant lvalue references or object values
+will become constant member functions.
+
+## Detailed design
+### Syntactic Changes
+
+C++'s existing syntax for declaring constant instance functions is compatible
+with HLSL. Adoption of this syntax does not introduce any syntactic ambiguities
+with existing HLSL constructs. Adding the `const` keyword to the end of the
+function declarator before the optional function body will denote a const
+instance function. See the examples below defining both a constant method and a
+constant overload of the call `()` operator:
+
+```c++
+struct Pupper {
+  void Wag() const { /* body omitted */ }
+  void operator() const { /* body omitted */ }
+};
+```
+
+### Semantic Changes
+
+In a const member function, the implicit object parameter (`this`) becomes a
+constant lvalue reference (`const &`). Code modifying any field of the `this`
+object is ill-formed and will produce a diagnostic. Calls to non-constant member
+functions are also ill-formed and will produce a diagnostic.
+
+This change requires modifications to HLSL's overload resolution rules to
+account for the const-ness of object parameters. When performing lookup of
+possible overload candidates, overloaded functions with non-constant implicit
+object parameters are invalid candidates when the implicit object is constant.
+
+Standard HLSL argument promotion rules will apply for the object method, but
+they cannot remove the `const` qualifier and shall not convert from a constant
+lvalue to a non-constant rvalue by copying the implicit argument as is valid for
+other arguments.
+
+### HLSL Data Type Changes
+
+Introducing constant member functions provides an opportunity to revisit the
+const-correctness patterns of existing HLSL data types. With this change we will
+perform an audit of existing data types to provide constant and non-constant
+member functions as appropriate for the data type.
+
+This will introduce differentiation of the subscript operators for resource
+types to provide constant and non-constant variations. The constant variation
+will return a constant lvalue reference while the non-constant variation will
+return an lvalue reference.
+
+### Impact on Existing Code
+
+Two of the changes described above have breaking impact on existing code. First,
+supporting constant member function overload resolution will break existing code
+that calls methods on `cbuffer`, `tbuffer` or global constant variables. Take
+the following valid HLSL:
+
+```c++
+struct Hat {
+  int getFeathers() {
+    return Feathers;
+  }
+  int Feathers;
+};
+
+cbuffer CB {
+  Hat H;
+};
+
+export int GetFeatherCount() {
+  return H.getFeathers();
+}
+```
+
+This code is currently valid because HLSL ignores the const-ness of the implicit
+object parameter. On introducing constant member functions, this code is
+ill-formed and will produce a diagnostic.
+
+The code is ill-formed because these declarations inside a `cbuffer` are
+implicitly constant. Today we ignore the `const`-ness of the object parameter
+and resolve the function.
+
+Implementing const-correct member functions on built-in HLSL data types will
+also introduce code breakages. Take the following valid HLSL:
+
+```c++
+void setValue(const RWBuffer<int> R, int Val, int Index) {
+  R[Index] = Val;
+}
+```
+
+With const-correct implementations of resource subscript operators, the
+const-qualified subscript operator will return a const-qualified lvalue which
+is immutable. This code will produce a diagnostic.
+
+### Detailed Description of Overload Resolution Rules
+
+TBD: HLSL's current overload resolution rules are not fully codified anywhere
+I'm aware of. For this design to be complete we need to fully specify the
+overload resolution and standard argument conversions.
+
+### Other Considerations
+
+This change should have no impact on code generation through SPIR-V or DXIL
+assuming that the existing parameter mangling for constant implicit object
+parameters works as expected.
