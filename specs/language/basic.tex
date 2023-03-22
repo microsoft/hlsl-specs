@@ -1,0 +1,19 @@
+\Ch{Basic Concepts}{Basic}
+
+\Sec{Lvalues and rvalues}{Basic.lval}
+
+\p Expressions are classified by the type(s) of values they produce. The valid
+types of values produced by expressions are:
+
+\begin{enumerate}
+  \item An \textit{lvalue} represents a function or object.
+  \item An \textit{rvalue} represents a temporary object.
+  \item An \textit{xvalue} (expiring value) represents an object near the end
+  of its lifetime.
+  \item A \textit{cxvalue} (casted expiring value) is an \textit{xvalue}
+  which, on expiration, assigns its value to a bound \textit{lvalue}.
+  \item A \textit{glvalue} is an \textit{lvalue}, \textit{xvalue}, or
+  \textit{cxvalue}.
+  \item A \textit{prvalue} is an \textit{rvalue} that is not an \textit{xvalue}.
+\end{enumerate}
+

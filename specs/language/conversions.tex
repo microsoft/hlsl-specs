@@ -1,0 +1,135 @@
+\Ch{Standard Conversions}{Conv}
+
+\p \acrshort{hlsl} inherits standard conversions similar to \gls{isoCPP}. This
+chapter enumerates the full set of conversions. A \textit{standard conversion
+sequence} is a sequence of standard conversions in the following order:
+\begin{enumerate}
+  \item Zero or one conversion of either lvalue-to-rvalue, array-to-pinter or
+  function-to-pointer.
+  \item Zero or one conversion of either integral conversion, floating point
+  conversion, floating point-integral conversion, or boolean conversion,
+  derived-to-base-lvalue, vector splat, vector truncation, or flat conversion.
+  \item Zero or one conversion of either component-wise integral conversion,
+  component-wise floating point conversion, component-wise floating
+  point-integral conversion, or component-wise boolean conversion.
+  \item Zero or one qualification conversion.
+\end{enumerate}
+
+Standard conversion sequences are applied to expressions, if necessary, to
+convert it to a required destination type.
+
+\Sec{Lvalue-to-rvalue conversion}{Conv.lval}
+
+\p A glvalue of a non-function type \texttt{T} can be converted to a prvalue.
+The program is ill-formed if \texttt{T} is an incomplete type. If the glvalue
+refers to an object that is not of type \texttt{T} and is not an object of a
+type derived from \texttt{T}, the program is ill-formed. If the glvalue refers to
+an object that is uninitialized, the behavior is undefined. Otherwise the
+prvalue is of type \texttt{T}.
+
+\p If the glvalue refers to an array of type \texttt{T}, the prvalue will refer
+to a copy of the array, not memory referred to by the glvalue.
+
+\Sec{Array-to-pointer conversion}{Conv.array}
+
+\p An lvalue or rvalue of type \texttt{T[]} (bounded or unbounded), can be
+converted to a prvalue of type pointer to \texttt{T}.
+[\textit{Note: \acrshort{hlsl} does not support grammar for specifying pointer or
+reference types, however they are used in the type system and must be described
+in language rules.}]
+
+\Sec{Integral conversion}{Conv.iconv}
+
+\p A glvalue of an integer type can be converted to a cxvalue of any other
+non-enumeration integer type. A prvalue of an integer type can be converted to a
+prvalue of any other integer type.
+
+\p If the destination type is unsigned, integer conversion maintains the bit pattern
+of the source value in the destination type truncating or extending the value to
+the destination type.
+
+\p If the destination type is signed, the value is unchanged if the destination
+type can represent the source value. If the destination type cannot represent
+the source value, the result is implementation-defined.
+
+\p If the source type is \texttt{bool}, the values \texttt{true} and
+\texttt{false} are converted to one and zero respectively.
+
+\Sec{Floating point conversion}{Conv.fconv}
+
+\p A glvalue of a floating point type can be converted to a cxvalue of any other
+floating point type. A prvalue of a floating point type can be converted to a
+prvalue of any other floating point type.
+
+\p If the source value can be exactly represented in the destination type, the
+conversion produces the exact representation of the source value. If the source
+value cannot be exactly represented, the conversion to a best-approximation of
+the source value is implementation defined.
+
+\Sec{Floating point-integral conversion}{Conv.fpint}
+
+\p A glvalue of floating point type can be converted to a cxvalue of integer
+type or a prvalue of floating point type can be converted to a prvalue of
+integer type. Conversion of floating point values to integer values truncates by
+discarding the fractional value. The behavior is undefined if the truncated
+value cannot be represented in the destination type.
+
+\p A glvalue of integer type can be converted to a cxvalue of floating point
+type or a prvalue of integer type can be converted to a prvalue of floating
+point type. If the destination type can exactly represent the source value, the
+result is the exact value. If the destination type cannot exactly represent the
+source value, the conversion to a best-approximation of the source value is
+implementation defined.
+
+\Sec{Boolean conversion}{Conv.bool}
+
+\p A glvalue of arithmetic type can be converted to a cxvalue of boolean type. A
+prvalue of arithmetic or unscoped enumeration type can be converted to a prvalue
+of boolean type. A zero value is converted to \texttt{false}; all other values
+are converted to \texttt{true}.
+
+\Sec{Vector splat conversion}{Conv.vsplat}
+
+\p A glvalue of type \texttt{T} can be converted to a cxvalue of type
+\texttt{vector<T,x>} or a prvalue of type \texttt{T} can be converted to a
+prvalue of type \texttt{vector<T,x>}. The destination value is the source value
+replicated into each element of the destination.
+
+\p A glvalue of type \texttt{T} can be converted to a cxvalue of type
+\texttt{matrix<T,x,y>} or a prvalue of type \texttt{T} can be converted to a
+prvalue of type \texttt{matrix<T,x,y>}. The destination value is the source
+value replicated into each element of the destination.
+
+\Sec{Vector and matrix truncation conversion}{Conv.vtrunc}
+
+\p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
+\texttt{vector<T,y>}, or a prvalue of type \texttt{vector<T,x>} can be converted
+to a prvalue of type \texttt{vector<T,y>} only if \texttt{x} is less than
+\texttt{y}.
+
+\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of type
+\texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
+converted to a prvalue of type \texttt{matrix<T,z,w>} only if \texttt{x} is less
+than or equal to \texttt{z} and \texttt{y} is less than or equal to \texttt{w}.
+
+\Sec{Component-wise conversions}{Conv.cwise}
+
+\p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
+\texttt{vector<V,x>}, or a prvalue of type \texttt{vector<T,x>} can be converted
+to a prvalue of type \texttt{vector<V,x>}. The source value is converted by
+performing the appropriate conversion of each element of type \texttt{T} to an
+element of type \texttt{V} following the rules for standard conversions
+in chapter \ref{Conv}.
+
+\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of
+type \texttt{matrix<V,x,y>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
+converted to a prvalue of type \texttt{matrix<V,x,y>}. The source value is
+converted by performing the appropriate conversion of each element of type
+\texttt{T} to an element of type \texttt{V} following the rules for standard
+conversions in chapter \ref{Conv}.
+
+\Sec{Qualification conversion}{Conv.qual}
+
+A prvalue of type "\textit{cv1} \texttt{T}" can be converted to a prvalue of type
+"\textit{cv2} \texttt{T}" type "\textit{cv2} \texttt{T}" is more cv-qualified
+than "\textit{cv1} \texttt{T}".
