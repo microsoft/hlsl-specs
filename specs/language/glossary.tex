@@ -36,11 +36,9 @@
 }
 
 \newglossaryentry{sm}
-{
-  name={Shader Model},
-  description={Versioned hardware description included as part of the DirectX
-  specification, which is used for code generation of GPU code to a common set
-  of features across a range of vendors.}
+{ name={Shader Model}, description={Versioned hardware description included as
+  part of the DirectX specification, which is used for code generation to a
+  common set of features across a range of vendors.}
 }
 
 \newglossaryentry{lane}{
@@ -64,8 +62,9 @@
 
 \newglossaryentry{threadgroup}{
   name={Thread Group},
-  description={A group of one or more \gls{wave}s which comprise a larger
-  computation. Also known as: group, workgroup, block or thread block.}
+  description={A group of \gls{lane}s which may be subdivided into one or more
+  \gls{wave}s and comprise a larger computation. Also known as: group,
+  workgroup, block or thread block.}
 }
 
 \newglossaryentry{dispatch}{

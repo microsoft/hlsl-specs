@@ -1,7 +1,17 @@
+<img src="https://microsoft.github.io/hlsl-specs/resources/HLSL.png" width="128">
+
 # HLSL Specifications
 
 This repository contains documentation for HLSL feature proposals and specifications. Please see the documentation for
 the HLSL Feature [Proposal Process](docs/Process.md) for more information on proposals.
+
+A listing of the active proposals is available [here](proposals/).
+
+This repository also contains specifications for the HLSL language. The draft
+HLSL specification is available in
+[HTML](https://microsoft.github.io/hlsl-specs/specs/hlsl.html) and
+[PDF](https://microsoft.github.io/hlsl-specs/specs/hlsl.pdf).
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

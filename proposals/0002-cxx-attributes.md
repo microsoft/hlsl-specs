@@ -1,3 +1,4 @@
+<!-- {% raw %} -->
 # C++ Attributes
 
 * Proposal: [0002](0002-cxx-attributes.md)
@@ -32,8 +33,7 @@ parameter declarations using a `:` to separate the name from the specifier:
 SamplerState samp1 : register(s5);
 Texture2D<float4> text1 : register(t3);
 
-float4 main(float2 a : A) : SV_Target
-{
+float4 main(float2 a : A) : SV_Target {
   ...
 }
 ```
@@ -65,8 +65,8 @@ code is ambiguous and currently _not_ interpreted as a bitfield declaration:
 If we wish to add source annotations to more grammatical elements in the future
 we will encounter more ambiguities because the `:` character has other meanings
 in C and modern C++ as well. to name a few examples: the ternary operator
-(`<boolean> ? <a> : <b>`), range-based for syntax (`for (<var> :
-<collection>)`), and switch label marking (`case 1:`).
+(`condition ? a : b`), range-based for syntax (`for (variable : collection)`),
+and switch label marking (`case 1:`).
 
 We will also encounter ambiguities with the `[]` syntax. We may encounter issues
 with array indexing which valid in contexts where we may wish to annotate
@@ -119,6 +119,9 @@ Below are a few more examples of C++ attributes that we could support:
     float f = [[hlsl::strict]](1.0 * 2.0); // applies to the parenthesis expression `(...)`.
 
     [[hlsl::unroll]] // applies to the for-loop expression.
-    for (int x = 0; x < 10; ++x) {}
+    for (int x = 0; x < 10; ++x) {
+      ...
+    }
   }
 ```
+<!-- {% endraw %} -->
