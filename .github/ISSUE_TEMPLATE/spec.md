@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Which spec or proposal does this relate to?**
+**Which document does this relate to?**
 Please link the file in the repo where the problem is documented.
 
 **Describe the issue you see with the spec**
