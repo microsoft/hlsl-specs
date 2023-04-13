@@ -4,7 +4,7 @@
 * Author(s): [Greg Fischer](https://github.com/greg-lunarg)
 * Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz), [Steven Perron](https://github.com/s-perron), [Diego Novillo](https://github.com/dnovillo)
 * Status: **Under Consideration**
-* Planned Version: Retroactive addition to Vulkan X.X (requires SPIR-V X.X. Some language details require HLSL 202x
+* Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3. Some language details require HLSL 202x
 
 ## Introduction
 
@@ -12,7 +12,7 @@ This proposal seeks to improve tool support for Vulkan shaders doing buffer devi
 
 ## Motivation
 
-vk::RawBufferLoad() is currently used to address physical storage buffer space. Unfortunately, use of this function has a number of shortcomings. One is that it generates low-level SPIR-V so that tools such as spirv-reflect, spirv-opt and renderdoc do not have the context to analyze and report on which members of a buffer are used in a logical manner. A bigger problem is that the HLSL programmer must compute the physical offsets of the members of a buffer which is error prone and difficult to maintain.
+vk::RawBufferLoad() and vk::RawBufferStore are currently used to reference physical storage buffer space. Unfortunately, use of these functions has a number of shortcomings. One is that they generate low-level SPIR-V so that tools such as spirv-reflect, spirv-opt and renderdoc do not have the context to analyze and report on which members of a buffer are used in a logical manner. A bigger problem is that the HLSL programmer must compute the physical offsets of the members of a buffer which is error prone and difficult to maintain.
 
 For example, here is a shader using vk::RawBufferLoad(). Note the physical offset 16 hard-coded into the shader:
 
@@ -46,7 +46,7 @@ There is another way to use RawBufferLoad which does allow logical selection of 
 The goal of this proposal is to have a solution that meets the following requirements:
 
 * Removes the need for having to manually or automatically generate offsets to load structured data with BufferDeviceAddress.
-* Get equivalent tooling functionality as is provided by the buffer reference feature in GLSL.  Namely, tools like RenderDoc are able to introspect the type information such that its buffer inspection and shader debugger are able to properly understand and represent the type of the data.
+* Enables equivalent tooling functionality as is provided by the buffer reference feature in GLSL.  Namely, tools like RenderDoc are able to introspect the type information such that its buffer inspection and shader debugger are able to properly understand and represent the type of the data.
 * Make it possible through SPIR-V reflection to determine which members of a struct accessed by BufferDeviceAddress are statically referenced and at what offset.  This is already possible for other data like cbuffers in order for shader tooling to be able to identify which elements are used and where to put them.
 
 ## Proposed solution
@@ -56,7 +56,7 @@ Our solution is to add a new builtin type in the vk namespace that is a pointer 
 This new type will have the following operations
 
 * Copy assignment and copy construction - These copy the value of the pointer from one variable to another.
-* Dereference Method - The get() method represents the struct rvalue pointed at by the pointer to which the get() is applied. Note that this does not necessarily imply the entire value is physically loaded at this point; it merely represents the rvalue that would be loaded, similar to the effect of the * operator when applied to a pointer in C++. As selection . operators are applied to the get(), the data that is physically loaded is reduced appropriately.
+* Dereference Method - The Get() method represents the struct const lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
 * Null Pointer Method - The IsNull() method returns true if the pointer is 0, false if not.
 
 Note the operations that are not allowed:
@@ -66,7 +66,7 @@ Note the operations that are not allowed:
 * There is no explicit pointer arithmetic. All addressing is implicitly done using the `.` pointer, or indexing an array in the struct T.
 * The comparison operators == and != are not supported for buffer pointers.
 
-Most of these restrictions are there for safety. They minimize the possibility of getting an invalid pointer. If the get() method is used on a null pointer, the behaviour is undefined.
+Most of these restrictions are there for safety. They minimize the possibility of getting an invalid pointer. If the Get() method is used on a null pointer, the behaviour is undefined.
 
 When used as a member in a buffer, vk::BufferPointer can be used to pass physical buffer addresses into a shader, and address and access buffer space with logical addressing, which allows tools such as spirv-opt, spirv-reflect and renderdoc to be able to better work with these shaders.
 
@@ -92,7 +92,7 @@ struct TestPushConstant_t
 
 float4 MainPs(void) : SV_Target0
 {
-      float4 vTest = g_PushConstants.m_nBufferDeviceAddress.g_vTestFloat4;
+      float4 vTest = g_PushConstants.m_nBufferDeviceAddress.Get().g_vTestFloat4;
       return vTest;
 }
 
@@ -126,9 +126,9 @@ struct TestPushConstant_t
 float4 MainPs(void) : SV_Target0
 {
       block_p g_p = g_PushConstants.root;
-      g_p = g_p.next;
+      g_p = g_p.Get().next;
       if (uint64_t(g_p) == 0) return float4(0.0,0.0,0.0,0.0);
-      return g_p.x
+      return g_p.Get().x
 }
 
 ```
@@ -139,11 +139,11 @@ Note also the ability to create local variables of type vk::BufferPointer such a
 
 ### Differences from C++ Pointers
 
-vk::BufferPointer is different from a C++ pointer in that a selection “.” operation can and must be applied to a buffer pointer to de-reference it. 
+vk::BufferPointer is different from a C++ pointer in that the method Get() can and must be applied to de-reference it. 
 
 ### Buffer Pointer Target Alignment
 
-The target alignment `A` of `vk::BufferPointer(T,A)` must be at least as large as the largest component type in the buffer pointer's pointee struct type `T` or the compiler may issue an error.
+The target alignment `A` of `vk::BufferPointer<T,A>` must be at least as large as the largest component type in the buffer pointer's pointee struct type `T` or the compiler may issue an error.
 
 ### Buffer Pointer Data Size and Alignment
 
@@ -155,7 +155,7 @@ The pointee of a vk::BufferPointer is considered to be a buffer and will be laid
 
 ### Buffer Pointer Usage
 
-vk::BufferPointer cannot be used in Input and Output variables. It also cannot be used in Unions, when those finally appear in HLSL.
+vk::BufferPointer cannot be used in Input and Output variables. It also cannot be used in Unions, when those appear in HLSL.
 
 A vk::BufferPointer can otherwise be used whereever the HLSL spec does not otherwise disallow it through listing of allowed types. Specifically, buffer members, local and static variables, function argument and return types can be vk::BufferPointer. Ray tracing payloads and shader buffer table records may also contain vk::BufferPointer.
 
