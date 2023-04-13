@@ -1,6 +1,6 @@
 ---
 name: Spec
-about: Highlight a problem with a published or adopted spec
+about: Highlight a problem with a published spec or accepted proposal
 title: ''
 labels: 'spec'
 assignees: ''
