@@ -6,13 +6,11 @@ Despite the openness of this process there are three significant caveats that
 should be noted:
 
 1. Final decisions about what features are included or excluded from HLSL are
-  made by the MSFT HLSL Team.
-2. This process cannot be used for features that require Shader Model changes
-  because Shader Model collaboration with hardware vendors occurs in private
-  under NDA.
-3. Some HLSL features may not go through this process, and may be kept secret
-  during development. We will try to restrict this only to features that require
-  NDAs with hardware vendors, but that may not always be the reason.
+   made by the MSFT HLSL Team. Our goals are to make HLSL the best programming
+   language across all supported runtime targets, not just DirectX or Vulkan.
+2. Some HLSL features may not go through this process, and may be kept secret
+   during development. We will try to restrict this only to features that
+   require NDAs with hardware vendors, but that may not always be the reason.
 
 Feature proposals from outside the HLSL team will be interpreted as requests,
 and may be considered or rejected based on team and release priorities. You
@@ -31,14 +29,24 @@ further tweaked to align with the HLSL team's goals and priorities.
 ## Proposing a Feature
 
 By far the best way for an external contributor to propose a feature is through
-GitHub issues (See the section below on "Filing Issues"). If you can't be
-deterred from writing a proposal yourself you must find a member of the HLSL
-team to act as a _Sponsor_ for the change. The _Sponsor_ is responsible for
-tracking and helping change proposals through the proposal life cycle.
+GitHub issues (See the section below on "Filing Issues"). Issues in this
+repository will be used to publicly track feature requests for the HLSL language
+and HLSL runtime interfaces. Direct tooling feature requests to the
+[DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler/issues/new).
+
+If you write a proposal yourself you must find a member of the HLSL team to act
+as a _Sponsor_ for the change. The _Sponsor_ is responsible for tracking and
+helping change proposals through the proposal life cycle. For Vulkan-specific
+features we require at least one _Sponsor_ from the HLSL team and one _Sponsor_
+from the Khronos Vulkan Working Group. If you need assistance finding a
+_Sponsor_ for a proposal reach out to the [HLSL Team](Contact.md).
 
 All feature proposals are evaluated against the goals for the next HLSL language
 revision. The goals for the upcoming HLSL language version can be found
 [here](HLSL202x.md).
+
+When writing a feature proposal you should also familiarize yourself with the
+HLSL [Design Considerations](DesignConsiderations.md).
 
 ## Proposal Lifecycle
 
