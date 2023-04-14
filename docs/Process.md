@@ -31,10 +31,10 @@ further tweaked to align with the HLSL team's goals and priorities.
 ## Proposing a Feature
 
 By far the best way for an external contributor to propose a feature is through
-GitHub issues. If you can't be deterred from writing a proposal yourself you
-must find a member of the HLSL team to act as a _Sponsor_ for the change. The
-_Sponsor_ is responsible for tracking and helping change proposals through the
-proposal life cycle.
+GitHub issues (See the section below on "Filing Issues"). If you can't be
+deterred from writing a proposal yourself you must find a member of the HLSL
+team to act as a _Sponsor_ for the change. The _Sponsor_ is responsible for
+tracking and helping change proposals through the proposal life cycle.
 
 All feature proposals are evaluated against the goals for the next HLSL language
 revision. The goals for the upcoming HLSL language version can be found
@@ -78,3 +78,21 @@ rationale behind why the feature was rejected.
 deferred may be provided with some justification for the deferral although the
 requirements for justification are not high and could be as simple as
 "insufficient resources".
+
+## Filing Issues
+
+This repository provides three custom issue templates:
+
+1. Feature Request
+2. Proposal
+3. Spec
+
+When filing feature requests please use the _Feature Request_ template. The more
+detailed information you can provide in a feature request the easier it is for
+our team to scope, prioritize, design and implement the requested feature.
+
+When filing issues relating to a currently in-progress proposal (i.e. any proposal not
+**Completed** or **Rejected**), use the _Proposal Follow-up_ template.
+
+When filing issues relating to a completed feature or specification document
+please use the _Spec_ template.
