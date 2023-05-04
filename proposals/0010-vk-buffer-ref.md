@@ -57,12 +57,13 @@ This new type will have the following operations
 
 * Copy assignment and copy construction - These copy the value of the pointer from one variable to another.
 * Dereference Method - The Get() method represents the struct const lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
-* Null Pointer Method - The IsNull() method returns true if the pointer is 0, false if not.
+* A buffer pointer can be cast to a uint64_t using uint64_t(bp). If the buffer pointer is null, the uint64_t is zero.
+* A uint64_t can be cast to a buffer pointer type. The name of the buffer pointer type is used as the casting method. If the uint64_t is zero, the buffer pointer is null. 
+* A buffer pointer can be cast to another buffer pointer type. It is equivalent to casting the buffer pointer to a uint64_t, and then casting the uint64_t to the new buffer pointer type.
 
 Note the operations that are not allowed:
 
 * There is no default construction. Every vk::BufferPointer<T> is either contained in a global resource (like a cbuffer, ubo, or ssbo), or it must be constructed using the copy constructor. 
-* There is no conversion from uint64_t to vk:BufferPointer.
 * There is no explicit pointer arithmetic. All addressing is implicitly done using the `.` pointer, or indexing an array in the struct T.
 * The comparison operators == and != are not supported for buffer pointers.
 
