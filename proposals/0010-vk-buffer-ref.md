@@ -163,6 +163,10 @@ A vk::BufferPointer can otherwise be used whereever the HLSL spec does not other
 
 Applying HLSL semantic annotations to objects of type vk::BufferPointer is disallowed.
 
+### Buffer Pointer Availability
+
+The following can be used at pre-processor time to determine if the current compiler supports vk::BufferPointer: _has_feature(hlsl_vk_buffer_pointer).
+
 ## SPIR-V Appendices
 
 ### Appendix A: SPIR-V for RawBufferLoad
