@@ -163,6 +163,16 @@ A vk::BufferPointer can otherwise be used whereever the HLSL spec does not other
 
 Applying HLSL semantic annotations to objects of type vk::BufferPointer is disallowed.
 
+### Buffer Pointers and Aliasing
+
+All buffer pointers are considered restricted pointers. In other words, given two different objects of buffer pointer type, it is assumed that their pointees do not overlap by default.
+
+An attribute vk::aliased_pointer can be attached to a variable, function parameter or a block member of buffer pointer type. It is assumed that the pointee of an object with this attribute can overlap with the pointee of any other object with this attribute.
+
+### Buffer Pointers and Address Space
+
+All buffer pointers are presumed to point into the same address space. No new address space attributes are proposed.
+
 ## SPIR-V Appendices
 
 ### Appendix A: SPIR-V for RawBufferLoad
