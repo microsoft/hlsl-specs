@@ -137,6 +137,10 @@ Note also the ability to create local variables of type vk::BufferPointer such a
 
 ## Design Details
 
+### Writing Buffer Pointer Pointees
+
+The pointees of vk::BufferPointer objects can be written as well as read.
+
 ### Differences from C++ Pointers
 
 vk::BufferPointer is different from a C++ pointer in that the method Get() can and must be applied to de-reference it. 
