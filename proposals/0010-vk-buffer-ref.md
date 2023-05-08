@@ -163,6 +163,10 @@ A vk::BufferPointer can otherwise be used whereever the HLSL spec does not other
 
 Applying HLSL semantic annotations to objects of type vk::BufferPointer is disallowed.
 
+### Buffer Pointers and Type Punning Through Unions
+
+While buffer pointer types are allowed in unions, type punning with buffer pointer types is disallowed.
+
 ## SPIR-V Appendices
 
 ### Appendix A: SPIR-V for RawBufferLoad
