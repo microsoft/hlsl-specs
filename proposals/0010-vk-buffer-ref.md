@@ -139,7 +139,7 @@ Note also the ability to create local variables of type vk::BufferPointer such a
 
 ### Writing Buffer Pointer Pointees
 
-The pointees of vk::BufferPointer objects can be written as well as read.
+The pointees of vk::BufferPointer objects can be written as well as read. See Appendix C for example.
 
 ### Differences from C++ Pointers
 
@@ -281,4 +281,35 @@ Here is the SPIR-V for this shader. Note the logical context of the declaration 
                OpReturn
                OpFunctionEnd
 ```
+
+### Appendix C: Write through vk::BufferPointer
+
+
+```c++
+
+struct Globals_s
+{
+      float4 g_vSomeConstantA;
+      float4 g_vTestFloat4;
+      float4 g_vSomeConstantB;
+};
+
+typedef vk::BufferPointer<Globals_s> Globals_p;
+
+struct TestPushConstant_t
+{
+      Globals_p m_nBufferDeviceAddress;
+};
+
+[[vk::push_constant]] TestPushConstant_t g_PushConstants;
+
+float4 MainPs(void) : SV_Target0
+{
+      float4 vTest = float4(1.0,0.0,0.0,0.0);
+      g_PushConstants.m_nBufferDeviceAddress.Get().g_vTestFloat4 = vTest;
+      return vTest;
+}
+
+```
+
 <!-- {% endraw %} -->
