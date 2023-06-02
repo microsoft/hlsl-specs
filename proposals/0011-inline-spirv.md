@@ -85,9 +85,58 @@ Most SPIR-V extension so only certain types of changes to the SPIR-V sped:
 1. add a new storage class, or
 1. add a new builtin input.
 
-Most extension also define [capabilities](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Capability) that are used to enable the new features, but the capabilities does nothing on its own.
+Most extension also define [capabilities](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Capability) that are used to enable the new features, but the capabilities do nothing on their own.
+
+The proposed solution will add syntax to define each of these features aliased to a meaningful name, so that they can be defined in a header file. Then users will be able to use the header file, and use the feature by using the name. They will not have to see consider the inline SPIR-V. The proposed solution will also expect that the SPIR-V referenced is defined in the version of spirv-headers that was used to build DXC.
 
 ### Execution modes
+
+The existing `vk::ext_execution_mode` is a builtin function. I'm guessing it was defined as a builtin function because the original designers want to be able to add an execution mode that was not yet defined in spirv-headers. Since we are not considering that workflow anymore, I propose that we define a new attribute `vk::spvexecutionmode(ExecutionMode)`.
+
+Then suppose we wanted to implement the [SPV_KHR_post_depth_coverage](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_post_depth_coverage.html) extension in a header file.
+
+The header file could be something like 
+
+```
+// spv_khr_post_depth_coverage.h
+
+namespace spv {
+  namespace khr {
+    const uint32_t PostDepthCoverageExecutionMode = 4446;
+  }
+}
+```
+
+The a user could use the extension:
+
+```
+#include "spv_khr_post_depth_coverage.h"
+
+[[vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionMode)]]
+float4 PSMain(...) : SV_TARGET
+{ ...
+}
+```
+
+Another way of using it would be:
+
+```
+// spv_khr_post_depth_coverage.h
+
+#define PostDepthCoverageExecutionMode vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionMode)
+```
+
+Then the user could write:
+
+```
+#include "spv_khr_post_depth_coverage.h"
+
+[[PostDepthCoverageExecutionMode]]
+float4 PSMain(...) : SV_TARGET
+{ ...
+}
+```
+
 ### Instructions and extended instructions
 ### Types
 ### Decorations
