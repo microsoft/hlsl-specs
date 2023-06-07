@@ -186,8 +186,32 @@ AvcMcePayloadINTEL payload;
 This would have the largest implementation cost, and for possibly little value. Not many extensions (TODO: Fill in actual numbers) create new types.
 
 ### Decorations
+
+The current inline spir-v include the `vk::ext_decorate` attribute. This generally works well as an attribute. A header file could handle the attribute in the same way that it handles the execution mode attribute.
+
 ### Storage classes
+
+The existing inline spir-v allows the developer to set the storage class for a variable. Conceptually this is similar to setting an address space. I would not want to add anything new, but I suggest we deprecate this when address spaces are added to HLSL more generally.
+
 ### Builtin input
+
+The existing inline spir-v has limited support for adding builtin. There is a sample that shows how to [add a builtin input to a pixel shader](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl). This work for pixel shaders because the parameters to a pixel shader can have arbitrary semantics. However, when we quickly ran into problems when [trying to declare a spir-v specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
+
+The reason that a builtin input requires more than just a decoration on the variable. It must be in the input storage class, and get added to the `OpEntryPoint` instruction. With the existing inline spir-v we can only get the first two.
+
+Since a lot (TODO: Add exact numbers) extensions add new builtin inputs, it would be good to have a clean way to do this. I'm proposing a new function attribute `vk::ext_builtin_input` that, like `vk::ext_instruction`, will imply a definition for the function. When the user calls the function, it will return the value of that builtin input.
+
+For example, we could declare the `gl_NumWorkGroups` builtin in a header file like this:
+
+```
+[[vk::ext_builtin_input(/* NumWorkgroups */ 24)]]
+uint32 gl_NumWorkGroups();
+```
+
+Then the compiler will be able to add a variable to in the input storage class, with the builtin decoration, with a type that is the same as the return type of the function, and add it to the OpEntryPoint for the entry points from which it is reachable. 
+
+The developer can use the builtin input by simply calling the function.
+
 ### Capability and extension instructions
 
 ## Detailed design
