@@ -160,6 +160,31 @@ I believe this part of the existing inline SPIR-V works well, and should be kept
 
 
 ### Types
+
+Some extensions introduce new types. Very few extension add new types. It is possible to define and use a spir-v type with the existing inline spir-v, but it is awkward to use. You can see a sample in the [spv.intrinsictypeInteger.hlsl](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicTypeInteger.hlsl) test. Some the difficulties with this are:
+
+1. The definition of the type is split in two. There is a definition of a function with has an arbitrary id and the id for the `OpType*` opcode for the type. The second part calls the function with values for all of the operands to the `OpType*` instruction in spir-v.
+1. The function call must be reachable from the entry point that will use the type even if it will be used to declare a global variable.
+1. The arbitrary id that is part of the type function is what is used to declare an object of that type. This means the same function cannot be used to declare two different types. Also, if there are multiple header files, the cannot use the same id for two different types. This can become hard to manage.
+
+I propose we deprecate the old mechanism, and replace it with a new type `vk::SpirvType<int OpCode, ...>`. The idea is that the template on the type contains the opcode and all of the parameters. The difficulty with this is that the operands are not just literal integer values. Sometimes they are another type. Then the header file could create a partial instantiation with a more meaningful name. For example, if you wanted to declare the types from the [SPV_INTEL_device_side_avc_motion_estimation](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_device_side_avc_motion_estimation.html) you could have
+
+
+```
+template<typename ImageType>
+typedef VmeImageINTEL vk::SpirvType</* OpTypeVmeImageINTEL */ 5700, Imagetype>
+typedef AvcMcePayloadINTEL vk::SprivType</* OpTypeAvcMcePayloadINTEL */ 5704>
+```
+
+Then the user could simply use the types:
+
+```
+VmeImageINTEL<Texture2D> image;
+AvcMcePayloadINTEL payload;
+```
+
+This would have the largest implementation cost, and for possibly little value. Not many extensions (TODO: Fill in actual numbers) create new types.
+
 ### Decorations
 ### Storage classes
 ### Builtin input
