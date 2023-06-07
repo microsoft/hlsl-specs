@@ -123,7 +123,8 @@ Another way of using it would be:
 ```
 // spv_khr_post_depth_coverage.h
 
-#define PostDepthCoverageExecutionMode vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionMode)
+const uint32_t PostDepthCoverageExecutionModeId = 4446;
+#define PostDepthCoverageExecutionMode vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionModeId)
 ```
 
 Then the user could write:
@@ -138,10 +139,30 @@ float4 PSMain(...) : SV_TARGET
 ```
 
 ### Instructions and extended instructions
+
+The existing `vk::ext_instruction` attribute is used to define a function as a specific spir-v instruction. Suppose we wanted to implement the [SPV_INTEL_subgroups](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_subgroups.html) extension in a header file. It contains a 8 new instructions. Each one could be defined in the header file as a function, and then the function can be called by the users. For example,
+
+```
+[[vk::ext_capability(5568)]]
+[[vk::ext_extension("SPV_INTEL_subgroups")]]
+[[vk::ext_instruction(/* OpSubgroupShuffleINTEL */ 5571)]]
+template<typename T>
+T SubgroupShuffleINTEL(T data, uint32 invocationId);
+```
+
+Then the user calls `SubgroupShuffleINTEL()` to use this instruction.
+
+Some instructions expect a pointer as an operand. This is why the `vk::ext_reference` attribute was added. I am not aware of any extensions that would need this. I suggestion we deprecate it in [proposal 0006](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0006-reference-types.md). 
+
+Other instruction require that a type be a literal. This is fairly common. The attribute `vk::ext_literal` was added to tell the compiler that is needs to add a literal value on the instruction instead of the result id of a load. This type of attribute would be meaningless in HLSL generally, and I will have to keep the attribute.
+
+I believe this part of the existing inline SPIR-V works well, and should be kept. If we feel strongly about naming conventions, we could change the names.
+
+
 ### Types
 ### Decorations
 ### Storage classes
-### Builtin inputs
+### Builtin input
 ### Capability and extension instructions
 
 ## Detailed design
