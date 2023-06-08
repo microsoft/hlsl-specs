@@ -20,8 +20,8 @@ minor alterations, specifically the removal of support for trigraph and digraph
 sequences. Below is a description of the phases.
 
 \begin{enumerate}
-  \item Source files are characters are mapped to the basic source character set
-  in an implementation-defined manner.
+  \item Source files are characters that are mapped to the basic source
+  character set in an implementation-defined manner.
   \item Any sequence of backslash (\texttt{\textbackslash}) immediately followed
   by a new line is deleted, resulting in splicing lines together.
   \item Tokenization occurs and comments are isolated. If a source file ends in
@@ -31,8 +31,8 @@ sequences. Below is a description of the phases.
   \item Preprocessing directives are executed, macros are expanded,
   \texttt{pragma} and other unary operator expressions are executed. Processing
   of \texttt{\#include} directives results in all preceding steps being executed
-  on the resolved file. Finally all preprocessing directives are removed from
-  the source.
+  on the resolved file, and can continue recursively. Finally all preprocessing
+  directives are removed from the source.
   \item Character and string literal specifiers are converted into the
   appropriate character set for the execution environment.
   \item Adjacent string literal tokens are concatenated.
