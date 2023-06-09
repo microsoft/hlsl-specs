@@ -195,7 +195,7 @@ The existing inline spir-v allows the developer to set the storage class for a v
 
 ### Builtin input
 
-The existing inline spir-v has limited support for adding builtin. There is a sample that shows how to [add a builtin input to a pixel shader](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl). This work for pixel shaders because the parameters to a pixel shader can have arbitrary semantics. However, when we quickly ran into problems when [trying to declare a spir-v specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
+The existing inline spir-v has limited support for adding a builtin. There is a sample that shows how to [add a builtin input to a pixel shader](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl). This work for pixel shaders because the parameters to a pixel shader can have arbitrary semantics. However, when we quickly ran into problems when [trying to declare a spir-v specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
 
 The reason that a builtin input requires more than just a decoration on the variable. It must be in the input storage class, and get added to the `OpEntryPoint` instruction. With the existing inline spir-v we can only get the first two.
 
@@ -211,6 +211,24 @@ uint32 gl_NumWorkGroups();
 Then the compiler will be able to add a variable to in the input storage class, with the builtin decoration, with a type that is the same as the return type of the function, and add it to the OpEntryPoint for the entry points from which it is reachable. 
 
 The developer can use the builtin input by simply calling the function.
+
+### Builtin output
+
+The existing inline spir-v has limited support for adding a builtin. This would have most of the same problems as declaring a builtin input.
+
+Nine of the 111 extensions add new builtin outputs. It would be good to have a clean way to do this. I'm proposing a new function attribute `vk::ext_builtin_ouput(val)` that, like `vk::ext_instruction`, will imply a definition for the function. When the user calls the function, it will set the value of the output to `val`.
+
+For example, we could declare the `gl_FragStencilRefARB` builtin in a header file like this:
+
+```
+[[vk::ext_extension("SPV_EXT_shader_stencil_export")]]
+[[vk::ext_builtin_input(/* FragStencilRefEXT */ 5014)]]
+void gl_FragStencilRefARB(int);
+```
+
+Then the compiler will be able to add a variable to in the output storage class, with the builtin decoration, with a type that is the same as the parameter, and add it to the OpEntryPoint for the entry points from which it is reachable. 
+
+The developer can set the builtin output by simply calling the function.
 
 ### Capability and extension instructions
 
