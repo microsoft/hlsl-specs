@@ -316,9 +316,28 @@ of detail here, but some common things to think through are:
 
 ## Alternatives considered (Optional)
 
-If alternative solutions were considered, please provide a brief overview. This
-section can also be populated based on conversations that occur during
-reviewing.
+### Auto-generating builtin functions and attributes from [spirv.core.grammar.json](https://github.com/KhronosGroup/SPIRV-Headers/blob/8e2ad27488ed2f87c068c01a8f5e8979f7086405/include/spirv/unified1/spirv.core.grammar.json)
+
+When we considered auto-generating, we noticed that not enough information is
+available. For example, it is not possible to tell if a builtin should be an
+input or output, and we cannot know it types. The other problem is that it will
+require testing in DXC when new functions or attributes are added. The solution
+proposed above leave a smaller testing surface in DXC, and places the testing
+burden on the writer of the header file.
+
+### Removing explicit references to capabilities and extensions
+
+It is possible to get the list of required capabilities from
+[spirv.core.grammar.json](https://github.com/KhronosGroup/SPIRV-Headers/blob/8e2ad27488ed2f87c068c01a8f5e8979f7086405/include/spirv/unified1/spirv.core.grammar.json).
+It would generally be possible for the compiler to automatically add the
+required capabilities an instruction is used. However, there are some cases
+where the capability allows an instruction to take a new type of operand. These
+are not part of the grammar, and would still require some way of explicitly
+adding a capability and annotation.
+
+If we can hide all of the cases that could be implicitly added in a header file,
+then there is very little burden on users. This is why we chose to not have
+implicit inclusion of the capabilities and extensions.
 
 ## Acknowledgments (Optional)
 
