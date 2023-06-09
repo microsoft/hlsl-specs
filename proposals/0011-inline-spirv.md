@@ -62,13 +62,6 @@ For example, `vk::ext_execution_mode` is a builtin function that
 [needs to be called from the entry point](https://github.com/microsoft/DirectXShaderCompiler/blob/adc0363539ef423ca3f6e9d0211a665756b81080/tools/clang/test/CodeGenSPIRV/spv.intrinsicExecutionMode.hlsl#L13)
 to which it applies. It would be much better as an attribute.
 
-The call to the execution mode builtin requires the enabling extension and
-capabilities to be added as attributes on the call. This seems unnecessary since
-that information should be available to the compiler through the spirv-headers
-JSON. This would be needed only if the spirv-header have not been updated to
-include the extension. We will need to decide if we want to support that
-workflow.
-
 The inline type definitions are also very involved. You can see the
 [sample](https://github.com/microsoft/DirectXShaderCompiler/blob/adc0363539ef423ca3f6e9d0211a665756b81080/tools/clang/test/CodeGenSPIRV/spv.intrinsicTypeInteger.hlsl)
 to get an idea of how hard it is to define a type.
@@ -78,8 +71,8 @@ shader stages. There are examples that show how to
 [declare a builtin variable](https://github.com/microsoft/DirectXShaderCompiler/blob/adc0363539ef423ca3f6e9d0211a665756b81080/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl)
 in a pixel shader. However, it
 [does not work in compute shaders](https://github.com/microsoft/DirectXShaderCompiler/issues/4217),
-or any other shader stage where there cannot be arbitrary inputs. This makes it
-impossible to implement many extensions.
+or any other shader stage where there cannot be arbitrary inputs. This makes
+many extensions impossible to implement.
 
 Common feedback on the feature is that is is
 ["a bit patchy, edge cases that don't work and that sort of thing"](https://github.com/microsoft/DirectXShaderCompiler/issues/5181#issuecomment-1537757720).
@@ -91,7 +84,8 @@ use cases that were considered at the time. Now that we have more experience, we
 should be able to improve on the implementation, while keeping the style
 similar.
 
-Most SPIR-V extension so only certain types of changes to the SPIR-V sped:
+Most SPIR-V extensions only introduce certain types of changes to the SPIR-V
+spec:
 
 1.  add a new
     [execution mode](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Execution_Mode),
@@ -99,12 +93,12 @@ Most SPIR-V extension so only certain types of changes to the SPIR-V sped:
 1.  add a new type,
 1.  add a new decoration,
 1.  add a new storage class, or
-1.  add a new builtin input.
+1.  add a new builtin.
 
-Most extension also define
+Most extensions also define
 [capabilities](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Capability)
-that are used to enable the new features, but the capabilities do nothing on
-their own.
+that are used to enable the new features, but the capabilities usually do
+nothing on their own.
 
 The proposed solution will add syntax to define each of these features aliased
 to a meaningful name, so that they can be defined in a header file. Then users
@@ -130,31 +124,10 @@ The header file could be something like
 ```
 // spv_khr_post_depth_coverage.h
 
-namespace spv {
-  namespace khr {
-    const uint32_t PostDepthCoverageExecutionMode = 4446;
-  }
-}
-```
-
-The a user could use the extension:
-
-```
-#include "spv_khr_post_depth_coverage.h"
-
-[[vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionMode)]]
-float4 PSMain(...) : SV_TARGET
-{ ...
-}
-```
-
-Another way of using it would be:
-
-```
-// spv_khr_post_depth_coverage.h
-
+// It would be nice to have this live in a namespace spv::khr::, but not possible with attributes.
+const uint32_t SampleMaskPostDepthCoverageCapabilityId = 4447;
 const uint32_t PostDepthCoverageExecutionModeId = 4446;
-#define PostDepthCoverageExecutionMode vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionModeId)
+#define SPV_KHR_PostDepthCoverageExecutionMode vk::ext_extension("SPV_KHR_post_depth_coverage"), vk::ext_capability(SampleMaskPostDepthCoverageCapabilityId), vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionModeId)
 ```
 
 Then the user could write:
@@ -162,7 +135,7 @@ Then the user could write:
 ```
 #include "spv_khr_post_depth_coverage.h"
 
-[[PostDepthCoverageExecutionMode]]
+[[SPV_KHR_PostDepthCoverageExecutionMode]]
 float4 PSMain(...) : SV_TARGET
 { ...
 }
@@ -192,7 +165,7 @@ Some instructions expect a pointer as an operand. This is why the
 would need this. I suggestion we deprecate it in
 [proposal 0006](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0006-reference-types.md).
 
-Other instruction require that a type be a literal. This is fairly common. The
+Other instructions require that a type be a literal. This is fairly common. The
 attribute `vk::ext_literal` was added to tell the compiler that is needs to add
 a literal value on the instruction instead of the result id of a load. This type
 of attribute would be meaningless in HLSL generally, and I will have to keep the
@@ -243,8 +216,8 @@ VmeImageINTEL<Texture2D> image;
 AvcMcePayloadINTEL payload;
 ```
 
-This would have the largest implementation cost, and for possibly little value.
-Not many extensions (TODO: Fill in actual numbers) create new types.
+We should consider the cost versus the value of adding this type. Just 3 out of
+111 spir-v extensions define a new type.
 
 ### Decorations
 
@@ -321,6 +294,10 @@ add it to the OpEntryPoint for the entry points from which it is reachable.
 The developer can set the builtin output by simply calling the function.
 
 ### Capability and extension instructions
+
+Existing inline spir-v has attributes to indicate that a capability or extension
+is needed by a particular part of the code. There are examples above, and there
+is no reason to change it.
 
 ## Detailed design
 
