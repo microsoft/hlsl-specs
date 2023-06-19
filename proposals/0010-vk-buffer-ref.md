@@ -58,7 +58,7 @@ This new type will have the following operations
 * Copy assignment and copy construction - These copy the value of the pointer from one variable to another.
 * Dereference Method - The Get() method represents the struct const lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
 * A new cast operator vk::pointer_cast<T,A>(p) is introduced. It creates a value of type BufferPointer<T,A>. The argument p can be of any BufferPointer type or uint64_t.
-* A buffer pointer can be cast to a bool. If so, it returns FALSE if the pointeris null, TRUE otherwise.
+* A buffer pointer can be cast to a bool. If so, it returns FALSE if the pointer is null, TRUE otherwise.
 
 Note the operations that are not allowed:
 
