@@ -41,7 +41,7 @@ inline SPIR-V.
 
 In Vulkan, there is a culture of allowing a vendor to define extensions that are
 only interesting to them. From the perspective of a driver this is acceptable
-because company B does not have to support the extension put out by vendor B, if
+because company A does not have to support the extension put out by vendor B, if
 they do not want to. It does not create extra work for anyone else.
 
 From a compiler perspective, this is no longer true. If a vendor wants DXC, or
@@ -55,7 +55,7 @@ submodules.
 The existing
 [inline SPIR-V](https://github.com/microsoft/DirectXShaderCompiler/wiki/GL_EXT_spirv_intrinsics-for-SPIR-V-code-gen)
 was the first attempt at solving this problem. However, the features are not
-easy to use, the documentation is incorrect, and is does not interact with the
+easy to use, the documentation is incorrect, and it does not interact with the
 rest of HLSL very well.
 
 For example, `vk::ext_execution_mode` is a builtin function that
@@ -74,7 +74,7 @@ in a pixel shader. However, it
 or any other shader stage where there cannot be arbitrary inputs. This makes
 many extensions impossible to implement.
 
-Common feedback on the feature is that is is
+Common feedback on the feature is that it is
 ["a bit patchy, edge cases that don't work and that sort of thing"](https://github.com/microsoft/DirectXShaderCompiler/issues/5181#issuecomment-1537757720).
 
 ## Proposed solution
@@ -146,7 +146,7 @@ float4 PSMain(...) : SV_TARGET
 The existing `vk::ext_instruction` attribute is used to define a function as a
 specific spir-v instruction. Suppose we wanted to implement the
 [SPV_INTEL_subgroups](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_subgroups.html)
-extension in a header file. It contains a 8 new instructions. Each one could be
+extension in a header file. It contains 8 new instructions. Each one could be
 defined in the header file as a function, and then the function can be called by
 the users. For example,
 
@@ -176,7 +176,7 @@ kept. If we feel strongly about naming conventions, we could change the names.
 
 ### Types
 
-Some extensions introduce new types. Very few extension add new types. It is
+Some extensions introduce new types. Very few extensions add new types. It is
 possible to define and use a spir-v type with the existing inline spir-v, but it
 is awkward to use. You can see a sample in the
 [spv.intrinsictypeInteger.hlsl](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicTypeInteger.hlsl)
@@ -234,14 +234,14 @@ are added to HLSL more generally.
 
 ### Builtin input
 
-The existing inline spir-v has limited support for adding a builtin. There is a
+The existing inline spir-v has limited support for adding a builtin input. There is a
 sample that shows how to
 [add a builtin input to a pixel shader](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl).
-This work for pixel shaders because the parameters to a pixel shader can have
-arbitrary semantics. However, when we quickly ran into problems when
+This works for pixel shaders because the parameters to a pixel shader can have
+arbitrary semantics. However, we quickly ran into problems when
 [trying to declare a spir-v specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
 
-The reason that a builtin input requires more than just a decoration on the
+A builtin input requires more than just a decoration on the
 variable. It must be in the input storage class, and get added to the
 `OpEntryPoint` instruction. With the existing inline spir-v we can only get the
 first two.
@@ -269,7 +269,7 @@ The developer can use the builtin input by simply calling the function.
 
 ### Builtin output
 
-The existing inline spir-v has limited support for adding a builtin. This would
+The existing inline spir-v has limited support for adding a builtin output. This would
 have most of the same problems as declaring a builtin input.
 
 Nine of the 111 extensions add new builtin outputs. It would be good to have a
@@ -287,7 +287,7 @@ file like this:
 void gl_FragStencilRefARB(int);
 ```
 
-Then the compiler will be able to add a variable to in the output storage class,
+Then the compiler will be able to add a variable in the output storage class,
 with the builtin decoration, with a type that is the same as the parameter, and
 add it to the OpEntryPoint for the entry points from which it is reachable.
 
@@ -320,7 +320,7 @@ of detail here, but some common things to think through are:
 
 When we considered auto-generating, we noticed that not enough information is
 available. For example, it is not possible to tell if a builtin should be an
-input or output, and we cannot know it types. The other problem is that it will
+input or output, and we cannot know its types. The other problem is that it will
 require testing in DXC when new functions or attributes are added. The solution
 proposed above leave a smaller testing surface in DXC, and places the testing
 burden on the writer of the header file.
