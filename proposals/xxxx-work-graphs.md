@@ -4,23 +4,37 @@
 
 * Proposal: [NNNN](NNNN-work-graphs.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex Riddell](https://github.com/tex3d)
+* Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex
+  Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
 * Planned Version: Shader Model 6.8
 
 ## Introduction
 
-This document describes Work Graphs, a new feature for GPU-based work generation built on new Shader Model 6.8 DXIL features.
+This document describes Work Graphs, a new feature for GPU-based work generation
+built on new Shader Model 6.8 DXIL features.
 
-Full documentation of the Work Graphs feature including DirectX runtime, HLSL, and DXIL documentation is available in the [Work Graphs Spec on GitHub](https://microsoft.github.io/DirectX-Specs/d3d/WorkGraphs.html). This document subsumes that document specifically as it relates to HLSL and the compiler features.
+Full documentation of the Work Graphs feature including DirectX runtime, HLSL,
+and DXIL documentation is available in the [Work Graphs Spec on
+GitHub](https://microsoft.github.io/DirectX-Specs/d3d/WorkGraphs.html). This
+document subsumes that document specifically as it relates to HLSL and the
+compiler features.
 
 ## Motivation
 
-Current language and runtime limitations make generating work on GPU threads insufficient to meet the needs of some workloads. If existing GPU features (like ExecuteIndirect) can't sufficiently generate work the application must generate the work from the CPU resulting in unnecessary round-tripping between the GPU and CPU. Work Graphs solves this problem by enabling more robust GPU-based work creation APIs.
+Current language and runtime limitations make generating work on GPU threads
+insufficient to meet the needs of some workloads. If existing GPU features (like
+ExecuteIndirect) can't sufficiently generate work the application must generate
+the work from the CPU resulting in unnecessary round-tripping between the GPU
+and CPU. Work Graphs solves this problem by enabling more robust GPU-based work
+creation APIs.
 
 ## Proposed solution
 
-Work graphs allows an application to specify a set of tasks as _nodes_ in a graph representing a more complex workload. Each _node_ has a fixed shader which takes one or more _input records_ as input and can produce one or more _output records_ as output.
+Work graphs allows an application to specify a set of tasks as _nodes_ in a
+graph representing a more complex workload. Each _node_ has a fixed shader which
+takes one or more _input records_ as input and can produce one or more _output
+records_ as output.
 
 ### Launch Modes
 
@@ -30,73 +44,110 @@ _Node_ shaders have one of three _launch modes_:
 * Broadcasting
 * Coalescing
 
-_Thread launch_ nodes represent an individual thread of work that processes a single _input record_. Thread launch nodes use a thread group size of `(1,1,1)`.
+_Thread launch_ nodes represent an individual thread of work that processes a
+single _input record_. Thread launch nodes use a thread group size of `(1,1,1)`.
 
-_Broadcasting launch_ nodes represent a grid of work operating on a single _input record_. Each input record to a broadcasting node launches a full dispatch grid. The size of the dispatch grid can either be fixed for the node or specified in the input.
+_Broadcasting launch_ nodes represent a grid of work operating on a single
+_input record_. Each input record to a broadcasting node launches a full
+dispatch grid. The size of the dispatch grid can either be fixed for the node or
+specified in the input.
 
-_Coalescing launch_ nodes represent a thread group operating on a shared array of _input records_. The shader declares the maximum number of records per thread group.
+_Coalescing launch_ nodes represent a thread group operating on a shared array
+of _input records_. The shader declares the maximum number of records per thread
+group.
 
 ### Records
 
-_Input records_ represent inputs to node shaders, and _output records_ represent outputs from node shaders. Records can be singular or arrays. _Input records_ can be read-only or read-write, while _output records_ are read-write but uninitialized when created.
+_Input records_ represent inputs to node shaders, and _output records_ represent
+outputs from node shaders. Records can be singular or arrays. _Input records_
+can be read-only or read-write, while _output records_ are read-write but
+uninitialized when created.
 
 ## Detailed design
 
 ### Node Entry Functions
 
-Node shaders are compute shaders built into library targets. Shader entries annotated as `[shader("node")]` are usable as work graph nodes.
+Node shaders are compute shaders built into library targets. Shader entries
+annotated as `[shader("node")]` are usable as work graph nodes.
 
-A broadcasting launch mode node entry may also be a compute entry (annotated with `[shader("compute")]`). In this case the node's input is an empty input record.
+A broadcasting launch mode node entry may also be a compute entry (annotated
+with `[shader("compute")]`). In this case the node's input is an empty input
+record.
 
 #### Function Attributes
 
-All node shaders except _thread launch_ nodes must specify the thread group size using the `[numthreads(<x>, <y>, <z>)]` attribute.
+All node shaders except _thread launch_ nodes must specify the thread group size
+using the `[numthreads(<x>, <y>, <z>)]` attribute.
 
-Node shaders support all compute shader function annotations, but also have new annotations unique to node shaders.
+Node shaders support all compute shader function annotations, but also have new
+annotations unique to node shaders.
 
 ##### **`[NodeLaunch("<mode>")]`**
-Valid values for node launch mode are `broadcasting`, `coalescing`, or `thread`. If the `NodeLaunch` attribute is not specified on a node entry the default launch mode is `broadcasting`.
+Valid values for node launch mode are `broadcasting`, `coalescing`, or `thread`.
+If the `NodeLaunch` attribute is not specified on a node entry the default
+launch mode is `broadcasting`.
 
 ##### **`[NodeIsProgramEntry]`**
 
-Shaders that can receive input records from both inside and outside the work graph (i.e. from a command list) require this attribute. Graphs can have more than one entry shaders that receive inputs from outside the graph. Nodes which do not have other nodes targeting them do not need to apply this attribute to receive input from outside the work graph.
+Shaders that can receive input records from both inside and outside the work
+graph (i.e. from a command list) require this attribute. Graphs can have more
+than one entry shaders that receive inputs from outside the graph. Nodes which
+do not have other nodes targeting them do not need to apply this attribute to
+receive input from outside the work graph.
 
 ##### **`[NodeID("<name>", <index> = 0)]`**
-If present the shader represents a node with the provided name. If present, the index parameter specifies the index into the named node array. If this attribute is not present the function name is the node name, and the index is `0`.
+If present the shader represents a node with the provided name. If present, the
+index parameter specifies the index into the named node array. If this attribute
+is not present the function name is the node name, and the index is `0`.
 
 ##### **`[NodeLocalRootArgumentsTableIndex(<index>)]`**
-The specified index indicates the record index into the local root arguments table bound to the work graph. If this attribute is not specified and the shader has a local root signature the index defaults to an unallocated table location.
+The specified index indicates the record index into the local root arguments
+table bound to the work graph. If this attribute is not specified and the shader
+has a local root signature the index defaults to an unallocated table location.
 
 ##### **`[NodeShareInputOf("<name>", <index> = 0 )]`**
-Share the inputs for the node specified by name and optional index with this node. Both nodes must have identical input records and the same launch mode and dispatch grid size (if fixed).
+Share the inputs for the node specified by name and optional index with this
+node. Both nodes must have identical input records and the same launch mode and
+dispatch grid size (if fixed).
 
 ##### **`[NodeDispatchGrid(<x>, <y>, <z>)]`**
-Specifies the size of the dispatch grid. Broadcast launch nodes must specify either the dispatch grid size or maximum dispatch grid size in source. The `x` `y` and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z` cannot exceed 2^24-1 (16,777,215).
+Specifies the size of the dispatch grid. Broadcast launch nodes must specify
+either the dispatch grid size or maximum dispatch grid size in source. The `x`
+`y` and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z`
+cannot exceed 2^24-1 (16,777,215).
 
 ##### **`[NodeMaxDispatchGrid(<x>, <y>, <z>)]`**
-Specifies the maximum dispatch grid size when the dispatch grid size is specified on the input record using the `SV_DispatchGrid` semantic. The `x` `y` and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z` cannot exceed 2^24-1 (16,777,215).
+Specifies the maximum dispatch grid size when the dispatch grid size is
+specified on the input record using the `SV_DispatchGrid` semantic. The `x` `y`
+and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z` cannot
+exceed 2^24-1 (16,777,215).
 
 ##### **`[NodeMaxRecursionDepth(<count>)]`**
-Specifies the maximum recursion depth for a node. This attribute is required if one of the outputs of a node is the ID of the node itself.
+Specifies the maximum recursion depth for a node. This attribute is required if
+one of the outputs of a node is the ID of the node itself.
 
 #### Entry Parameters
 
-Specific types for input parameters depend on the node launch mode, but all node shaders support two categories of parameters:
+Specific types for input parameters depend on the node launch mode, but all node
+shaders support two categories of parameters:
 
 * Zero or one Node Input Parameter.
 * Zero or more Node Output Parameter(s).
 
-Broadcast and Coalescing Launch shaders also support optional system value parameters.
+Broadcast and Coalescing Launch shaders also support optional system value
+parameters.
 
 ##### Node Input Objects
 
-Node input objects come in three categories, one for each launch mode, with read-only and read-write variants:
+Node input objects come in three categories, one for each launch mode, with
+read-only and read-write variants:
 
 * `{RW}ThreadNodeInputRecord<RecordTy>` - for thread launch nodes.
 * `{RW}DispatchNodeInputRecord<RecordTy>` - for broadcasting launch nodes.
 * `{RW}GroupNodeInputRecord<RecordTy>`- for coalescing launch nodes.
 
-The pseudo-HLSL code below describes the basic interface of the `{RW}{Thread|Dispatch|Group}NodeInputRecord<RecordTy>` classes:
+The pseudo-HLSL code below describes the basic interface of the
+`{RW}{Thread|Dispatch|Group}NodeInputRecord<RecordTy>` classes:
 
 ```c++
 namespace detail {
@@ -188,7 +239,8 @@ template <typename RecordTy>
 using RWGroupNodeInputRecord = detail::GroupNodeInputRecordBase<RecordTy, true>;
 ```
 
-Coalescing launch nodes also accept the `EmptyNodeInput` input object for cases without record data. The pseudo-HLSL interface for `EmptyNodeInput` is:
+Coalescing launch nodes also accept the `EmptyNodeInput` input object for cases
+without record data. The pseudo-HLSL interface for `EmptyNodeInput` is:
 
 ```c++
 class EmptyNodeInput {
@@ -204,7 +256,8 @@ class EmptyNodeInput {
 ##### Node Output Objects
 
 
-Node output objects are either records or empty. The following pseudo-HLSL defines the interfaces for the `NodeOutput` and `EmptyNodeOutput` objects:
+Node output objects are either records or empty. The following pseudo-HLSL
+defines the interfaces for the `NodeOutput` and `EmptyNodeOutput` objects:
 
 ```c++
 template <typename RecordTy> class NodeOutput {
@@ -261,7 +314,9 @@ class EmptyNodeOutput {
 };
 ```
 
-Array variations of the node output objects also exist exposing subscript operators to index the individual output. The following pseudo-HLSL defines the interfaces for the `NodeOutputArray` and `EmptyNodeOutputArray` objects:
+Array variations of the node output objects also exist exposing subscript
+operators to index the individual output. The following pseudo-HLSL defines the
+interfaces for the `NodeOutputArray` and `EmptyNodeOutputArray` objects:
 
 ```c++
 namespace detail {
@@ -278,9 +333,11 @@ using NodeOutputArray = detail::NodeOutputArrayBase<NodeOutput<RecordTy>>;
 using EmptyNodeOutputArray = detail::NodeOutputArrayBase<EmptyNodeOutput>;
 ```
 
-Each node output can contain zero or more thread or group node output records which feed into other nodes for processing.
+Each node output can contain zero or more thread or group node output records
+which feed into other nodes for processing.
 
-The following pseudo-HLSL defines the interfaces for the `ThreadNodeOutputRecords` and `GroupNodeOutputRecords` objects:
+The following pseudo-HLSL defines the interfaces for the
+`ThreadNodeOutputRecords` and `GroupNodeOutputRecords` objects:
 
 ```c++
 namespace detail {
@@ -313,29 +370,42 @@ using GroupNodeOutputRecords = detail::NodeOutputRecordsBase<RecordTy>;
 ###### **`[MaxRecords(<count>)]`**
 Applies to node inputs in coalescing launch nodes or outputs for any node mode.
 
-Required for node inputs for coalescing launch nodes, this attribute restricts the maximum number of records per thread group. Implementations are not required to fill to the specified maximum.
+Required for node inputs for coalescing launch nodes, this attribute restricts
+the maximum number of records per thread group. Implementations are not required
+to fill to the specified maximum.
 
-When applied to node outputs, this attribute restricts the maximum number of records produced to the output. When applied to a `NodeOutputArray`, the maximum applies as the sum of all records across the output array, not per-node.
+When applied to node outputs, this attribute restricts the maximum number of
+records produced to the output. When applied to a `NodeOutputArray`, the maximum
+applies as the sum of all records across the output array, not per-node.
 
-Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith` attribute.
+Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
+attribute.
 
 ###### **`[MaxRecordsSharedWith("<name>")]`**
-This attribute applies to node outputs. The named node must have the `MaxRecords` attribute applied to its entry. This attribute and the `MaxRecords` attribute are mutually exclusive.
+This attribute applies to node outputs. The named node must have the
+`MaxRecords` attribute applied to its entry. This attribute and the `MaxRecords`
+attribute are mutually exclusive.
 
-The node that this attribute is applied to shares a maximum record allocation with the named node.
+The node that this attribute is applied to shares a maximum record allocation
+with the named node.
 
-Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith` attribute.
+Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
+attribute.
 
 ###### **`[NodeID("<name>", <index> = 0)]`**
-This attribute applies to output nodes and defines the name and index of the output node. If not provided, the default index is 0.
+This attribute applies to output nodes and defines the name and index of the
+output node. If not provided, the default index is 0.
 
-If this attribute is not present on an output, the default node ID for the output is the name of the parameter, and the index is the default index (0).
+If this attribute is not present on an output, the default node ID for the
+output is the name of the parameter, and the index is the default index (0).
 
 ###### **`[AllowSparseNodes]`**
-This attribute applies to outputs and allows the work graph to be created even if there is not a node defined for the specified output.
+This attribute applies to outputs and allows the work graph to be created even
+if there is not a node defined for the specified output.
 
 ###### **`[NodeArraySize(<count>)]`**
-Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray` objects.
+Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray`
+objects.
 
 ### New Built-in Functions
 
@@ -349,7 +419,9 @@ Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray` 
 uint GetRemainingRecursionLevels();
 ```
 
-For nodes that recurse, the `GetRemainingRecursionLevels()` function returns the number of remaining recursion levels before reaching the node's maximum recursion depth.
+For nodes that recurse, the `GetRemainingRecursionLevels()` function returns the
+number of remaining recursion levels before reaching the node's maximum
+recursion depth.
 
 #### Barrier
 
@@ -394,13 +466,20 @@ void Barrier(uint MemoryTypeFlags, uint AccessFlags, uint SyncFlags);
 void Barrier(Object TargetObject, uint AccessFlags, uint SyncFlags);
 ```
 
-Work graphs introduces a new more flexible implementation of the memory barrier functions. This function is available in all shader types (including non-node shaders).
+Work graphs introduces a new more flexible implementation of the memory barrier
+functions. This function is available in all shader types (including non-node
+shaders).
 
-The new `Barrier` function implements a superset of the existing memory barrier functions which are still supported (i.e. `AllMemoryBarrier{WithGroupSync}()`, `GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`).
+The new `Barrier` function implements a superset of the existing memory barrier
+functions which are still supported (i.e. `AllMemoryBarrier{WithGroupSync}()`,
+`GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`).
 
-In the context of work graphs, `Barrier` enables requesting a memory barrier on input and/or output record memory specifically, while the implementation is free to store the data in any memory region.
+In the context of work graphs, `Barrier` enables requesting a memory barrier on
+input and/or output record memory specifically, while the implementation is free
+to store the data in any memory region.
 
-The pseudo-code below shows implementing the existing HLSL memory barrier functions using the new `Barrier` function.
+The pseudo-code below shows implementing the existing HLSL memory barrier
+functions using the new `Barrier` function.
 
 ```C++
 void AllMemoryBarrier() {
@@ -433,7 +512,10 @@ void GroupMemoryBarrierWithGroupSync() {
 
 #### **`[NodeTrackRWInputSharing]`**
 
-If a `RWDispatchNodeInputRecord<T>` is used for cross-group sharing and calls `FinishedCrossGroupSharing`, the struct type `T` must have the `[NodeTrackRWInputSharing]` attribute applied to it. This allocates memory in the record allocation to track thread completion.
+If a `RWDispatchNodeInputRecord<T>` is used for cross-group sharing and calls
+`FinishedCrossGroupSharing`, the struct type `T` must have the
+`[NodeTrackRWInputSharing]` attribute applied to it. This allocates memory in
+the record allocation to track thread completion.
 
 ## Alternatives considered (Optional)
 
@@ -443,13 +525,9 @@ reviewing.
 
 ## Acknowledgments
 
-This spec is an extensive collaboration between the Microsoft HLSL and Direct3D teams and IHV partners.
+This spec is an extensive collaboration between the Microsoft HLSL and Direct3D
+teams and IHV partners.
 
-Special thanks to:
-
-Claire Andrews
-Amar Patel
-Tex Riddell
-Greg Roth
+Special thanks to Claire Andrews, Amar Patel, Tex Riddell, and Greg Roth.
 
 <!-- {% endraw %} -->
