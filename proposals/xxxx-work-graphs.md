@@ -82,6 +82,10 @@ using the `[numthreads(<x>, <y>, <z>)]` attribute.
 Node shaders support all compute shader function annotations, but also have new
 annotations unique to node shaders.
 
+> Consistent with HLSL grammar attribute names are case-insensitive. Any
+> attributes that take string arguments, the string argument values are
+> case-sensitive.
+
 ##### **`[NodeLaunch("<mode>")]`**
 Valid values for node launch mode are `broadcasting`, `coalescing`, or `thread`.
 If the `NodeLaunch` attribute is not specified on a node entry the default
@@ -367,6 +371,10 @@ using GroupNodeOutputRecords = detail::NodeOutputRecordsBase<RecordTy>;
 
 ##### Entry Parameter Attributes
 
+> Consistent with HLSL grammar attribute names are case-insensitive. Any
+> attributes that take string arguments, the string argument values are
+> case-sensitive.
+
 ###### **`[MaxRecords(<count>)]`**
 Applies to node inputs in coalescing launch nodes or outputs for any node mode.
 
@@ -509,6 +517,10 @@ void GroupMemoryBarrierWithGroupSync() {
 ```
 
 ### New Structure Attributes
+
+> Consistent with HLSL grammar attribute names are case-insensitive. Any
+> attributes that take string arguments, the string argument values are
+> case-sensitive.
 
 #### **`[NodeTrackRWInputSharing]`**
 
