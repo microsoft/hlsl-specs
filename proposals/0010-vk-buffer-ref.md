@@ -165,7 +165,7 @@ Applying HLSL semantic annotations to objects of type vk::BufferPointer is disal
 
 ### Buffer Pointer Availability
 
-The following can be used at pre-processor time to determine if the current compiler supports vk::BufferPointer: _has_feature(hlsl_vk_buffer_pointer).
+The following can be used at pre-processor time to determine if the current compiler supports vk::BufferPointer: __has_feature(hlsl_vk_buffer_pointer).
 
 ## SPIR-V Appendices
 
