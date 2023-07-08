@@ -165,7 +165,7 @@ Applying HLSL semantic annotations to objects of type vk::BufferPointer is disal
 
 ### Buffer Pointers and Type Punning Through Unions
 
-While buffer pointer types are allowed in unions, type punning with buffer pointer types is disallowed.
+While buffer pointer types are allowed in unions, type punning with buffer pointer types is disallowed as it is with all other types in HLSL. Specifically, when a member of a union is defined, all other members become undefined, no matter the types.
 
 ## SPIR-V Appendices
 
