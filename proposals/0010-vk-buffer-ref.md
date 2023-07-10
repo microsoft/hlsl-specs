@@ -63,7 +63,7 @@ class vk::BufferPointer {
 }
 ```
 
-This class represents a pointer to a buffer of type struct `S`. `align` is the alignment in bytes of the pointer. If `align` is not specified, the alignment is assumed to be 16 bytes.
+This class represents a pointer to a buffer of type struct `S`. `align` is the alignment in bytes of the pointer. If `align` is not specified, the alignment is assumed to be alignof(S).
 
 This new type will have the following operations
 
