@@ -165,7 +165,7 @@ Applying HLSL semantic annotations to objects of type vk::BufferPointer is disal
 
 ### Buffer Pointers and Aliasing
 
-All buffer pointers are considered restricted pointers. In other words, given two different objects of buffer pointer type, it is assumed that their pointees do not overlap by default.
+By default, buffer pointers are assumed to be restrict pointers as defined by the C99 standard.
 
 An attribute vk::aliased_pointer can be attached to a variable, function parameter or a block member of buffer pointer type. It is assumed that the pointee of an object with this attribute can overlap with the pointee of any other object with this attribute.
 
