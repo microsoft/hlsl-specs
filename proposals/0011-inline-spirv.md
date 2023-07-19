@@ -18,12 +18,12 @@ inline SPIR-V.
 
 In Vulkan, there is a culture of allowing a vendor to define extensions that are
 only interesting to them. From the perspective of a driver this is acceptable
-because company A does not have to support the extension put out by vendor B, if
+because company A does not have to support the extension put out by vendor B if
 they do not want to. It does not create extra work for anyone else.
 
-From a compiler perspective, this is no longer true. If a vendor wants DXC, or
-any other SPIR-V generator, to generate the SPIR-V for their extension it
-generally requires a code change to the compiler that must be maintained.
+From a compiler perspective, this is not true. If a vendor wants DXC, or any
+other SPIR-V generator, to generate the SPIR-V for their extension it generally
+requires a code change to the compiler that must be maintained.
 
 If those extensions could be defined as a header file that DXC consumes, then a
 vendor would not have to modify the compiler other than possibly updating the
@@ -64,8 +64,7 @@ similar.
 Most SPIR-V extensions only introduce certain types of changes to the SPIR-V
 spec:
 
-1.  add a new
-    [execution mode](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#Execution_Mode),
+1.  add a new execution mode,
 1.  add a new instruction or extended instruction,
 1.  add a new type,
 1.  add a new decoration,
@@ -77,32 +76,26 @@ Most extensions also define
 that are used to enable the new features, but the capabilities usually do
 nothing on their own.
 
-The proposed solution will add syntax to define each of these features aliased
-to a meaningful name, so that they can be defined in a header file. Then users
-will be able to use the header file, and use the feature by using the name. They
-will not have to see the inline SPIR-V. The proposed solution will also expect
-that the SPIR-V referenced is defined in the version of spirv-headers that was
-used to build DXC.
+The proposed solution will add syntax to define each of these features, and give
+them a meaningful name. They can be defined in a header file that users will be
+able to use. They will not have to see the inline SPIR-V.
 
 ### Execution modes
 
 The existing `vk::ext_execution_mode` is a builtin function. Using a function
-allows the `vk::ext_capability` and `vk::ext_extension` to be attached to the
-execution mode. This is useful for adding execution modes that was not yet
-present in SPIRV-headers.
+allows the `vk::ext_capability` and `vk::ext_extension` attributes to be
+attached to the execution mode. This is useful for adding execution modes that
+was not yet present in SPIRV-Headers.
 
 This design is awkward to use because the execution mode is only indirectly
 connected to the entry point. This proposal adds a new attribute
 `vk::spvexecutionmode(ExecutionMode)`, where `ExecutionMode` values are defined
-by SPIRV-Headers. Since the execution mode has to be defined by SPIRV-Headers,
-the compiler will be able to automatically add the required capabilities and
-extension.
+by SPIRV-Headers. The required extensions and capabilities could be applied to
+the entry point.
 
-Then suppose we wanted to implement the
+For example, suppose we wanted to implement the
 [SPV_KHR_post_depth_coverage](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_post_depth_coverage.html)
-extension in a header file.
-
-The header file could be something like
+extension in a header file. The header file could be something like
 
 ```
 // spv_khr_post_depth_coverage.h
@@ -110,7 +103,7 @@ The header file could be something like
 // It would be nice to have this live in a namespace spv::khr::, but not possible with attributes.
 const uint32_t SampleMaskPostDepthCoverageCapabilityId = 4447;
 const uint32_t PostDepthCoverageExecutionModeId = 4446;
-#define SPV_KHR_PostDepthCoverageExecutionMode vk::ext_extension("SPV_KHR_post_depth_coverage"), vk::ext_capability(SampleMaskPostDepthCoverageCapabilityId), vk::spvexecutionmode(spv::khr::PostDepthCoverageExecutionModeId)
+#define SPV_KHR_PostDepthCoverageExecutionMode vk::ext_extension("SPV_KHR_post_depth_coverage"), vk::ext_capability(SampleMaskPostDepthCoverageCapabilityId), vk::spvexecutionmode(PostDepthCoverageExecutionModeId)
 ```
 
 Then the user could write:
@@ -127,7 +120,7 @@ float4 PSMain(...) : SV_TARGET
 ### Instructions and extended instructions
 
 The existing `vk::ext_instruction` attribute is used to define a function as a
-specific spir-v instruction. Suppose we wanted to implement the
+specific SPIR-V instruction. Suppose we wanted to implement the
 [SPV_INTEL_subgroups](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_subgroups.html)
 extension in a header file. It contains 8 new instructions. Each one could be
 defined in the header file as a function, and then the function can be called by
@@ -145,30 +138,32 @@ Then the user calls `SubgroupShuffleINTEL()` to use this instruction.
 
 ### Types
 
-Some extensions introduce new types. Very few extensions add new types. It is
-possible to define and use a spir-v type with the existing inline spir-v, but it
-is awkward to use. You can see a sample in the
+Some extensions introduce new types. It is possible to define and use a SPIR-V
+type with the existing inline SPIR-V, but it is awkward to use. You can see a
+sample in the
 [spv.intrinsictypeInteger.hlsl](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicTypeInteger.hlsl)
-test. Some the difficulties with this are:
+test. Some of the difficulties are:
 
 1.  The definition of the type is split in two. There is a definition of a
-    function with has an arbitrary id and the id for the `OpType*` opcode for
+    function which has an arbitrary id and the id for the `OpType*` opcode for
     the type. The second part calls the function with values for all of the
-    operands to the `OpType*` instruction in spir-v.
+    operands to the `OpType*` instruction in SPIR-V.
 1.  The function call must be reachable from the entry point that will use the
     type even if it will be used to declare a global variable.
 1.  The arbitrary id that is part of the type function is what is used to
     declare an object of that type. This means the same function cannot be used
     to declare two different types. Also, if there are multiple header files,
-    the cannot use the same id for two different types. This can become hard to
+    they cannot use the same id for two different types. This can become hard to
     manage.
 
 This proposal deprecates the old mechanism, and replaces it with a new type
 `vk::SpirvType<int OpCode, ...>`. The template on the type contains the opcode
 and all of the parameters necessary for that opcode. The difficulty with this is
 that the operands are not just literal integer values. Sometimes they are
-another type. Then the header file could create a partial instantiation with a
-more meaningful name. For example, if you wanted to declare the types from the
+another type.
+
+The header file could create a partial instantiation with a more meaningful
+name. For example, if you wanted to declare the types from the
 [SPV_INTEL_device_side_avc_motion_estimation](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_device_side_avc_motion_estimation.html)
 you could have
 
@@ -185,42 +180,39 @@ VmeImageINTEL<Texture2D> image;
 AvcMcePayloadINTEL payload;
 ```
 
-We should consider the cost versus the value of adding this type. Just 3 out of
-111 spir-v extensions define a new type.
-
 ### Decorations
 
-The current inline spir-v include the `vk::ext_decorate` attribute. This
-generally works well as an attribute. A header file could handle the attribute
-in the same way that it handles the execution mode attribute.
+The current inline SPIR-V includes the `vk::ext_decorate` attribute. This works
+well as an attribute. A header file could handle the attribute in the same way
+that it handles the execution mode attribute.
 
 ### Storage classes
 
-The existing inline spir-v allows the developer to set the storage class for a
-variable. Conceptually this is similar to setting an address space. I would not
-want to add anything new, but I suggest we deprecate this when address spaces
-are added to HLSL more generally.
+The existing inline SPIR-V allows the developer to set the storage class for a
+variable using the `vk::ext_storage_class` attribute. A storage class is similar
+to an address space, which HLSL does not have yet. The attribute can be hidden
+in a header file the same way that the execution mode attribute is.
 
 ### Builtin input
 
-The existing inline spir-v has limited support for adding a builtin input. There is a
-sample that shows how to
+The existing inline SPIR-V has limited support for adding a builtin input. There
+is a sample that shows how to
 [add a builtin input to a pixel shader](https://github.com/microsoft/DirectXShaderCompiler/blob/128b6fd16b449df696a5c9f9405982903a4f88c4/tools/clang/test/CodeGenSPIRV/spv.intrinsicDecorate.hlsl).
 This works for pixel shaders because the parameters to a pixel shader can have
-arbitrary semantics. However, we quickly ran into problems when
-[trying to declare a spir-v specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
+arbitrary semantics. However, it is not possible to
+[declare a SPIR-V specific builtin in a compute shader](https://github.com/microsoft/DirectXShaderCompiler/issues/4217).
 
-A builtin input requires more than just a decoration on the
-variable. It must be in the input storage class, and get added to the
-`OpEntryPoint` instruction. With the existing inline spir-v we can only get the
-first two.
+A builtin input requires more than just a decoration on the variable. It must be
+in the input storage class, and get added to the `OpEntryPoint` instruction.
+With the existing inline SPIR-V, the variable can be decorated and assigned to
+the correct storage class. However, it cannot always be correctly associated
+with the entry point.
 
-Existing extensions add new builtin inputs. To support adding built in inputs
-from source, this proposal adds a new vk::ext_builtin_input attribute that
-applies to a function declaration providing an implicit definition which returns
-the value of the builtin.
+To support adding built in inputs from source, this proposal adds a new
+`vk::ext_builtin_input` attribute that applies to a function declaration
+providing an implicit definition which returns the value of the builtin.
 
-For example, we could declare the `gl_NumWorkGroups` builtin in a header file
+For example, the `gl_NumWorkGroups` builtin could be declared in a header file
 like this:
 
 ```
@@ -237,15 +229,15 @@ The developer can use the builtin input by simply calling the function.
 
 ### Builtin output
 
-The existing inline spir-v has limited support for adding a builtin output. This would
-have most of the same problems as declaring a builtin input.
+The existing inline SPIR-V has limited support for adding a builtin output. This
+would have most of the same problems as declaring a builtin input.
 
-Existing extensions add new builtin outputs. To support adding builtin outputs
-from source, this proposal adds a new vk::ext_builtin_output attribute that
-applies to a function declaration providing an implicit definition which sets
-the value of the output to the provided parameter value.
+To support adding builtin outputs from source, this proposal adds a new
+`vk::ext_builtin_output attribute` that applies to a function declaration
+providing an implicit definition which sets the value of the output to the
+provided parameter value.
 
-For example, we could declare the `gl_FragStencilRefARB` builtin in a header
+For example, the `gl_FragStencilRefARB` builtin could be declared in a header
 file like this:
 
 ```
@@ -262,9 +254,9 @@ The developer can set the builtin output by simply calling the function.
 
 ### Capability and extension instructions
 
-Existing inline spir-v has attributes to indicate that a capability or extension
-is needed by a particular part of the code. There are examples above, and there
-is no reason to change it.
+Existing inline SPIR-V has attributes to indicate that a capability or extension
+is needed by a particular part of the code. There are examples above. This
+proposal will allows these attribute to be applied to an entry point.
 
 ## Detailed design
 
