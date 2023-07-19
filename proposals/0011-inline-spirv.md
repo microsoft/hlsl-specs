@@ -2,33 +2,10 @@
 
 # Inline SPIR-V
 
-## Instructions
-
-> This template wraps at 80-columns. You don't need to match that wrapping, but
-> having some consistent column wrapping makes it easier to view diffs on
-> GitHub's review UI. Please wrap your lines to make it easier to review.
-
-> When filling out the template below for a new feature proposal, please do the
-> following first:
-
-> 1.  exclude the "Planned Version", "PRs" and "Issues" from the header.
-> 2.  Do not spend time writing the "Detailed design" until the feature has been
->     merged in the "Under Consideration" phase.
-> 3.  Delete this Instructions section including the line below.
-
---------------------------------------------------------------------------------
-
 *   Proposal: [0011](0011-inline-spirv.md)
 *   Author(s): [Steven Perron](https://github.com/s-perron)
 *   Sponsor: TBD
 *   Status: **Under Consideration**
-
-*During the review process, add the following fields as needed:*
-
-*   Planned Version: 20YY
-*   PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-*   Issues:
-    [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
 
 ## Introduction
 
@@ -103,17 +80,23 @@ nothing on their own.
 The proposed solution will add syntax to define each of these features aliased
 to a meaningful name, so that they can be defined in a header file. Then users
 will be able to use the header file, and use the feature by using the name. They
-will not have to see consider the inline SPIR-V. The proposed solution will also
-expect that the SPIR-V referenced is defined in the version of spirv-headers
-that was used to build DXC.
+will not have to see the inline SPIR-V. The proposed solution will also expect
+that the SPIR-V referenced is defined in the version of spirv-headers that was
+used to build DXC.
 
 ### Execution modes
 
-The existing `vk::ext_execution_mode` is a builtin function. I'm guessing it was
-defined as a builtin function because the original designers want to be able to
-add an execution mode that was not yet defined in spirv-headers. Since we are
-not considering that workflow anymore, I propose that we define a new attribute
-`vk::spvexecutionmode(ExecutionMode)`.
+The existing `vk::ext_execution_mode` is a builtin function. Using a function
+allows the `vk::ext_capability` and `vk::ext_extension` to be attached to the
+execution mode. This is useful for adding execution modes that was not yet
+present in SPIRV-headers.
+
+This design is awkward to use because the execution mode is only indirectly
+connected to the entry point. This proposal adds a new attribute
+`vk::spvexecutionmode(ExecutionMode)`, where `ExecutionMode` values are defined
+by SPIRV-Headers. Since the execution mode has to be defined by SPIRV-Headers,
+the compiler will be able to automatically add the required capabilities and
+extension.
 
 Then suppose we wanted to implement the
 [SPV_KHR_post_depth_coverage](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_post_depth_coverage.html)
@@ -160,20 +143,6 @@ T SubgroupShuffleINTEL(T data, uint32 invocationId);
 
 Then the user calls `SubgroupShuffleINTEL()` to use this instruction.
 
-Some instructions expect a pointer as an operand. This is why the
-`vk::ext_reference` attribute was added. I am not aware of any extensions that
-would need this. I suggestion we deprecate it in
-[proposal 0006](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0006-reference-types.md).
-
-Other instructions require that a type be a literal. This is fairly common. The
-attribute `vk::ext_literal` was added to tell the compiler that is needs to add
-a literal value on the instruction instead of the result id of a load. This type
-of attribute would be meaningless in HLSL generally, and I will have to keep the
-attribute.
-
-I believe this part of the existing inline SPIR-V works well, and should be
-kept. If we feel strongly about naming conventions, we could change the names.
-
 ### Types
 
 Some extensions introduce new types. Very few extensions add new types. It is
@@ -194,12 +163,12 @@ test. Some the difficulties with this are:
     the cannot use the same id for two different types. This can become hard to
     manage.
 
-I propose we deprecate the old mechanism, and replace it with a new type
-`vk::SpirvType<int OpCode, ...>`. The idea is that the template on the type
-contains the opcode and all of the parameters. The difficulty with this is that
-the operands are not just literal integer values. Sometimes they are another
-type. Then the header file could create a partial instantiation with a more
-meaningful name. For example, if you wanted to declare the types from the
+This proposal deprecates the old mechanism, and replaces it with a new type
+`vk::SpirvType<int OpCode, ...>`. The template on the type contains the opcode
+and all of the parameters necessary for that opcode. The difficulty with this is
+that the operands are not just literal integer values. Sometimes they are
+another type. Then the header file could create a partial instantiation with a
+more meaningful name. For example, if you wanted to declare the types from the
 [SPV_INTEL_device_side_avc_motion_estimation](http://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_device_side_avc_motion_estimation.html)
 you could have
 
@@ -246,11 +215,10 @@ variable. It must be in the input storage class, and get added to the
 `OpEntryPoint` instruction. With the existing inline spir-v we can only get the
 first two.
 
-Since a lot (TODO: Add exact numbers) extensions add new builtin inputs, it
-would be good to have a clean way to do this. I'm proposing a new function
-attribute `vk::ext_builtin_input` that, like `vk::ext_instruction`, will imply a
-definition for the function. When the user calls the function, it will return
-the value of that builtin input.
+Existing extensions add new builtin inputs. To support adding built in inputs
+from source, this proposal adds a new vk::ext_builtin_input attribute that
+applies to a function declaration providing an implicit definition which returns
+the value of the builtin.
 
 For example, we could declare the `gl_NumWorkGroups` builtin in a header file
 like this:
@@ -272,11 +240,10 @@ The developer can use the builtin input by simply calling the function.
 The existing inline spir-v has limited support for adding a builtin output. This would
 have most of the same problems as declaring a builtin input.
 
-Nine of the 111 extensions add new builtin outputs. It would be good to have a
-clean way to do this. I'm proposing a new function attribute
-`vk::ext_builtin_ouput(val)` that, like `vk::ext_instruction`, will imply a
-definition for the function. When the user calls the function, it will set the
-value of the output to `val`.
+Existing extensions add new builtin outputs. To support adding builtin outputs
+from source, this proposal adds a new vk::ext_builtin_output attribute that
+applies to a function declaration providing an implicit definition which sets
+the value of the output to the provided parameter value.
 
 For example, we could declare the `gl_FragStencilRefARB` builtin in a header
 file like this:
