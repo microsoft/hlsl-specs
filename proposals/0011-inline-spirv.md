@@ -260,19 +260,6 @@ proposal will allows these attribute to be applied to an entry point.
 
 ## Detailed design
 
-*The detailed design is not required until the feature is under review.*
-
-This section should grow into a feature specification that will live in the
-specifications directory once complete. Each feature will need different levels
-of detail here, but some common things to think through are:
-
-*   How is this feature represented in the grammar?
-*   How does it work interact other HLSL features (semantics, buffers, etc)?
-*   How does this interact with C++ features that aren't already in HLSL?
-*   Does this have implications for existing HLSL source code compatibility?
-*   Does this change require DXIL changes?
-*   Can it be CodeGen'd to SPIR-V?
-
 ## Alternatives considered (Optional)
 
 ### Auto-generating builtin functions and attributes from [spirv.core.grammar.json](https://github.com/KhronosGroup/SPIRV-Headers/blob/8e2ad27488ed2f87c068c01a8f5e8979f7086405/include/spirv/unified1/spirv.core.grammar.json)
