@@ -4,7 +4,7 @@
 
 *   Proposal: [0011](0011-inline-spirv.md)
 *   Author(s): [Steven Perron](https://github.com/s-perron)
-*   Sponsor: TBD
+*   Sponsor: [Chris B](https://github.com/llvm-beanz) and [Steven Perron](https://github.com/s-perron)
 *   Status: **Under Consideration**
 
 ## Introduction
