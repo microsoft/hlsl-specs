@@ -24,16 +24,16 @@ functions to enable higher throughput matrix operations that fully utilize GPU
 SIMD hardware.
 
 These higher throughput matrix operations are required for optimal performance
-of many machine learning and image processing workloads. Adding native support
-to HLSL will enable high-performance matrix operations across all supported
-hardware with Shader Model 6.8 drivers.
+of many machine learning and image processing workloads. Adding support to HLSL
+will enable high-performance matrix operations across Shader Model 6.8 drivers
+when hardware support is available.
 
 ## Proposed solution
 
 WaveMatrix introduces new matrix templates to facilitate wave cooperative
 operations:
 
-```c++
+```hlsl
 // Matrix Depth (K) dimension is hardware dependent
 // With TYPE_IN one of {float32_t, float16_t, uint8_t4_packed, int8_t4_packed}
 WaveMatrixLeft  <TYPE_IN, M, N> ;             // M x K
@@ -55,7 +55,7 @@ WaveMatrix accumulator object methods support operating on corresponding Left
 and Right operands. Results of operations can be stored or accumulated back into
 the accumulator. A simple example of multiplication is:
 
-```c++
+```hlsl
 [numthreads(64,1,1)]
 void main(uint3 GTID : SV_GroupThreadID, uint GIDX : SV_GroupIndex)
 {
@@ -77,15 +77,6 @@ syntax and using inheritance to represent interface composition. The objects in
 the `detail` namespace are not exposed in the HLSL runtime. They are provided
 here to make the specification more concise to consume. Objects in no namespace
 are exposed as public interfaces.
-
-### WaveMatrix Fill
-
-All WaveMatrix objects have a `Fill` method of the form `void Fill(ElTy Value)`
-where `ElTy` is the element type.
-
-The `Fill` method fills the matrix or matrix fragment with the provided value.
-All wave threads must provide the same value or the result is undefined. All
-WaveMatrix objects have the same `Fill` method with the same behavior.
 
 ### WaveMatrix Matrix Objects
 
@@ -112,6 +103,20 @@ class WaveMatrixBase {
 } // namespace detail
 ```
 
+The following sections will explain in detail what these methods do and what the
+parameters represent.
+
+#### WaveMatrix Fill
+
+All WaveMatrix objects have a `Fill` method of the form `void Fill(ElTy Value)`
+where `ElTy` is the element type.
+
+The `Fill` method assigns the given Value to every element in the matrix or
+matrix fragment. All wave threads must provide the same value or the result is
+undefined. All WaveMatrix objects have the same `Fill` method with the same
+behavior.
+
+
 #### Loading and Storing WaveMatrix Matrix Objects
 
 Values for WaveMatrix matrix objects can be loaded from and stored to
@@ -131,7 +136,8 @@ the row stride as a number of elements.
 ##### Orientation
 
 When loading and storing WaveMatrix matrices a boolean parameter is provided to
-indicate if the matrix being loaded or stored is column major.
+indicate if the matrix being loaded or stored is column major. When false row
+major orientation is assumed.
 
 Matrices may be stored in row or column layout. Matrices are always loaded into
 row-major orientation in memory for WaveMatrix objects. The `Load` and `Store`
@@ -141,16 +147,20 @@ matrices.
 ##### Stride
 
 When loading and storing from `groupshared` arrays, the stride is expressed in
-number of elements.
+number of elements, and signifies the number of elements between the first
+element of each row for row major matrices or column for column major matrices.
 
 When loading and storing from `[RW]ByteAddressBuffer` types, the stride is
 expressed in bytes. The row stride must be a multiple of the size of the
-element, and greater than or equal to the size of the element multiplied by the
+element and greater than or equal to the size of the element multiplied by the
 number of elements per row. Any value below the minimum legal values are
 ignored. The behavior of row stride values that are not a multiple of element
 stride is undefined.
 
 #### WaveMatrix Left & Right
+
+The code below approximately declares the base interface that WaveMatrixLeft and
+WaveMatrixRight objects implement.
 
 ```c++
 template <typename ElTy, int NRows, int NCols>
@@ -166,12 +176,13 @@ class WaveMatrixRight : detail::WaveMatrixBase<ElTy, NRows, NCols> {
 
 `ElTy` must be either a 32 or 16 bit floating point type or an 8 bit packed
 signed or unsigned integer type. `NRows` and `NCols` must be compile-time
-constant expressions.
+constant expressions, and represent the number of rows and columns in the matrix
+respectively.
  
 ##### WaveMatrix(Left|Right) MatrixDepth
 
 The `MatrixDepth` method returns the hardware-dependent depth for the matrix
-multiplication unit. The resulting value must be an even multiple of 16.
+multiplication unit. The resulting value must be an multiple of 16.
 
 ### WaveMatrix Matrix Fragment Objects
 
@@ -182,7 +193,7 @@ column of a WaveMatrix matrix.
 ```c++
 namespace detail {
 template <typename ElTy, int NRows, int NCols>
-class WaveMatrixFragmentBase : WaveMatrixBase<ElTy, NRows, NCols> {
+class WaveMatrixFragmentBase {
   void Fill(ElTy Val);
 
   void Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -217,15 +228,15 @@ the element stride as a number of elements.
 When loading and storing from `groupshared` arrays, the stride is expressed in
 number of elements.
 
-When loading and storing from `[RW]ByteAddressBuffer` types the stride must be
-greater than or equal to the size of the element type. Any value below the
-minimum legal values are ignored. The behavior of row stride values that are not
-a multiple of element stride is undefined.
+When loading and storing from `[RW]ByteAddressBuffer` types the stride is
+expressed in bytes and must be greater than or equal to the size of the element
+type. Any value below the minimum legal values are ignored. The behavior of
+stride values that are not a multiple of element size is undefined.
 
 ### WaveMatrix Accumulator Objects
 
-The WaveMatrix Accumulator objects come in three forms which are represented by
-two categories: matrix accumulators and fragment accumulators. All accumulators
+The WaveMatrix Accumulator objects come in three forms which fall into two
+categories: matrix accumulators and fragment accumulators. All accumulators
 implement the interface below:
 
 ```c++
@@ -255,14 +266,14 @@ struct is_8bit_packed_int_type =
                       std::is_same<T, uint8_t4_packed>::value),
                      std::true_type>;
 
-template <typename T> struct is_8bit_packed_int_type = std::false_type;
+template <typename T> using is_8bit_packed_int_type = std::false_type;
 
 template <typename T>
-struct is_32bit_int_type = std::enable_if_t<(std::is_same<T, int32_t>::value ||
+using is_32bit_int_type = std::enable_if_t<(std::is_same<T, int32_t>::value ||
                                              std::is_same<T, uint32_t>::value),
                                             std::true_type>;
 
-template <typename T> struct is_32bit_int_type = std::false_type;
+template <typename T> using is_32bit_int_type = std::false_type;
 } // namespace detail
 
 template <typename ElTy, int NRows, int NCols>
@@ -309,7 +320,9 @@ element-wise addition.
 
 The `WaveMatrixAccumulator::Multiply` method performs multiplication of the left
 and right arguments and stores the result back into the `WaveMatrixAccumulator`.
-This is a wave-level operation and cannot be used inside divergent control flow.
+This operation does not accumulate into the result, it overwrites the result.
+This is a wave-level operation and cannot be used inside divergent control flow:
+doing so results in undefined behavior.
 
 For `Multiply` operations the matrix element types must match the accumulator
 type unless the accumulator is a signed or unsigned 32-bit integer type. For
@@ -321,7 +334,7 @@ integers are also supported and can be mixed interchangeably.
 The `WaveMatrixAccumulator::MultiplyAccumulate` method performs multiplication
 of the left and right arguments and adds the result back into the
 `WaveMatrixAccumulator`. This is a wave-level operation and cannot be used
-inside divergent control flow.
+inside divergent control flow: doing so results in undefined behavior.
 
 For `MultiplyAccumulate` operations the matrix element types must match the
 accumulator type unless the accumulator is a signed or unsigned 32-bit integer
@@ -352,6 +365,20 @@ class WaveMatrixRightRowAcc
 };
 ```
 
+#### Wave Matrix Fragment SumAccumulate
+
+The `SumAccumulate` methods accumulate the values of the argument matrix into
+the WaveMatrix fragment accumulator. The fragment WaveMatrix must have the same
+data type as the fragment accumulator.
+
+This intrinsic is used to calculate
+$(\sum_{i=0}^{K} A_{[x,i]})$ and $(\sum_{i=0}^{K} B_{[i,y]})$ from the
+equation in the **Zero Point** section below.
+
+For accumulating into a `WaveMatrixLeftColAcc`, this results in a row-wise sum
+into the accumulator. For accumulating into a `WaveMatrixRightRowAcc`, this
+results in a column-wise sum into the accumulator.
+
 #### Zero Point
 
 The following is the equation for matrix multiplication with zero point
@@ -368,16 +395,6 @@ $- Z_b * (\sum_{i=0}^{K} A_{[x,i]})$ is the zero point adjustment for matrix $B$
 $+ Z_a * Z_b * K$ is the static zero point adjustment for both matrix $A$ and $B$
 
 $Z_*$ are constant zero points values
-
-#### Wave Matrix SumAccumulate
-
-The `SumAccumulate` methods accumulate the values of the argument matrix into
-the WaveMatrix fragment accumulator. The fragment WaveMatrix must have the same
-data type as the fragment accumulator.
-
-This intrinsics is used to calculated
-$(\sum_{i=0}^{K} A_{[x,i]})$ and $(\sum_{i=0}^{K} B_{[i,y]})$ from our above
-equation.
 
 
 ## Acknowledgments
