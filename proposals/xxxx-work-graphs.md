@@ -70,9 +70,8 @@ uninitialized when created.
 Node shaders are compute shaders built into library targets. Shader entries
 annotated as `[shader("node")]` are usable as work graph nodes.
 
-A broadcasting launch mode node entry may also be a compute entry (annotated
-with `[shader("compute")]`). In this case the node's input is an empty input
-record.
+As with all previous shader types, a shader entry function may have only one
+shader stage annotation.
 
 #### Function Attributes
 
