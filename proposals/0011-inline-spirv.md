@@ -168,9 +168,11 @@ name. For example, if you wanted to declare the types from the
 you could have
 
 ```
+typedef vk::SprivType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
+
+// Requires HLSL2021
 template<typename ImageType>
-typedef VmeImageINTEL vk::SpirvType</* OpTypeVmeImageINTEL */ 5700, Imagetype>
-typedef AvcMcePayloadINTEL vk::SprivType</* OpTypeAvcMcePayloadINTEL */ 5704>
+using VmeImageINTEL = vk::SpirvType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
 ```
 
 Then the user could simply use the types:
