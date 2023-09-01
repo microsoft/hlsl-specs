@@ -179,6 +179,10 @@ A vk::BufferPointer can otherwise be used whereever the HLSL spec does not other
 
 Applying HLSL semantic annotations to objects of type vk::BufferPointer is disallowed.
 
+### Buffer Pointer Availability
+
+The following can be used at pre-processor time to determine if the current compiler supports vk::BufferPointer: __has_feature(hlsl_vk_buffer_pointer).
+
 ### Buffer Pointers and Type Punning Through Unions
 
 While buffer pointer types are allowed in unions, type punning with buffer pointer types is disallowed as it is with all other types in HLSL. Specifically, when a member of a union is defined, all other members become undefined, no matter the types.
