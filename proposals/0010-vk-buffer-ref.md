@@ -180,6 +180,16 @@ A vk::BufferPointer can otherwise be used whereever the HLSL spec does not other
 
 Applying HLSL semantic annotations to objects of type vk::BufferPointer is disallowed.
 
+### Buffer Pointers and Aliasing
+
+By default, buffer pointers are assumed to be restrict pointers as defined by the C99 standard.
+
+An attribute vk::aliased_pointer can be attached to a variable, function parameter or a block member of buffer pointer type. It is assumed that the pointee of an object with this attribute can overlap with the pointee of any other object with this attribute.
+
+### Buffer Pointers and Address Space
+
+All buffer pointers are presumed to point into the host memory address space. No new address space attributes are proposed.
+
 ### Buffer Pointer Availability
 
 The following can be used at pre-processor time to determine if the current compiler supports vk::BufferPointer: __has_feature(hlsl_vk_buffer_pointer).
