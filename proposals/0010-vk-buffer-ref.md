@@ -149,6 +149,10 @@ Note also the ability to create local variables of type vk::BufferPointer such a
 
 ## Design Details
 
+### Writing Buffer Pointer Pointees
+
+The pointees of vk::BufferPointer objects can be written as well as read. See Appendix C for example HLSL. See Appendix D for the SPIR-V.
+
 ### Differences from C++ Pointers
 
 vk::BufferPointer is different from a C++ pointer in that the method Get() can and must be applied to de-reference it. 
@@ -293,4 +297,94 @@ Here is the SPIR-V for this shader. Note the logical context of the declaration 
                OpReturn
                OpFunctionEnd
 ```
+
+### Appendix C: HLSL for Write through vk::BufferPointer
+
+
+```c++
+
+struct Globals_s
+{
+      float4 g_vSomeConstantA;
+      float4 g_vTestFloat4;
+      float4 g_vSomeConstantB;
+};
+
+typedef vk::BufferPointer<Globals_s> Globals_p;
+
+struct TestPushConstant_t
+{
+      Globals_p m_nBufferDeviceAddress;
+};
+
+[[vk::push_constant]] TestPushConstant_t g_PushConstants;
+
+float4 MainPs(void) : SV_Target0
+{
+      float4 vTest = float4(1.0,0.0,0.0,0.0);
+      g_PushConstants.m_nBufferDeviceAddress.Get().g_vTestFloat4 = vTest;
+      return vTest;
+}
+
+```
+
+### Appendix D: SPIR-V for Write through vk::BufferPointer
+
+
+```
+               OpCapability Shader
+               OpCapability PhysicalStorageBufferAddresses
+               OpExtension "SPV_KHR_physical_storage_buffer"
+               OpMemoryModel PhysicalStorageBuffer64 GLSL450
+               OpEntryPoint Fragment %MainPs "MainPs" %out_var_SV_Target0 %g_PushConstants
+	       OpExecutionMode %MainPs OriginUpperLeft
+	       OpSource HLSL 600
+               OpName %type_PushConstant_TestPushConstant_t "type.PushConstant.TestPushConstant_t"
+               OpMemberName %type_PushConstant_TestPushConstant_t 0 "m_nBufferDeviceAddress"
+               OpName %Globals_s "Globals_s"
+               OpMemberName %Globals_s 0 "g_vSomeConstantA"
+               OpMemberName %Globals_s 1 "g_vTestFloat4"
+               OpMemberName %Globals_s 2 "g_vSomeConstantB"
+               OpName %g_PushConstants "g_PushConstants"
+               OpName %out_var_SV_Target0 "out.var.SV_Target0"
+               OpName %MainPs "MainPs"
+               OpDecorate %out_var_SV_Target0 Location 0
+               OpMemberDecorate %Globals_s 0 Offset 0
+               OpMemberDecorate %Globals_s 1 Offset 16
+               OpMemberDecorate %Globals_s 2 Offset 32
+               OpDecorate %Globals_s Block
+               OpMemberDecorate %type_PushConstant_TestPushConstant_t 0 Offset 0
+               OpDecorate %type_PushConstant_TestPushConstant_t Block
+        %int = OpTypeInt 32 1
+      %int_0 = OpConstant %int 0
+      %int_1 = OpConstant %int 1
+      %float = OpTypeFloat 32
+    %float_1 = OpConstant %float 1
+    %float_0 = OpConstant %float 0
+    %v4float = OpTypeVector %float 4
+          %7 = OpConstantComposite %v4float %float_1 %float_0 %float_0 %float_0
+  %Globals_s = OpTypeStruct %v4float %v4float %v4float
+%_ptr_PhysicalStorageBuffer_Globals_s = OpTypePointer PhysicalStorageBuffer %Globals_s
+%type_PushConstant_TestPushConstant_t = OpTypeStruct %_ptr_PhysicalStorageBuffer_Globals_s
+%_ptr_PushConstant_type_PushConstant_TestPushConstant_t = OpTypePointer PushConstant %type_PushConstant_TestPushConstant_t
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %void = OpTypeVoid
+         %15 = OpTypeFunction %void
+         %16 = OpTypeFunction %v4float
+%_ptr_Function_v4float = OpTypePointer Function %v4float
+%_ptr_PushConstant__ptr_PhysicalStorageBuffer_Globals_s = OpTypePointer PushConstant %_ptr_PhysicalStorageBuffer_Globals_s
+%_ptr_PhysicalStorageBuffer_v4float = OpTypePointer PhysicalStorageBuffer %v4float
+%g_PushConstants = OpVariable %_ptr_PushConstant_type_PushConstant_TestPushConstant_t PushConstant
+%out_var_SV_Target0 = OpVariable %_ptr_Output_v4float Output
+     %MainPs = OpFunction %void None %15
+         %20 = OpLabel
+         %23 = OpAccessChain %_ptr_PushConstant__ptr_PhysicalStorageBuffer_Globals_s %g_PushConstants %int_0
+         %24 = OpLoad %_ptr_PhysicalStorageBuffer_Globals_s %23
+         %25 = OpAccessChain %_ptr_PhysicalStorageBuffer_v4float %24 %int_1
+               OpStore %25 %7 Aligned 16
+               OpStore %out_var_SV_Target0 %7
+               OpReturn
+               OpFunctionEnd
+```
+
 <!-- {% endraw %} -->
