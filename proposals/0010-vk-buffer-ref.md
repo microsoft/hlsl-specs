@@ -171,7 +171,7 @@ An attribute vk::aliased_pointer can be attached to a variable, function paramet
 
 ### Buffer Pointers and Address Space
 
-All buffer pointers are presumed to point into the same address space. No new address space attributes are proposed.
+All buffer pointers are presumed to point into the host memory address space. No new address space attributes are proposed.
 
 ## SPIR-V Appendices
 
