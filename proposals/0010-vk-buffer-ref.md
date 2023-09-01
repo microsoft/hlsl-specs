@@ -51,7 +51,19 @@ The goal of this proposal is to have a solution that meets the following require
 
 ## Proposed solution
 
-Our solution is to add a new builtin type in the vk namespace that is a pointer to a buffer of a given type, `vk::BufferPointer<T,A>`. The template argument `T` must be a struct. `A` must be an integer and is the alignment in bytes of the pointer. If `A` is not specified, the alignment is assumed to be 16 bytes.
+Our solution is to add a new builtin type in the vk namespace that is a pointer to a buffer of a given type:
+
+```c++
+template <struct S, int align>
+class vk::BufferPointer {
+    vk::BufferPointer(const vk::BufferPointer&);
+    vk::BufferPointer& operator=(const vk::BufferPointer&);
+    vk::BufferPointer(const uint64_t);
+    S& Get() const;
+}
+```
+
+This class represents a pointer to a buffer of type struct `S`. `align` is the alignment in bytes of the pointer. If `align` is not specified, the alignment is assumed to be alignof(S).
 
 This new type will have the following operations
 
