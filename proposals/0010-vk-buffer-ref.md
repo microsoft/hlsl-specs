@@ -69,16 +69,17 @@ This new type will have the following operations
 
 * Copy assignment and copy construction - These copy the value of the pointer from one variable to another.
 * Dereference Method - The Get() method represents the struct const lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
-* Null Pointer Method - The IsNull() method returns true if the pointer is 0, false if not.
+* Two new cast operators are introduced. vk::static_pointer_cast<T, A> allows casting any vk::BufferPointer<SrcType, SrcAlign> to vk::BufferPointer<DstType, DstAlign> only if SrcType is a type derived from DstType. vk::reinterpret_pointer_cast<T, A> allows casting for all other BufferPointer types. For both casts, DstAlign <= SrcAlign must be true. 
+* A buffer pointer can be constructed from a uint64_t u using the constructor syntax vk::BufferPointer<T,A>(u).
+* A buffer pointer can be cast to a bool. If so, it returns FALSE if the pointer is null, TRUE otherwise.
 
 Note the operations that are not allowed:
 
 * There is no default construction. Every vk::BufferPointer<T> is either contained in a global resource (like a cbuffer, ubo, or ssbo), or it must be constructed using the copy constructor. 
-* There is no conversion from uint64_t to vk:BufferPointer.
 * There is no explicit pointer arithmetic. All addressing is implicitly done using the `.` pointer, or indexing an array in the struct T.
 * The comparison operators == and != are not supported for buffer pointers.
 
-Most of these restrictions are there for safety. They minimize the possibility of getting an invalid pointer. If the Get() method is used on a null pointer, the behaviour is undefined.
+Most of these restrictions are there for safety. They minimize the possibility of getting an invalid pointer. If the Get() method is used on a null or invalid pointer, the behaviour is undefined.
 
 When used as a member in a buffer, vk::BufferPointer can be used to pass physical buffer addresses into a shader, and address and access buffer space with logical addressing, which allows tools such as spirv-opt, spirv-reflect and renderdoc to be able to better work with these shaders.
 
