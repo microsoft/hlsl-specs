@@ -4,7 +4,8 @@
 
 *   Proposal: [0011](0011-inline-spirv.md)
 *   Author(s): [Steven Perron](https://github.com/s-perron)
-*   Sponsor: [Chris B](https://github.com/llvm-beanz) and [Steven Perron](https://github.com/s-perron)
+*   Sponsor: [Chris B](https://github.com/llvm-beanz) and
+    [Steven Perron](https://github.com/s-perron)
 *   Status: **Under Consideration**
 
 ## Introduction
@@ -224,8 +225,8 @@ uint32 gl_NumWorkGroups();
 
 Then the compiler will be able to add a variable to in the input storage class,
 with the builtin decoration, with a type that is the same as the return type of
-the function, and add it to the OpEntryPoint for the entry points from which it
-is reachable.
+the function, and add it to the OpEntryPoint instruction when it is referenced
+by the entry point’s call tree.
 
 The developer can use the builtin input by simply calling the function.
 
@@ -286,10 +287,5 @@ adding a capability and annotation.
 If we can hide all of the cases that could be implicitly added in a header file,
 then there is very little burden on users. This is why we chose to not have
 implicit inclusion of the capabilities and extensions.
-
-## Acknowledgments (Optional)
-
-Take a moment to acknowledge the contributions of people other than the author
-and sponsor.
 
 <!-- {% endraw %} -->
