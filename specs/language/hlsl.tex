@@ -20,6 +20,7 @@
 \newcommand{\Ch}[2]{\chapter[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sec}[2]{\section[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sub}[2]{\subsection[#1]{#1\hfill[#2]}\label{#2}}
+\newcommand{\SubSub}[2]{\subsubsection[#1]{#1\hfill[#2]}\label{#2}}
 
 \input{glossary}
 
@@ -60,6 +61,8 @@
    \par%
    \everypar{\noindent \stepcounter{parcount}\parnum \hspace{1em}}%
 }{}
+
+\newcommand{\Par}[2]{\paragraph[#1]{#1\hfill[#2]\\}\label{#2}\p}
 
 \begin{document}
 \input{macros} 
