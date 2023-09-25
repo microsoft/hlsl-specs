@@ -438,39 +438,33 @@ enum class MEMORY_TYPE_FLAG : uint {
   GROUP_SHARED_MEMORY = 0x00000002,
   NODE_INPUT_MEMORY = 0x00000004,
   NODE_OUTPUT_MEMORY = 0x00000008,
+  ALL_MEMORY = 0x0000000f,
 };
 
-enum class ACCESS_FLAG : uint {
-  DEVICE_VISIBLE = 0x00000001, // implies group visible (smaller scope)
-  GROUP_VISIBLE = 0x00000002,
-};
-
-enum class SYNC_FLAG : uint {
+enum class SEMANTIC_FLAG : uint {
   GROUP_SYNC = 0x00000001,
+  GROUP_SCOPE = 0x00000002,
+  DEVICE_SCOPE = 0x00000004,
 };
 
 /// @brief Request a barrier for a set of memory types and/or thread group
 /// execution sync.
 /// @param MemoryTypeFlags Flag bits as defined by MEMORY_TYPE_FLAG.
-/// @param AccessFlags Flag bits as defined by ACCESS_FLAG.
-/// @param SyncFlags FlagBits as defined by SYNC_FLAG.
+/// @param SemanticFlags Flag bits as defined by SEMANTIC_FLAG.
 ///
-/// If `GROUP_SYNC` is specified in the sync flags, `Barrier` must be called
-/// from thread group uniform control flow.
-void Barrier(uint MemoryTypeFlags, uint AccessFlags, uint SyncFlags);
+/// `Barrier` must be called from thread group uniform control flow.
+void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 
 /// @brief Request a barrier for just the memory used by an object.
 /// @param TargetObject The object or resource which owns the memory to apply
 /// the barrier to.
-/// @param AccessFlags Flag bits as defined by ACCESS_FLAG.
-/// @param SyncFlags FlagBits as defined by SYNC_FLAG.
+/// @param SemanticFlags Flag bits as defined by SEMANTIC_FLAG.
 ///
 /// The TargetObject parameter can be a particular node input/output record
 /// object or UAV resource. Groupshared variables are not currently supported.
 ///
-/// If `GROUP_SYNC` is specified in the sync flags, `Barrier` must be called
-/// from thread group uniform control flow.
-void Barrier(Object TargetObject, uint AccessFlags, uint SyncFlags);
+/// `Barrier` must be called from thread group uniform control flow.
+void Barrier(Object TargetObject, uint SemanticFlags);
 ```
 
 Work graphs introduces a new more flexible implementation of the memory barrier
@@ -489,28 +483,24 @@ The pseudo-code below shows implementing the existing HLSL memory barrier
 functions using the new `Barrier` function.
 
 ```C++
-void AllMemoryBarrier() {
-  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY | NODE_INPUT_MEMORY |
-              NODE_OUTPUT_MEMORY,
-          DEVICE_VISIBLE, 0);
-}
+void AllMemoryBarrier() { Barrier(ALL_MEMORY, DEVICE_SCOPE, 0); }
 
 void AllMemoryBarrierWithGroupSync() {
-  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY | NODE_INPUT_MEMORY |
-              NODE_OUTPUT_MEMORY,
-          DEVICE_VISIBLE, GROUP_SYNC);
+  Barrier(ALL_MEMORY, DEVICE_SCOPE | GROUP_SYNC);
 }
 
-void DeviceMemoryBarrier() { Barrier(UAV_MEMORY, DEVICE_VISIBLE, 0); }
+void DeviceMemoryBarrier() {
+  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY, DEVICE_SCOPE, 0);
+}
 
 void DeviceMemoryBarrierWithGroupSync() {
-  Barrier(UAV_MEMORY, DEVICE_VISIBLE, GROUP_SYNC);
+  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY, DEVICE_SCOPE | GROUP_SYNC, 0);
 }
 
-void GroupMemoryBarrier() { Barrier(GROUP_SHARED_MEMORY, GROUP_VISIBLE, 0); }
+void GroupMemoryBarrier() { Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE, 0); }
 
 void GroupMemoryBarrierWithGroupSync() {
-  Barrier(GROUP_SHARED_MEMORY, GROUP_VISIBLE, GROUP_SYNC);
+  Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE | GROUP_SYNC);
 }
 
 ```
