@@ -98,9 +98,9 @@ DXIL 1.8 also adds new property types for Wave Matrix and Work Graph types.
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │finisedCrossGroupSharing       │  244   │i1 @dx.op.finishedCrossGroupSharing(i32, %dx.types.NodeRecordHandle)                                                   │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│barrierByMemoryType            │  245   │void @dx.op.barrierByMemoryType(i32, i32, i32, i32)                                                                    │
+│barrierByMemoryType            │  245   │void @dx.op.barrierByMemoryType(i32, i32, i32)                                                                         │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│barrierByNodeRecordHandle      │  246   │call void @dx.op.barrierByNodeRecordHandle(i32, %dx.types.NodeRecordHandle, i32, i32)                                  │
+│barrierByNodeRecordHandle      │  246   │call void @dx.op.barrierByNodeRecordHandle(i32, %dx.types.NodeRecordHandle, i32)                                       │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │createNodeOutputHandle         │  247   │%dx.types.NodeHandle @dx.op.createNodeOutputHandle(i32, i32)                                                           │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
