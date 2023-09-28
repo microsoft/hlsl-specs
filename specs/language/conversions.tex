@@ -4,7 +4,7 @@
 chapter enumerates the full set of conversions. A \textit{standard conversion
 sequence} is a sequence of standard conversions in the following order:
 \begin{enumerate}
-  \item Zero or one conversion of either lvalue-to-rvalue, array-to-pinter or
+  \item Zero or one conversion of either lvalue-to-rvalue, array-to-pointer or
   function-to-pointer.
   \item Zero or one conversion of either integral conversion, floating point
   conversion, floating point-integral conversion, or boolean conversion,
@@ -69,13 +69,13 @@ the source value is implementation defined.
 \Sec{Floating point-integral conversion}{Conv.fpint}
 
 \p A glvalue of floating point type can be converted to a cxvalue of integer
-type or a prvalue of floating point type can be converted to a prvalue of
+type. A prvalue of floating point type can be converted to a prvalue of
 integer type. Conversion of floating point values to integer values truncates by
 discarding the fractional value. The behavior is undefined if the truncated
 value cannot be represented in the destination type.
 
 \p A glvalue of integer type can be converted to a cxvalue of floating point
-type or a prvalue of integer type can be converted to a prvalue of floating
+type. A prvalue of integer type can be converted to a prvalue of floating
 point type. If the destination type can exactly represent the source value, the
 result is the exact value. If the destination type cannot exactly represent the
 source value, the conversion to a best-approximation of the source value is
@@ -109,8 +109,8 @@ to a prvalue of type \texttt{vector<T,y>} only if \texttt{x} is less than
 
 \p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of type
 \texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
-converted to a prvalue of type \texttt{matrix<T,z,w>} only if \texttt{x} is less
-than or equal to \texttt{z} and \texttt{y} is less than or equal to \texttt{w}.
+converted to a prvalue of type \texttt{matrix<T,z,w>} only if \( x \leq z \)
+and \(y \leq w \)
 
 \Sec{Component-wise conversions}{Conv.cwise}
 
@@ -131,5 +131,5 @@ conversions in chapter \ref{Conv}.
 \Sec{Qualification conversion}{Conv.qual}
 
 A prvalue of type "\textit{cv1} \texttt{T}" can be converted to a prvalue of type
-"\textit{cv2} \texttt{T}" type "\textit{cv2} \texttt{T}" is more cv-qualified
+"\textit{cv2} \texttt{T}" if type "\textit{cv2} \texttt{T}" is more cv-qualified
 than "\textit{cv1} \texttt{T}".
