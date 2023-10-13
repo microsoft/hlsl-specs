@@ -406,4 +406,36 @@ float4 MainPs(void) : SV_Target0
                OpFunctionEnd
 ```
 
+### Appendix E: HLSL for Implicit Cast of Restrict to Aliased
+
+
+```c++
+
+struct Globals_s
+{
+      float4 g_vSomeConstantA;
+      float4 g_vTestFloat4;
+      float4 g_vSomeConstantB;
+};
+
+typedef vk::BufferPointer<Globals_s> Globals_p;
+
+struct TestPushConstant_t
+{
+      Globals_p m_nBufferDeviceAddress;
+};
+
+[[vk::push_constant]] TestPushConstant_t g_PushConstants;
+
+float4 MainPs(void) : SV_Target0
+{
+      float4 vTest = float4(1.0,0.0,0.0,0.0);
+      [[vk::aliased_pointer]] Globals_p bp0(g_PushConstants.m_nBufferDeviceAddress);
+      [[vk::aliased_pointer]] Globals_p bp1(g_PushConstants.m_nBufferDeviceAddress);
+      bp0.Get().g_vTestFloat4 = vTest;
+      return bp1.Get().g_vTestFloat4; // Returns float4(1.0,0.0,0.0,0.0)
+}
+
+```
+
 <!-- {% endraw %} -->
