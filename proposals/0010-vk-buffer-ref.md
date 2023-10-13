@@ -184,7 +184,11 @@ Applying HLSL semantic annotations to objects of type vk::BufferPointer is disal
 
 By default, buffer pointers are assumed to be restrict pointers as defined by the C99 standard.
 
-An attribute vk::aliased_pointer can be attached to a variable, function parameter or a block member of BufferPointer type. It ie assumed that the pointee of a BufferPointer with this attribute can overlap with the pointee of any other BufferPointer with this attribute. This also means that the pointee of a BufferPointer with this attribute does not overlap with the pointee of a default (restrict) BufferPointer.
+An attribute vk::aliased_pointer can be attached to a variable, function parameter or a struct member of BufferPointer type. It is assumed that the pointee of a BufferPointer with this attribute can overlap with the pointee of any other BufferPointer with this attribute if they have the same pointee type and their scopes intersect. This also means that the pointee of a BufferPointer with this attribute does not overlap with the pointee of a default (restrict) BufferPointer.
+
+The result of vk::static_pointer_cast and vk::reinterpret_pointer_cast as well as all constructors is restrict.
+
+A pointer value can be assigned to a variable, function parameter or struct member entity, even if the aliasing disagrees. Such an assignment is an implicit cast of this property.
 
 ### Buffer Pointers and Address Space
 
