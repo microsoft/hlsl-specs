@@ -190,6 +190,8 @@ The result of vk::static_pointer_cast and vk::reinterpret_pointer_cast as well a
 
 A pointer value can be assigned to a variable, function parameter or struct member entity, even if the aliasing disagrees. Such an assignment is an implicit cast of this property.
 
+See Appendix E for example of aliasing casting.
+
 ### Buffer Pointers and Address Space
 
 All buffer pointers are presumed to point into the host memory address space. No new address space attributes are proposed.
