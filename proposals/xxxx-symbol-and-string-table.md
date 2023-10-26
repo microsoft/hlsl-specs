@@ -140,7 +140,7 @@ This change has no impact on the HLSL language representation. It has no
 interaction with existing language features or C++ features. It has no source
 compatibility impact or impact on SPIR-V.
 
-## Alternatives considered (Optional)
+## Alternatives considered
 
 We could continue extending custom data structures in the DXIL Container to
 capture new data. This change is likely overkill for our immediate needs,
