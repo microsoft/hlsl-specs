@@ -108,10 +108,31 @@ table so that the string table only contains "foobar\0". The string "foobar"
 would be assigned offset 4, and the string "bar" would be assigned offset 7
 (both offsets are 4-byte incremented for the preceding size field).
 
+The maximum size of the string table is `UINT32_MAX`, although other offsets in
+the DX Container file may not be able to handle string tables significantly
+smaller than that.
 
 ### DXIL Validation
 
-The DXIL validator will ignore the symbol and string table parts.
+The DXIL validator will validate an appropriate number of exported symbols for
+the target profile. The table below describes the maximum number of exported
+symbols per shader profile:
+
+| Profile        | Maximum Number of Symbols               |
+|----------------|-----------------------------------------|
+| Pixel          | 1                                       |
+| Vertex         | 1                                       |
+| Geometry       | 1                                       |
+| Hull           | 2                                       |
+| Domain         | 1                                       |
+| Compute        | 1                                       |
+| Library        | UINT32_MAX / sizeof(Symbol) = 214748364 |
+| Mesh           | 1                                       |
+| Amplification  | 1                                       |
+
+The effective maximum allowable symbol count for Library shaders is
+significantly lower since many offsets in the DX Container file are 32-bit. It
+is expected that things will break if the file size exceeds `UINT32_MAX`.
 
 ### Other Considerations
 
