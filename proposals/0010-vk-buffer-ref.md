@@ -188,7 +188,7 @@ An attribute vk::aliased_pointer can be attached to a variable, function paramet
 
 ### Buffer Pointers and Address Space
 
-All buffer pointers are presumed to point into the host memory address space. No new address space attributes are proposed.
+All buffer pointers are presumed to point into the buffer device address space as defined by the Vulkan type VkDeviceAddress. See the following link for additional detail: https://registry.khronos.org/vulkan/specs/1.3-khr-extensions/html/vkspec.html#VkDeviceAddress.
 
 ### Buffer Pointer Availability
 
