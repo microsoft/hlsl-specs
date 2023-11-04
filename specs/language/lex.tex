@@ -1,0 +1,48 @@
+\Ch{Lexical Conventions}{Lex}
+
+\Sec{Unit of Translation}{Lex.Translation}
+
+\p The text of \acrshort{hlsl} programs is collected in \textit{source} and
+\textit{header} files. The distinction between source and header files is social
+and not technical. An implementation will construct a \textit{translation unit}
+from a single source file and any included source or header files referenced via
+the \texttt{\#include} preprocessing directive conforming to the \gls{isoC}
+preprocessor specification.
+
+\p An implementation may implicitly include additional sources as required to
+expose the \acrshort{hlsl} library functionality as defined in (FIXME: Add
+reference to library chapter).
+
+\Sec{Phases of Translation}{Lex.Phases}
+
+\p \acrshort{hlsl} inherits the phases of translation from \gls{isoCPP}, with
+minor alterations, specifically the removal of support for trigraph and digraph
+sequences. Below is a description of the phases.
+
+\begin{enumerate}
+  \item Source files are characters that are mapped to the basic source
+  character set in an implementation-defined manner.
+  \item Any sequence of backslash (\texttt{\textbackslash}) immediately followed
+  by a new line is deleted, resulting in splicing lines together.
+  \item Tokenization occurs and comments are isolated. If a source file ends in
+  a partial comment or preprocessor token the program is ill-formed and a
+  diagnostic shall be issued. Each comment block shall be treated as a single
+  white-space character.
+  \item Preprocessing directives are executed, macros are expanded,
+  \texttt{pragma} and other unary operator expressions are executed. Processing
+  of \texttt{\#include} directives results in all preceding steps being executed
+  on the resolved file, and can continue recursively. Finally all preprocessing
+  directives are removed from the source.
+  \item Character and string literal specifiers are converted into the
+  appropriate character set for the execution environment.
+  \item Adjacent string literal tokens are concatenated.
+  \item White-space is no longer significant. Syntactic and semantic analysis
+  occurs translating the whole translation unit into an implementation-defined
+  representation.
+  \item The translation unit is processed to determine required instantiations,
+  the definitions of the required instantiations are located, and the
+  translation and instantiation units are merged. The program is ill-formed if
+  any required instantiation cannot be located or fails during instantiation.
+  \item External references are resolved, library references linked, and all
+  translation output is collected into a single output.
+\end{enumerate}
