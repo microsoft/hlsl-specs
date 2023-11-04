@@ -1,9 +1,8 @@
 \Ch{Expressions}{Expr}
 
-\p \acrshort{hlsl} inherits many basic expression constructs from \gls{isoCPP}.
-This chapter defines the formulations of expressions and the behavior of
+\p This chapter defines the formulations of expressions and the behavior of
 operators when they are not overloaded. Only member operators may be
-overloaded\footnote{That will change in the future, but this document assumes
+overloaded\footnote{This will change in the future, but this document assumes
 current behavior.}. Operator overloading does not alter the rules for operators
 defined by this standard.
 
@@ -13,15 +12,17 @@ evaluated in the program\footnote{The operand to \texttt{sizeof(...)} is a good
 example of an \textit{unevaluated operand}. In the code \texttt{sizeof(Foo())},
 the call to \texttt{Foo()} is never evaluated in the program.}.
 
-\p Whenever an \textit{glvalue} appears in an expression that expects a
+\p Whenever a \textit{glvalue} appears in an expression that expects a
 \textit{prvalue}, a standard conversion sequence is applied based on the rules
 in \ref{Conv}.
 
 \Sec{Usual Arithmetic Conversions}{Expr.conv}
 \p Binary operators for arithmetic and enumeration type require that both
 operands are of a common type. When the types do not match the \textit{usual
-arithmetic conversions} are applied to yield a common type. The \textit{usual
-arithmetic conversions} are:
+arithmetic conversions} are applied to yield a common type. When \textit{usual
+arithmetic conversions} are applied to vector operands they behave as
+component-wise conversions (\ref{Conv.cwise}). The \textit{usual arithmetic
+conversions} are:
 
 \begin{itemize}
   \item If either operand is of scoped enumeration type no conversion is
@@ -30,8 +31,10 @@ arithmetic conversions} are:
   performed with the following rules:
   \begin{itemize}
     \item If both vectors are of the same length, no extension is required.
-    \item If one operand has more vector components than the other, the shorter
-    vector shall be extended to match the length of the longer vector.
+    \item If one operand is a vector and the other operand is a scalar, the
+    scalar is extended to a vector via a Splat conversion (\ref{Conv.vsplat}).
+    \item Otherwise, if both operands are vectors of different lengths, the
+    expression is ill-formed.
   \end{itemize}
   \item If either operand is of type \texttt{double} or \texttt{vector<double,
   X>}, the other operator shall be converted to match.
@@ -40,11 +43,12 @@ arithmetic conversions} are:
   \item Otherwise, if either operand is of type \texttt{half} or \texttt{vector<half, X>},
   the other operand shall be converted to match.
   \item Otherwise, integer promotions are performed on each scalar or vector
-  operand either by conversion of the scalar or vector element conversion.
+  operand following the appropriate scalar or component-wise conversion
+  (\ref{Conv}).
   \begin{itemize}
-    \item Otherwise, if both operands are scalar or vector elements of signed or
-    unsigned types, the operand of lesser integer conversion rank shall be
-    converted to the type of the operand with greater rank.
+    \item If both operands are scalar or vector elements of signed or unsigned
+    types, the operand of lesser integer conversion rank shall be converted to
+    the type of the operand with greater rank.
     \item Otherwise, if both the operand of unsigned scalar or vector element
     type is of greater rank than the operand of signed scalar or vector element
     type, the signed operand is converted to the type of the unsigned operand.
