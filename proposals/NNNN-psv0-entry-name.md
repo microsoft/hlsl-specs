@@ -45,8 +45,6 @@ and require parsing a large amount of unnecessary data.
 
 ## Proposed solution
 
-The natural way to express data like this for D3D runtime consumption,
-within the current set of container parts, would be to use the `PSV0` part.
 The `PSV0` part has a string table, and a versioning convention that allows
 backward and forward compatibility when adding new data.
 Adding a new structure version with a field for the entry name which is an
