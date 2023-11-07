@@ -27,7 +27,7 @@ In an upcoming feature, the D3D12 runtime needs to know the entry
 function name for non-library shaders in order to import shaders into
 collections, and construct graphics or compute programs using them.
 
-Dxil libraries encode information about entry functions and exports, among
+DXIL libraries encode information about entry functions and exports, among
 other facts the runtime needs, in the Runtime Data `RDAT` part.
 However, non-library targets, such as `vs_6_7`, `cs_6_0`, and so on, do not
 use the `RDAT` part to describe data for the runtime.  Instead, for historical
