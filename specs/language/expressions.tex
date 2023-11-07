@@ -1,0 +1,63 @@
+\Ch{Expressions}{Expr}
+
+\p This chapter defines the formulations of expressions and the behavior of
+operators when they are not overloaded. Only member operators may be
+overloaded\footnote{This will change in the future, but this document assumes
+current behavior.}. Operator overloading does not alter the rules for operators
+defined by this standard.
+
+\p An expression may also be an \textit{unevaluated operand} when it appears in
+some contexts. An \textit{unevaluated operand} is a expression which is not
+evaluated in the program\footnote{The operand to \texttt{sizeof(...)} is a good
+example of an \textit{unevaluated operand}. In the code \texttt{sizeof(Foo())},
+the call to \texttt{Foo()} is never evaluated in the program.}.
+
+\p Whenever a \textit{glvalue} appears in an expression that expects a
+\textit{prvalue}, a standard conversion sequence is applied based on the rules
+in \ref{Conv}.
+
+\Sec{Usual Arithmetic Conversions}{Expr.conv}
+\p Binary operators for arithmetic and enumeration type require that both
+operands are of a common type. When the types do not match the \textit{usual
+arithmetic conversions} are applied to yield a common type. When \textit{usual
+arithmetic conversions} are applied to vector operands they behave as
+component-wise conversions (\ref{Conv.cwise}). The \textit{usual arithmetic
+conversions} are:
+
+\begin{itemize}
+  \item If either operand is of scoped enumeration type no conversion is
+  performed, and the expression is ill-formed if the types do not match.
+  \item If either operand is a \texttt{vector<T,X>}, vector extension is
+  performed with the following rules:
+  \begin{itemize}
+    \item If both vectors are of the same length, no extension is required.
+    \item If one operand is a vector and the other operand is a scalar, the
+    scalar is extended to a vector via a Splat conversion (\ref{Conv.vsplat}).
+    \item Otherwise, if both operands are vectors of different lengths, the
+    expression is ill-formed.
+  \end{itemize}
+  \item If either operand is of type \texttt{double} or \texttt{vector<double,
+  X>}, the other operator shall be converted to match.
+  \item Otherwise, if either operand is of type \texttt{float} or \texttt{vector<float,
+  X>}, the other operand shall be converted to match.
+  \item Otherwise, if either operand is of type \texttt{half} or \texttt{vector<half, X>},
+  the other operand shall be converted to match.
+  \item Otherwise, integer promotions are performed on each scalar or vector
+  operand following the appropriate scalar or component-wise conversion
+  (\ref{Conv}).
+  \begin{itemize}
+    \item If both operands are scalar or vector elements of signed or unsigned
+    types, the operand of lesser integer conversion rank shall be converted to
+    the type of the operand with greater rank.
+    \item Otherwise, if both the operand of unsigned scalar or vector element
+    type is of greater rank than the operand of signed scalar or vector element
+    type, the signed operand is converted to the type of the unsigned operand.
+    \item Otherwise, if the operand of signed scalar or vector element type is
+    able to represent all values of the operand of unsigned scalar or vector
+    element type, the unsigned operand is converted to the type of the signed
+    operand.
+    \item Otherwise, both operands are converted to a scalar or vector type of
+    the unsigned integer type corresponding to the type of the operand with
+    signed integer scalar or vector element type.
+  \end{itemize}
+\end{itemize}
