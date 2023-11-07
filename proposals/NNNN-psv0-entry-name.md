@@ -38,10 +38,10 @@ signatures, and a `PSV0` (`PipelineStateValidation`) part that encodes all
 additional information for the runtime.
 
 None of these parts included for non-library shaders currently capture the name
-of the entry function inside the DxilModule.  This name is available through
-metadata in the DxilModule, but that is encoded in llvm bitcode, so it is not
-accessible to the runtime without adding significant dependencies, and parsing
-through a lot of data it otherwise does not need to parse.
+of the entry function inside the DXIL part data. This name is available in
+the encoded llvm bitcode, but the runtime is unable to parse bitcode.
+Enabling the runtime to parse LLVM bitcode would add dependencies,
+and require parsing a large amount of unnecessary data.
 
 ## Proposed solution
 
@@ -50,7 +50,7 @@ within the current set of container parts, would be to use the `PSV0` part.
 The `PSV0` part has a string table, and a versioning convention that allows
 backward and forward compatibility when adding new data.
 Adding a new structure version with a field for the entry name which is an
-offset into the string table is a natural and straightforward way to add this
+offset into the string table accommodates the need to surface
 information for the D3D12 runtime to access.
 
 Adding this information will not impact an older runtime's ability to read the
@@ -59,7 +59,7 @@ of the `PSV0` data, the name will simply appear to be unset.  If the name is
 unset, the runtime can fall back to default behavior, which limits the state
 object API usage scenarios.
 
-With this solution, when a new compiler and validator are used to compile an
+When a new compiler and validator are used to compile an
 application's shaders, these shaders will still be compatible with older
 pipeline API and runtime versions while including the additional information
 that makes them convenient to use in the new state object API.
@@ -67,14 +67,11 @@ that makes them convenient to use in the new state object API.
 ## Detailed design
 
 This section contains some of the details describing the data layout of PSV0.
-This should be more than sufficient to understand where the new proposed data
-member for `EntryFunctionName` fits in with the rest of the data format.  It
-does not completely define some of the unrelated parts of PSV0, but this could
-be a good starting point for a complete PSV0 specification.  Notable omissions
-are the `PSVSignatureElement` and `PSVResourceBindInfo` record structure and
-the shader-stage specific info structures contained in the `PSVRuntimeInfo0`
-shader info union.  The contents of these structures are not relevant to this
-proposal.
+For brevity this spec does not specify unrelated parts of the PSV0 format.
+Notable omissions are the `PSVSignatureElement` and `PSVResourceBindInfo` record
+structure and the shader-stage specific info structures contained in the
+`PSVRuntimeInfo0` shader info union.  The contents of these structures are not
+relevant to this proposal.
 
 ### PSV0 data layout
 
@@ -110,7 +107,7 @@ indicated by this value.
 |-|-|-|-|-|-|
 | 0 | 16 | `union { ... }` | union member depends on shader type decoded from the `ProgramVersion` in the `DxilProgramHeader` | None | union of shader info structures, not relevant here. |
 | 16 | 4 | `uint32_t MinimumExpectedWaveLaneCount` | Always | None | minimum wave size for shader |
-| 16 | 4 | `uint32_t MaximumExpectedWaveLaneCount` | Always | None | maximum wave size for shader |
+| 20 | 4 | `uint32_t MaximumExpectedWaveLaneCount` | Always | None | maximum wave size for shader |
 
 #### PSVRuntimeInfo Version 1
 
