@@ -46,3 +46,141 @@ sequences. Below is a description of the phases.
   \item External references are resolved, library references linked, and all
   translation output is collected into a single output.
 \end{enumerate}
+
+\Sec{Character Sets}{Lex.CharSet}
+
+\p The \textit{basic source character set} is a subset of the ASCII character set.
+The table below lists the valid characters and their ASCII values:
+
+\begin{center}
+  \begin{tabular}{|| c | c | c ||}
+    \hline
+    Hex ASCII Value & Character Name & Glyph or C Escape Sequence \\
+    \hline
+    0x09 & Horizontal Tab & \texttt{\textbackslash t} \\
+    0x0A & Line Feed & \texttt{\textbackslash n} \\
+    0x0D & Carriage Return & \texttt{\textbackslash r} \\
+    0x20 & Space & \\
+    0x21 & Exclamation Mark & \texttt{!}\\
+    0x22 & Quotation Mark & \texttt{"}\\
+    0x23 & Number Sign & \texttt{\#}\\
+    0x25 & Percent Sign & \texttt{\%}\\
+    0x26 & Ampersand & \texttt{\&}\\
+    0x27 & Apostrophe & \texttt{'}\\
+    0x28 & Left Parenthesis & \texttt{(}\\
+    0x29 & Right Parenthesis & \texttt{)}\\
+    0x2A & Asterisk & \texttt{*}\\
+    0x2B & Plus Sign & \texttt{+}\\
+    0x2C & Comma & \texttt{,}\\
+    0x2D & Hyphen-Minus & \texttt{-}\\
+    0x2E & Full Stop & \texttt{.}\\
+    0x2F & Solidus & \texttt{/}\\
+    0x30 .. 0x39 & Digit Zero .. Nine & \texttt{0 1 2 3 4 5 6 7 8 9}\\
+    0x3A & Colon & \texttt{:}\\
+    0x3B & Semicolon & \texttt{;}\\
+    0x3C & Less-than Sign & \texttt{<}\\
+    0x3D & Equals Sign & \texttt{=}\\
+    0x3E & Greater-than Sign & \texttt{>}\\
+    0x3F & Question Mark & \texttt{?}\\
+    0x41 .. 0x5A & Latin Capital Letter A .. Z &
+        \texttt{A B C D E F G H I J K L M}\\
+    & & \texttt{N O P Q R S T U V W X Y Z}\\
+    0x5B & Left Square Bracket & \texttt{[}\\
+    0x5C & Reverse Solidus & \texttt{\textbackslash}\\
+    0x5D & Right Square Bracket & \texttt{[}\\
+    0x5E & Circumflex Accent & \texttt{\textasciicircum}\\
+    0x5F & Underscore & \texttt{\_}\\
+    0x61 .. 0x7A & Latin Small Letter a .. z &
+        \texttt{a b c d e f g h i j k l m}\\
+    & & \texttt{n o p q r s t u v w x y z}\\
+    0x7B & Left Curly Bracket & \texttt{\{}\\
+    0x7C & Vertical Line & \texttt{|}\\
+    0x7D & Right Curly Bracket & \texttt{\}}\\
+    \hline
+  \end{tabular}
+\end{center}
+
+\p An implementation may allow source files to be written in alternate
+\textit{extended character sets} as long as that set is a superset of the
+\textit{basic character set}. The \textit{translation character set} is an
+\textit{extended character set} or the \textit{basic character set} as chosen by
+the implementation.
+
+\Sec{Preprocessing Tokens}{Lex.PPTokens}
+
+\begin{grammar}
+  \define{preprocessing-token}\br
+  header-name\br
+  identifier\br
+  pp-number\br
+  character-literal\br
+  string-literal\br
+  preprocessing-op-or-punc\br
+  \textnormal{each non-whitespace character from the \textit{translation
+  character set} that cannot be one of the above}
+\end{grammar}\footnote{The preprocessor is inherited from C++ 11 with no
+grammar extensions. It is specified here only for completeness.}
+
+\p Each preprocessing token that is converted to a token shall have the lexical
+form of a keyword, an identifier, a constant, a string literal or an operator or
+punctuator.
+
+\p Preprocessing tokens are the minimal lexical elements of the language during
+translation phases 3 through 6 (\ref{Lex.Phases}). Preprocessing tokens can be
+separated by whitespace in the form of comments, white space characters, or
+both. White space may appear within a preprocessing token only as part of a
+header name or between the quotation characters in a character constant or
+string literal.
+
+\p Header name preprocessing tokens are only recognized within
+\texttt{\#include} preprocessing directives, \texttt{\_\_has\_include} expressions,
+and implementation-defined locations within \texttt{\#pragma} directives. In
+those contexts, a sequence of characters that could be either a header name or a
+string literal is recognized as a header name.
+
+\Sec{Tokens}{Lex.Tokens}
+
+\begin{grammar}
+  \define{token}\br
+  identifier\br
+  keyword\br
+  literal\br
+  operator-or-punctuator
+\end{grammar}
+
+\p There are five kinds of tokens: identifiers, keywords, literals, and
+operators or punctuators. All whitespace characters and comments are ignored
+except as they separate tokens.
+
+\Sec{Comments}{Lex.Comments}
+
+\p The characters \texttt{/*} start a comment which terminates with the
+characters \texttt{*\textbackslash}. The characters \texttt{//} start a comment
+which terminates at the next new line.
+
+\Sec{Header Names}{Lex.Headers}
+
+\begin{grammar}
+  \define{header-name}\br
+  \texttt{<} h-char-sequence \texttt{>}\br
+  \texttt{"} h-char-sequence \texttt{"}
+
+  \define{h-char-sequence}\br
+  h-char\br
+  h-char-sequence h-char
+
+  \define{h-char}\br
+  \textnormal{any character in the \textit{translation character set} except
+  newline or \texttt{>}}
+
+  \define{q-char-sequence}\br
+  q-char\br
+  q-char-sequence q-char
+
+  \define{q-char}\br
+  \textnormal{any character in the \textit{translation character set} except
+  newline or \texttt{"}}
+\end{grammar}
+
+\p Character sequences in header names are mapped to header files or external
+source file names in an implementation defined way.
