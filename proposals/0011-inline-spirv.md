@@ -6,7 +6,7 @@
 *   Author(s): [Steven Perron](https://github.com/s-perron)
 *   Sponsor: [Chris B](https://github.com/llvm-beanz) and
     [Steven Perron](https://github.com/s-perron)
-*   Status: **Under Consideration**
+*   Status: **Under Review**
 
 ## Introduction
 
