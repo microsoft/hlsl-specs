@@ -184,7 +184,13 @@ Applying HLSL semantic annotations to objects of type vk::BufferPointer is disal
 
 By default, buffer pointers are assumed to be restrict pointers as defined by the C99 standard.
 
-An attribute vk::aliased_pointer can be attached to a variable, function parameter or a block member of buffer pointer type. It is assumed that the pointee of an object with this attribute can overlap with the pointee of any other object with this attribute.
+An attribute vk::aliased_pointer can be attached to a variable, function parameter or a struct member of BufferPointer type. It is assumed that the pointee of a BufferPointer with this attribute can overlap with the pointee of any other BufferPointer with this attribute if they have the same pointee type and their scopes intersect. This also means that the pointee of a BufferPointer with this attribute does not overlap with the pointee of a default (restrict) BufferPointer.
+
+The result of vk::static_pointer_cast and vk::reinterpret_pointer_cast as well as all constructors is restrict.
+
+A pointer value can be assigned to a variable, function parameter or struct member entity, even if the aliasing disagrees. Such an assignment is an implicit cast of this property.
+
+See Appendix E for example of aliasing casting.
 
 ### Buffer Pointers and Address Space
 
@@ -400,6 +406,38 @@ float4 MainPs(void) : SV_Target0
                OpStore %out_var_SV_Target0 %7
                OpReturn
                OpFunctionEnd
+```
+
+### Appendix E: HLSL for Implicit Cast of Restrict to Aliased
+
+
+```c++
+
+struct Globals_s
+{
+      float4 g_vSomeConstantA;
+      float4 g_vTestFloat4;
+      float4 g_vSomeConstantB;
+};
+
+typedef vk::BufferPointer<Globals_s> Globals_p;
+
+struct TestPushConstant_t
+{
+      Globals_p m_nBufferDeviceAddress;
+};
+
+[[vk::push_constant]] TestPushConstant_t g_PushConstants;
+
+float4 MainPs(void) : SV_Target0
+{
+      float4 vTest = float4(1.0,0.0,0.0,0.0);
+      [[vk::aliased_pointer]] Globals_p bp0(g_PushConstants.m_nBufferDeviceAddress);
+      [[vk::aliased_pointer]] Globals_p bp1(g_PushConstants.m_nBufferDeviceAddress);
+      bp0.Get().g_vTestFloat4 = vTest;
+      return bp1.Get().g_vTestFloat4; // Returns float4(1.0,0.0,0.0,0.0)
+}
+
 ```
 
 <!-- {% endraw %} -->
