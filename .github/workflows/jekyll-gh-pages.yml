@@ -33,7 +33,8 @@ jobs:
         run: |
           sudo apt -y install texlive
           sudo apt -y install texlive-latex-extra
-          sudo apt -y install pandoc
+          curl -fsSL https://github.com/jgm/pandoc/releases/download/3.1.9/pandoc-3.1.9-1-amd64.deb -o pandoc.deb
+          sudo dpkg -i pandoc.deb
       - name: Build LaTeX
         run: |
           cmake -B build ${{github.workspace}}/specs/language
