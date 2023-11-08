@@ -1,0 +1,36 @@
+%%------------------------------------------------------------------------------
+%% Grammar formatting
+%%------------------------------------------------------------------------------
+
+\newlength{\GrammarIndent}
+\setlength{\GrammarIndent}{\leftmargini}
+\newlength{\GrammarInc}
+\setlength{\GrammarInc}{\GrammarIndent}
+\newlength{\GrammarRest}
+\setlength{\GrammarRest}{2\GrammarIndent}
+
+\newenvironment{grammar} {
+  \newcommand{\define}[1]{{\textit{##1}\textnormal{:}}}
+  \newcommand{\terminal}[1]{{\textnormal{##1}}}
+  \newcommand{\keyword}[1]{\texttt{##1}}
+  \newcommand{\br}{\hfill\\*}
+
+  \renewcommand{\texttt}[1]{{\small\ttfamily\upshape ##1}}
+
+  \newcommand{\grammarindentfirst}{\GrammarIndent}
+  \newcommand{\grammarindentinc}{\GrammarInc}
+  \newcommand{\grammarindentrest}{\GrammarRest}
+  \itshape
+
+  \begin{grammarlist}
+  \item\relax
+}{
+  \end{grammarlist}
+}
+
+\newlist{grammarlist}{itemize}{1}
+\setlist[grammarlist]{
+  parsep=1ex, partopsep=0pt, itemsep=0pt, topsep=0pt, label={},
+  leftmargin=\grammarindentrest, listparindent=-\grammarindentinc,
+  itemindent=\listparindent
+}
