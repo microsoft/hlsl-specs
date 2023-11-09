@@ -2,7 +2,7 @@
 
 # Add shader name to Pipeline State Validation data (PSV0)
 
-* Proposal: [NNNN](NNNN-psv0-entry-name.md)
+* Proposal: [0012](0012-psv0-entry-name.md)
 * Author(s): [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
