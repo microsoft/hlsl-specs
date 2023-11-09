@@ -15,7 +15,7 @@
 ## Introduction
 
 In an upcoming feature, the D3D12 runtime needs to know the entry function name
-for non-library shaders, in order to import shaders into collections, and
+for non-library shaders, in order to import shaders into state objects, and
 construct graphics or compute programs referring to them by name.  The `PSV0`
 part of a DxilContainer encodes information for the D3D12 runtime so it can
 construct and validate state objects without parsing llvm bitcode.  This
