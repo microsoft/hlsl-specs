@@ -184,3 +184,95 @@ which terminates at the next new line.
 
 \p Character sequences in header names are mapped to header files or external
 source file names in an implementation defined way.
+
+\Sec{Preprocessing numbers}{Lex.PPNumber}
+
+\begin{grammar}
+  \define{pp-number}\br
+  digit\br
+  \texttt{.} digit\br
+  pp-number \texttt{'} digit\br
+  pp-number \texttt{'} non-digit\br
+  pp-number \texttt{e} sign\br
+  pp-number \texttt{E} sign\br
+  pp-number \texttt{p} sign\br
+  pp-number \texttt{P} sign\br
+  pp-number \texttt{.}
+\end{grammar}
+
+\p Preprocessing numbers begin with a digit or period (\texttt{.}), and may be
+followed by valid identifier characters and floating point literal suffixes
+(\texttt{e+}, \texttt{e-}, \texttt{E+}, \texttt{E-}, \texttt{p+}, \texttt{p-},
+\texttt{P+}, and \texttt{P-}). Preprocessing number tokens lexically include all
+\textit{integer-literal} and \textit{floating-point-literal} tokens.
+
+\p Preprocessing numbers do not have types or values. Types and values are
+assigned to \textit{integer-literal}, \textit{floating-point-literal}, and
+\textit{vector-literal} tokens on successful conversion from preprocessing
+numbers.
+
+\p A preprocessing number cannot end in a period (\texttt{.}) if the immediate
+next token is a \textit{scalar-element-sequence} (\ref{Lex.Literal.Vector}). In
+this situation the \textit{pp-number} token is truncated to end before the
+period\footnote{This grammar formulation is not context-free and requires an
+LL(2) parser.}.
+
+%\Sec{Identifiers}{Lex.Ident}
+
+%\Sec{Keywords}{Lex.Keywords}
+
+%\Sec{Operators and Punctuators}{Lex.Operators}
+
+\Sec{Literals}{Lex.Literals}
+
+\Sub{Literal Classifications}{Lex.Literal.Kinds}
+
+\begin{grammar}
+  \define{literal}\br
+  integer-literal\br
+  character-literal\br
+  floating-point-literal\br
+  string-literal\br
+  boolean-literal\br
+  vector-literal
+\end{grammar}
+
+%\Sub{Integer Literals}{Lex.Literal.Int}
+
+%\Sub{Character Literals}{Lex.Literal.Char}
+
+%\Sub{Floating-point Literals}{Lex.Literal.Float}
+
+%\Sub{String Literals}{Lex.Literal.String}
+
+%\Sub{Boolean Literals}{Lex.Literal.Bool}
+
+\Sub{Vector Literals}{Lex.Literal.Vector}
+
+\begin{grammar}
+  \define{vector-literal}\br
+  integer-literal \texttt{.} scalar-element-sequence\br
+  floating-point-literal \texttt{.} scalar-element-sequence
+
+  \define{scalar-element-sequence}\br
+  scalar-element-sequence-x\br
+  scalar-element-sequence-r
+
+  \define{scalar-element-sequence-x}\br
+  \texttt{x}\br
+  scalar-element-sequence-x \texttt{x}
+
+  \define{scalar-element-sequence-r}\br
+  \texttt{r}\br
+  scalar-element-sequence-r \texttt{r}
+\end{grammar}
+
+\p A \textit{vector-literal} is an \textit{integer-literal} or
+\textit{floating-point} literal followed by a period (\texttt{.}) and a
+\textit{scalar-element-sequence}.
+
+\p A \textit{scalar-element-sequence} is a \textit{vector-swizzle-sequence}
+where only the first vector element accessor is valid (\texttt{x} or
+\texttt{r}). A \textit{scalar-element-sequence} is equivalent to a vector splat
+conversion performed on the \textit{integer-literal} or
+\textit{floating-point-literal} value (\ref{Conv.vsplat}).
