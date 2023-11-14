@@ -76,7 +76,7 @@ This new type will have the following operations
 Note the operations that are not allowed:
 
 * There is no default construction. Every vk::BufferPointer<T> is either contained in a global resource (like a cbuffer, ubo, or ssbo), or it must be constructed using the copy constructor. 
-* There is no explicit pointer arithmetic. All addressing is implicitly done using the `.` pointer, or indexing an array in the struct T.
+* There is no explicit pointer arithmetic. All addressing is implicitly done using the `.` operator, or indexing an array in the struct T.
 * The comparison operators == and != are not supported for buffer pointers.
 
 Most of these restrictions are there for safety. They minimize the possibility of getting an invalid pointer. If the Get() method is used on a null or invalid pointer, the behaviour is undefined.
