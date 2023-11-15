@@ -220,7 +220,7 @@ like this:
 
 ```
 [[vk::ext_builtin_input(/* NumWorkgroups */ 24)]]
-uint32 gl_NumWorkGroups();
+uint3 gl_NumWorkGroups();
 ```
 
 Then the compiler will be able to add a variable to in the input storage class,
