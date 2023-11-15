@@ -1,4 +1,10 @@
 %%------------------------------------------------------------------------------
+%% General formatting
+%%------------------------------------------------------------------------------
+
+\newcommand{\keyword}[1]{{\texttt{#1}}}
+
+%%------------------------------------------------------------------------------
 %% Grammar formatting
 %%------------------------------------------------------------------------------
 
@@ -12,7 +18,6 @@
 \newenvironment{grammar} {
   \newcommand{\define}[1]{{\textit{##1}\textnormal{:}}}
   \newcommand{\terminal}[1]{{\textnormal{##1}}}
-  \newcommand{\keyword}[1]{\texttt{##1}}
   \newcommand{\br}{\hfill\\*}
 
   \renewcommand{\texttt}[1]{{\small\ttfamily\upshape ##1}}

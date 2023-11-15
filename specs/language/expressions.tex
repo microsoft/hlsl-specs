@@ -61,3 +61,35 @@ conversions} are:
     signed integer scalar or vector element type.
   \end{itemize}
 \end{itemize}
+
+\Sec{Primary Expressions}{Expr.Primary}
+
+\begin{grammar}
+  \define{primary-expression}\br
+  literal\br
+  \keyword{this}\br
+  \texttt{(} expression \texttt{)}\br
+  id-expression\br
+\end{grammar}
+
+\Sub{Literals}{Expr.Primary.Literal}
+
+\p The type of a \textit{literal} is determined based on the grammar forms
+specified in \ref{Lex.Literal.Kinds}.
+
+\Sub{This}{Expr.Primary.This}
+
+\p The keyword \keyword{this} names a reference to the implicit object of
+non-static member functions or non-static data member initializers. The
+\keyword{this} parameter is always a \textit{prvalue} of
+non-\textit{cv-qualified}
+type\footnote{\href{https://github.com/microsoft/hlsl-specs/blob/main/proposals/0007-const-instance-methods.md}{HLSL
+Specs Proposal 0007} proposes adopting C++-like syntax and semantics for
+\textit{cv-qualified} \keyword{this} references.}.
+
+\Sub{Parenthesis}{Expr.Primary.Paren}
+
+\p An expression (\textit{E}) enclosed in parenthesis has the same type, result
+and value category as \textit{E} without the enclosing parenthesis. A
+parenthesized expression may be used in the same contexts with the same meaning
+as the same non-parenthesized expression.
