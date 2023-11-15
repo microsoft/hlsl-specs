@@ -245,7 +245,7 @@ file like this:
 
 ```
 [[vk::ext_extension("SPV_EXT_shader_stencil_export")]]
-[[vk::ext_builtin_input(/* FragStencilRefEXT */ 5014)]]
+[[vk::ext_builtin_output(/* FragStencilRefEXT */ 5014)]]
 void gl_FragStencilRefARB(int);
 ```
 
