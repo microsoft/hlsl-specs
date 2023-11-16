@@ -220,7 +220,7 @@ like this:
 
 ```
 [[vk::ext_builtin_input(/* NumWorkgroups */ 24)]]
-uint32 gl_NumWorkGroups();
+uint3 gl_NumWorkGroups();
 ```
 
 Then the compiler will be able to add a variable to in the input storage class,
@@ -245,7 +245,7 @@ file like this:
 
 ```
 [[vk::ext_extension("SPV_EXT_shader_stencil_export")]]
-[[vk::ext_builtin_input(/* FragStencilRefEXT */ 5014)]]
+[[vk::ext_builtin_output(/* FragStencilRefEXT */ 5014)]]
 void gl_FragStencilRefARB(int);
 ```
 
