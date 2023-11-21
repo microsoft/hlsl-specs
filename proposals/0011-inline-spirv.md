@@ -211,24 +211,25 @@ With the existing inline SPIR-V, the variable can be decorated and assigned to
 the correct storage class. However, it cannot always be correctly associated
 with the entry point.
 
-To support adding built in inputs from source, this proposal adds a new
-`vk::ext_builtin_input` attribute that applies to a function declaration
-providing an implicit definition which returns the value of the builtin.
+To support adding builtin inputs from source, this proposal adds a new
+`vk::ext_builtin_input` attribute which takes a `builtInId` parameter and
+applies to a variable declaration. This attribute must be applied to a static
+variable.
 
 For example, the `gl_NumWorkGroups` builtin could be declared in a header file
 like this:
 
 ```
 [[vk::ext_builtin_input(/* NumWorkgroups */ 24)]]
-uint3 gl_NumWorkGroups();
+static uint3 gl_NumWorkGroups;
 ```
 
-Then the compiler will be able to add a variable to in the input storage class,
-with the builtin decoration, with a type that is the same as the return type of
-the function, and add it to the OpEntryPoint instruction when it is referenced
-by the entry point’s call tree.
+Then the compiler will be able to add a variable in the Input storage class,
+with the BuiltIn decoration, with a type that is the same as the type of the
+variable, and add it to the OpEntryPoint instruction when it is referenced by
+the entry point’s call tree.
 
-The developer can use the builtin input by simply calling the function.
+The developer can use the builtin input by simply using the variable.
 
 ### Builtin output
 
@@ -236,9 +237,9 @@ The existing inline SPIR-V has limited support for adding a builtin output. This
 would have most of the same problems as declaring a builtin input.
 
 To support adding builtin outputs from source, this proposal adds a new
-`vk::ext_builtin_output attribute` that applies to a function declaration
-providing an implicit definition which sets the value of the output to the
-provided parameter value.
+`vk::ext_builtin_output` attribute which takes a `builtInId` parameter and
+applies to a variable declaration. This attribute must be applied to a static
+variable.
 
 For example, the `gl_FragStencilRefARB` builtin could be declared in a header
 file like this:
@@ -246,14 +247,18 @@ file like this:
 ```
 [[vk::ext_extension("SPV_EXT_shader_stencil_export")]]
 [[vk::ext_builtin_output(/* FragStencilRefEXT */ 5014)]]
-void gl_FragStencilRefARB(int);
+static int gl_FragStencilRefARB;
 ```
 
-Then the compiler will be able to add a variable in the output storage class,
-with the builtin decoration, with a type that is the same as the parameter, and
+Then the compiler will be able to add a variable in the Output storage class,
+with the BuiltIn decoration, with a type that is the same as the variable, and
 add it to the OpEntryPoint for the entry points from which it is reachable.
 
-The developer can set the builtin output by simply calling the function.
+The developer can set the builtin output by simply assigning to the variable.
+
+A single variable declaration may not have both the `vk::ext_builtin_input` and
+`vk::ext_builtin_output` attributes. A specific builtin ID may only be used for
+either an input or an output, not both.
 
 ### Capability and extension instructions
 
