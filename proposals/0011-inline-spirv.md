@@ -214,14 +214,14 @@ with the entry point.
 To support adding builtin inputs from source, this proposal adds a new
 `vk::ext_builtin_input` attribute which takes a `builtInId` parameter and
 applies to a variable declaration. This attribute must be applied to a static
-variable.
+const variable.
 
 For example, the `gl_NumWorkGroups` builtin could be declared in a header file
 like this:
 
 ```
 [[vk::ext_builtin_input(/* NumWorkgroups */ 24)]]
-static uint3 gl_NumWorkGroups;
+static const uint3 gl_NumWorkGroups;
 ```
 
 Then the compiler will be able to add a variable in the Input storage class,
