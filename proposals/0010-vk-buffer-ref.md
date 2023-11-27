@@ -68,7 +68,7 @@ This class represents a pointer to a buffer of type struct `S`. `align` is the a
 This new type will have the following operations
 
 * Copy assignment and copy construction - These copy the value of the pointer from one variable to another.
-* Dereference Method - The Get() method represents the struct const lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
+* Dereference Method - The Get() method represents the struct lvalue reference of the pointer to which it is applied. The selection . operator can be applied to the Get() to further select a member from the referenced struct.
 * Two new cast operators are introduced. vk::static_pointer_cast<T, A> allows casting any vk::BufferPointer<SrcType, SrcAlign> to vk::BufferPointer<DstType, DstAlign> only if SrcType is a type derived from DstType. vk::reinterpret_pointer_cast<T, A> allows casting for all other BufferPointer types. For both casts, DstAlign <= SrcAlign must be true. 
 * A buffer pointer can be constructed from a uint64_t u using the constructor syntax vk::BufferPointer<T,A>(u).
 * A buffer pointer can be cast to a bool. If so, it returns FALSE if the pointer is null, TRUE otherwise.
