@@ -5,7 +5,7 @@
 * Proposal: [0012](0012-psv0-entry-name.md)
 * Author(s): [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Consideration**
+* Status: **Accepted**
 * Planned Version: SM 6.8, validator version 1.8
 * PRs:
   [#5946](https://github.com/microsoft/DirectXShaderCompiler/pull/5946)
