@@ -87,12 +87,8 @@ non-static member functions. The \keyword{this} parameter is always a
   {HLSL Specs Proposal 0007} proposes adopting C++-like syntax and semantics for
   \textit{cv-qualified} \keyword{this} references.}
   
-\p A \keyword{this} expression shall not appear within the declaration of a
-static member function, except as an \textit{unevaluated operand}. When used as
-an \textit{unevaluated operand}, the type of the \keyword{this} expression is
-defined.
-
-\p The \keyword{this} expression may not appear in any other context.
+\p A \keyword{this} expression shall not appear outside the declaration of a
+non-static member function.
 
 \Sub{Parenthesis}{Expr.Primary.Paren}
 
