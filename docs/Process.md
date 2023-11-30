@@ -34,6 +34,11 @@ repository will be used to publicly track feature requests for the HLSL language
 and HLSL runtime interfaces. Direct tooling feature requests to the
 [DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler/issues/new).
 
+> Note: a tooling feature would be a feature that does not impact HLSL source
+> representations in any way (no added syntax, APIs, or altered
+> interpretations), and instead exposes new ways to use the DXC compiler or
+> library.
+
 If you write a proposal yourself you must find a member of the HLSL team to act
 as a _Sponsor_ for the change. The _Sponsor_ is responsible for tracking and
 helping change proposals through the proposal life cycle. For Vulkan-specific
