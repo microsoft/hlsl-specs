@@ -96,3 +96,40 @@ non-static member function.
 and value category as \textit{E} without the enclosing parenthesis. A
 parenthesized expression may be used in the same contexts with the same meaning
 as the same non-parenthesized expression.
+
+\Sub{Names}{Expr.Primary.ID}
+
+\begin{note}
+  The grammar and behaviors of this section are almost identical to C/C++ with
+  some subtractions (notably lambdas and destructors).
+\end{note}
+
+\begin{grammar}
+  \define{id-expression}\br
+  unqualified-id\br
+  qualified-id
+\end{grammar}
+
+\SubSub{Unqualified Identifiers}{Expr.Primary.ID.Unqual}
+
+\begin{grammar}
+  \define{unqualified-id}\br
+  identifier\br
+  operator-function-id\br
+  conversion-function-id\br
+  template-id\br
+\end{grammar}
+
+\SubSub{Qualified Identifiers}{Expr.Primary.ID.Qual}
+
+\begin{grammar}
+  \define{qualified-id}\br
+  nested-name-specifier \opt{\keyword{template}} unqualified-id\br
+  \define{nested-name-specifier}\br
+  \terminal{::}\br
+  type-name \terminal{::}\br
+  namespace-name \terminal{::}\br
+  nested-name-specifier identifier \terminal{::}\br
+  nested-name-specifier \opt{\keyword{template}} simple-template-id \terminal{::}
+\end{grammar}
+
