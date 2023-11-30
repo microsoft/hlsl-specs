@@ -66,10 +66,8 @@ via the built-in preprocessor macros described below:
   Shader stage. The shader stage values are exposed as
   `__SHADER_STAGE_**STAGE**` (i.e. `__SHADER_STAGE_VERTEX`,
   `__SHADER_STAGE_PIXEL`, ...)
-* **`__SHADER_TARGET_MAJOR`** - Major version for shader target (Vulkan or
-  Shader Model).
-* **`__SHADER_TARGET_MINOR`** - Minor version for shader target (Vulkan or
-  Shader Model).
+* **`__SHADER_TARGET_MAJOR`** - Major version for Shader Model target.
+* **`__SHADER_TARGET_MINOR`** - Minor version for Shader Model target.
 
 If these macros are not sufficient for a given feature new macros or other
 mechanisms should be added as appropriate for the feature to enable developers
