@@ -109,6 +109,8 @@ This new type will have the following operations
     syntax vk::BufferPointer<T,A>(u).
 *   A buffer pointer can be cast to a bool. If so, it returns FALSE if the
     pointer is null, TRUE otherwise.
+*   A buffer pointer can be cast to a uint64_t. The cast will return the 64-bit
+    address that the pointer points to.
 
 Note the operations that are not allowed:
 
@@ -120,8 +122,12 @@ Note the operations that are not allowed:
 *   The comparison operators == and != are not supported for buffer pointers.
 
 Most of these restrictions are there for safety. They minimize the possibility
-of getting an invalid pointer. If the Get() method is used on a null or invalid
-pointer, the behaviour is undefined.
+of getting an invalid pointer. If a buffer pointer is cast to and from a
+uint64_t, then it is the responsibility of the user to make sure that a valid
+pointer is generated, and that aliasing rules are followed.
+
+If the Get() method is used on a null or invalid pointer, the behaviour is
+undefined.
 
 When used as a member in a buffer, vk::BufferPointer can be used to pass
 physical buffer addresses into a shader, and address and access buffer space
