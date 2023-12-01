@@ -160,8 +160,9 @@ operations to execute correctly.
 
 \p A grouping of \gls{lane}s for execution is called a \gls{wave}. \gls{wave}
 sizes vary by hardware architecture. Some hardware implementations support
-multiple wave sizes. Generally wave sizes are powers of two, but there is no
-requirement that be the case. \acrshort{hlsl} is explicitly designed to run on
+multiple wave sizes. Wave sizes must be powers of two. There is no overall
+minimum wave size requirement, although some language features do have minimum
+lane size requirements. \acrshort{hlsl} is explicitly designed to run on
 hardware with arbitrary \gls{wave} sizes. Hardware architectures may implement
 \gls{wave}s as \acrfull{simt} where each thread executes instructions in
 lock-step. This is not a requirement of the model. Some constructs in
@@ -187,11 +188,38 @@ limits defined by the runtime and enforced by the compiler. If a
 \gls{threadgroup}'s size is not a whole multiple of the hardware \gls{wave}
 size, the unused hardware \gls{lane}s are implicitly inactive.
 
+\p If a \gls{threadgroup} size is smaller than the \gls{wave} size , or if the
+\gls{threadgroup} size is not an even multiple of the \gls{wave} size, the
+remaining \gls{lane} are \textit{inactive} \gls{lane}s.
+
 \SubSub{\gls{dispatch}}{Intro.Model.Terms.Dispatch}
 
 \p A grouping of \gls{threadgroup}s which represents the full execution of a
 \acrshort{hlsl} program and results in a completed result for all input data
 elements.
+
+\SubSub{\gls{lane} States}{Intro.Model.Terms.LaneState}
+
+\p \gls{lane}s may be in three primary states: \textit{active}, \textit{helper},
+\textit{inactive}, and \textit{predicated off}.
+
+\p An \textit{active} \gls{lane} is enabled to perform computations and produce
+output results based on the initial launch conditions and program control flow.
+
+\p A \textit{helper} \gls{lane} is a lane which would not be executed by the
+initial launch conditions except that its computations are required for adjacent
+pixel operations in pixel fragment shaders. A \textit{helper} \gls{lane} will
+execute all computations but will not perform writes to buffers, and any outputs
+it produces are discarded.
+
+\p A \textit{inactive} \gls{lane} is a lane that is not executed by the initial
+launch conditions. This occurs when there is not sufficient inputs to fill the
+all \gls{lane}s in the \gls{wave}.
+
+\p A \textit{predicated off} \gls{lane} is a lane that is not being executed due
+to program control flow. A \gls{lane} may be \textit{predicated off} when
+control flow for the \gls{lane}s in a \gls{wave} diverge and one or more lanes
+are temporarily not executing.
 
 \Sub{\acrshort{spmd} Execution Model}{Intro.Model.Exec}
 
