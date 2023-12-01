@@ -279,9 +279,3 @@ the host may have additional synchronization concerns for host visibility.
 \gls{lane}s executing on the device. Constant memory is read-only, and an
 implementation can assume that constant memory is immutable and cannot change
 during execution.
-
-\SubSub{Host Memory}{Intro.Memory.Spaces.Host}
-
-\p Host memory is memory that is directly addressable by the host. Reads and writes
-to host memory may occur in any order except as restricted by synchronization
-intrinsics or other memory annotations.
