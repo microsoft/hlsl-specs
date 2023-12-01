@@ -172,7 +172,7 @@ The pointee of a vk::BufferPointer is considered to be a buffer and will be laid
 
 ### Buffer Pointer Usage
 
-vk::BufferPointer cannot be used in Input and Output variables. It also cannot be used in Unions, when those appear in HLSL.
+vk::BufferPointer cannot be used in Input and Output variables.
 
 A vk::BufferPointer can otherwise be used whereever the HLSL spec does not otherwise disallow it through listing of allowed types. Specifically, buffer members, local and static variables, function argument and return types can be vk::BufferPointer. Ray tracing payloads and shader buffer table records may also contain vk::BufferPointer.
 
