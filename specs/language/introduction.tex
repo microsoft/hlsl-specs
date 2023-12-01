@@ -154,16 +154,22 @@ the execution status of the lane (\ref{Intro.Model.Terms.LaneState}).
 
 \SubSub{\gls{wave}}{Intro.Model.Terms.Wave}
 
-\p A grouping of \gls{lane}s for execution is called a \gls{wave}. \gls{wave}
-sizes vary by hardware architecture. Some hardware implementations support
-multiple wave sizes. Wave sizes must be powers of two. There is no overall
-minimum wave size requirement, although some language features do have minimum
-lane size requirements. \acrshort{hlsl} is explicitly designed to run on
-hardware with arbitrary \gls{wave} sizes. Hardware architectures may implement
-\gls{wave}s as \acrfull{simt} where each thread executes instructions in
-lock-step. This is not a requirement of the model. Some constructs in
-\acrshort{hlsl} require synchronized execution. Such constructs will explicitly
-specify that requirement.
+\p A grouping of \gls{lane}s for execution is called a \gls{wave}. The size of a
+\gls{wave} is defined as the maximum number of \textit{active} \gls{lane}s the
+\gls{wave} supports. \gls{wave} sizes vary by hardware architecture, and are required
+to be powers of two. The number of \textit{active} \gls{lane}s in a \gls{wave}
+can be any value between one and the \gls{wave} size.
+
+\p Some hardware implementations support multiple \gls{wave} sizes. There is no
+overall minimum wave size requirement, although some language features do have
+minimum \gls{lane} size requirements.
+
+\p \acrshort{hlsl} is explicitly designed to run on hardware with arbitrary
+\gls{wave} sizes. Hardware architectures may implement \gls{wave}s as
+\acrfull{simt} where each thread executes instructions in lockstep. This is not
+a requirement of the model. Some constructs in \acrshort{hlsl} require
+synchronized execution. Such constructs will explicitly specify that
+requirement.
 
 \SubSub{\gls{quad}}{Intro.Model.Terms.Quad}
 
@@ -218,6 +224,25 @@ to program control flow. A \gls{lane} may be \textit{predicated off} when
 control flow for the \gls{lane}s in a \gls{wave} diverge and one or more lanes
 are temporarily not executing.
 
+\p The diagram blow illustrates the state transitions between \gls{lane} states:
+
+\begin{tikzpicture}[shorten >=1pt,node distance=3cm,auto, squarednode/.style={rectangle,minimum size=7mm}]
+  \node[squarednode,state,initial above] (active) {$active$};
+  \node[squarednode,state,initial above] (inactive)[right of=active] {$inactive$};
+  \node[squarednode,state] (helper)[below of=active] {$helper$};
+  \node[squarednode,state] (off1)[below left of=active] {off};
+  \node[squarednode,state] (off2)[right of=helper] {off};
+
+
+  \path[->] (active) edge node {discard} (inactive);
+  \path[->] (active) edge node {discard} (helper);
+  \path[->] (active) edge node {branch} (off1);
+  \path[->] (off1) edge node {} (active);
+
+  \path[->] (helper) edge node {branch} (off2);
+  \path[->] (off2) edge node {} (helper);
+\end{tikzpicture}
+
 \Sub{\acrshort{spmd} Execution Model}{Intro.Model.Exec}
 
 \p A runtime implementation shall provide an implementation-defined mechanism
@@ -243,8 +268,8 @@ elaborate further.
 
 \Sub{Memory Spaces}{Intro.Memory.Spaces}
 
-\p \acrshort{hlsl} programs manipulate data stored in five distinct memory
-spaces: thread, threadgroup, device, constant and host.
+\p \acrshort{hlsl} programs manipulate data stored in four distinct memory
+spaces: thread, threadgroup, device and constant.
 
 \SubSub{Thread Memory}{Intro.Memory.Spaces.Thread}
 
