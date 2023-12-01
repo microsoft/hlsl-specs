@@ -48,12 +48,13 @@
 }
 \pagestyle{body}
 
+\setcounter{secnumdepth}{3}
 \newcommand{\parnum}{\textbf{\arabic{parcount}}}
 
 \setlength\parindent{0cm}
 
 \newcounter{parcount}
-\counterwithin{parcount}{subsection}
+\counterwithin{parcount}{subsubsection}
 \newcommand\p{%
     \stepcounter{parcount}%
     \parnum \hspace{1em}%
