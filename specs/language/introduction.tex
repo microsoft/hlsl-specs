@@ -149,12 +149,8 @@ threads advance independent of each other. In \acrshort{spmd} programs, a group
 of \gls{lane}s may execute instructions in lockstep because each instruction may
 be a \acrshort{simd} instruction computing the results for multiple \gls{lane}s
 simultaneously, or synchronizing execution across multiple \gls{lane}s or
-\gls{wave}s. A lane may be \textit{active} or \textit{inactive}, which denotes
-if operations on a lane are executing at a given point in the program.
-Additionally, an \textit{active} lane may be a \textit{helper} lane.
-\textit{Helper} lanes actively execute instructions but their outputs are
-discarded. \textit{Helper} lanes may be required for \gls{lane}-cooperative
-operations to execute correctly.
+\gls{wave}s. A \gls{lane} has an associated \textit{lane state} which denotes
+the execution status of the lane (\ref{Intro.Model.Terms.LaneState}).
 
 \SubSub{\gls{wave}}{Intro.Model.Terms.Wave}
 
@@ -210,7 +206,8 @@ output results based on the initial launch conditions and program control flow.
 initial launch conditions except that its computations are required for adjacent
 pixel operations in pixel fragment shaders. A \textit{helper} \gls{lane} will
 execute all computations but will not perform writes to buffers, and any outputs
-it produces are discarded.
+it produces are discarded. \textit{Helper} lanes may be required for
+\gls{lane}-cooperative operations to execute correctly.
 
 \p A \textit{inactive} \gls{lane} is a lane that is not executed by the initial
 launch conditions. This occurs when there is not sufficient inputs to fill the
