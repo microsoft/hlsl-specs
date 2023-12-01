@@ -1,7 +1,8 @@
 \documentclass[oneside]{book}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage[acronym]{glossaries}
+\usepackage{nameref}
+\usepackage[acronym,numberedsection=nameref,toc]{glossaries}
 \usepackage{multicol}
 \usepackage[marginparwidth=75pt, margin=2cm]{geometry}
 \usepackage{listings}
@@ -78,7 +79,6 @@
 
 \clearpage
 
-\label{glossaries}
 \printglossary[type=\acronymtype]
 \printglossary
 
