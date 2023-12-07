@@ -100,6 +100,9 @@ This new type will have the following operations
 *   Dereference Method - The Get() method represents the struct lvalue reference
     of the pointer to which it is applied. The selection . operator can be
     applied to the Get() to further select a member from the referenced struct.
+    The reference returned by the Get() method is supported in all APIs that
+    take reference, `inout` or `out` parameters, and can be converted to an
+    rvalue following standard conversion rules.
 *   Two new cast operators are introduced. vk::static_pointer_cast<T, A> allows
     casting any vk::BufferPointer<SrcType, SrcAlign> to
     vk::BufferPointer<DstType, DstAlign> only if SrcType is a type derived from
