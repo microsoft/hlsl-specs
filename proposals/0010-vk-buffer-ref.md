@@ -196,7 +196,7 @@ float4 MainPs(void) : SV_Target0
 {
       block_p g_p(g_PushConstants.root);
       g_p = g_p.Get().next;
-      if (!(bool)g_p) // Null pointer test
+      if ((uint64_t)g_pi == 0) // Null pointer test
           return float4(0.0,0.0,0.0,0.0);
       return g_p.Get().x
 }
