@@ -86,6 +86,7 @@ class vk::BufferPointer {
     vk::BufferPointer& operator=(const vk::BufferPointer&);
     vk::BufferPointer(const uint64_t);
     S& Get() const;
+    operator uint64_t() const;
 }
 ```
 
@@ -105,10 +106,10 @@ This new type will have the following operations
     vk::BufferPointer<DstType, DstAlign> only if SrcType is a type derived from
     DstType. vk::reinterpret_pointer_cast<T, A> allows casting for all other
     BufferPointer types. For both casts, DstAlign <= SrcAlign must be true.
-*   A buffer pointer can be constructed from a uint64_t u using the constructor
+*   A buffer pointer can be constructed from a uint64_t using the constructor
     syntax vk::BufferPointer<T,A>(u).
-*   A buffer pointer can be cast to a bool. If so, it returns FALSE if the
-    pointer is null, TRUE otherwise.
+*   A buffer pointer can be cast to a uint64_t. The cast will return the 64-bit
+    address that the pointer points to.
 
 Note the operations that are not allowed:
 
@@ -120,8 +121,12 @@ Note the operations that are not allowed:
 *   The comparison operators == and != are not supported for buffer pointers.
 
 Most of these restrictions are there for safety. They minimize the possibility
-of getting an invalid pointer. If the Get() method is used on a null or invalid
-pointer, the behaviour is undefined.
+of getting an invalid pointer. If a buffer pointer is cast to and from a
+uint64_t, then it is the responsibility of the user to make sure that a valid
+pointer is generated, and that aliasing rules are followed.
+
+If the Get() method is used on a null or invalid pointer, the behaviour is
+undefined.
 
 When used as a member in a buffer, vk::BufferPointer can be used to pass
 physical buffer addresses into a shader, and address and access buffer space
@@ -191,7 +196,7 @@ float4 MainPs(void) : SV_Target0
 {
       block_p g_p(g_PushConstants.root);
       g_p = g_p.Get().next;
-      if (!(bool)g_p) // Null pointer test
+      if ((uint64_t)g_pi == 0) // Null pointer test
           return float4(0.0,0.0,0.0,0.0);
       return g_p.Get().x
 }
