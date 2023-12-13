@@ -11,7 +11,7 @@
 > When filling out the template below for a new feature proposal, please do the
 > following first:
 
-> 1. exclude the "Planned Version", "PRs" and "Issues" from the header.
+> 1. Exclude the "Planned Version", "PRs" and "Issues" from the header.
 > 2. Do not spend time writing the "Detailed design" until the feature has been
 >    merged in the "Under Consideration" phase.
 > 3. Delete this Instructions section including the line below.
@@ -25,7 +25,7 @@
 
 *During the review process, add the following fields as needed:*
 
-* Planned Version: 20YY
+* Planned Version: Shader Model X.Y
 * PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
 * Issues:
   [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
@@ -57,18 +57,80 @@ This section should grow into a feature specification that will live in the
 specifications directory once complete. Each feature will need different levels
 of detail here, but some common things to think through are:
 
+### HLSL Additions
+
 * How is this feature represented in the grammar?
+* How does it interact with different shader stages?
 * How does it work interact other HLSL features (semantics, buffers, etc)?
 * How does this interact with C++ features that aren't already in HLSL?
 * Does this have implications for existing HLSL source code compatibility?
-* Does this change require DXIL changes?
-* Can it be CodeGen'd to SPIR-V?
+
+### Interchange Format Additions
+
+* What DXIL changes does this change require?
+* What Metadata changes does this require?
+* How will SPIRV be supported?
+
+### Diagnostic Changes
+
+* What additional errors or warnings does this introduce?
+* What exisiting errors or warnings does this remove?
+
+#### Validation Changes
+
+* What additional validation failures does this introduce?
+* What existing validation failures does this remove?
+
+### Runtime Additions
+
+#### Runtime information
+
+* What information does the compiler need to provide for the runtime and how?
+
+#### Device Capability
+
+* How does it intereact with other Shader Model options?
+* What shader model and/or optional feature is required for the bulk of this feature to be present?
+* What portions are only available if an existing or new optional feature is present?
+
+
+## Testing
+
+* How will correct codegen for DXIL/SPIRV be tested?
+* How will the diagnostics be tested?
+* How will validation errors be tested?
+* How will validation of new DXIL elements be tested?
+* How will the execution results be tested?
+
+## Transition Strategy for Breaking Changes (Optional)
+
+* Newly-introduced errors that cause existing shaders to newly produce errors
+  fall into two categories:
+  * Changes that produce errors from already broken shaders that previously
+    worked due to a flaw in the compiler.
+  * Changes that break previously valid shaders due to changes in what the compiler
+    accepts related to this feature.
+* It's not always obvious which category a new error falls into
+* Trickier still are changes that alter codegen of existing shader code.
+
+* If there are changes that will change how existing shaders compile,
+  what transition suport will we provide?
+  * New compilation failures should have a clear error message and ideally a FIXIT
+  * Changes in codegen should include a warning and possibly a rewriter
+  * Errors that are produced for previously valid shader code whould give ample
+    notice to developers that the change is coming and might involve rollout stages
+
+* Note that changes that allow shaders that failed to compile before to compile
+  require testing that the code produced is appropriate, but they do not require
+  any special transition support. In these cases, this section might be skipped.
 
 ## Alternatives considered (Optional)
 
 If alternative solutions were considered, please provide a brief overview. This
 section can also be populated based on conversations that occur during
-reviewing.
+reviewing. Having these solutions and why they were rejected documented may save
+trouble from those who might want to suggest feedback or additional features that
+might build on this on. Even variations on the chosen solution can be intresting.
 
 ## Acknowledgments (Optional)
 
