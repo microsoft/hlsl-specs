@@ -18,9 +18,11 @@
 
 \renewcommand{\familydefault}{\sfdefault}
 
+\setcounter{secnumdepth}{3} % number subsections
 \newcommand{\Ch}[2]{\chapter[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sec}[2]{\section[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sub}[2]{\subsection[#1]{#1\hfill[#2]}\label{#2}}
+\newcommand{\SubSub}[2]{\subsubsection[#1]{#1\hfill[#2]}\label{#2}}
 
 \input{glossary}
 
@@ -50,8 +52,15 @@
 
 \setlength\parindent{0cm}
 
-\newcounter{parcount}
-\counterwithin{parcount}{subsection}
+\newcommand{\newparcounter}[1]{
+\newcounter{#1}
+\counterwithin{#1}{chapter}
+\counterwithin{#1}{section}
+\counterwithin{#1}{subsection}
+\counterwithin{#1}{subsubsection}
+}
+
+\newparcounter{parcount}
 \newcommand\p{%
     \stepcounter{parcount}%
     \parnum \hspace{1em}%
