@@ -133,3 +133,30 @@ as the same non-parenthesized expression.
   nested-name-specifier \opt{\keyword{template}} simple-template-id \terminal{::}
 \end{grammar}
 
+\Sec{Postfix Expressions}{Expr.Post}
+
+\begin{grammar}
+  \define{postfix-expression}\br
+  primary-expression\br
+  postfix-expression \terminal{[} expression \terminal{]}\br
+  postfix-expression \terminal{[} braced-init-list \terminal{]}\br
+  postfix-expression \terminal{(} \opt{expression-list} \terminal{)}\br
+  simple-type-specifier \terminal{(} \opt{expression-list} \terminal{)}\br
+  typename-specifier \terminal{(} \opt{expression} \terminal{)}\br
+  simple-type-specifier braced-init-list\br
+  typename-specifier braced-init-list\br
+  postfix-expression \terminal{.} \opt{\terminal{template}} id-expression\br
+  postfix-expression \terminal{->} \opt{\terminal{template}} id-expression\br
+  postfix-expression \terminal{++}\br
+  postfix-expression \terminal{--}
+\end{grammar}
+
+\Sec{Subscript}{Expr.Post.Subscript}
+
+\p A \textit{postfix-expression} followed by an expression in square brackets
+(\texttt{[ ]}) is a subscript expression. In an array subscript expression of
+the form \texttt{E1[E2]}, \texttt{E1} must either be a variable of array of
+\texttt{T[]}, or an object of type \texttt{T} where \texttt{T} provides an
+overloaded implementation of \texttt{operator[]} (\ref{Overload}).\footnote{HLSL
+does not support the base address of a subscript operator being the expression
+inside the braces, which is valid in C and C++.}
