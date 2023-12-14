@@ -31,6 +31,7 @@ jobs:
         uses: actions/configure-pages@v2
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt -y install texlive
           sudo apt -y install texlive-latex-extra
           curl -fsSL https://github.com/jgm/pandoc/releases/download/3.1.9/pandoc-3.1.9-1-amd64.deb -o pandoc.deb
