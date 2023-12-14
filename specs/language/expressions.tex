@@ -196,45 +196,45 @@ lvalue directly decays via array-to-pointer decay. \footnote{This results in
 
 \p Arguments to \textit{output} and \textit{input/output parameters} must be
 lvalues. \textit{Output parameters} are not initialized prior to the call; they
-are passed as an uninitialized cx-value (\ref{Basic.lval}). An \textit{output
+are passed as an uninitialized cxvalue (\ref{Basic.lval}). An \textit{output
 parameter} is only initialized explicitly inside the called function. It is
 undefined behavior to not explicitly initialize an \textit{output parameter}
-before returning from the function in which it is defined. The cx-value created
+before returning from the function in which it is defined. The cxvalue created
 from an argument to an \textit{input/output parameter} is initialized through
 copy-initialization from the lvalue argument expression. In both cases, the
-cx-value shall have the type of the parameter and the argument can be converted
+cxvalue shall have the type of the parameter and the argument can be converted
 to that type through implicit or explicit conversion.
 
 \p If an argument to an \textit{output} or \textit{input/output parameter} is a
-constant sized array, the array is copied to a temporary cx-value following the
+constant sized array, the array is copied to a temporary cxvalue following the
 same rules for any other data type. If an argument to an \textit{output} or
 \textit{input/output parameter} is an unsized array type, the array lvalue
 directly decays via array-to-pointer decay. An argument of a constant sized
-array of type \texttt{T[N]} can be converted to a cx-value of an unsized array
+array of type \texttt{T[N]} can be converted to a cxvalue of an unsized array
 of type \texttt{T[]} through array to pointer decay. An unsized array of type
 \texttt{T[]}, cannot be implicitly converted to a a constant sized array of type
 \texttt{T[N]}.
 
-\p On expiration of the cx-value, the value is assigned back to the argument
+\p On expiration of the cxvalue, the value is assigned back to the argument
 lvalue expression following an inverted conversion if applicable. The argument
 expression must be of a type or able to convert to a type that has defined
-copy-initialization to and from the parameter type. The lifetime of the cx-value
+copy-initialization to and from the parameter type. The lifetime of the cxvalue
 begins at argument expression evaluation, and ends after the function returns. A
-cx-value argument is passed by-address to the caller.
+cxvalue argument is passed by-address to the caller.
 
 \p If the lvalue passed to an \textit{output} or \textit{input/output parameter}
 does not alias any other parameter passed to that function, an implementation
 may avoid the creation of excess temporaries by passing the address of the
-lvalue instead of creating the cx-value.
+lvalue instead of creating the cxvalue.
 
 \p When a function is called, any parameter of object type must have completely
 defined type, and any parameter of array of object type must have completely
 defined element type.\footnote{HLSL \textit{output} and \textit{input/output
 parameters} are passed by value, so they must also have complete type.} The
 lifetime of a parameter ends on return of the function in which it is
-defined.\footnote{As stated above cx-value parameters are passed-by-address, so
-the expiring parameter is the reference to the address, not the cx-value. The
-cx-value expires in the caller.} Initialization and destruction of each
+defined.\footnote{As stated above cxvalue parameters are passed-by-address, so
+the expiring parameter is the reference to the address, not the cxvalue. The
+cxvalue expires in the caller.} Initialization and destruction of each
 parameter occurs within the context of the calling function.
 
 \p The value of a function call is the value returned by the called function.
