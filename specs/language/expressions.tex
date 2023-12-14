@@ -180,7 +180,8 @@ different.}
 
 \p If the function is a non-static member function the \texttt{this} argument
 shall be initialized to a reference to the object of the call as if casted by an
-explicit cast expression.
+explicit cast expression to an lvalue reference of the type that the function is
+declared as a member of.
 
 \p Parameters are either \textit{input parameters}, \textit{output parameters},
 or \textit{input/output parameters} as denoted in the called function's
@@ -226,20 +227,20 @@ does not alias any other parameter passed to that function, an implementation
 may avoid the creation of excess temporaries by passing the address of the
 lvalue instead of creating the cx-value.
 
-\p When a function is called parameters with object type must have completely
-defined type, and parameters of array of object must have completely defined
-element type.\footnote{HLSL \textit{output} and \textit{input/output parameters}
-are passed by value, so they must also have complete type.} The lifetime of a
-parameter ends on return of the function in which it is defined.\footnote{As
-stated above cx-value parameters are passed-by-address, so the expiring
-parameter is the reference to the address, not the cx-value. The cx-value
-expires in the caller.} Initialization and destruction of each parameter occurs
-within the context of the calling function.
+\p When a function is called, any parameter of object type must have completely
+defined type, and any parameter of array of object type must have completely
+defined element type.\footnote{HLSL \textit{output} and \textit{input/output
+parameters} are passed by value, so they must also have complete type.} The
+lifetime of a parameter ends on return of the function in which it is
+defined.\footnote{As stated above cx-value parameters are passed-by-address, so
+the expiring parameter is the reference to the address, not the cx-value. The
+cx-value expires in the caller.} Initialization and destruction of each
+parameter occurs within the context of the calling function.
 
 \p The value of a function call is the value returned by the called function.
 
 \p A function call is an lvalue if the result type is an lvalue reference type;
 otherwise it is a prvalue.
 
-\p If a function call is a prvalue of object type, the type of the prvalue shall
+\p If a function call is a prvalue of object type, the type of the prvalue must
 be complete.
