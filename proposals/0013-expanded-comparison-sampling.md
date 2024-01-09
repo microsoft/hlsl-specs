@@ -345,11 +345,11 @@ typedef enum D3D12_FEATURE {
 
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22 {
     ...
-    BOOL ExtendedComparisonSamplesSupported;
+    BOOL ExpandedComparisonSamplingSupported;
 } D3D12_FEATURE_DATA_D3D12_OPTIONS22;
 ```
 
-`ExtendedComparisonSamplesSupported` is a boolean that specifies
+`ExpandedComparisonSamplingSupported` is a boolean that specifies
  whether the expanded comparison sample methods indicated here are supported
  by the given hardware and runtime.
 
@@ -361,10 +361,10 @@ Verify that `SampleCmpGrad` and the new `CalculateLevelOfDetail*` overloads
  generate appropriate code including the new DXIL and SPIRV intrinsics for all
  shader stages.
 Verify that `SampleCmpBias` produces appropriate code including the new DXIL and
- SPIRV intrinsics for pixel and compute shader stages.
+ SPIRV intrinsics for pixel, compute, and node shader stages.
 Where the `DerivativesInMeshAndAmplificationShadersSupported` capability bit is
  supported, verify that `SampleCmpBias` produces appropriate code including the
- new DXIL and SPIRV intrinsics for pixel and compute shader stages.
+ new DXIL and SPIRV intrinsics for mesh and amplification shader stages.
 For all of the above, verify that no validation errors are produced for the
  generated code.
 For all of the above, wherever `SampleCmpGrad` and `SampleCmpBias` are used,
