@@ -5,6 +5,10 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+  pull_request:
+    types: [opened,synchronize]
+    paths:
+      - specs/language/**
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -50,9 +54,15 @@ jobs:
           destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
+      - if: ${{ github.event_name == 'pull_request'}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDF
+          path: ${{github.workspace}}/specs/hlsl.pdf
 
   # Deployment job
   deploy:
+    if: ${{ github.event_name == 'push'}}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
