@@ -40,9 +40,9 @@ In Clang, most shader APIs have header declarations that live in the default
 included `hlsl_intrinsics.h`. All shader API declarations have Clang
 availability attributes denoting version information for when the APIs are
 introduced, deprecated, and removed. This version annotation can be per-stage or
-for all stages. These annotations exist on declarations to power IDE tooling
-through clangd. Regardless of this proposal the availability annotations must be
-present.
+for all stages. The availability annotations will need to exist on declarations
+regardless of this proposal, as they provide information to AST-based tooling
+such as IDE workflows.
 
 As an example of the annotations in action take the following declaration from
 `hlsl_intrinsics.h`:
@@ -64,39 +64,38 @@ more informed auto-complete, refactoring, and in-editor diagnostics.
 ### Diagnostic Modes
 
 This proposal introduces three new modes for diagnosing API availability:
-relaxed, strict, and pedantic. Clang's default mode will be the
-strict mode. The `-fhlsl-diagnostic-mode=` flag allows users to select which
-diagnostic mode they wish to use.
+default, relaxed, and strict.
 
-### Relaxed Diagnostic Mode
+### Default Diagnostic Mode
 
-The relaxed diagnostic mode performs an AST traversal after the translation unit
+The default diagnostic mode performs an AST traversal after the translation unit
 has been fully parsed, and requires construction of a call graph. In the relaxed
 mode, an AST visitor will traverse to all `CallExpr` nodes that are reachable
 from exported functions (either library exports or entry functions). If the
 callee of a `CallExpr` has availability annotations that signify that the API is
-unavailable for the target shader model and stage the compiler emits a
-_warning_.
+unavailable for the target shader model and stage the compiler emits an
+_error_.
 
 Clang encodes the target shader model version in the target triple, and the
 shader stage in the `HLSLShaderAttr` which is implicitly or explicitly applied
 to the entry function.
 
-The relaxed mode does not issue diagnostics for `CallExpr` nodes that are inside
+The default mode does not issue diagnostics for `CallExpr` nodes that are inside
 functions which are not reachable from exported functions.
+
+### Relaxed Diagnostic Mode
+
+The implementation of the relaxed diagnostic mode matches the default mode,
+except that when a `CallExpr` references an unavailable API, the compiler emits
+a _warning_.
+
+The relaxed mode does not issue diagnostics for `CallExpr` nodes that are inside
+functions which are not reachable from exported functions. A user enables
+relaxed mode by passing `-Wno-error-hlsl-availability`.
 
 ### Strict Diagnostic Mode
 
-The implementation of the strict diagnostic mode matches the relaxed mode,
-except that when a `CallExpr` references an unavailable API, the compiler emits
-an _error_.
-
-The strict mode does not issue diagnostics for `CallExpr` nodes that are inside
-functions which are not reachable from exported functions.
-
-### Pedantic Diagnostic Mode
-
-The pedantic diagnostic mode strives to aggressively issue diagnostics. For
+The strict diagnostic mode strives to aggressively issue diagnostics. For
 non-library shaders, during parsing any callee of a `CallExpr` that has
 availability annotation that marks it as unavailable for the target shader model
 and stage will produce an _error_.
@@ -108,6 +107,8 @@ visitor will traverse to all `CallExpr` nodes that are reachable from annotated
 shader entry functions. If the callee of a `CallExpr` has availability
 annotations that signify that the API is unavailable for the target shader stage
 the compiler emits an _error_.
+
+A user enables strict mode by passing `-fhlsl-strict-diagnostics`.
 
 ### Comparison Against Existing Behavior
 
@@ -152,7 +153,7 @@ warning:
       |       ^~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-With this proposal under the _strict_ or _pedantic_ mode, clang will emit the
+With this proposal under the _default_ or _strict_ mode, clang will emit the
 following error:
 
 ```
@@ -164,7 +165,7 @@ following error:
 In all three cases above the DXIL validator will also emit the same diagnostic
 as it does today.
 
-To illustrate the difference between _strict_ and _pedantic_ take the following
+To illustrate the difference between _default_ and _strict_ take the following
 example:
 
 ```c++
@@ -184,8 +185,8 @@ void main(uint3 threadId : SV_DispatchThreadId) { }
 ```
 
 In this example the call of the unavailable API is in an unused function. In
-both the _relaxed_ and _strict_ diagnostic modes, clang will emit no
-diagnostics. In the pedantic mode, clang emits the following diagnostic:
+both the _relaxed_ and _default_ diagnostic modes, clang will emit no
+diagnostics. In the _strict_ mode, clang emits the following diagnostic:
 
 ```
 <>:9:6: error: 'WriteSamplerFeedbackLevel' is available beginning with Shader Model 6.6
