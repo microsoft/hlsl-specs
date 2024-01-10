@@ -6,7 +6,7 @@
 *   Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz),
     [Steven Perron](https://github.com/s-perron),
     [Diego Novillo](https://github.com/dnovillo)
-*   Status: **Under Review**
+*   Status: **Accepted**
 *   Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3.
     Some language details require HLSL 202x
 
