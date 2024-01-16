@@ -91,7 +91,7 @@ a _warning_.
 
 The relaxed mode does not issue diagnostics for `CallExpr` nodes that are inside
 functions which are not reachable from exported functions. A user enables
-relaxed mode by passing `-Wno-error-hlsl-availability`.
+relaxed mode by passing `-Wno-error=hlsl-availability`.
 
 ### Strict Diagnostic Mode
 
@@ -108,7 +108,11 @@ shader entry functions. If the callee of a `CallExpr` has availability
 annotations that signify that the API is unavailable for the target shader stage
 the compiler emits an _error_.
 
-A user enables strict mode by passing `-fhlsl-strict-diagnostics`.
+Unlike in the _default_ or _relaxed_ mode, the compiler will emit diagnostics
+for mismatched shader model version without the use of a call graph and
+regardless of reachability.
+
+A user enables strict mode by passing `-fhlsl-strict-diagnostics`. 
 
 ### Comparison Against Existing Behavior
 
@@ -162,9 +166,6 @@ following error:
       |       ^~~~~~~~~~~~~~~~~~~~~~~~~
 ```
 
-In all three cases above the DXIL validator will also emit the same diagnostic
-as it does today.
-
 To illustrate the difference between _default_ and _strict_ take the following
 example:
 
@@ -196,6 +197,57 @@ diagnostics. In the _strict_ mode, clang emits the following diagnostic:
 
 In this case the DXIL validator will emit no diagnostic since the call to the
 unavailable API is not present in the final output.
+
+In all three cases above the DXIL validator will also emit the same diagnostic
+as it does today.
+
+To illustrate the behavior for library shaders consider the following example:
+
+> [Godbolt Link](https://godbolt.org/z/rKMGz566M)
+```c++
+float d(float f) {
+  return ddx(f);
+}
+
+float dead(float f) {
+  return WaveMultiPrefixSum(f, 1.xxxx);
+}
+
+float also_dead(float f) {
+  return ddy(f)
+}
+
+[shader("vertex")]
+float main() : FOO {
+  float f = 3;
+  return d(f);
+}
+```
+
+When compiled with the `lib_6_3` profile under the _default_ mode, clang will
+emit the following error:
+
+```
+<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0 
+   9 |   return ddx(f);
+     |          ^~~
+```
+
+When compiled with the `lib_6_3` profile under the _strict_ mode, clang will
+emit the following errors:
+
+```
+<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0 
+   9 |   return ddx(f);
+     |          ^~~
+<>:6:9: error: 'WaveMultiPrefixSum' is available beginning with Shader Model 6.5 
+   9 |   return WaveMultiPrefixSum(f, 1.xxxx);
+     |          ^~~~~~~~~~~~~~~~~~
+```
+
+Neither case results in a diagnostic emission for the `ddy` call in `also_dead`
+because the function is not called and `ddy` is valid in the target shader model
+version.
 
 Because bytecode validation occurs late (after optimization), some more complex
 cases can occur. For example, users have reported situations that produce
