@@ -6,7 +6,7 @@
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
-* Planned Version: Shader Model 6.8
+* Planned Version: Shader Model 6.9
 
 
 ## Introduction
@@ -14,7 +14,7 @@
 This proposal adds HLSL support for a new DXIL feature WaveMatrix. The new data
 types and operations add support for wave cooperative matrix multiplication and
 accumulation. The underlying hardware and driver interfaces for this feature are
-introduced in Shader Model 6.8.
+introduced in Shader Model 6.9.
 
 ## Motivation
 
@@ -25,7 +25,7 @@ SIMD hardware.
 
 These higher throughput matrix operations are required for optimal performance
 of many machine learning and image processing workloads. Adding support to HLSL
-will enable high-performance matrix operations across Shader Model 6.8 drivers
+will enable high-performance matrix operations across Shader Model 6.9 drivers
 when hardware support is available.
 
 ## Proposed solution
