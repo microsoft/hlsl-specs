@@ -14,6 +14,11 @@ DXIL. This proposal captures an abbreviated version of the DXIL changes.
 
 ## Detailed design
 
+### Address Space 6
+
+DXIL 1.8 reserves address space 6 for storage of work graph record data. This is
+used in some of the new DXIL intrinsics.
+
 ### DXIL Constant additions
 
 DXIL 1.8 introduces a new enumeration to the `DXIL::ShaderKind` enumeration and
@@ -37,19 +42,16 @@ a new enumeration type `DXIL::NodeLaunchType` as described in the table below:
 
 ### New DXIL Types
 
-DXIL 1.8 adds new opaque object types for interacting with Wave Matrix and Work
-Graph types.
+DXIL 1.8 adds new opaque object types for interacting with Work Graph types.
 
 ```
-%dx.types.waveMatrix = type { i8* }
 %dx.types.NodeHandle = type { i8* }
 %dx.types.NodeRecordHandle = type { i8* }
 ```
 
-DXIL 1.8 also adds new property types for Wave Matrix and Work Graph types.
+DXIL 1.8 also adds new property types for Work Graph types.
 
 ```
-%dx.types.waveMatProps = type { i8, i8, i32, i32 }
 %dx.types.NodeInfo = type { i32, i32 }
 %dx.types.NodeRecordInfo = type { i32, i32 }
 ```
@@ -60,61 +62,37 @@ DXIL 1.8 also adds new property types for Wave Matrix and Work Graph types.
 ┌───────────────────────────────┬────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │             Name              │ opcode │                                                     IR Signature                                                      │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_Annotate            │  226   │void @dx.op.waveMatrix_Annotate(i32, %dx.types.waveMatrix*, %dx.types.waveMatProps)                                    │
+│allocateNodeOutputRecord       │  226   │%dx.types.NodeRecordHandle @dx.op.allocateNodeOutputRecords(i32, %dx.types.NodeHandle, i32, i1)                        │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_Depth               │  227   │i32 @dx.op.waveMatrix_Depth(i32, %dx.types.waveMatProps)                                                               │
+│getNodeRecordPtr               │  227   │<type> addrspace(6)* @dx.op.getNodeRecordPtr.<type>(i32, %dx.types.NodeRecordHandle, i32)                              │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_Fill                │  228   │void @dx.op.waveMatrix_Fill.<type>(i32, %dx.types.waveMatrix*, <type>)                                                 │
+│incrementOutputCount           │  228   │void @dx.op.incrementOutputCount(i32, %dx.types.NodeHandle, i32, i1)                                                   │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_LoadRawBuf          │  229   │void @dx.op.waveMatrix_LoadRawBuf(i32, %dx.types.waveMatrix*, %dx.types.Handle, i32, i32, i8, i1)                      │
+│outputComplete                 │  229   │void @dx.op.outputComplete(i32, %dx.types.NodeRecordHandle)                                                            │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_LoadGroupShared     │  230   │void @dx.op.waveMatrix_LoadGroupShared.<type>(i32, %dx.types.waveMatrix*, <type> addrspace(3)*, i32, i32, i1)          │
+│getInputRecordCount            │  230   │ i32 @dx.op.getInputRecordCount(i32, %dx.types.NodeRecordHandle)                                                       │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_StoreRawBuf         │  231   │void @dx.op.waveMatrix_StoreRawBuf(i32, %dx.types.waveMatrix*, %dx.types.Handle, i32, i32, i8, i1)                     │
+│getInputRecordCount            │  231   │ i32 @dx.op.getInputRecordCount(i32, %dx.types.NodeRecordHandle)                                                       │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_StoreGroupShared    │  232   │void @dx.op.waveMatrix_StoreGroupShared.<type>(i32, %dx.types.waveMatrix*, <type> addrspace(3)*, i32, i32, i1)         │
+│finisedCrossGroupSharing       │  232   │i1 @dx.op.finishedCrossGroupSharing(i32, %dx.types.NodeRecordHandle)                                                   │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_Multiply            │  233   │void @dx.op.waveMatrix_Multiply(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*, %dx.types.waveMatrix*)              │
+│barrierByMemoryType            │  233   │void @dx.op.barrierByMemoryType(i32, i32, i32)                                                                         │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_MultiplyAccumulate  │  234   │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+│barrierByNodeRecordHandle      │  234   │call void @dx.op.barrierByNodeRecordHandle(i32, %dx.types.NodeRecordHandle, i32)                                       │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_ScalarOp            │  235   │void @dx.op.waveMatrix_ScalarOp.<type>(i32, %dx.types.waveMatrix*, i8, <type>)                                         │
+│createNodeOutputHandle         │  235   │%dx.types.NodeHandle @dx.op.createNodeOutputHandle(i32, i32)                                                           │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_SumAccumulate       │  236   │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+│indexNodeHandle                │  236   │%dx.types.NodeHandle @dx.op.indexNodeHandle(i32, %dx.types.NodeHandle, i32)                                            │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│waveMatrix_Add                 │  237   │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+│annotateNodeHandle             │  236   │%dx.types.NodeHandle @dx.op.annotateNodeHandle(i32, %dx.types.NodeHandle, %dx.types.NodeInfo)                          │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│allocateNodeOutputRecord       │  238   │%dx.types.NodeRecordHandle @dx.op.allocateNodeOutputRecords(i32, %dx.types.NodeHandle, i32, i1)                        │
+│createNodeInputRecordHandle    │  237   │%dx.types.NodeRecordHandle @dx.op.createNodeInputRecordHandle(i32, i32)                                                │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│getNodeRecordPtr               │  239   │<type> addrspace(6)* @dx.op.getNodeRecordPtr.<type>(i32, %dx.types.NodeRecordHandle, i32)                              │
+│annotateNodeRecordHandle       │  238   │%dx.types.NodeRecordHandle @dx.op.annotateNodeRecordHandle(i32, %dx.types.NodeRecordHandle, %dx.types.NodeRecordInfo)  │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│incrementOutputCount           │  240   │void @dx.op.incrementOutputCount(i32, %dx.types.NodeHandle, i32, i1)                                                   │
+│nodeOutputIsValid              │  239   │i1 @dx.op.nodeOutputIsValid(i32, %dx.types.NodeHandle)                                                                 │
 ├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│outputComplete                 │  241   │void @dx.op.outputComplete(i32, %dx.types.NodeRecordHandle)                                                            │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│getInputRecordCount            │  242   │ i32 @dx.op.getInputRecordCount(i32, %dx.types.NodeRecordHandle)                                                       │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│getInputRecordCount            │  243   │ i32 @dx.op.getInputRecordCount(i32, %dx.types.NodeRecordHandle)                                                       │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│finisedCrossGroupSharing       │  244   │i1 @dx.op.finishedCrossGroupSharing(i32, %dx.types.NodeRecordHandle)                                                   │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│barrierByMemoryType            │  245   │void @dx.op.barrierByMemoryType(i32, i32, i32)                                                                         │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│barrierByNodeRecordHandle      │  246   │call void @dx.op.barrierByNodeRecordHandle(i32, %dx.types.NodeRecordHandle, i32)                                       │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│createNodeOutputHandle         │  247   │%dx.types.NodeHandle @dx.op.createNodeOutputHandle(i32, i32)                                                           │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│indexNodeHandle                │  248   │%dx.types.NodeHandle @dx.op.indexNodeHandle(i32, %dx.types.NodeHandle, i32)                                            │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│annotateNodeHandle             │  249   │%dx.types.NodeHandle @dx.op.annotateNodeHandle(i32, %dx.types.NodeHandle, %dx.types.NodeInfo)                          │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│createNodeInputRecordHandle    │  250   │%dx.types.NodeRecordHandle @dx.op.createNodeInputRecordHandle(i32, i32)                                                │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│annotateNodeRecordHandle       │  251   │%dx.types.NodeRecordHandle @dx.op.annotateNodeRecordHandle(i32, %dx.types.NodeRecordHandle, %dx.types.NodeRecordInfo)  │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│nodeOutputIsValid              │  252   │i1 @dx.op.nodeOutputIsValid(i32, %dx.types.NodeHandle)                                                                 │
-├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│getRemainingRecursionLevels    │  253   │call i32 @dx.op.getRemainingRecursionLevels(i32)                                                                       │
+│getRemainingRecursionLevels    │  240   │call i32 @dx.op.getRemainingRecursionLevels(i32)                                                                       │
 └───────────────────────────────┴────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -147,6 +125,8 @@ Node shader entry metadata can contain the following tagged entries:
 │kDxilNodeOutputsTag                      │    21    │MDList: (MDList[])        │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
 │kDxilNodeMaxDispatchGridTag              │    22    │MD list: (i32, i32, i32)  │
+├─────────────────────────────────────────┼──────────┼──────────────────────────┤
+│kDxilRangedWaveSize                      │    23    │MD list: (i32, i32, i32)  │
 └─────────────────────────────────────────┴──────────┴──────────────────────────┘
 ```
 
