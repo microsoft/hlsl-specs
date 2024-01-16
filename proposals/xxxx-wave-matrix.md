@@ -396,6 +396,52 @@ $+ Z_a * Z_b * K$ is the static zero point adjustment for both matrix $A$ and $B
 
 $Z_*$ are constant zero points values
 
+### DXIL Changes
+
+### New DXIL Types
+
+Wave Matrix adds a new opaque object type for interacting with Wave Matrix
+objects.
+
+```
+%dx.types.waveMatrix = type { i8* }
+```
+
+Wave Matrix also adds a new property type for Wave Matrix objects.
+
+```
+%dx.types.waveMatProps = type { i8, i8, i32, i32 }
+```
+# New DXIL Opcodes
+
+```
+┌───────────────────────────────┬────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│             Name              │ opcode │                                                     IR Signature                                                      │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_Annotate            │ <TBD>  │void @dx.op.waveMatrix_Annotate(i32, %dx.types.waveMatrix*, %dx.types.waveMatProps)                                    │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_Depth               │ <TBD>  │i32 @dx.op.waveMatrix_Depth(i32, %dx.types.waveMatProps)                                                               │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_Fill                │ <TBD>  │void @dx.op.waveMatrix_Fill.<type>(i32, %dx.types.waveMatrix*, <type>)                                                 │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_LoadRawBuf          │ <TBD>  │void @dx.op.waveMatrix_LoadRawBuf(i32, %dx.types.waveMatrix*, %dx.types.Handle, i32, i32, i8, i1)                      │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_LoadGroupShared     │ <TBD>  │void @dx.op.waveMatrix_LoadGroupShared.<type>(i32, %dx.types.waveMatrix*, <type> addrspace(3)*, i32, i32, i1)          │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_StoreRawBuf         │ <TBD>  │void @dx.op.waveMatrix_StoreRawBuf(i32, %dx.types.waveMatrix*, %dx.types.Handle, i32, i32, i8, i1)                     │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_StoreGroupShared    │ <TBD>  │void @dx.op.waveMatrix_StoreGroupShared.<type>(i32, %dx.types.waveMatrix*, <type> addrspace(3)*, i32, i32, i1)         │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_Multiply            │ <TBD>  │void @dx.op.waveMatrix_Multiply(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*, %dx.types.waveMatrix*)              │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_MultiplyAccumulate  │ <TBD>  │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_ScalarOp            │ <TBD>  │void @dx.op.waveMatrix_ScalarOp.<type>(i32, %dx.types.waveMatrix*, i8, <type>)                                         │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_SumAccumulate       │ <TBD>  │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+├───────────────────────────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│waveMatrix_Add                 │ <TBD>  │void @dx.op.waveMatrix_Accumulate(i32, %dx.types.waveMatrix*, %dx.types.waveMatrix*)                                   │
+└───────────────────────────────┴────────┴───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 ## Acknowledgments
 
