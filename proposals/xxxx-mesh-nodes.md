@@ -112,7 +112,7 @@ complete the picture.
 In the future, we may add subobjects to specify more of these details within
 the DXIL library for convenience.
 
-### Illustrative Example
+### Example Syntax
 
 ```cpp
 struct MyMeshRecord {
@@ -373,7 +373,7 @@ might build on this on. Even variations on the chosen solution can be intresting
 
 ## Acknowledgments (Optional)
 
+> TBD:
+
 > Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
-
-<!-- {% endraw %} -->
