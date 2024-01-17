@@ -1,0 +1,52 @@
+Draft 4: Entry point parameter semantic diagnostics
+Shaders with entry point functions may have semantics attached to the function's parameters. This spec specifies how legal semantic usage is checked on entry point shaders. 
+The purpose of the spec is to properly define how diagnostics get emitted in Sema for higher-dimensional parameters with semantics, that later get flattened in SROA. 
+Although the DXIL spec specifies how semantic indices are assigned in https://github.com/Microsoft/DirectXShaderCompiler/blob/main/docs/DXIL.rst#semantic-index-assignment, there is no indication of how the indices are used to generate diagnostics.
+
+Entry function selection (specifics outside scope of this proposal)
+The compiler will find the entry function requested by the compilation option, or for a library profile, visit all entry functions in the library. 
+For each function, all parameters are analyzed, along with the return type and any semantic applied to the function for the return value. Each parameter is handled depending on some classification.  
+Depending on the shader kind, the qualifiers and special HLSL types are used to determine the interpretation and rules for the parameter.  
+This can mean determining whether the parameter is an input (in, default), an output (out), or both (inout), and determining which specific signature point(s) the parameter belongs to, for applicable shader stages. 
+The parameter type for recursive flattening and semantic assignment is determined here as well, potentially from the template type of a special HLSL object parameter, such as InputPatch<>.
+
+Parameter classification for diagnostics (IDENTIFYING SIGNATURE POINT):
+The compiler will interpret parameters depending on entry type, qualifiers, and special HLSL object types, then dispatch to a parameter handling function with initial top-level details. 
+For node parameters, the compiler can detect whether the parameter is an input node record or an output node record, and further, detect the type of input or output record  (Dispatch, RWDispatch, Thread, etc.) At the top level, there will be a switch statement to determine the parameter type.
+If there is a node parameter type detected, then the logic that already exists to validate node parameters and assign semantic indices will be tweaked  to prevent duplicate semantic assignment. Otherwise, the logic described below will be used to assign semantic indices. 
+Additionally, there will be a top-level map, where the key is the signature point identifier, and the value is a pair, where the pair types are the two data structures defined below, Sems and pairsAssigned. As signature points are identified, this map will be constructed.
+
+How semantic indices are assigned per parameter type once sigpoints are assigned
+Basic HLSL types (scalar, vector, matrix), and arrays of such:
+⦁	Determine number of rows based on array size * matrix rows, assign this many consecutively increasing indices starting from the start index.
+Struct or class type:
+⦁	recursively traverse base types if any
+⦁	traverse fields, with the starting index following the last index used by a prior field or base type. Each field gets assigned the next index value after the last one used for any prior fields. 
+  Every Basic  HLSL type requires a semantic + index pair if the type is found within a "regular" argument, and if there is no possible semantic to assign, semantic index assignment halts and an error is emitted.
+Array of struct or class type:
+⦁	Iterate array elements, assigning the semantic + index pair, but incrementing the index to the next unused index for each subsequent array entry.
+Separately, after semantic indices are assigned here, a structure will be constructed that contains the type information and hierarchical relationships between all types, to represent the structure of the parameter that was analyzed.
+It will be easy to extract the number of semantic indices that were assigned to the parameter itself, or the number of semantic indices that were assigned to any sub-type of the parameter (at any field or structure contained within the parameter). 
+This structure will be useful in SROA to validate that assignment took place correctly.
+
+Parameter handling functions:
+A parameter handling function already exists for Work Graphs to handle record type and look for a particular system value.  Since the record is not flattened into signature elements, the approach is different compared to entries with signature elements.
+This spec requires a new parameter handling function for node types that applies parameter flattening to determine the set of signature elements, and semantics+indices, that a parameter defines. 
+The way in which parameters are flattened into signature elements is described here: https://github.com/Microsoft/DirectXShaderCompiler/blob/main/docs/DXIL.rst#vertex-shader-hlsl. 
+This example shows how semantic index assignment works with struct fields and array elements. Diagnostic logic will need to compute the signature elements from a structure to match this flattening for diagnostics.
+
+Signature element diagnostics
+Diagnosis on first detection of duplicate semantic assignment is possible with these data structures:
+std::map<std::pair<semanticNameLowercased StringRef, int semanticIndex>, SourceLocation> pairsAssigned;
+std::map<std::string semanticName, std::map<semanticIndex, SignatureElement* > >  Sems;
+The first structure is a map from lower-case canonicalized semantic names and an associated index, to a source location. The map is useful in detecting whenever a duplicate semantic name is detected. 
+Whenever another semantic index pair is being assigned, we first check this map to see if an assignment like this has already been made (that matches semantic name and index). 
+If a duplicate was found, then we have access to the SourceLocation that the original assignment took place in. At this point, given the semantic name and the index that the compiler is inserting, and the source location where the pair originated from, a diagnostic can be emitted, which looks like:
+"Error: Duplicate semantic  index pair detected: {semantic Name} {semantic Index}, first applied from pairsAssigned[{semantic Name after lower-casing}][{semantic Index}].SourceLocation, and then applied from {current SourceLocation}."  
+If no duplicate was found, we insert into this map and then move onto the second structure. In this structure, the key is a semantic name. 
+The value is a map of all the instances where that semantic name appears in the current signature point (a group of relevant parameters to check duplication within a function parameter list). 
+For this inner map, the key is a semantic index for the specified semantic name, and the value is a pointer to the signatureElement object associated with that semantic + index pair. During the assignment of semantic + index pairs, both of these structures will be constructed.
+
+To determine the set of parameters involved in the same signature point context, hctdb.py will be used. 
+Depending on the shader kind and other factors, diagnostics will be emitted only for parameters that are within the same signature point subcontext, among all the parameters in the entry point function parameter list. 
+A new sig point kind will need to be added to specify the subcontext of node object parameters, that would allow node record type parameters.
