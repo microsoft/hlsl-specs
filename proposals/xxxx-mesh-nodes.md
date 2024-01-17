@@ -1,37 +1,11 @@
 # Mesh Nodes
 
-## Instructions
-
-> This template wraps at 80-columns. You don't need to match that wrapping, but
-> having some consistent column wrapping makes it easier to view diffs on
-> GitHub's review UI. Please wrap your lines to make it easier to review.
-
-> When filling out the template below for a new feature proposal, please do the
-> following first:
-
-> 1. Exclude the "Planned Version", "PRs" and "Issues" from the header.
-> 2. Do not spend time writing the "Detailed design" until the feature has been
->    merged in the "Under Consideration" phase.
-> 3. Delete this Instructions section including the line below.
-
----
-
 * Proposal: [NNNN](NNNN-mesh-nodes.md)
 * Author(s): [Amar Patel](https://github.com/amarpMSFT), [Tex Riddell](https://github.com/tex3d)
-* Sponsor: TBD
+* Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
 
-*During the review process, add the following fields as needed:*
-
-* Planned Version: Shader Model X.Y
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues:
-  [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
-
 ## Introduction
-
-> 10,000 ft view of the change being proposed. Try to keep to one paragraph and
-less than 10 sentences.
 
 This proposes the addition of a mesh node to Work Graphs as an experimental
 feature.
@@ -47,12 +21,6 @@ For now only mesh node support is considered as an experimental addition.
 
 ## Motivation
 
-> Describe the problems users are currently facing that this feature addresses.
-Include concrete examples, links to related issues, and any relevant background.
-
-> The point of this section is not to convince reviewers that you have a solution,
-but rather that HLSL has a problem that needs to be resolved.
-
 Work graphs are a great way to generate compute work on the GPU, and there is a
 lot of interest in expanding this to scheduling graphics work as a replacement
 for execute indirect.
@@ -60,10 +28,6 @@ Mesh shader is a natural place to start, as it's already a compute shader, and
 has far fewer details to work out than supporting legacy graphics pipelines.
 
 ## Proposed solution
-
-> Describe your solution to the problem. Provide examples and describe how they
-work. Show how your solution is better than current workarounds: is it cleaner,
-safer, or more efficient?
 
 Add a new node launch type `"mesh"`, indicating a mesh shader leaf graphics node.
 The new mesh node is based on a combination of a broadcast launch node and a
