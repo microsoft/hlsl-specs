@@ -70,8 +70,8 @@ The new mesh node is based on a combination of a broadcast launch node and a
 mesh shader. See more details about the runtime context in the work graphs spec
 [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#graphics-nodes).
 
-Use the node input record as the mesh payload, instead of an explicit `payload`
-argument.
+Use the node input record as the mesh shader input payload, instead of an
+explicit `payload` argument.
 Like a broadcast node input record, this must have an `SV_DispatchGrid` field
 indicating the grid size when `[NodeMaxDispatchGrid(x,y,z)]` is used.
 
@@ -90,12 +90,27 @@ Each of these require a user defined structure using semantics on fields, where
 fields of HLSL basic types will be used to generate signature elements in the
 same way they are for mesh shader signature handling.
 
-Amplification shaders are not necessary in this context, since work graph node
+Amplification shaders are not supported in this context, since work graph node
 shaders provide the function of generating the mesh node dispatches on the GPU.
+
+Mesh nodes can also be used as one or more entrypoints in a work graph
+(standalone since they can't output to other nodes),
+in which case the input record (payload) is supplied from DispatchGraph()
+at the API just like any other work graph entrypoint input.
+
+A complete mesh node is defined at the API by first creating a
+[generic program](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_generic_program_desc)
+including the mesh node function name, a pixel shader, and other optional state,
+then referring to that program in a
+[work graph program node](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_program_node),
+which may optionally override node properties, such as the node ID.
 
 See the [DispatchMesh Launch Nodes](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#dispatchmesh-launch-nodes)
 section of the work graphs spec, along with sections linked from there, to
 complete the picture.
+
+In the future, we may add subobjects to specify more of these details within
+the DXIL library for convenience.
 
 ### Illustrative Example
 
@@ -163,9 +178,9 @@ for more detailed descriptions of the node function attributes.
 |--|--|--|
 | `[shader("node")]` | Y | Indicates a node shader entry point |
 | `[NodeLaunch("mesh")]` | Y | Signifies a mesh node |
-| `[NodeIsProgramEntry]` | N | Node can be the first (and only) node in a graph, receiving the input record from the API, instead of from an upstream node. |
+| `[NodeIsProgramEntry]` | N | Node can be launched directly from the API in addition to or instead of from an upstream node in the work graph. |
 | `[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | N | Name for the node. In the absence of this attribute, the shader function name is the node name. There is also an optional uint `arrayIndex` parameter, meaning the shader is actually at slot `nodeName[arrayIndex]` in an array of nodes with the collective ID `nodeName`. The absence of `arrayIndex` means `arrayIndex` is `0`, which is also the case if `NodeID` isn't specified at all (using the shader function name). |
-| `[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table bound when the work graph is used. May be omitted or set to `-1` (equivalent to omitting). |
+| `[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table bound when the work graph is used. May be omitted or set to `-1` (equivalent to omitting).  If omitted and a local root signature is used, the runtime will auto-assign the index. |
 | `[NumThreads(x,y,z)]` | Y | Specifies the launch size of the threadgroup of the Mesh shader, just like with compute shader. The number of threads can not exceed `X * Y * Z = 128`. See [numthreads](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#numthreads) in the Mesh Shader spec. |
 | `[NodeShareInputOf("nodeName")]` or `[NodeShareInputOf("nodeName",arrayIndex)]` | N | Share the input of the specified NodeID with this node. |
 | `[NodeDispatchGrid(x,y,z)]` | Yes, unless `NodeMaxDispatchGrid` is defined | Declare a fixed dispatch grid size for use with this node. |
@@ -184,7 +199,7 @@ The input record takes the place of the `payload` in the mesh shader.
 |-|-|
 | `DispatchNodeInputRecord<`*recordType*`>` | read only node input |
 | [`globallycoherent`] `RWDispatchNodeInputRecord<`*recordType*`>` | Shared R/W access to input record across launched shaders. `globallycoherent` required for any cross-group coherency. |
-| *none* | Input record can be omitted when `[NodeDispatchGrid(...)]` is used and there is no record content. |
+| *none* | Input record can be omitted when there is no record content. `[NodeDispatchGrid(...)]` is then required to specify a fixed grid size. |
 
 See the work graphs spec
 [Node input declaration](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#node-input-declaration)
@@ -204,7 +219,7 @@ These are the same [system values supported by mesh shaders](https://github.com/
 
 ##### Node Outputs
 
-No node outputs are allowed for `[LaunchMode("mesh")]`.
+No outputs to other nodes are allowed for `[LaunchMode("mesh")]`.
 
 ##### Mesh Shader Outputs
 
