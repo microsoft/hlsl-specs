@@ -4,18 +4,22 @@
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
-* Planned Version: Shader Model 6.8, validator version 1.8
+* Planned Version: Shader Model 6.8
 
 ## Introduction
 
 Shader Model 6.6 included the ability to specify a wave size on a shader entry
- point in order to indicate that this shader depends on a specific wave size.
+ point in order to indicate either that a shader depends on or strongly prefers
+ a specific wave size.
 If that size of wave isn't available to the current hardware,
  shader will fail to load.
-Existing queries allow the developer to determine if this will happen in
- advance.
+If that wave size is among those supported by the platform,
+ it must be the one used when the shader is executed.
 This enables creating custom shaders optimized for the wave size of a
  particularly interesting platform and loading them when possible.
+Existing queries provide the developer with all the information necessary
+ to determine what a platform supports,
+ which should let them choose shaders accordingly.
 
 ## Motivation
 
@@ -47,13 +51,17 @@ This allows the same shader to be used in the event of the availability of a
 
 Some platforms that support a range of wave sizes might overlap with the range
  specified as supported by the shader in more than one value.
-In these cases, the runtime has a choice of wave sizes that it probably doesn't
- have the information needed to choose the best wave size.
-To give the runtime the needed information, it is useful to specify the
+In these cases, the runtime driver has a choice of wave sizes,
+ but it probably doesn't have the information needed to choose the best wave size.
+
+To provide the needed information, the shader author could specify the
  preferred wave size in addition to the full range of acceptable values.
 By adding an optional third `WaveSize` parameter, shader authors can specify the
  optimal wave size for a given shader in addition to the range of acceptable
  sizes.
+This also preserves the ability to force the driver to choose your preferred
+ wave size when multiples are available just as was done with the single value
+ `WaveSize` attribute.
 
 ## Detailed Design
 
@@ -75,17 +83,25 @@ Where `minWaveSize` is the minimum wave size supported by the shader
 
 ### DXIL Additions
 
-The existing `WaveSize` value is stored as a metadata scalar constant.
+The existing `WaveSize` value is stored as a metadata 32-bit integer constant.
 To store the additional values, an additional metadata tag indicating a tuple of
- three values representing the parameters to `WaveSize` given by the user.
+ three 32-bit integers representing the given parameters to `WaveSize`.
 In the case where no preferred wave size is specified, the value zero will
  indicate that nothing was specified.
 
+|         Tag             | Constant |         Value           |
+|-------------------------|----------|-------------------------|
+|kDxilRangedWaveSizeTag   |    23    |MD list: (i32, i32, i32) |
+
 ### SPIR-V Additions
 
-To make use of this attribute, SPIRV would have to represent it in new SPIRV
- operations that drivers can read to determine what the values are an how to
- use to them to choose the best wave size for a given shader.
+To represent the wave size range and preferred value in SPIR-V,
+ a new `ExecutionMode` value would need to be defined for the `OpExecutionMode`
+ instruction to allow specifying `SubgroupSize` with three operands instead of
+ one.
+Like the other formats, the location of the operands would indicate
+ what each value represents, the first two being the min and max wave sizes and
+ the third being the preferred wave size.
 
 ### Diagnostic Changes
 
@@ -100,9 +116,9 @@ These are where new or slightly altered errors are produced:
  attribute.
 * If the preferred wave size value indicated by the third parameter of
  `WaveSize` is not in the range specified by the first two parameters.
-* If multiple `WaveSize` attributes are applied to the same entry point,
- regardless of what overload they are, the existing error indicating an
- attribute conflict is produced.
+* If multiple `WaveSize` attributes are applied to the same entry point
+ with different numbers or values of parameters,
+ the existing error indicating an attribute conflict is produced.
 * If more than three or fewer than one parameter is applied to `WaveSize`.
 * If negative values are provided for any of the `WaveSize` parameters.
 * If float values are provided for any of the `WaveSize` parameters.
@@ -114,11 +130,15 @@ These are where new or slightly altered errors are produced:
 
 Validation should confirm:
 
-* The tuple that the wave size range tag points to has exactly three elements.
 * Each element in that is a power of two integer between 4 and 128 inclusive.
   The third parameter may also be zero.
 * The minimum wave size is less than the maximum wave size.
-* The preferred wave size lies between the minimum and maximum.
+* The preferred wave size is zero or lies between the minimum and maximum.
+* Where validator version is less than 1.6, fail on shaders that use `WaveSize`.
+* Where validator version is less than 1.8, fail when the `WaveSize` metadata
+ tag has more than one parameter.
+* Where validator version is greater than or equal to 1.8, fail when The tuple
+ that the wave size range tag points to does nto have exactly three elements.
 
 ### Runtime Additions
 
@@ -127,8 +147,6 @@ Validation should confirm:
 The PSV0 runtime data structure already contains both
  `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount` members that
  can be used to transmit the minimum and maximum values to the runtime.
-A new `PreferredWaveLaneCount` value will need to be added to the PSV3 revision
- of that struct to accommodate the third preferred value.
 
 #### Device Capability
 
@@ -228,10 +246,10 @@ For each wave size in the platform range,
  ensure that the following shader range, preferred value, and platform range
  combinations are accepted and use the preferred value:
 
-* The the preferred value and shader maximum is equal to the current platform
+* The  preferred value and shader maximum is equal to the current platform
   range value and the shader minimum is one power of two less than the platform
   minimum.
-* The the preferred value and shader minimum is equal to the current platform
+* The preferred value and shader minimum is equal to the current platform
   range value and the shader maximum is one power of two more than the platform
   maximum.
 * The shader range is the full 4-128 and the preferred value is the current
@@ -241,10 +259,10 @@ For each wave size in the platform range,
  ensure that the following shader range, preferred value, and platform range
  combinations are accepted:
 
-* The the shader maximum is equal to the current platform range value and the
+* The shader maximum is equal to the current platform range value and the
   preferred value and shader minimum is one power of two less than the platform
   minimum.
-* The the shader minimum is equal to the current platform range value and the
+* The shader minimum is equal to the current platform range value and the
   preferred value and shader maximum is one power of two more than the platform
   maximum.
 * The shader range is the full 4-128 and the preferred value is one power of two
@@ -254,9 +272,14 @@ For each wave size in the platform range,
 
 ## Alternatives considered
 
-The preferred wave size is seen as useful, but unlike the simple range,
- it requires adding new runtime data.
-That effort should be factored into the consideration of this alternative.
+Useful as it is, the preferred wave size parameter adds some level of testing, diagnostic, and other implementation complexity.
+It wasn't part of the original discussions that motivated this feature,
+ but it is necessary to maintain one aspect of the original `WaveSize` behavior.
+In addition to allowing the platform to reject wave sizes that are unsupported
+ at all, the single-value `WaveSize` attribute tells the platform which wave
+ size to choose among however many options the platform offers.
+Without the preferred wave size, there wouldn't be a way to specify this
+ preference and the platform might choose arbitrarily among the supported values.
 
 Instead of modifying the existing attribute, an additional range attribute taking
  only two parameters might be provided to specify the range while keeping the
@@ -281,3 +304,17 @@ The only issue here is that it complicates correctness checking a bit where
 The simple solution would be to allow only one of either `WaveSize` or
  `WaveSizeRange`.
 Mild aesthetic preference ultimately opted to reuse the existing attribute.
+
+## Acknowledgements
+
+This document received invaluable contributions and feedback from various Microsoft
+ team members and our partners.
+
+Special thanks:
+
+* Alan Baker
+* Chris Bieneman
+* Martin Fuller
+* Amar Patel
+* Damyan Pepper
+* Tex Riddell
