@@ -37,6 +37,41 @@ The query to determine what wave sizes are supported takes a range and similar
  information is transmitted from the shader to the runtime, though not the
  driver.
 
+### Motivational Example
+
+As an example of how this might be useful, consider a tile culling shader
+For each tile, the shader has to compute the maximum and minimum depth values.
+
+To do this without a preferred wave size involves expensive atomic an barrier
+ operations.
+To keep track of the current minimum and maximum values for each tile requires
+ a storage buffer.
+This buffer needs to be pre-initialized to unachievably low values for the
+ maximum and unachievalby high values for the minimum to ensure that whatever
+ the first value encountered is, it will replace the initialization.
+This pre-clearing requires an expensive resource barrier.
+After that setup, each thread in the tile will have to
+ use atomic operations to compare this thread's depth value
+ and determine the overall mininum and maximum depth for the whole tile,
+ storing it in the tile-specific location in the buffer.
+
+Shader Model 6.6's `WaveSize` already introduces some improvement opportunities
+ on this approach.
+A shader could specify a wave size of 64 and each thread could load 4 depth
+ values and perform a the minimum and maximum calculations locally.
+These local results are then used in a wave minimum/maximum calculation and
+ writes the final result.
+This removes the need for atomics and the advance buffer clearing.
+
+With the addition of a 
+
+Lets say that we are running instead with a range, which is say [4,64]. But we can indicate that 64 is optimal. (Perhaps [4,64,64] to say which is our preferred wave size)
+
+So if we get wave64, SV_GroupWaveCount == 1, we run the console version on PC, great! This was the hint we provided and we get the best version of the shader.
+If SV_GroupWaveCount > 1, we can still do better than the current PC implementation, because we have SV_GroupWaveIndex. That is, we allocate a  per wave min/max value in group shared memory. Each wave writes its min/max into group shared memory. We do a group sync, all waves other than wave index 0 retire. Wave index 0 reads all the group shared values, does another min/max of those, and writes the results for the tile. No atomics, no pre-clearing of the buffer.
+
+So yeah we can definitely use both the range wave size and SV_GroupWaveIndex/Count in conjunction to bring the console implementation of the shader to PC, and inform the compiler to pick the wave size we know is going to do a better job and run faster, if it can.
+
 ## Proposed solution
 
 Modifying the parameters of the `WaveSize` attribute that was introduced by
