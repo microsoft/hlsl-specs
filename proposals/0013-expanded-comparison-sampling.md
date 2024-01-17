@@ -5,7 +5,7 @@
              [Jesse Natalie](https://github.com/jenatali)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
-* Planned Version: Shader Model 6.8, validator version 1.8
+* Planned Version: Shader Model 6.8
 * Issues: [30](https://github.com/microsoft/hlsl-specs/issues/30),
           [81](https://github.com/microsoft/hlsl-specs/issues/81)
 
@@ -130,32 +130,33 @@ To add LOD calculation for comparison samplers, HLSL will introduce and require
 These new HLSL texture methods will be added:
 
 ```c++
-<Format> <TexObject>::SampleCmpGrad(
+template<typename ElementType, int CoordsCt, int DimsCt>
+vector<ElementType, ElementSize> TextureBase::SampleCmpGrad(
     SamplerComparisonState S,
-    float<crds> Location,
-    float<dims> DDX,
-    float<dims> DDY,
+    vector<float,CoordsCt> Location,
+    vector<float,DimsCt> DDX,
+    vector<float,DimsCt> DDY,
     float CompareValue,
-    [int<dims> Offset,]
-    [float Clamp,]
-    [out uint Status]
-);
-<Format> TextureCube::SampleCmpGrad(
+    vector<float,DimsCt> Offset = 0.0,
+    float Clamp = 0.0f);
+
+template<typename ElementType, int CoordsCt, int DimsCt>
+vector<ElementType, ElementSize> TextureCube::SampleCmpGrad(
     SamplerComparisonState S,
-    float<crds> Location,
-    float<dims> DDX,
-    float<dims> DDY,
+    vector<float,CoordsCt> Location,
+    vector<float,DimsCt> DDX,
+    vector<float,DimsCt> DDY,
     float CompareValue,
-    [float Clamp,]
-    [out uint Status]
-);
+    float Clamp = 0.0f);
 ```
 
-Where `TexObject` represents any of Texture1D[Array] or Texture2D[Array]
+Where `TextureBase` represents any of Texture1D[Array] or Texture2D[Array]
  texture object types.
 Note that `TextureCube` method does not have an `Offset` parameter in keeping
  with other `TextureCube` methods and
  that `TextureCubeArray` does not support the `SampleCmpGrad` method.
+Note that these both have an additional overload that includes all the default
+ parameters explicitly specified and a final output `status` parameter
 `SampleCmpGrad` is available in all shader stages.
 
 ```c++
@@ -297,8 +298,6 @@ To implement the new `CalculateLevelOfDetail[Unclamped]` overloads,
 * Using `CalculateLevelOfDetail[Unclamped]` with a `SamplerComparisonState`
   sampler will no longer produce an error when compiling with appropriate shader
   model versions.
-* Invoking new methods `SampleCmpBias` and `SampleCmpGrad` with valid texture
-  objects and parameters will not produce an unrecognized function error.
 
 #### New Errors
 
@@ -324,8 +323,10 @@ To implement the new `CalculateLevelOfDetail[Unclamped]` overloads,
 
 #### Runtime information
 
-A shader flag indicating usage of `SampleCmpBias` or `SampleCmpGrad` to indicate
- that the shader requires the presence of a capability bit indicating support.
+`ExtendedComparisonSampling` is a new feature info flag added to SFI0.
+It indicates that the shadermakes use of `SampleCmpBias` or `SampleCmpGrad`.
+This indicates to the runtime that that the shader requires the presence of
+ the corresponding capability bit (described below) indicating support.
 
 #### Device Capability
 
