@@ -27,7 +27,7 @@ Shader Model 6.6 provides no mechanism for specifying multiple wave sizes that a
  single shader might be able to support.
 Consequently, if more than one target wave size is of interest, separate entry
  points will have to be created for each wave size.
-These will each have to be compiled and shipped separately and, at runtime,
+These will each have to be compiled and shipped separately and, at run time,
  the appropriate shaders will have to be selected.
 This increases the size of the shipped product and potentially slows down
  runtime shader loading.
@@ -86,7 +86,7 @@ This allows the same shader to be used in the event of the availability of a
 
 Some platforms that support a range of wave sizes might overlap with the range
  specified as supported by the shader in more than one value.
-In these cases, the runtime driver has a choice of wave sizes,
+In these cases, the graphics driver has a choice of wave sizes,
  but it probably doesn't have the information needed to choose the best wave size.
 
 To provide the needed information, the shader author could specify the
@@ -159,7 +159,6 @@ These are where new or slightly altered errors are produced:
 * If float values are provided for any of the `WaveSize` parameters.
 * If non-numerical values are provided for any of the `WaveSize` parameters.
 * If non-literal variables are provided for any of the `WaveSize` parameters.
-* If any of the parameters to `WaveSize` are less than 4 or greater than 128.
 
 #### Validation Changes
 
@@ -179,6 +178,7 @@ Validation should confirm:
 
 #### Runtime information
 
+No additions are needed here.
 The PSV0 runtime data structure already contains both
  `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount` members that
  can be used to transmit the minimum and maximum values to the runtime.
@@ -202,8 +202,6 @@ Verify this compiler output:
   the third in the same tuple.
 * That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
   values reflect those provided for the wave size range.
-* That the PSV3 `PreferredWaveLaneCount` value reflects the third preferred
-  value when provided and zero when omitted.
 
 #### Diagnostics Testing
 
@@ -307,7 +305,8 @@ For each wave size in the platform range,
 
 ## Alternatives considered
 
-Useful as it is, the preferred wave size parameter adds some level of testing, diagnostic, and other implementation complexity.
+Useful as it is, the preferred wave size parameter adds some level of testing,
+ diagnostic, and other implementation complexity.
 It wasn't part of the original discussions that motivated this feature,
  but it is necessary to maintain one aspect of the original `WaveSize` behavior.
 In addition to allowing the platform to reject wave sizes that are unsupported
