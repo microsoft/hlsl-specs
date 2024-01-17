@@ -258,20 +258,6 @@ node shaders with `mesh` launch type:
 Notably, the `dx.op.GetMeshPayload` intrinsic from mesh shader is not supported
 by mesh nodes. Instead, payload data is available through the node input record.
 
-### Diagnostic Changes
-
-> TBD:
-
-> * What additional errors or warnings does this introduce?
-> * What exisiting errors or warnings does this remove?
-
-#### Validation Changes
-
-> TBD:
-
-> * What additional validation failures does this introduce?
-> * What existing validation failures does this remove?
-
 ### Runtime Additions
 
 #### Runtime information
@@ -311,33 +297,6 @@ for detail.
 
 Devices that support experimental `D3D_SHADER_MODEL_6_9` and experimental [`D3D12_WORK_GRAPHS_TIER_1_1`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_work_graphs_tier) are required to support these features as part of graphics nodes in work graphs.
 
-## Testing
-
-> TBD
-
-> * How will correct codegen for DXIL/SPIRV be tested?
-> * How will the diagnostics be tested?
-> * How will validation errors be tested?
-> * How will validation of new DXIL elements be tested?
-> * How will the execution results be tested?
-
-## Alternatives considered (Optional)
-
-> TBD:
-
-> If alternative solutions were considered, please provide a brief overview. This
-section can also be populated based on conversations that occur during
-reviewing. Having these solutions and why they were rejected documented may save
-trouble from those who might want to suggest feedback or additional features that
-might build on this on. Even variations on the chosen solution can be intresting.
-
 ## Open Questions
 
 - Should vanilla mesh shaders be supported, or only mesh nodes?
-
-## Acknowledgments (Optional)
-
-> TBD:
-
-> Take a moment to acknowledge the contributions of people other than the author
-and sponsor.
