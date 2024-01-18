@@ -41,7 +41,10 @@ indicating the grid size when `[NodeMaxDispatchGrid(x,y,z)]` is used.
 
 The same system value inputs supported for broadcast launch nodes and mesh
 shaders are supported in the same way here:
-`SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, and `SV_GroupID`.
+`SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`,
+and `SV_ViewID`.
+Note: data required for runtime validation of ViewID attribute expansion is not
+supported for the target of this proposal.
 
 Node outputs are not allowed - the mesh node must be a leaf in the work graph.
 
@@ -180,6 +183,7 @@ These are the same [system values supported by mesh shaders](https://github.com/
 | `SV_GroupIndex`       | `uint`  | Flattened thread index within group |
 | `SV_GroupID`          | `uint3` | Group ID within dispatch |
 | `SV_DispatchThreadID` | `uint3` | Thread ID within dispatch |
+| `SV_ViewID`           | `uint`  | See [definition in Mesh Shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_viewid) |
 
 ##### Node Outputs
 
