@@ -291,8 +291,6 @@ by mesh nodes. Instead, payload data is available through the node input record.
 
 #### Runtime information
 
-> * What information does the compiler need to provide for the runtime and how?
-
 For mesh launch mode, additional node details will need to be captured to RDAT.
 For context, see [RDAT_LibraryTypes.inl](https://github.com/microsoft/DirectXShaderCompiler/blob/main/include/dxc/DxilContainer/RDAT_LibraryTypes.inl).
 The approach proposed for this prototype is to add a `RDAT::NodeFuncAttribKind`
