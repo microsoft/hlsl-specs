@@ -168,6 +168,12 @@ The input record takes the place of the `payload` in the mesh shader.
 | [`globallycoherent`] `RWDispatchNodeInputRecord<`*recordType*`>` | Shared R/W access to input record across launched shaders. `globallycoherent` required for any cross-group coherency. |
 | *none* | Input record can be omitted when there is no record content. `[NodeDispatchGrid(...)]` is then required to specify a fixed grid size. |
 
+One system value is supported inside the *recordType* for `SV_DispatchGrid`,
+see [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#sv_dispatchgrid)
+for more details, where mesh nodes are just like broadcast launch nodes in
+this regard.
+Any other semantics on fields in the record structure are ignored.
+
 See the work graphs spec
 [Node input declaration](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#node-input-declaration)
 section under options for broadcasting launch for more detail.
