@@ -157,11 +157,37 @@ test. Some of the difficulties are:
     they cannot use the same id for two different types. This can become hard to
     manage.
 
-This proposal deprecates the old mechanism, and replaces it with a new type
-`vk::SpirvType<int OpCode, ...>`. The template on the type contains the opcode
-and all of the parameters necessary for that opcode. The difficulty with this is
-that the operands are not just literal integer values. Sometimes they are
-another type.
+This proposal deprecates the old mechanism, and replaces it with two new types
+`vk::SpirvOpaqueType<uint OpCode, ...>` and
+`vk::SpirvType<uint OpCode, uint size, uint alignment, ...>`. For
+`SpirvOpaqueType`, the template on the type contains the opcode and all of the
+parameters necessary for that opcode. Each parameter may be one of three kinds
+of values:
+
+1.  Any expression that can be evaluated to a constant scalar value at compile
+    time. This value will be passed in to the type-declaration instruction as
+    the id of an `OpConstant*` instruction.
+1.  An expression as described above, wrapped in a call to `vk::ext_literal`.
+    This value will be passed in to the type-declaration instruction as an
+    immediate literal value.
+1.  Any type. The id of the lowered type will be passed in to the
+    type-declaration instruction.
+
+For example, [`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/
+SPIRV.html#OpTypeArray) takes an id for the element type and an id for the
+element length, so an array of 16 integers could be declared as
+
+```
+vk::SpirvOpaqueType</* OpTypeArray */ 28, int, 16>
+```
+
+[`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#
+OpTypeVector) takes an id for the component type and a literal for the component
+count, so a 4-integer vector could be declared as
+
+```
+vk::SpirvOpaqueType</* OpTypeVector */ 23, int, vk::ext_literal(4)>
+```
 
 The header file could create a partial instantiation with a more meaningful
 name. For example, if you wanted to declare the types from the
@@ -169,11 +195,11 @@ name. For example, if you wanted to declare the types from the
 you could have
 
 ```
-typedef vk::SprivType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
+typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
 
 // Requires HLSL2021
 template<typename ImageType>
-using VmeImageINTEL = vk::SpirvType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
+using VmeImageINTEL = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
 ```
 
 Then the user could simply use the types:
@@ -182,6 +208,22 @@ Then the user could simply use the types:
 VmeImageINTEL<Texture2D> image;
 AvcMcePayloadINTEL payload;
 ```
+
+If you want to use an inline SPIR-V type in a context where the size and
+alignment matter, for example as an interface type or in a push constant, you
+should use `SpirvType` instead of `SpirvOpaqueType`.
+
+`SpirvType` additionally takes a `size` parameter, specifying the number of
+bytes a single value of the type occupies, and an `alignment` parameter,
+specifying a power of two that the value will be aligned to in memory. For
+example, an unsigned 8-bit integer type could be declared as
+
+```
+typedef vk::SpirvType</* OpTypeInt */ 21, /* size */ 1, /* alignment */ 1, vk::ext_literal(8), vk::ext_literal(false)> uint8_t;
+```
+
+Neither `SpirvType` nor `SpirvOpaqueType` may be used as the component type for
+an HLSL vector or matrix.
 
 ### Decorations
 
