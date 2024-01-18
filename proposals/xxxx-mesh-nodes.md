@@ -212,6 +212,25 @@ any of the output arrays.
 
 See [shared output arrays](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#shared-output-arrays) in the mesh shader spec for more details.
 
+##### Mesh Node Output System Values
+
+Like mesh shaders, `vertices` and `primitives` outputs require semantics on
+fields to produce corresponding output and primitive signature elements.
+Outputs also support the same system values supported by mesh shaders, listed
+below.  See links below for additional details relevant to mesh shaders for
+`SV_PrimitiveID` and `SV_CullPrimitive`.
+
+| system value semantic       | type     | required? | location | notes |
+|-----------------------------|----------|-----------|----------|-------------|
+| `SV_Position`               | `float4`     | Y | `vertices`   |  |
+| `SV_RenderTargetArrayIndex` | `uint`       | N | `primitives` |  |
+| `SV_ViewPortArrayIndex`     | `uint`       | N | `primitives` |  |
+| `SV_ClipDistance`           | `float<1-4>` | N | `vertices`   |  |
+| `SV_CullDistance`           | `float<1-4>` | N | `vertices`   |  |
+| `SV_ShadingRate`            | `uint`       | N | `primitives` |  |
+| `SV_PrimitiveID`            | `uint`       | N | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_primitiveid-in-the-pixel-shader) |
+| `SV_CullPrimitive`          | `uint`       | N | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_cullprimitive) |
+
 #### SetMeshOutputCounts
 
 > Excerpts from [SetMeshOutputCounts](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#setmeshoutputcounts) in the mesh shader spec.
