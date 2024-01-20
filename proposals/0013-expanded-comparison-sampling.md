@@ -29,45 +29,45 @@ The most useful forms of sampling involve the calculation of a MIP level
 Different non-comparison sampler operations calculate the MIP level in different
  ways:
 
-* `Sample(SamplerState S, float<crds> Location)`
+* `Sample(SamplerState S, vector<float, CoordsCt> Location)`
   samples using LOD values that are determined implicitly using gradients
   (sometimes called derivatives) representing how much the coordinates in
   `Location` that correspond to sampling dimension change across neighboring
   pixels.
-* `SampleBias(SamplerState S, float<crds> Location, float Bias)`
+* `SampleBias(SamplerState S, vector<float, CoordsCt> Location, float Bias)`
    samples using the same implicitly-determined LOD with an
    explicitly-provided `Bias` value added to that result.
-* `SampleGrad(SamplerState S, float<crds> Location, float<dims> DDX, float<dims> DDY)`
+* `SampleGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY)`
    samples using the LOD calculated using the explicitly-provided
    `DDX` and `DDY` gradients.
-* `SampleLevel(SamplerState S, float<crds> Location, float LOD)`
+* `SampleLevel(SamplerState S, vector<float, CoordsCt> Location, float LOD)`
    samples using an explicitly-provided `LOD`.
 
-Note that throughout this document, we use `<crds>` to represent the number of
- indexable coordinate dimensions and `<dims>` to represent the number of native
- dimension axes in the texture resource.
-This means that `<crds>` includes the native dimensions as well as an additional
- dimension for the slices in array textures and `<dims>` excludes the additional
- array texture slice dimension.
+Note that throughout this document, the template parameter `CoordsCt`
+ represents the number of indexable coordinate dimensions and `DimsCt`
+ represents the number of native dimension axes in the given texture resource.
+This means that `CoordsCt` includes the native dimensions as well as an
+ additional dimension for the slices in array textures and `DimsCt` excludes
+ the additional array texture slice dimension.
 
 Comparison sampler operations have fewer options for how the LOD is calculated:
 
-* `SampleCmp(SamplerComparisonState S, float<crds> Location)`
+* `SampleCmp(SamplerComparisonState S, vector<float, CoordsCt> Location)`
   performs a comparison sample using implicitly-determined LOD values.
-* `SampleCmpLevelZero(SamplerComparisonState S, float<crds> Location, float cmpVal)`
+* `SampleCmpLevelZero(SamplerComparisonState S, vector<float, CoordsCt> Location, float cmpVal)`
   performs a comparison sample using LOD 0
-* `SampleCmpLevel(SamplerComparisonState S, float<crds> Location, float cmpVal, float LOD)`
+* `SampleCmpLevel(SamplerComparisonState S, vector<float, CoordsCt> Location, float cmpVal, float LOD)`
   performs a comparison sample using an explicitly provided `LOD`
   (as of shader model 6.7)
 
 Additionally, the level of detail value can be calculated and retrieved directly
  for non-comparison samplers:
 
-* `CalculateLevelOfDetailUnclamped(SamplerState S, float<crds> Location)`
+* `CalculateLevelOfDetailUnclamped(SamplerState S, vector<float, CoordsCt> Location)`
   returns the raw LOD value determined implicitly using gradients representing
   how much the dimension in `Location` change across neighboring pixels
   regardless of whether it falls outside the valid range.
-* `CalculateLevelOfDetail(SamplerState S, float<crds> Location)`
+* `CalculateLevelOfDetail(SamplerState S, vector<float, CoordsCt> Location)`
   returns the implicitly-determined LOD value clamped to the valid range.
 
 There are no `CalculateLevelOfDetail` variants for comparison samplers.
@@ -88,10 +88,10 @@ To add full comparison sampling support, HLSL will introduce an optional feature
  that adds these new comparison sampling builtin methods to all texture objects
  that currently support the non-comparison methods:
 
-* `SampleCmpBias(SamplerComparisonState S, float<crds> Location, float Bias)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias)`
   performs a comparison sample using the implicitly-determined LOD with the
   explicitly-provided `Bias` value added to that result.
-* `SampleCmpGrad(SamplerState S, float<crds> Location, float DDX, float DDY)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float DDX, float DDY)`
    samples using the LOD calculated using the explicitly-provided
    `DDX` and `DDY` gradients.
 
@@ -103,24 +103,24 @@ Though not included above, all relevant overloads of `SampleBias` and
 The parameters not explicitly described here will function exactly as they do
  when used by the non-comparison builtin methods:
 
-* `SampleCmpBias(SamplerComparisonState S, float<crds> Location, float Bias)`
-* `SampleCmpBias(SamplerComparisonState S, float<crds> Location, float Bias, int<dims> Offset)`
-* `SampleCmpBias(SamplerComparisonState S, float<crds> Location, float Bias, int<dims> Offset, float Clamp)`
-* `SampleCmpBias(SamplerComparisonState S, float<crds> Location, float Bias, int<dims> Offset, float Clamp, uint Status)`
-%* `SampleCmpGrad(SamplerState S, float<crds> Location, float<dims> DDX, float<dims> DDY)`
-* `SampleCmpGrad(SamplerState S, float<crds> Location, float<dims> DDX, float<dims> DDY, int<dims> Offset)`
-* `SampleCmpGrad(SamplerState S, float<crds> Location, float<dims> DDX, float<dims> DDY, int<dims> Offset, float Clamp)`
-* `SampleCmpGrad(SamplerState S, float<crds> Location, float<dims> DDX, float<dims> DDY, int<dims> Offset, float Clamp, uint Status)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset, float Clamp)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset, float Clamp, uint Status)`
+%* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp, uint Status)`
 
 To add LOD calculation for comparison samplers, HLSL will introduce and require
  these new comparison sampler method overloads to all texture objects that
  currently support the non-comparison method overloads:
 
-* `CalculateLevelOfDetailUnclamped(SamplerComparisonState S, float<crds> Location)`
+* `CalculateLevelOfDetailUnclamped(SamplerComparisonState S, vector<float, CoordsCt> Location)`
   returns the raw LOD value determined implicitly using gradients representing
   how much the `Location` changes across neighboring pixels regardless of
   whether it falls outside the valid range.
-* `CalculateLevelOfDetail(SamplerComparisonState S, float<crds> Location)`
+* `CalculateLevelOfDetail(SamplerComparisonState S, vector<float, CoordsCt> Location)`
   returns the implicitly-determined LOD value clamped to the valid range.
 
 ## Detailed Design
@@ -131,58 +131,60 @@ These new HLSL texture methods will be added:
 
 ```c++
 template<typename ElementType, int CoordsCt, int DimsCt>
-vector<ElementType, ElementSize> TextureBase::SampleCmpGrad(
+vector<ElementType, DimsCt> TextureBase::SampleCmpGrad(
     SamplerComparisonState S,
-    vector<float,CoordsCt> Location,
-    vector<float,DimsCt> DDX,
-    vector<float,DimsCt> DDY,
+    vector<float, CoordsCt> Location,
+    vector<float, DimsCt> DDX,
+    vector<float, DimsCt> DDY,
     float CompareValue,
-    vector<float,DimsCt> Offset = 0.0,
+    vector<int, DimsCt> Offset = 0,
     float Clamp = 0.0f);
 
 template<typename ElementType, int CoordsCt, int DimsCt>
-vector<ElementType, ElementSize> TextureCube::SampleCmpGrad(
+vector<ElementType, DimsCt> TextureCube::SampleCmpGrad(
     SamplerComparisonState S,
-    vector<float,CoordsCt> Location,
-    vector<float,DimsCt> DDX,
-    vector<float,DimsCt> DDY,
+    vector<float, CoordsCt> Location,
+    vector<float, DimsCt> DDX,
+    vector<float, DimsCt> DDY,
     float CompareValue,
     float Clamp = 0.0f);
 ```
 
 Where `TextureBase` represents any of Texture1D[Array] or Texture2D[Array]
  texture object types.
-Note that `TextureCube` method does not have an `Offset` parameter in keeping
- with other `TextureCube` methods and
- that `TextureCubeArray` does not support the `SampleCmpGrad` method.
+The `TextureCube` method does not have an `Offset` parameter in keeping
+ with other `TextureCube` methods.
+`TextureCubeArray` does not support the `SampleCmpGrad` method.
 Note that these both have an additional overload that includes all the default
- parameters explicitly specified and a final output `status` parameter
+ parameters explicitly specified and a final output `status` parameter.
 `SampleCmpGrad` is available in all shader stages.
 
 ```c++
-<Format> <TexObject>::SampleCmpBias(
+template<typename ElementType, int CoordsCt, int DimsCt>
+vector<ElementType, DimsCt> TextureBase::SampleCmpBias(
       SamplerComparisonState S,
-      float<crds> Location,
+      vector<float, CoordsCt> Location,
       float Bias,
       float CompareValue,
-      [int<dims> Offset,]
-      [float Clamp,]
-      [out uint Status]
+      vector<int, DimsCt> Offset = 0,
+      float Clamp = 0.0f,
 );
-<Format> TextureCube[Array]::SampleCmpBias(
+template<typename ElementType, int CoordsCt, int DimsCt>
+vector<ElementType, DimsCt> TextureCube[Array]::SampleCmpBias(
       SamplerComparisonState S,
-      float<crds> Location,
+      vector<float, CoordsCt> Location,
       float Bias,
       float CompareValue,
-      [float Clamp,]
-      [out uint Status]
+      float Clamp = 0.0f
 );
 ```
 
-Where `TexObject` represents any of Texture1D[Array] or Texture2D[Array]
+Where `TextureBase` represents any of Texture1D[Array] or Texture2D[Array]
  texture object types.
-Note that `TextureCube*` methods do not have an `Offset` parameter
- in keeping with other `TextureCube*` methods.
+The `TextureCube*` methods do not have an `Offset` parameter in keeping with other
+ `TextureCube*` methods.
+Both methods have an additional overload that includes all the default
+ parameters explicitly specified and a final output `status` parameter.
 `SampleCmpBias` is only available in the pixel and compute shader stages where
  implicit derivatives can be calculated.
 
@@ -207,15 +209,19 @@ More specifically, `SampleCmpGrad` uses explicit gradients to compute the LOD
 Two new HLSL overloads for calculating the level of detail will be added:
 
 ```c++
-float <TexObject>::CalculateLevelOfDetail(
+template<int CoordsCt>
+float TextureBase::CalculateLevelOfDetail(
       SamplerComparisonState S,
-      float<crds> Location);
-float <TexObject>::CalculateLevelOfDetailUnclamped(
+      vector<float, CoordsCt> Location
+);
+template<int CoordsCt>
+float TextureBase::CalculateLevelOfDetailUnclamped(
       SamplerComparisonState S,
-      float<crds> Location);
+      vector<float, CoordsCt> Location
+);
 ```
 
-Where `TexObject` represents any texture object type except `Texture2DMS*`.
+Where `TextureBase` represents any texture object type except `Texture2DMS*`.
 `CalculateLevelOfDetail` is only available in the pixel and compute shader
  stages where implicit derivatives can be calculated.
 
@@ -323,8 +329,14 @@ To implement the new `CalculateLevelOfDetail[Unclamped]` overloads,
 
 #### Runtime information
 
-`ExtendedComparisonSampling` is a new feature info flag added to SFI0.
-It indicates that the shadermakes use of `SampleCmpBias` or `SampleCmpGrad`.
+A new feature info flag is added to SFI0:
+
+|         Tag             | Bit |   Value    | Description                             |
+|-------------------------|-----|------------|-----------------------------------------|
+|SampleCmpGradientOrBias  | 31  | 0x80000000 | SampleCmpBias or SampleCmpGrad are used |
+
+It indicates to the runtime that the shader makes use of `SampleCmpBias` or
+ `SampleCmpGrad`.
 This indicates to the runtime that that the shader requires the presence of
  the corresponding capability bit (described below) indicating support.
 
@@ -379,7 +391,7 @@ Use `SampleCmpBias` in code reachable from the entry point of each unsupported
  mesh stages if lacking hardware support for mesh derivatives)
 Using `SampleCmpBias`, `SampleCmpGrad`, and the new `CalculateLevelOfDetail*`
  overloads in an unsupported shader model on a supported stage and verify that
- a special error indicating the require version is produced.
+ a special error indicating the required version is produced.
 
 ### Validation Testing
 
