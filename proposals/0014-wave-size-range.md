@@ -120,10 +120,6 @@ These are where new or slightly altered errors are produced:
  with different numbers or values of parameters,
  the existing error indicating an attribute conflict is produced.
 * If more than three or fewer than one parameter is applied to `WaveSize`.
-* If negative values are provided for any of the `WaveSize` parameters.
-* If float values are provided for any of the `WaveSize` parameters.
-* If non-numerical values are provided for any of the `WaveSize` parameters.
-* If non-literal variables are provided for any of the `WaveSize` parameters.
 
 #### Validation Changes
 
@@ -161,49 +157,53 @@ As a required feature, devices supporting the shader model it ships with are
 
 Verify this compiler output:
 
-* The two parameter overload of `WaveSize` correctly transmits those values to a
+1. The two parameter overload of `WaveSize` correctly transmits those values to a
   metadata tuple with a zero third value that is pointed to by the correct tag
   in the entry point attribute list.
-* The three parameter overload of `WaveSize` transmits those values as well as
+2. The three parameter overload of `WaveSize` transmits those values as well as
   the third in the same tuple.
-* That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
+3. That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
   values reflect those provided for the wave size range.
 
 #### Diagnostics Testing
 
-* Use the following invalid parameters each parameter location to `WaveSize`
+1. Use the following invalid parameters each parameter location to `WaveSize`
   and ensure that an appropriate error is produced:
-  * Negative power of two integer
-  * Floating point value
-  * non-literal
-  * Integer less than 4
-  * Integer greater than 128
-  * A non-power-of-two integer between 4 and 128
-* Add the following invalid `WaveSize` attributes to an compute shader entry
+   1. Negative power of two integer
+   2. Floating point value
+   3. non-literal integer
+   4. Integer less than 4
+   5. Integer greater than 128
+   6. A non-power-of-two integer between 4 and 128
+2. Add the following invalid `WaveSize` attributes to an compute shader entry
   point and ensure that an appropriate error is produced:
-  * no parameter list
-  * an empty parameter list "()"
-  * four parameters
-* Try the following invalid `WaveSize` parameter value combinations and ensure
+   1. no parameter list
+   2. an empty parameter list "()"
+   3. four parameters
+3. Try the following invalid `WaveSize` parameter value combinations and ensure
   that an appropriate error is produced:
-  * Set the minimum wave size equal to the maximum
-  * Set the minimum wave size greater than the maximum
-  * Set the preferred wave size to a value outside of the specified range
-* Combine multiples of the 1, 2 and 3 parameter `WaveSize` attribute overloads
-  on the same entry point and ensure that an attribute conflict error is
-  produced.
+   1. Set the minimum wave size equal to the maximum
+   2. Set the minimum wave size greater than the maximum
+   3. Set the preferred wave size to a value outside of the specified range
+4. Combine multiples of the 1, 2 and 3 parameter `WaveSize` attribute overloads
+  with different values on the same entry point and ensure that an attribute
+  conflict error is produced.
 
 ### Validation Testing
 
 Test that the following produce validation errors:
 
-* The wave size range tag pointing to anything but a tuple of 3
-* A tuple value is not an integer
-* A range tuple value is -4, 0, 1, 2, 3, 127, 129, or 256
-* A preferred tuple value is -4, 1, 2, 3, 127, 129, or 256
-* The minimum wave size value is equal to the maximum
-* The minimum wave size value is greater than the maximum
-* The preferred wave size is outside the specified range, but otherwise valid
+1. The wave size range tag pointing to anything but a tuple of 3
+2. A tuple value is not an integer
+3. A range tuple value is -4, 0, 1, 2, 3, 127, 129, or 256
+4. A preferred tuple value is -4, 1, 2, 3, 127, 129, or 256
+5. The minimum wave size value is equal to the maximum
+6. The minimum wave size value is greater than the maximum
+7. The preferred wave size is outside the specified range, but otherwise valid
+8. Multiple metadata `kDxilRangedWaveSizeTag`s are in the same compiled shader.
+9. A metadata `kDxilRangedWaveSizeTag` is included with a `kDxilWaveSizeTag` in
+ the same compiled shader.
+10. Explicit validator versions before 1.8 used with `kDxilRangedWaveSizeTag`s
 
 ### Execution Testing
 
