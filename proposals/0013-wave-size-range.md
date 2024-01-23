@@ -166,7 +166,8 @@ Verify this compiler output:
   values reflect those provided for the wave size range.
 
 Note that the above must all use literal values for the parameters on account of
- other compile-time contants being broken due to DXC bug [#2188](https://github.com/microsoft/DirectXShaderCompiler/issues/2188).
+ other compile-time contants being broken due to DXC bug 
+ [#2188](https://github.com/microsoft/DirectXShaderCompiler/issues/2188).
 
 #### Diagnostics Testing
 
