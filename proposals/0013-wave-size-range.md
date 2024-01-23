@@ -1,6 +1,6 @@
 # Wave Size Range
 
-* Proposal: [0014](0014-wave-size-range.md)
+* Proposal: [0013](0013-wave-size-range.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
