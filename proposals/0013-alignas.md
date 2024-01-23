@@ -2,7 +2,7 @@
 
 # HLSL alignas Specifier
 
-* Proposal: [0013](0013-alignas.md)
+* Proposal: [NNNN](NNNN-alignas.md)
 * Author(s): [Mike Apodaca (NVIDIA)](https://github.com/mapodaca-nv)
 * Sponsor: TBD
 * Status: **Under Consideration**
@@ -50,11 +50,10 @@ re-compilation and re-caching of shaders.
 
 ## Proposed solution
 
-Describe your solution to the problem. Provide examples and describe how they
-work. Show how your solution is better than current workarounds: is it cleaner,
-safer, or more efficient?
-
-## Detailed design
+The `alignas` specifier may be specified on the declaration of a
+structure or the declaration of a structure member, when used by
+`[RW]StructuredBuffer` declarations, and templated `ByteAddressBuffer` loads
+and stores.
 
 ### Syntax
 
@@ -269,10 +268,6 @@ value bits smaller than the alignment specified.
 
 ## Alternatives considered (Optional)
 
-If alternative solutions were considered, please provide a brief overview.
- This
-section can also be populated based on conversations that occur during
-reviewing.
 
 ## Acknowledgments (Optional)
 
