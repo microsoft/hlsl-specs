@@ -109,8 +109,8 @@ Like the other formats, the location of the operands would indicate
 
 These are where new or slightly altered errors are produced:
 
-* If any of the parameters of `WaveSize` are not literal power of two integers
-  between 4 and 128 inclusive.
+* If any of the parameters of `WaveSize` are not compile-time constant
+  power-of-two integers between 4 and 128 inclusive.
 * If the minimum wave size value is greater than or equal to the max wave size
  as respectively specified by the first and second parameters in the `WaveSize`
  attribute.
@@ -125,7 +125,7 @@ These are where new or slightly altered errors are produced:
 
 Validation should confirm:
 
-* Each element in that is a power of two integer between 4 and 128 inclusive.
+* Each element in that is a power-of-two integer between 4 and 128 inclusive.
   The third parameter may also be zero.
 * The minimum wave size is less than the maximum wave size.
 * The preferred wave size is zero or lies between the minimum and maximum.
@@ -134,7 +134,7 @@ Validation should confirm:
 * Validation should fail in an entry has both `RangedWaveSize` and `WaveSize`
  metadata.
 * Where validator version is greater than or equal to 1.8, fail when The tuple
- that the wave size range tag points to does nto have exactly three elements.
+ that the wave size range tag points to does not have exactly three elements.
 
 ### Runtime Additions
 
@@ -165,13 +165,17 @@ Verify this compiler output:
 3. That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
   values reflect those provided for the wave size range.
 
+Note that the above must all use literal values for the parameters on account of
+ other compile-time contants being broken due to DXC bug 
+ [#2188](https://github.com/microsoft/DirectXShaderCompiler/issues/2188).
+
 #### Diagnostics Testing
 
 1. Use the following invalid parameters each parameter location to `WaveSize`
   and ensure that an appropriate error is produced:
-   1. Negative power of two integer
+   1. Negative power-of-two integer
    2. Floating point value
-   3. non-literal integer
+   3. non-compile-time constant integer
    4. Integer less than 4
    5. Integer greater than 128
    6. A non-power-of-two integer between 4 and 128
