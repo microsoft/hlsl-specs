@@ -93,8 +93,8 @@ If only the first two values are non-zero, they represent the minimum
  and maximum respectively without a specified preferred size.
 If only the first value is non-zero, it represents the legacy wave size as
  introduced in Shader Model 6.6 and previously represented by `kDxilWaveSizeTag`.
-That is that the single non-zero value is effectively minimum, maximum and
- preferred size in that it represents the only supported wave size for the shader.
+In this case, the single non-zero value is effectively minimum, maximum and
+ preferred size in that it represents the only wave size supported by the shader.
 
 |         Tag             | Constant |         Value           |
 |-------------------------|----------|-------------------------|
