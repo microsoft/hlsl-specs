@@ -86,7 +86,7 @@ Where `minWaveSize` is the minimum wave size supported by the shader
 The existing `WaveSize` value is stored as a single metadata 32-bit integer
  constant.
 The new metadata tag expands this to a tuple of three 32-bit integers.
-These values represent and and all parameters to `WaveSize`.
+These values represent all potential parameters to `WaveSize`.
 If all three values are non-zero, they represent the minimum, maximum,
  and preferred wave sizes respectively.
 If only the first two values are non-zero, they represent the minimum
