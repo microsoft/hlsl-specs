@@ -252,11 +252,11 @@ This spec is an extensive collaboration between the Microsoft HLSL and Direct3D
 teams and IHV partners.
 
 Special thanks to:
-Claire Andrews
-Nick Feeney
-Amar Patel
-Tex Riddell
-Greg Roth
+* Claire Andrews
+* Nick Feeney
+* Amar Patel
+* Tex Riddell
+* Greg Roth
 
 
 <!-- {% endraw %} -->
