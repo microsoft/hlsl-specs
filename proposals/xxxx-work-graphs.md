@@ -26,15 +26,15 @@ Current language and runtime limitations make generating work on GPU threads
 insufficient to meet the needs of some workloads. If existing GPU features (like
 ExecuteIndirect) can't sufficiently generate work the application must generate
 the work from the CPU resulting in unnecessary round-tripping between the GPU
-and CPU. Work Graphs solves this problem by enabling more robust GPU-based work
-creation APIs.
+and CPU. The Work Graphs feature solves this problem by enabling more robust
+GPU-based work creation APIs.
 
 ## Proposed solution
 
-Work graphs allows an application to specify a set of tasks as _nodes_ in a
-graph representing a more complex workload. Each _node_ has a fixed shader which
-takes one or more _input records_ as input and can produce one or more _output
-records_ as output.
+The Work Graphs feature allows an application to specify a set of tasks as
+_nodes_ in a graph representing a more complex workload. Each _node_ has a fixed
+shader which takes one or more _input records_ as input and can produce one or
+more _output records_ as output.
 
 ### Launch Modes
 
@@ -67,7 +67,8 @@ uninitialized when created.
 
 ### Node Entry Functions
 
-Node shaders are compute shaders built into library targets. Shader entries
+Node shaders are entry functions built into library targets. Node shaders have
+similar capabilities and execution semantics to compute shaders. Shader entries
 annotated as `[shader("node")]` are usable as work graph nodes.
 
 As with all previous shader types, a shader entry function may have only one
@@ -101,12 +102,12 @@ receive input from outside the work graph.
 ##### **`[NodeID("<name>", <index> = 0)]`**
 If present the shader represents a node with the provided name. If present, the
 index parameter specifies the index into the named node array. If this attribute
-is not present the function name is the node name, and the index is `0`.
+is not present, the function name is the node name, and the index is `0`.
 
 ##### **`[NodeLocalRootArgumentsTableIndex(<index>)]`**
 The specified index indicates the record index into the local root arguments
 table bound to the work graph. If this attribute is not specified and the shader
-has a local root signature the index defaults to an unallocated table location.
+has a local root signature, the index defaults to an unallocated table location.
 
 ##### **`[NodeShareInputOf("<name>", <index> = 0 )]`**
 Share the inputs for the node specified by name and optional index with this
@@ -116,14 +117,14 @@ dispatch grid size (if fixed).
 ##### **`[NodeDispatchGrid(<x>, <y>, <z>)]`**
 Specifies the size of the dispatch grid. Broadcast launch nodes must specify
 either the dispatch grid size or maximum dispatch grid size in source. The `x`
-`y` and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z`
-cannot exceed 2^24-1 (16,777,215).
+`y` and `z` parameters individually cannot exceed (2^16)-1 (65535), and `x*y*z`
+cannot exceed (2^24)-1 (16,777,215).
 
 ##### **`[NodeMaxDispatchGrid(<x>, <y>, <z>)]`**
 Specifies the maximum dispatch grid size when the dispatch grid size is
 specified on the input record using the `SV_DispatchGrid` semantic. The `x` `y`
-and `z` parameters individually cannot exceed 2^16-1 (65535), and `x*y*z` cannot
-exceed 2^24-1 (16,777,215).
+and `z` parameters individually cannot exceed (2^16)-1 (65535), and `x*y*z` cannot
+exceed (2^24)-1 (16,777,215).
 
 ##### **`[NodeMaxRecursionDepth(<count>)]`**
 Specifies the maximum recursion depth for a node. This attribute is required if
@@ -161,7 +162,7 @@ template <typename RecordTy, bool IsRW> class NodeInputRecordInterface {
 
   /// @brief Get a writable reference to the underlying record.
   ///
-  /// Only available for non-RW object variants. The non-const Get() returns a
+  /// Only available for RW object variants. The non-const Get() returns a
   /// reference to the underlying data.
   std::enable_if_t<IsRW, RecordTy>::type &Get();
 };
@@ -181,7 +182,7 @@ template <typename RecordTy, bool IsRW = false> class GroupNodeInputRecordBase {
   /// @brief Get a writable reference to the underlying record.
   /// @param Index The record index to access.
   ///
-  /// Only available for non-RW object variangs. The non-const Get() returns a
+  /// Only available for RW object variants. The non-const Get() returns a
   /// reference to the underlying data.
   std::enable_if_t<IsRW, RecordTy>::type &Get(uint Index);
 
@@ -467,7 +468,7 @@ void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 void Barrier(Object TargetObject, uint SemanticFlags);
 ```
 
-Work graphs introduces a new more flexible implementation of the memory barrier
+Work Graphs introduces a new more flexible implementation of the memory barrier
 functions. This function is available in all shader types (including non-node
 shaders).
 
@@ -475,7 +476,7 @@ The new `Barrier` function implements a superset of the existing memory barrier
 functions which are still supported (i.e. `AllMemoryBarrier{WithGroupSync}()`,
 `GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`).
 
-In the context of work graphs, `Barrier` enables requesting a memory barrier on
+In the context of a node shader, `Barrier` enables requesting a memory barrier on
 input and/or output record memory specifically, while the implementation is free
 to store the data in any memory region.
 
