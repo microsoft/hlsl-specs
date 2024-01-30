@@ -98,7 +98,8 @@ parameter flattening to determine the set of signature elements, and semantics+i
 that a parameter defines. 
 The way in which parameters are flattened into signature elements is described here: 
 https://github.com/Microsoft/DirectXShaderCompiler/blob/main/docs/DXIL.rst#vertex-shader-hlsl. 
-This example shows how semantic index assignment works with struct fields and array elements. Diagnostic logic will need to compute the signature elements from a structure
+This example shows how semantic index assignment works with struct fields and array elements. 
+Diagnostic logic will need to compute the signature elements from a structure
 to match this flattening for diagnostics.
 
 *Signature element diagnostics
