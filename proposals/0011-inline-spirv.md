@@ -102,8 +102,8 @@ extension in a header file. The header file could be something like
 // spv_khr_post_depth_coverage.h
 
 // It would be nice to have this live in a namespace spv::khr::, but not possible with attributes.
-const uint32_t SampleMaskPostDepthCoverageCapabilityId = 4447;
-const uint32_t PostDepthCoverageExecutionModeId = 4446;
+static const uint32_t SampleMaskPostDepthCoverageCapabilityId = 4447;
+static const uint32_t PostDepthCoverageExecutionModeId = 4446;
 #define SPV_KHR_PostDepthCoverageExecutionMode vk::ext_extension("SPV_KHR_post_depth_coverage"), vk::ext_capability(SampleMaskPostDepthCoverageCapabilityId), vk::spvexecutionmode(PostDepthCoverageExecutionModeId)
 ```
 
@@ -128,10 +128,10 @@ defined in the header file as a function, and then the function can be called by
 the users. For example,
 
 ```
+template<typename T>
 [[vk::ext_capability(5568)]]
 [[vk::ext_extension("SPV_INTEL_subgroups")]]
 [[vk::ext_instruction(/* OpSubgroupShuffleINTEL */ 5571)]]
-template<typename T>
 T SubgroupShuffleINTEL(T data, uint32 invocationId);
 ```
 
