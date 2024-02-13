@@ -158,18 +158,25 @@ test. Some of the difficulties are:
     manage.
 
 This proposal deprecates the old mechanism, and replaces it with two new types
-`vk::SpirvOpaqueType<uint OpCode, ...>` and
-`vk::SpirvType<uint OpCode, uint size, uint alignment, ...>`. For
-`SpirvOpaqueType`, the template on the type contains the opcode and all of the
-parameters necessary for that opcode. Each parameter may be one of three kinds
-of values:
+`vk::SpirvOpaqueType<uint OpCode, typename... Operands>` and
+`vk::SpirvType<uint OpCode, uint size, uint alignment, typename... Operands>`.
+For `SpirvOpaqueType`, the template on the type contains the opcode and all of
+the parameters necessary for that opcode. Each parameter must be one of three
+kinds of values:
 
-1.  Any expression that can be evaluated to a constant scalar value at compile
-    time. This value will be passed in to the type-declaration instruction as
-    the id of an `OpConstant*` instruction.
-1.  An expression as described above, wrapped in a call to `vk::ext_literal`.
-    This value will be passed in to the type-declaration instruction as an
-    immediate literal value.
+1.  An instantiation of the `vk::integral_constant<typename T, T v>` type
+    template. This can be used to pass in any constant integral value. This
+    value will be passed in to the type-declaration instruction as the id of an
+    `OpConstant*` instruction.
+
+    For example, `123` can be passed in by using
+    `vk::integral_constant<uint, 123>`.
+1.  An `integral_constant` with the `_spirv_immediate` type qualifier. This
+    value will be passed in to the type-declaration instruction as an immediate
+    literal value.
+
+    For example, `123` can be passed in as an immediate literal by using
+    `_spirv_immediate vk::integral_constant<uint, 123>`.
 1.  Any type. The id of the lowered type will be passed in to the
     type-declaration instruction.
 
@@ -178,7 +185,7 @@ SPIRV.html#OpTypeArray) takes an id for the element type and an id for the
 element length, so an array of 16 integers could be declared as
 
 ```
-vk::SpirvOpaqueType</* OpTypeArray */ 28, int, 16>
+vk::SpirvOpaqueType</* OpTypeArray */ 28, int, vk::integral_constant<uint, 16> >
 ```
 
 [`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#
@@ -186,7 +193,7 @@ OpTypeVector) takes an id for the component type and a literal for the component
 count, so a 4-integer vector could be declared as
 
 ```
-vk::SpirvOpaqueType</* OpTypeVector */ 23, int, vk::ext_literal(4)>
+vk::SpirvOpaqueType</* OpTypeVector */ 23, int, _spirv_immediate vk::integral_constant<uint, 4> >
 ```
 
 The header file could create a partial instantiation with a more meaningful
@@ -219,7 +226,7 @@ specifying a power of two that the value will be aligned to in memory. For
 example, an unsigned 8-bit integer type could be declared as
 
 ```
-typedef vk::SpirvType</* OpTypeInt */ 21, /* size */ 1, /* alignment */ 1, vk::ext_literal(8), vk::ext_literal(false)> uint8_t;
+typedef vk::SpirvType</* OpTypeInt */ 21, /* size */ 1, /* alignment */ 1, _spirv_immediate vk::integral_constant<8>, _spirv_immediate vk::integral_constant<bool, false> > uint8_t;
 ```
 
 Neither `SpirvType` nor `SpirvOpaqueType` may be used as the component type for
