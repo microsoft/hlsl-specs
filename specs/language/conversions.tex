@@ -37,7 +37,7 @@ to a copy of the array, not memory referred to by the glvalue.
 
 \Sec{Array-to-pointer conversion}{Conv.array}
 
-\p An lvalue or rvalue of type \texttt{T[]} (bounded or unbounded), can be
+\p An lvalue or rvalue of type \texttt{T[N]} (constant-sized array), can be
 converted to a prvalue of type pointer to \texttt{T}.
 [\textit{Note: \acrshort{hlsl} does not support grammar for specifying pointer or
 reference types, however they are used in the type system and must be described
@@ -109,13 +109,16 @@ value replicated into each element of the destination.
 
 \p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
 \texttt{vector<T,y>}, or a prvalue of type \texttt{vector<T,x>} can be converted
-to a prvalue of type \texttt{vector<T,y>} only if \texttt{x} is less than
-\texttt{y}.
+to a prvalue of type \texttt{vector<T,y>} only if \( y < x \). The resulting
+value is comprised of elements \( [0..y) \), dropping trailing elements.
 
 \p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of type
 \texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
 converted to a prvalue of type \texttt{matrix<T,z,w>} only if \( x \leq z \)
-and \(y \leq w \)
+and \(y \leq w \). Matrix truncation is performed on each row and column
+dimension separately. The resulting value is comprised of vectors \( [0..x) \)
+which are each separately comprised of elements \( [0..y) \). Trailing vectors
+and elements are dropped.
 
 \Sec{Component-wise conversions}{Conv.cwise}
 
@@ -138,3 +141,39 @@ conversions in chapter \ref{Conv}.
 A prvalue of type "\textit{cv1} \texttt{T}" can be converted to a prvalue of type
 "\textit{cv2} \texttt{T}" if type "\textit{cv2} \texttt{T}" is more cv-qualified
 than "\textit{cv1} \texttt{T}".
+
+\Sec{Conversion Rank}{Conv.rank}
+
+\p Every integer and floating point type have defined conversion ranks.
+A \textit{promotion} is any conversion of a value from a lower conversion rank
+to a higher conversion rank.
+
+\Sub{Integer Conversion Rank}{Conv.rank.int}
+
+\begin{itemize}
+  \item  No two signed integer types shall have the same conversion rank even if
+  they have the same representation.
+  \item The rank of a signed integer type shall be greater than the rank of any
+  signed integer type with a smaller size.
+  \item The rank of any unsigned integer type shall equal the rank of the
+  corresponding signed integer type.
+  \item The rank of \texttt{bool} shall be less than the rank of all other
+  standard integer types.
+  \item For all integer types \texttt{T1}, \texttt{T2}, and \texttt{T3}: if
+  \texttt{T1} has greater rank than \texttt{T2} and \texttt{T2} has greater rank
+  than \texttt{T3}, then \texttt{T1} shall have greater rank than \texttt{T3}.
+\end{itemize}
+
+\Sub{Floating Point Conversion Rank}{Conv.rank.float}
+
+\begin{itemize}
+  \item No two floating point types shall have the same conversion rank even if
+  they have the same representation.
+  \item The rank of a floating point type shall be greater than the rank of any
+  floating point type with a smaller size.
+  \item The rank \texttt{float} shall be greater than the rank of \texttt{half}.
+  \item For all floating point types \texttt{T1}, \texttt{T2}, and \texttt{T3}:
+  if \texttt{T1} has greater rank than \texttt{T2} and \texttt{T2} has greater
+  rank than \texttt{T3}, then \texttt{T1} shall have greater rank than
+  \texttt{T3}.
+\end{itemize}
