@@ -254,6 +254,10 @@ an implementation-defined way. A runtime implementation may sort the
 implementation-defined way. During execution no guarantees are made that all
 \gls{lane}s in a \gls{wave} are actively executing.
 
+\p \gls{wave}, \gls{quad}, and \gls{threadgroup} operations require execution
+synchronization of applicable active and helper \gls{lane}s as defined by the
+individual operation.
+
 \Sub{Optimization Restrictions}{Intro.Model.Restrictions}
 
 \p An optimizing compiler may not optimize code generation such that it changes
