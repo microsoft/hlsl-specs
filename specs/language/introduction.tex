@@ -254,6 +254,18 @@ an implementation-defined way. A runtime implementation may sort the
 implementation-defined way. During execution no guarantees are made that all
 \gls{lane}s in a \gls{wave} are actively executing.
 
+\Sub{Optimization Restrictions}{Intro.Model.Restrictions}
+
+\p An optimizing compiler may not optimize code generation such that it changes
+the behavior of a well-formed program except in the presence of
+\textit{implementation-defined} or \textit{unspecified} behavior.
+
+\p The presence of \gls{wave}, \gls{quad}, or \gls{threadgroup} operations
+may further limit the valid transformations of a program. Specifically, control
+flow operations which result in changing which \gls{lane}s, \gls{quad}s, or
+\gls{wave}s are actively executing are illegal in the presence of cooperative
+operations if the optimization alters the behavior of the program.
+
 \Sec{\acrshort{hlsl} Memory Models}{Intro.Memory}
 
 \p Memory accesses for \gls{sm} 5.0 and earlier operate on 128-bit slots aligned
