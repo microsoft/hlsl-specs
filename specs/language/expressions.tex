@@ -96,3 +96,153 @@ non-static member function.
 and value category as \textit{E} without the enclosing parenthesis. A
 parenthesized expression may be used in the same contexts with the same meaning
 as the same non-parenthesized expression.
+
+\Sub{Names}{Expr.Primary.ID}
+
+\begin{note}
+  The grammar and behaviors of this section are almost identical to C/C++ with
+  some subtractions (notably lambdas and destructors).
+\end{note}
+
+\begin{grammar}
+  \define{id-expression}\br
+  unqualified-id\br
+  qualified-id
+\end{grammar}
+
+\SubSub{Unqualified Identifiers}{Expr.Primary.ID.Unqual}
+
+\begin{grammar}
+  \define{unqualified-id}\br
+  identifier\br
+  operator-function-id\br
+  conversion-function-id\br
+  template-id\br
+\end{grammar}
+
+\SubSub{Qualified Identifiers}{Expr.Primary.ID.Qual}
+
+\begin{grammar}
+  \define{qualified-id}\br
+  nested-name-specifier \opt{\keyword{template}} unqualified-id\br
+  \define{nested-name-specifier}\br
+  \terminal{::}\br
+  type-name \terminal{::}\br
+  namespace-name \terminal{::}\br
+  nested-name-specifier identifier \terminal{::}\br
+  nested-name-specifier \opt{\keyword{template}} simple-template-id \terminal{::}
+\end{grammar}
+
+\Sec{Postfix Expressions}{Expr.Post}
+
+\begin{grammar}
+  \define{postfix-expression}\br
+  primary-expression\br
+  % The [] characters on the two lines below should be inside \terminal, however
+  % pandoc doesn't seem to like that.
+  postfix-expression [ expression ]\br
+  postfix-expression [ braced-init-list ]\br %
+  postfix-expression \terminal{(} \opt{expression-list} \terminal{)}\br
+  simple-type-specifier \terminal{(} \opt{expression-list} \terminal{)}\br
+  typename-specifier \terminal{(} \opt{expression} \terminal{)}\br
+  simple-type-specifier braced-init-list\br
+  typename-specifier braced-init-list\br
+  postfix-expression \terminal{.} \opt{\terminal{template}} id-expression\br
+  postfix-expression \terminal{->} \opt{\terminal{template}} id-expression\br
+  postfix-expression \terminal{++}\br
+  postfix-expression \terminal{--}
+\end{grammar}
+
+\Sec{Subscript}{Expr.Post.Subscript}
+
+\p A \textit{postfix-expression} followed by an expression in square brackets
+(\texttt{[ ]}) is a subscript expression. In an array subscript expression of
+the form \texttt{E1[E2]}, \texttt{E1} must either be a variable of array of
+\texttt{T[]}, or an object of type \texttt{T} where \texttt{T} provides an
+overloaded implementation of \texttt{operator[]} (\ref{Overload}).\footnote{HLSL
+does not support the base address of a subscript operator being the expression
+inside the braces, which is valid in C and C++.}
+
+\Sec{Function Calls}{Expr.Post.Call}
+
+\p A function call may be an \textit{ordinary function}, or a \textit{member
+function}. In a function call to an \textit{ordinary function}, the
+\textit{postfix-expression} must be an lvalue that refers to a function. In a
+function call to a \textit{member function}, the \textit{postfix-expression}
+will be an implicit or explicit class member access whose \textit{id-expression}
+is a member function name.
+
+\p When a function is called, each parameter shall be initialized with its
+corresponding argument. The order in which parameters are initialized is
+unspecified. \footnote{Today in DXC targeting DXIL matches the Microsoft C++ ABI
+and evaluates argument expressions right-to-left, while SPIR-V generation
+matches the Itanium ABI evaluating parameters left-to-right. There are good
+arguments for unifying these behaviors, and arguments for keeping them
+different.}
+
+\p If the function is a non-static member function the \texttt{this} argument
+shall be initialized to a reference to the object of the call as if casted by an
+explicit cast expression to an lvalue reference of the type that the function is
+declared as a member of.
+
+\p Parameters are either \textit{input parameters}, \textit{output parameters},
+or \textit{input/output parameters} as denoted in the called function's
+declaration (\ref{Decl.Function}).
+
+\p \textit{Input parameters} are passed by-value into a function. If an argument
+to an \textit{input parameter} is of constant-sized array type, the array is
+copied to a temporary and the temporary value is converted to an address via
+array-to-pointer decay. If an argument is an unsized array type, the array
+lvalue directly decays via array-to-pointer decay. \footnote{This results in
+\textit{input} parameters of unsized arrays being modifiable by a function.}
+
+\p Arguments to \textit{output} and \textit{input/output parameters} must be
+lvalues. \textit{Output parameters} are not initialized prior to the call; they
+are passed as an uninitialized cxvalue (\ref{Basic.lval}). An \textit{output
+parameter} is only initialized explicitly inside the called function. It is
+undefined behavior to not explicitly initialize an \textit{output parameter}
+before returning from the function in which it is defined. The cxvalue created
+from an argument to an \textit{input/output parameter} is initialized through
+copy-initialization from the lvalue argument expression. In both cases, the
+cxvalue shall have the type of the parameter and the argument can be converted
+to that type through implicit or explicit conversion.
+
+\p If an argument to an \textit{output} or \textit{input/output parameter} is a
+constant sized array, the array is copied to a temporary cxvalue following the
+same rules for any other data type. If an argument to an \textit{output} or
+\textit{input/output parameter} is an unsized array type, the array lvalue
+directly decays via array-to-pointer decay. An argument of a constant sized
+array of type \texttt{T[N]} can be converted to a cxvalue of an unsized array
+of type \texttt{T[]} through array to pointer decay. An unsized array of type
+\texttt{T[]}, cannot be implicitly converted to a a constant sized array of type
+\texttt{T[N]}.
+
+\p On expiration of the cxvalue, the value is assigned back to the argument
+lvalue expression following an inverted conversion if applicable. The argument
+expression must be of a type or able to convert to a type that has defined
+copy-initialization to and from the parameter type. The lifetime of the cxvalue
+begins at argument expression evaluation, and ends after the function returns. A
+cxvalue argument is passed by-address to the caller.
+
+\p If the lvalue passed to an \textit{output} or \textit{input/output parameter}
+does not alias any other parameter passed to that function, an implementation
+may avoid the creation of excess temporaries by passing the address of the
+lvalue instead of creating the cxvalue.
+
+\p When a function is called, any parameter of object type must have completely
+defined type, and any parameter of array of object type must have completely
+defined element type.\footnote{HLSL \textit{output} and \textit{input/output
+parameters} are passed by value, so they must also have complete type.} The
+lifetime of a parameter ends on return of the function in which it is
+defined.\footnote{As stated above cxvalue parameters are passed-by-address, so
+the expiring parameter is the reference to the address, not the cxvalue. The
+cxvalue expires in the caller.} Initialization and destruction of each
+parameter occurs within the context of the calling function.
+
+\p The value of a function call is the value returned by the called function.
+
+\p A function call is an lvalue if the result type is an lvalue reference type;
+otherwise it is a prvalue.
+
+\p If a function call is a prvalue of object type, the type of the prvalue must
+be complete.

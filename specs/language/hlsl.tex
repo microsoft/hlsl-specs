@@ -1,7 +1,8 @@
 \documentclass[oneside]{book}
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-\usepackage[acronym]{glossaries}
+\usepackage{nameref}
+\usepackage[acronym,numberedsection=nameref,toc]{glossaries}
 \usepackage{multicol}
 \usepackage[marginparwidth=75pt, margin=2cm]{geometry}
 \usepackage{listings}
@@ -19,6 +20,7 @@
 
 \renewcommand{\familydefault}{\sfdefault}
 
+\setcounter{secnumdepth}{3} % number subsections
 \newcommand{\Ch}[2]{\chapter[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sec}[2]{\section[#1]{#1\hfill[#2]}\label{#2}}
 \newcommand{\Sub}[2]{\subsection[#1]{#1\hfill[#2]}\label{#2}}
@@ -53,8 +55,15 @@
 
 \setlength\parindent{0cm}
 
-\newcounter{parcount}
-\counterwithin{parcount}{subsubsection}
+\newcommand{\newparcounter}[1]{
+\newcounter{#1}
+\counterwithin{#1}{chapter}
+\counterwithin{#1}{section}
+\counterwithin{#1}{subsection}
+\counterwithin{#1}{subsubsection}
+}
+
+\newparcounter{parcount}
 \newcommand\p{%
     \stepcounter{parcount}%
     \parnum \hspace{1em}%
@@ -84,7 +93,6 @@
 
 \clearpage
 
-\label{glossaries}
 \printglossary[type=\acronymtype]
 \printglossary
 

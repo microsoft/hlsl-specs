@@ -26,18 +26,13 @@ This process draws heavily from
 [Swift's Evolution process](https://github.com/apple/swift-evolution/), and is
 further tweaked to align with the HLSL team's goals and priorities.
 
-## Proposing a Feature
+Significant project infrastructure or implementation details will also use this
+process to refine and document the design process.
 
-By far the best way for an external contributor to propose a feature is through
-GitHub issues (See the section below on "Filing Issues"). Issues in this
-repository will be used to publicly track feature requests for the HLSL language
-and HLSL runtime interfaces. Direct tooling feature requests to the
-[DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler/issues/new).
+## Making a Proposal
 
-> Note: a tooling feature would be a feature that does not impact HLSL source
-> representations in any way (no added syntax, APIs, or altered
-> interpretations), and instead exposes new ways to use the DXC compiler or
-> library.
+The best way for an external contributor to propose a feature is through GitHub
+issues (See the section below on "Filing Issues").
 
 If you write a proposal yourself you must find a member of the HLSL team to act
 as a _Sponsor_ for the change. The _Sponsor_ is responsible for tracking and
@@ -57,6 +52,10 @@ HLSL [Design Considerations](DesignConsiderations.md).
 
 Draft proposals are first provided as pull requests. They should be written
 following one of the templates in the `proposals/templates` directory.
+
+Add new proposals for language or runtime features directly in the `proposals`
+directory. Add new proposals for project infrastructure or implementation
+details of the compilers in the `proposals/infra` directory.
 
 Proposals that follow the most simplified path from idea to feature will move
 through the following states in order:
@@ -93,6 +92,19 @@ requirements for justification are not high and could be as simple as
 "insufficient resources".
 
 ## Filing Issues
+
+Issues in this repository publicly tracks feature requests for the HLSL language
+and HLSL runtime interfaces as well as issues with proposals and specifications
+contained within the repository.
+
+Please direct tooling feature requests to the
+[DirectXShaderCompiler](https://github.com/microsoft/DirectXShaderCompiler/issues/new),
+or [Clang](https://github.com/llvm/llvm-project/issues/new) as appropriate.
+
+> Note: a tooling feature would be a feature that does not impact HLSL source
+> representations in any way (no added syntax, APIs, or altered
+> interpretations), and instead exposes new ways to use the DXC compiler or
+> library.
 
 This repository provides three custom issue templates:
 
