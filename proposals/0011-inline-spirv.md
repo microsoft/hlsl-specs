@@ -171,12 +171,13 @@ kinds of values:
 
     For example, `123` can be passed in by using
     `vk::integral_constant<uint, 123>`.
-1.  An `integral_constant` with the `_spirv_immediate` type qualifier. This
-    value will be passed in to the type-declaration instruction as an immediate
-    literal value.
+1.  An instantiation of the `vk::Literal<typename T>` type template. `T` should
+    be an instantiation of `integral_constant`. The value of this constant will
+    be passed in to the type-declaration instruction as an immediate literal
+    value.
 
     For example, `123` can be passed in as an immediate literal by using
-    `_spirv_immediate vk::integral_constant<uint, 123>`.
+    `vk::Literal<vk::integral_constant<uint, 123> >`.
 1.  Any type. The id of the lowered type will be passed in to the
     type-declaration instruction.
 
@@ -193,7 +194,7 @@ OpTypeVector) takes an id for the component type and a literal for the component
 count, so a 4-integer vector could be declared as
 
 ```
-vk::SpirvOpaqueType</* OpTypeVector */ 23, int, _spirv_immediate vk::integral_constant<uint, 4> >
+vk::SpirvOpaqueType</* OpTypeVector */ 23, int, vk::Literal<vk::integral_constant<uint, 4> > >
 ```
 
 The header file could create a partial instantiation with a more meaningful
@@ -226,7 +227,12 @@ specifying a power of two that the value will be aligned to in memory. For
 example, an unsigned 8-bit integer type could be declared as
 
 ```
-typedef vk::SpirvType</* OpTypeInt */ 21, /* size */ 1, /* alignment */ 1, _spirv_immediate vk::integral_constant<8>, _spirv_immediate vk::integral_constant<bool, false> > uint8_t;
+typedef vk::SpirvType</* OpTypeInt */ 21,
+    /* size */ 1,
+    /* alignment */ 1,
+    vk::Literal<vk::integral_constant<uint, 8> >,
+    vk::Literal<vk::integral_constant<bool, false> >
+> uint8_t;
 ```
 
 Neither `SpirvType` nor `SpirvOpaqueType` may be used as the component type for
