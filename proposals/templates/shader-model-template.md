@@ -4,6 +4,14 @@
 
 ## Instructions
 
+> This template is a guideline for documenting a shader model feature.
+> Unlike language-only features, these require DXIL changes and thereby if not
+> hardware support, then at least hardware driver support.
+> The section titles are meant to be retained in the final product,
+> but the descriptions are to outline what should be in those sections
+> and should be replaced by the feature-specific text.
+> However, not all sections may be required for all features.
+
 > This template wraps at 80-columns. You don't need to match that wrapping, but
 > having some consistent column wrapping makes it easier to view diffs on
 > GitHub's review UI. Please wrap your lines to make it easier to review.
@@ -89,10 +97,13 @@ of detail here, but some common things to think through are:
 
 #### Device Capability
 
-* How does it intereact with other Shader Model options?
-* What shader model and/or optional feature is required for the bulk of this feature to be present?
-* What portions are only available if an existing or new optional feature is present?
-
+* How does it interact with other Shader Model options?
+* What shader model and/or optional feature is prerequisite for the bulk of
+  this feature?
+* What portions are only available if an existing or new optional feature
+  is present?
+* Can this feature be supported through emulation or some other means
+  in older shader models?
 
 ## Testing
 
