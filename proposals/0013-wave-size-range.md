@@ -83,9 +83,12 @@ Where `minWaveSize` is the minimum wave size supported by the shader
 
 ### DXIL Additions
 
-The existing `WaveSize` value is stored as a single metadata 32-bit integer
- constant.
-The new metadata tag expands this to a tuple of three 32-bit integers.
+The existing metadata `kDxilWaveSizeTag`(11)
+ that takes only a single 32-bit integer constant is invalid in 6.8 shaders,
+ but will continue to be supported in earlier shader model versions.
+
+The new metadata `kDxilRangedWaveSizeTag`(23) takes a tuple
+ of three 32-bit integers.
 These values represent all potential parameters to `WaveSize`.
 If all three values are non-zero, they represent the minimum, maximum,
  and preferred wave sizes respectively.
@@ -96,9 +99,10 @@ If only the first value is non-zero, it represents the legacy wave size as
 In this case, the single non-zero value is effectively minimum, maximum and
  preferred size in that it represents the only wave size supported by the shader.
 
-|         Tag             | Constant |         Value           |
-|-------------------------|----------|-------------------------|
-|kDxilRangedWaveSizeTag   |    23    |MD list: (i32, i32, i32) |
+|         Tag             | Constant |         Value           | Shader Models |
+|-------------------------|----------|-------------------------|---------------|
+|kDxilWaveSizeTag         |    11    |          i32            |     <6.8      |
+|kDxilRangedWaveSizeTag   |    23    |MD list: (i32, i32, i32) |    >=6.8      |
 
 ### SPIR-V Additions
 
@@ -142,9 +146,9 @@ Validation should confirm:
 * The third element (preferred wave size) is greater or equal to the first
  element (minimum wave size) and less than or equal to the second element
  (maximum wave size) or zero.
-* Validators with versions less than 1.8 fail on shaders that use
+* Shaders with with versions less than 6.8 fail on shaders that use
  `kDxilRangedWaveSizeTag`.
-* Validators with versions greater than or equal to 1.8 fail on shaders that use
+* Shaders with versions greater than or equal to 6.8 fail on shaders that use
  `kDxilWaveSizeTag`.
 
 ### Runtime Additions
