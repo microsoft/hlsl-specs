@@ -11,14 +11,14 @@
 > but the descriptions are to outline what should be in those sections
 > and should be replaced by the feature-specific text.
 > However, not all sections may be required for all features.
-
+{}
 > This template wraps at 80-columns. You don't need to match that wrapping, but
 > having some consistent column wrapping makes it easier to view diffs on
 > GitHub's review UI. Please wrap your lines to make it easier to review.
-
+>
 > When filling out the template below for a new feature proposal, please do the
 > following first:
-
+>
 > 1. Exclude the "Planned Version", "PRs" and "Issues" from the header.
 > 2. Do not spend time writing the "Detailed design" until the feature has been
 >    merged in the "Under Consideration" phase.
@@ -59,7 +59,7 @@ safer, or more efficient?
 
 ## Detailed design
 
-_The detailed design is not required until the feature is under review._
+*The detailed design is not required until the feature is under review.*
 
 This section should grow into a feature specification that will live in the
 specifications directory once complete. Each feature will need different levels
@@ -82,7 +82,7 @@ of detail here, but some common things to think through are:
 ### Diagnostic Changes
 
 * What additional errors or warnings does this introduce?
-* What exisiting errors or warnings does this remove?
+* What existing errors or warnings does this remove?
 
 #### Validation Changes
 
@@ -125,10 +125,10 @@ of detail here, but some common things to think through are:
 * Trickier still are changes that alter codegen of existing shader code.
 
 * If there are changes that will change how existing shaders compile,
-  what transition suport will we provide?
+  what transition support will we provide?
   * New compilation failures should have a clear error message and ideally a FIXIT
   * Changes in codegen should include a warning and possibly a rewriter
-  * Errors that are produced for previously valid shader code whould give ample
+  * Errors that are produced for previously valid shader code would give ample
     notice to developers that the change is coming and might involve rollout stages
 
 * Note that changes that allow shaders that failed to compile before to compile
@@ -141,7 +141,7 @@ If alternative solutions were considered, please provide a brief overview. This
 section can also be populated based on conversations that occur during
 reviewing. Having these solutions and why they were rejected documented may save
 trouble from those who might want to suggest feedback or additional features that
-might build on this on. Even variations on the chosen solution can be intresting.
+might build on this on. Even variations on the chosen solution can be interesting.
 
 ## Acknowledgments (Optional)
 
