@@ -227,11 +227,12 @@ Test that the following produce validation errors:
 2. A tuple value is not an integer.
 3. A range tuple value is -4, 0, 1, 2, 3, 127, 129, or 256.
 4. A preferred tuple value is -4, 1, 2, 3, 127, 129, or 256.
-5. The minimum wave size value is greater than the maximum, but otherwise valid.
-6. The preferred wave size is outside the specified range, but otherwise valid.
-7. Multiple metadata `kDxilRangedWaveSizeTag`s are in the same compiled shader.
-8. A metadata `kDxilWaveSizeTag` is used with 1.8 or greater validation.
-9. Explicit validator versions before 1.8 used with `kDxilRangedWaveSizeTag`s.
+5. The minimum wave size value is equal to the maximum, but otherwise valid.
+6. The minimum wave size value is greater than the maximum, but otherwise valid.
+7. The preferred wave size is outside the specified range, but otherwise valid.
+8. Multiple metadata `kDxilRangedWaveSizeTag`s are in the same compiled shader.
+9. A metadata `kDxilWaveSizeTag` is used with 1.8 or greater validation.
+10. Explicit validator versions before 1.8 used with `kDxilRangedWaveSizeTag`s.
 
 ### Execution Testing
 
