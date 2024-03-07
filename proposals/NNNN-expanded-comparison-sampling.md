@@ -344,22 +344,22 @@ This indicates to the runtime that that the shader requires the presence of
 
 Applications can query the availability
  of these features by
- passing `D3D12_FEATURE_D3D12_OPTIONS22`
+ passing `D3D12_FEATURE_D3D12_OPTIONS21`
  as the `Feature` parameter
  and retrieving the `pFeatureSupportData` parameter
- as a struct of type `D3D12_FEATURE_DATA_D3D12_OPTIONS22`.
+ as a struct of type `D3D12_FEATURE_DATA_D3D12_OPTIONS21`.
 The relevant parts of these structs are defined below.
 
 ```C++
 typedef enum D3D12_FEATURE {
     ...
-    D3D12_FEATURE_D3D12_OPTIONS22
+    D3D12_FEATURE_D3D12_OPTIONS21
 } D3D12_FEATURE;
 
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS22 {
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21 {
     ...
-    BOOL ExpandedComparisonSamplingSupported;
-} D3D12_FEATURE_DATA_D3D12_OPTIONS22;
+    BOOL SampleCmpGradientAndBiasSupported;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS21;
 ```
 
 `ExpandedComparisonSamplingSupported` is a boolean that specifies
@@ -413,18 +413,22 @@ Test that DXIL validation of allowed resource types must be performed for
 
 ### Execution Testing
 
-Since there is no defined equation to determine which mip level an
+Since there is no defined equation to determine which MIP level an
  implementation should use, the best approach is to compare the results of
- different operations involving mip levels to ensure that they are consistent.
+ different operations involving MIP levels to ensure that they are consistent.
 
-To test `CalculateLevelOfDetail*` methods,
-use a texture with sentinel values in each mip level and ensure that the mip
-  level returned by CalculateLevelOfDetail matches the behavior of the original
-  SampleCmp operation by providing the sentinel value of the mip level
-  CalculateLevelOfDetail* made you expect and making sure that it matches.
-This will ensure that CalculateLevelOfDetail correctly returns the mip value
+To test `CalculateLevelOfDetail*` methods for each supported shader stage,
+first fill each MIP level of a texture with a single sentinel value matching the
+MIP level.
+Then use `CalculateLevelOfDetail` to calculate the expected MIP level.
+Finally, use `SampleCmp` with the comparison sampler with comparison mode equal
+and the comparison value set to the calculated MIP level to determine if the
+calculated value matches the sentinal values in the texture.
+Return the result of the comparison sample.
+It should be 1 if the calculated level was correct.
+This will ensure that CalculateLevelOfDetail correctly returns the MIP value
 that sample would have used.
-Ensure as well that `CalculateLevelOfDetail` clamps the mip result and
+Ensure as well that `CalculateLevelOfDetail` clamps the MIP result and
  `CalculateLevelOfDetailUnclamped` does not.
 
 Given the nature of SampleCmp operations, the tests will have to be performed
@@ -439,15 +443,15 @@ If it's the next expected value, the expected value is updated before the next
 If any other value is found, the test should fail.
 
 To test the `SampleCmpBias` method,
-use a texture with sentinel values in each mip level, start with no bias
- and determine the default mip level, then increase the bias ensuring that the
- mip level the sample uses switches to the expected next level at a reasonable
+use a texture with sentinel values in each MIP level, start with no bias
+ and determine the default MIP level, then increase the bias ensuring that the
+ MIP level the sample uses switches to the expected next level at a reasonable
  bias: somewhere between just over 0.0 and 1.0.
 Repeat for a few levels.
 
 To test the `SampleCmpGrad` method,
-use a texture with sentinel values in each mip level, start with gradients of 0
- to determine the base mip level. Increase the gradients gradually and ensure
- that mip level the sample uses switches to the expected next level at
+use a texture with sentinel values in each MIP level, start with gradients of 0
+ to determine the base MIP level. Increase the gradients gradually and ensure
+ that MIP level the sample uses switches to the expected next level at
  reasonable gradient values.
 Repeat for a few levels.
