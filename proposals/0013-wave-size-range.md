@@ -146,10 +146,10 @@ Validation should confirm:
 * The third element (preferred wave size) is greater or equal to the first
  element (minimum wave size) and less than or equal to the second element
  (maximum wave size) or zero.
-* Shaders with with versions less than 6.8 fail on shaders that use
- `kDxilRangedWaveSizeTag`.
-* Shaders with versions greater than or equal to 6.8 fail on shaders that use
- `kDxilWaveSizeTag`.
+* Shaders with target shader model less than 6.8 that use 
+  `kDxilRangedWaveSizeTag` should fail.
+* Shaders with target sahder model greater than or equal to 6.8 that use
+  `kDxilWaveSizeTag` should fail.
 
 ### Runtime Additions
 
