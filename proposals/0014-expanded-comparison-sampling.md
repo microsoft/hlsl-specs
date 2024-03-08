@@ -1,6 +1,6 @@
 # Expanded Comparison Sampling
 
-* Proposal: [NNNN](NNNN-expanded-comparison-sampling.md)
+* Proposal: [0014](0014-expanded-comparison-sampling.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk),
              [Jesse Natalie](https://github.com/jenatali)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
