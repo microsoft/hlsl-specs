@@ -61,9 +61,6 @@ Regardless of presence or use of instance buffers,
 It corresponds to `StartInstanceLocation` from the underlying `DrawInstanced()`
  or `DrawIndexedInstanced()` call
  or equivalent indirect call from `ExecuteIndirect()` on the command list.
-For shader invocations outside `DrawInstanced()`, `DrawIndexedInstanced()`
- or corresponding indirect call from `ExecuteIndirect()`,
- `SV_StartInstanceLocation` is always zero.
 
 `SV_StartVertexLocation` represents the value added to each index before reading
  a vertex from vertex buffer(s) if present.
