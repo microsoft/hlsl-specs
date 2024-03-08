@@ -108,7 +108,7 @@ $result2 = call i32 @dx.op.StartInstanceLocation(i32 257)
 
 Use of HLSL entry parameters with the new semantic annotations
  `SV_StartInstanceLocation` or `SV_StartVertexLocation` can be supported in
- SPIR-V using OpVariables with the result <id> of the OpVariable set to
+ SPIR-V using OpVariables with the result id of the OpVariable set to
  `BaseInstance`(4425) or `BaseVertex`(4424) respectively.
 
 ### Diagnostic Changes
