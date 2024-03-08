@@ -1,6 +1,6 @@
 # Extended Command Information
 
-* Proposal: [NNNN](NNNN-extended-command-info.md)
+* Proposal: [0015](0015-extended-command-info.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
