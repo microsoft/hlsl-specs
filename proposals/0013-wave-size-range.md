@@ -67,7 +67,7 @@ This also preserves the ability to force the driver to choose your preferred
 
 ### HLSL additions
 
-The existing `WaveSize` attribute gains a second overload:
+The existing `WaveSize` attribute gains a new variant:
 
 ```HLSL
 [WaveSize(<minWaveSize>, <maxWaveSize>, [prefWaveSize])]
@@ -83,15 +83,26 @@ Where `minWaveSize` is the minimum wave size supported by the shader
 
 ### DXIL Additions
 
-The existing `WaveSize` value is stored as a metadata 32-bit integer constant.
-To store the additional values, an additional metadata tag indicating a tuple of
- three 32-bit integers representing the given parameters to `WaveSize`.
-In the case where no preferred wave size is specified, the value zero will
- indicate that nothing was specified.
+The existing metadata `kDxilWaveSizeTag`(11)
+ that takes only a single 32-bit integer constant is invalid in 6.8 shaders,
+ but will continue to be supported in earlier shader model versions.
 
-|         Tag             | Constant |         Value           |
-|-------------------------|----------|-------------------------|
-|kDxilRangedWaveSizeTag   |    23    |MD list: (i32, i32, i32) |
+The new metadata `kDxilRangedWaveSizeTag`(23) takes a tuple
+ of three 32-bit integers.
+These values represent all potential parameters to `WaveSize`.
+If all three values are non-zero, they represent the minimum, maximum,
+ and preferred wave sizes respectively.
+If only the first two values are non-zero, they represent the minimum
+ and maximum respectively without a specified preferred size.
+If only the first value is non-zero, it represents the legacy wave size as
+ introduced in Shader Model 6.6 and previously represented by `kDxilWaveSizeTag`.
+In this case, the single non-zero value is effectively minimum, maximum and
+ preferred size in that it represents the only wave size supported by the shader.
+
+|         Tag             | Constant |         Value           | Shader Models |
+|-------------------------|----------|-------------------------|---------------|
+|kDxilWaveSizeTag         |    11    |          i32            |     <6.8      |
+|kDxilRangedWaveSizeTag   |    23    |MD list: (i32, i32, i32) |    >=6.8      |
 
 ### SPIR-V Additions
 
@@ -125,16 +136,20 @@ These are where new or slightly altered errors are produced:
 
 Validation should confirm:
 
-* Each element in that is a power-of-two integer between 4 and 128 inclusive.
-  The third parameter may also be zero.
-* The minimum wave size is less than the maximum wave size.
-* The preferred wave size is zero or lies between the minimum and maximum.
-* Where validator version is less than 1.8, fail on shaders that use
- `RangedWaveSize`.
-* Validation should fail in an entry has both `RangedWaveSize` and `WaveSize`
- metadata.
-* Where validator version is greater than or equal to 1.8, fail when The tuple
- that the wave size range tag points to does not have exactly three elements.
+* The metadata `kDxilRangedWaveSizeTag` points to a tuple of exactly three
+ elements.
+* Each element of that tuple is a power-of-two integer between 4 and 128
+ inclusive or zero.
+* However, the first element (minimum wave size) is not zero.
+* The second element (maximum wave size) is greater than the first element
+ (minimum wave size) or zero.
+* The third element (preferred wave size) is greater or equal to the first
+ element (minimum wave size) and less than or equal to the second element
+ (maximum wave size) or zero.
+* Shaders with target shader model less than 6.8 that use
+  `kDxilRangedWaveSizeTag` should fail.
+* Shaders with target shader model greater than or equal to 6.8 that use
+  `kDxilWaveSizeTag` should fail.
 
 ### Runtime Additions
 
@@ -144,10 +159,14 @@ No additions are needed here.
 The PSV0 runtime data structure already contains both
  `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount` members that
  can be used to transmit the minimum and maximum values to the runtime.
+The existing single wave size value will continue to set both of these values to
+ that provided by the user.
+The preferred value is not relevant to the runtime as it cannot result in
+ shader loading failure.
 
 #### Device Capability
 
-As a required feature, devices supporting the shader model it ships with are
+As a required feature, devices supporting the Shader Model 6.8 are
  required to respect the wave size restrictions indicated by the wave size range
  metadata.
 
@@ -155,18 +174,25 @@ As a required feature, devices supporting the shader model it ships with are
 
 ### Correct Behavior Testing
 
-Verify this compiler output:
+Verify the following compiler output:
 
-1. The two parameter overload of `WaveSize` correctly transmits those values to a
-  metadata tuple with a zero third value that is pointed to by the correct tag
-  in the entry point attribute list.
-2. The three parameter overload of `WaveSize` transmits those values as well as
-  the third in the same tuple.
-3. That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
+1. The one parameter variant of `WaveSize` correctly produces a metadata tuple
+ pointed to by a `kDxilRangedWaveSizeTag` in the entry point attribute list with
+ the single value as the first element and the last two elements set to zero.
+ No `kDxilWaveSizeTag` should be produced.
+2. The two parameter variant of `WaveSize` correctly produces a metadata tuple
+ pointed to by a `kDxilRangedWaveSizeTag` in the entry point attribute list with
+ the two values as the first two elements and the last element set to zero.
+ No `kDxilWaveSizeTag` should be produced.
+3. The three parameter variant of `WaveSize` correctly produces a metadata tuple
+ pointed to by a `kDxilRangedWaveSizeTag` in the entry point attribute list with
+ all three values in their respective element locations.
+ No `kDxilWaveSizeTag` should be produced.
+4. That the PSV0 `MinimumExpectedWaveLaneCount` and `MaximumExpectedWaveLaneCount`
   values reflect those provided for the wave size range.
 
 Note that the above must all use literal values for the parameters on account of
- other compile-time contants being broken due to DXC bug 
+ other compile-time constants being broken due to DXC bug
  [#2188](https://github.com/microsoft/DirectXShaderCompiler/issues/2188).
 
 #### Diagnostics Testing
@@ -174,22 +200,22 @@ Note that the above must all use literal values for the parameters on account of
 1. Use the following invalid parameters each parameter location to `WaveSize`
   and ensure that an appropriate error is produced:
    1. Negative power-of-two integer
-   2. Floating point value
+   2. Floating-point value
    3. non-compile-time constant integer
-   4. Integer less than 4
-   5. Integer greater than 128
+   4. Power-of-two integer less than 4
+   5. Power-of-two integer greater than 128
    6. A non-power-of-two integer between 4 and 128
 2. Add the following invalid `WaveSize` attributes to an compute shader entry
   point and ensure that an appropriate error is produced:
-   1. no parameter list
-   2. an empty parameter list "()"
-   3. four parameters
+   1. No parameter list
+   2. An empty parameter list "()"
+   3. Four parameters
 3. Try the following invalid `WaveSize` parameter value combinations and ensure
   that an appropriate error is produced:
-   1. Set the minimum wave size equal to the maximum
-   2. Set the minimum wave size greater than the maximum
-   3. Set the preferred wave size to a value outside of the specified range
-4. Combine multiples of the 1, 2 and 3 parameter `WaveSize` attribute overloads
+   1. The minimum wave size is equal to the maximum
+   2. The minimum wave size is greater than the maximum
+   3. The preferred wave size is a value outside of the specified range
+4. Combine multiples of the 1, 2 and 3 parameter `WaveSize` attribute variants
   with different values on the same entry point and ensure that an attribute
   conflict error is produced.
 
@@ -197,17 +223,16 @@ Note that the above must all use literal values for the parameters on account of
 
 Test that the following produce validation errors:
 
-1. The wave size range tag pointing to anything but a tuple of 3
-2. A tuple value is not an integer
-3. A range tuple value is -4, 0, 1, 2, 3, 127, 129, or 256
-4. A preferred tuple value is -4, 1, 2, 3, 127, 129, or 256
-5. The minimum wave size value is equal to the maximum
-6. The minimum wave size value is greater than the maximum
-7. The preferred wave size is outside the specified range, but otherwise valid
+1. The wave size range tag pointing to anything but a tuple of 3.
+2. A tuple value is not an integer.
+3. A range tuple value is -4, 0, 1, 2, 3, 127, 129, or 256.
+4. A preferred tuple value is -4, 1, 2, 3, 127, 129, or 256.
+5. The minimum wave size value is equal to the maximum, but otherwise valid.
+6. The minimum wave size value is greater than the maximum, but otherwise valid.
+7. The preferred wave size is outside the specified range, but otherwise valid.
 8. Multiple metadata `kDxilRangedWaveSizeTag`s are in the same compiled shader.
-9. A metadata `kDxilRangedWaveSizeTag` is included with a `kDxilWaveSizeTag` in
- the same compiled shader.
-10. Explicit validator versions before 1.8 used with `kDxilRangedWaveSizeTag`s
+9. A metadata `kDxilWaveSizeTag` is used with 1.8 or greater validation.
+10. Explicit validator versions before 1.8 used with `kDxilRangedWaveSizeTag`s.
 
 ### Execution Testing
 
@@ -318,6 +343,7 @@ Special thanks:
 
 * Alan Baker
 * Chris Bieneman
+* Joshua Batista
 * Martin Fuller
 * Amar Patel
 * Damyan Pepper
