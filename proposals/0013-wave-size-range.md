@@ -141,14 +141,14 @@ Validation should confirm:
 * Each element of that tuple is a power-of-two integer between 4 and 128
  inclusive or zero.
 * However, the first element (minimum wave size) is not zero.
-* The first element (minimum wave size) is less than the second
- (maximum wave size).
+* The second element (maximum wave size) is greater than the first element
+ (minimum wave size) or zero.
 * The third element (preferred wave size) is greater or equal to the first
  element (minimum wave size) and less than or equal to the second element
  (maximum wave size) or zero.
-* Shaders with target shader model less than 6.8 that use 
+* Shaders with target shader model less than 6.8 that use
   `kDxilRangedWaveSizeTag` should fail.
-* Shaders with target sahder model greater than or equal to 6.8 that use
+* Shaders with target shader model greater than or equal to 6.8 that use
   `kDxilWaveSizeTag` should fail.
 
 ### Runtime Additions
