@@ -1,38 +1,45 @@
 # Extended Command Information
 
-v0.4 2023-09-27
+* Proposal: [NNNN](NNNN-extended-command-info.md)
+* Author(s): [Greg Roth](https://github.com/pow2clk)
+* Sponsor: [Greg Roth](https://github.com/pow2clk)
+* Status: **Under Consideration**
+* Planned Version: Shader Model 6.8
 
-Three new system-value semantics are required to be supported in HLSL shader model 6.8:
+## Introduction
+
+Two new system-value semantics are required to be supported in HLSL shader
+ model 6.8:
 
 * SV_StartVertexLocation -
  Reports StartVertexLocation from DrawInstanced()
  or BaseVertexLocation from DrawIndexedInstanced() to a vertex shader.
 * SV_StartInstanceLocation -
  Reports StartInstanceLocation From Draw*Instanced to a vertex shader.
-* SV_IndirectCommandIndex -
- Reports the auto-incrementing index of the current indirect command operation
- to a shader.
+
+## Motivation
 
 Since SV_VertexID doesn't include the StartVertexLocation
- and SV_InstanceID doesn't include the StartInstanceLocation values provided to the API
- through the corresponding draw or execute calls,
+ and SV_InstanceID doesn't include the StartInstanceLocation values provided to
+ the API through the corresponding draw or execute calls,
  this information has been unavailable to HLSL unless independently passed in.
-Availability of these values allows reconstruction of the vertex and instance representation
- used within the API.
+Availability of these values allows reconstruction of the vertex and instance
+ representation used within the API.
+In particular, if the vertex or instance information is offset by a certain
+ amount in the API, the shader can access that information and potentially
+ make use of data before that offset for special usage.
 It also provides compatibility support for APIs that include these values
  in their VertexID and PrimitiveID equivalents.
 
-## Contents
+## Proposed solution
 
-* [SV_StartVertexLocation](#sv_startvertexlocation)
-* [SV_StartInstanceLocation](#sv_startinstancelocation)
-* [SV_IndirectCommandIndex](#sv_indirectcommandindex)
-* [DXIL](#dxil)
-* [Device Capability](#device-capability)
-* [Issues](#issues)
-* [Change Log](#change-log)
+## Detailed Design
 
-## SV_StartVertexLocation
+### HLSL additions
+
+##### SV_StartVertexLocation
+
+New semantic inputs are added to HLSL vertex shaders.
 
 | Semantic Input | Type |
 |---------------------------|--------|
@@ -61,7 +68,7 @@ For any subsequent stage that cares about this value, the shader must pass it ma
  using a user semantic.
 SV_StartVertexLocation is an invalid semantic for any shader outputs.
 
-## SV_StartInstanceLocation
+##### SV_StartInstanceLocation
 
 | Semantic Input | Type |
 |---------------------------|--------|
@@ -82,26 +89,10 @@ The system only populates this as input to the vertex shader.
 For any subsequent stage that cares about this value, the shader must pass it manually
  using a user semantic.
 SV_StartVertexLocation is an invalid semantic for any shader outputs.
-<!-- See issue 1 -->
 
-## SV_IndirectCommandIndex
+### DXIL Additions
 
-| Semantic Input | Type |
-|---------------------------|--------|
-| SV_IndirectCommandIndex | uint |
-
-Index of the current command in an ExecuteIndirect() call.
-Within an ExecuteIndirect() call, SV_IndirectCommandIndex starts at 0 for its first command
- and increments by one for each subsequent command.
-For shader invocations outside ExecuteIndirect(), SV_IndirectCommandIndex is always 0.
-
-The system will populate this as a system value input to vertex, mesh and amplification shader stages.
-SV_IndirectCommandIndex is an invalid tag for any shader outputs.
-<!-- See issue 3 -->
-
-## DXIL
-
-Three new DXIL operations that return the three semantic values are introduced in DXIL 1.8.
+Two new DXIL operations that return the two semantic values are introduced in DXIL 1.8.
 The associated opcodes are the only parameters.
 
 ```C++
@@ -110,39 +101,51 @@ $result1 = call i32 @dx.op.StartVertexLocation(i32 256)
 
 // SV_StartInstanceLocation
 $result2 = call i32 @dx.op.StartInstanceLocation(i32 257)
-
-// SV_IndirectCommandIndex
-$result3 = call i32 @dx.op.IndirectCommandIndex(i32 258)
 ```
 
-## Device Capability
+### SPIR-V Additions
+
+### Diagnostic Changes
+
+#### New Errors
+
+#### Validation Changes
+
+### Runtime Additions
+
+#### Runtime information
+
+#### Device Capability
 
 Devices that support `D3D_SHADER_MODEL_6_8` are required to support these system values.
 
-## Issues
+## Testing
 
-1. For which shader stages should these values be available?
-   * StartVertexLocation and StartPrintiveLocation are available to the vertex shader
-     stage through system value inputs.
-     They cannot be used on output variables.
-     SV_IndirectCommandIndex is available to all shader stages.
+### Correct Behavior Testing
 
-2. How should SV_StartVertexLocation and SV_StartInstanceLocation be accessed?
-   * Though these could be built-in functions,
-     semantic values are consistent with how the corresponding existing information
-     is accessed.
+#### Diagnostics Testing
+### Validation Testing
+### Execution Testing
 
-3. How should SV_IndirectCommandIndex be accessed?
-   * UNRESOLVED: Some implmenetations of ExecuteIndirect involving replays
-     will have a problem with the semantic value.
-     Perhaps instead might use an incrementing root constant
-     that increments by one for each invocation.
+## Alternatives considered
 
-## Change Log
+There may have been utility to making StartVertexLocation and StartPrimitiveLocation
+ available in entry shader stages beyond just the vertex shader.
+That would have exceeded the requirement that motivated this feature without
+ certainty that it would be useful for anyone,
+ so availability was limited to the vertex stage.
 
-Version|Date|Description
--|-|-
-0.4|27 Sep 2023|Limit StartInstanceLocation to vertex shaders
-0.3|27 Sep 2023|clarified signed int. added command idx issue. fixed copy/paste issues
-0.2|25 Sep 2023|Renamed BaseVertexLocation. Allowed multiple stages. Clarified value definitions.
-0.1|25 Sep 2023|Initial version
+The StartVertexLocation and StartInstanceLocation information might have been
+ accessible to the HLSL author by built-in functions rather than semantics.
+It was a technical possibility that would have made them more readily available
+ without having to pipe entry parameters to subfunctions,
+ however semantic values are consistent with how the corresponding information
+ is accessed such as VertexID.
+For the sake of consistency and the principal of least surprise,
+ they are represented as semantic values as well.
+
+
+## Acknowledgements
+
+* Amar Patel
+* Tex Riddell
