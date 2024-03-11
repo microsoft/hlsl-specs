@@ -6,8 +6,6 @@
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: Complete
 * Version: Shader Model 6.8
-* Issues: [30](https://github.com/microsoft/hlsl-specs/issues/30),
-          [81](https://github.com/microsoft/hlsl-specs/issues/81)
 
 ## Introduction
 
