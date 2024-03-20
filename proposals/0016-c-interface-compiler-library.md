@@ -13,11 +13,11 @@
 
 ## Introduction
 
-An effort is underway to modernize compilation of HLSL based shaders. This is
-commonly referred to as the upstream effort. This effort is a long term play
-that positions HLSL shader compilation in a place that provides the most
-stability and maintainability for the future by giving as many options to
-DirectX while the GPU/NPU landscape evolves.
+An effort is underway to modernize compilation of HLSL based shaders by adding
+HLSL compilation to clang. This effort is a long term play that positions
+HLSL shader compilation in a place that provides the most stability and
+maintainability for the future by giving as many options to DirectX while the
+GPU/NPU landscape evolves.
 
 There are multiple ways to compile a shader today.
 * dxc.exe - Executable that takes command line options and outputs bytecode
@@ -26,19 +26,19 @@ compile shaders.
 
 ## Motivation
 
-One of the HLSL compiler's primary usage modes is as a library. The upstream
+One of the HLSL compiler's primary usage modes is as a library. The clang
 compiler will also need to expose a library for toolchains to compile a shader.
 
 ## Proposed solution
 
 The existing HLSL compiler's library support on Windows is COM based.
-This is a non-starter for the upstream effort.  COM doesn't fit any of the
+This is a non-starter for clang.  COM doesn't fit any of the
 existing patterns and is considered to be a Windows-only thing.  Many
 developers do not like COM and are immediately turned off on seeing it as a 
 requirement.
 
-A better fit in the upstream architecture will be to introduce a library
-with one or more c style exports to perform compilation tasks.
+A better fit in the clang architecture will be to introduce a library with one
+or more c style exports to perform compilation tasks.
 
 This export could be part of an existing shared library exposed from clang
 (example: libClang, libTooling, etc) or a completely new library that is HLSL
@@ -46,7 +46,7 @@ specific. (example: libHlsl, libCompile).
 
 Support for [legacy HLSL compiler toolchains](#alternatives-considered-for-supporting-legacy-toolchains)
 will also be addressed in this proposal. The design will help migration of
-older DXC-based solutions to adopt the new upstream compiler.
+older DXC-based solutions to adopt clang as the preferred HLSL compiler.
 
 ## Detailed design
 
@@ -59,8 +59,7 @@ _The detailed design is not required until the feature is under review._
 This approach involves creating wrapper code released on
 https://github.com/microsoft that can be included into existing toolchain
 projects. This wrapper implementation will be a drop-in match to all of the
-existing public interfaces allowing easy adoption to using the upstream
-compiler.
+existing public interfaces allowing easy adoption to using clang.
 
 The wrapper implementation will call into the new C export for compilation.
 
