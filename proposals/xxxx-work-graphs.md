@@ -31,6 +31,8 @@ GPU-based work creation APIs.
 
 ## Proposed solution
 
+### HLSL Additions
+
 The Work Graphs feature allows an application to specify a set of tasks as
 _nodes_ in a graph representing a more complex workload. Each _node_ has a fixed
 shader which takes one or more _input records_ as input and can produce one or
@@ -45,7 +47,9 @@ _Node_ shaders have one of three _launch modes_:
 * Coalescing
 
 _Thread launch_ nodes represent an individual thread of work that processes a
-single _input record_. Thread launch nodes use a thread group size of `(1,1,1)`.
+single _input record_. Thread launch nodes have no visible thread group, do not
+use the `numthreads` attribute, have no access to groupshared memory, and
+cannot use group-scope memory or sync barriers.
 
 _Broadcasting launch_ nodes represent a grid of work operating on a single
 _input record_. Each input record to a broadcasting node launches a full
@@ -79,10 +83,11 @@ shader stage annotation.
 All node shaders except _thread launch_ nodes must specify the thread group size
 using the `[numthreads(<x>, <y>, <z>)]` attribute.
 
-Node shaders support all compute shader function annotations, but also have new
-annotations unique to node shaders.
+Node shaders support existing compute shader function annotations: `numthreads`
+ and `wavesize`.
+They also have new annotations unique to node shaders.
 
-> Consistent with HLSL grammar attribute names are case-insensitive. Any
+> Consistent with HLSL grammar, attribute names are case-insensitive. Any
 > attributes that take string arguments, the string argument values are
 > case-sensitive.
 
@@ -93,11 +98,13 @@ launch mode is `broadcasting`.
 
 ##### **`[NodeIsProgramEntry]`**
 
+
+Indicates a node that may be invoked as an entry directly by the API.
 Shaders that can receive input records from both inside and outside the work
 graph (i.e. from a command list) require this attribute. Graphs can have more
-than one entry shaders that receive inputs from outside the graph. Nodes which
-do not have other nodes targeting them do not need to apply this attribute to
-receive input from outside the work graph.
+than one entry shader that receives inputs from outside the graph.
+This property is implied if no other work graph nodes target this node,
+so in that case the attribute is optional and may be omitted.
 
 ##### **`[NodeID("<name>", <index> = 0)]`**
 If present the shader represents a node with the provided name. If present, the
@@ -111,8 +118,8 @@ has a local root signature, the index defaults to an unallocated table location.
 
 ##### **`[NodeShareInputOf("<name>", <index> = 0 )]`**
 Share the inputs for the node specified by name and optional index with this
-node. Both nodes must have identical input records and the same launch mode and
-dispatch grid size (if fixed).
+node. Both nodes must have identical input records, the same launch mode, and
+identical dispatch grid size (if fixed).
 
 ##### **`[NodeDispatchGrid(<x>, <y>, <z>)]`**
 Specifies the size of the dispatch grid. Broadcast launch nodes must specify
@@ -135,11 +142,11 @@ one of the outputs of a node is the ID of the node itself.
 Specific types for input parameters depend on the node launch mode, but all node
 shaders support two categories of parameters:
 
-* Zero or one Node Input Parameter.
-* Zero or more Node Output Parameter(s).
+* Zero or one [Node Input Parameter](#node-input-objects).
+* Zero or more [Node Output Parameter(s)](#node-output-objects).
 
-Broadcast and Coalescing Launch shaders also support optional system value
-parameters.
+[Broadcast and Coalescing Launch](launch-modes) shaders also support optional
+system value parameters.
 
 ##### Node Input Objects
 
@@ -148,10 +155,10 @@ read-only and read-write variants:
 
 * `{RW}ThreadNodeInputRecord<RecordTy>` - for thread launch nodes.
 * `{RW}DispatchNodeInputRecord<RecordTy>` - for broadcasting launch nodes.
-* `{RW}GroupNodeInputRecord<RecordTy>`- for coalescing launch nodes.
+* `{RW}GroupNodeInputRecords<RecordTy>`- for coalescing launch nodes.
 
 The pseudo-HLSL code below describes the basic interface of the
-`{RW}{Thread|Dispatch|Group}NodeInputRecord<RecordTy>` classes:
+`{RW}{Thread|Dispatch|Group}NodeInputRecord{s}<RecordTy>` classes:
 
 ```c++
 namespace detail {
@@ -167,8 +174,8 @@ template <typename RecordTy, bool IsRW> class NodeInputRecordInterface {
   std::enable_if_t<IsRW, RecordTy>::type &Get();
 };
 
-/// @brief Interface for GroupNodeInputRecord and RWGroupNodeInputRecord
-template <typename RecordTy, bool IsRW = false> class GroupNodeInputRecordBase {
+/// @brief Interface for GroupNodeInputRecords and RWGroupNodeInputRecords
+template <typename RecordTy, bool IsRW = false> class GroupNodeInputRecordsBase {
   /// @brief Returns the number of records that have been coalesced into the
   /// current thread group.
   ///
@@ -237,10 +244,10 @@ class RWDispatchNodeInputRecord
 };
 
 template <typename RecordTy>
-using GroupNodeInputRecord = detail::GroupNodeInputRecordBase<RecordTy, false>;
+using GroupNodeInputRecord = detail::GroupNodeInputRecordsBase<RecordTy, false>;
 
 template <typename RecordTy>
-using RWGroupNodeInputRecord = detail::GroupNodeInputRecordBase<RecordTy, true>;
+using RWGroupNodeInputRecord = detail::GroupNodeInputRecordsBase<RecordTy, true>;
 ```
 
 Coalescing launch nodes also accept the `EmptyNodeInput` input object for cases
@@ -260,8 +267,9 @@ class EmptyNodeInput {
 ##### Node Output Objects
 
 
-Node output objects are either records or empty. The following pseudo-HLSL
-defines the interfaces for the `NodeOutput` and `EmptyNodeOutput` objects:
+Node output objects either allocate records or increment a counter for  empty
+records. The following pseudo-HLSL defines the interfaces for the `NodeOutput`
+ and `EmptyNodeOutput` objects:
 
 ```c++
 template <typename RecordTy> class NodeOutput {
@@ -300,12 +308,15 @@ template <typename RecordTy> class NodeOutput {
 };
 
 class EmptyNodeOutput {
-  /// @brief Adds `Count` empty output records to the thread node outputs.
+  /// @brief Adds `Count` empty output records to the node output, where this
+  /// `Count` is specified per-thread.  The total number added is the sum of
+  /// `Count` values for each thread in the group.
   ///
   /// Must be called in thread group uniform control flow.
   void ThreadIncrementOutputCount(uint Count);
 
-  /// @brief Adds `Count` empty output records to the group node outputs.
+  /// @brief Adds `Count` empty output records to the node output, once for the
+  /// group, instead of summing the value across threads.
   ///
   /// Must be called in thread group uniform control flow. The value of
   /// `Count` and `this` must be uniform across the thread group.
@@ -376,7 +387,7 @@ using GroupNodeOutputRecords = detail::NodeOutputRecordsBase<RecordTy>;
 > case-sensitive.
 
 ###### **`[MaxRecords(<count>)]`**
-Applies to node inputs in coalescing launch nodes or outputs for any node mode.
+Applies to node inputs in coalescing launch nodes or outputs for any launch mode.
 
 Required for node inputs for coalescing launch nodes, this attribute restricts
 the maximum number of records per thread group. Implementations are not required
@@ -389,13 +400,13 @@ applies as the sum of all records across the output array, not per-node.
 Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
 attribute.
 
-###### **`[MaxRecordsSharedWith("<name>")]`**
-This attribute applies to node outputs. The named node must have the
-`MaxRecords` attribute applied to its entry. This attribute and the `MaxRecords`
-attribute are mutually exclusive.
+###### **`[MaxRecordsSharedWith(<parameter>)]`**
+This attribute applies to node outputs. The named parameter must have the
+`MaxRecords` attribute. This attribute and the `MaxRecords` attribute are
+mutually exclusive.
 
-The node that this attribute is applied to shares a maximum record allocation
-with the named node.
+The node output that this attribute is applied to shares a maximum record
+allocation with the named node output parameter.
 
 Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
 attribute.
@@ -409,7 +420,10 @@ output is the name of the parameter, and the index is the default index (0).
 
 ###### **`[AllowSparseNodes]`**
 This attribute applies to outputs and allows the work graph to be created even
-if there is not a node defined for the specified output.
+if there is not a node defined for the specified output.  If the output is an
+array, each element may or may not have a downstream node defined in the graph.
+`IsValid()` can be used to determine whether an output node is defined in the
+graph.
 
 ###### **`[NodeArraySize(<count>)]`**
 Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray`
@@ -434,7 +448,7 @@ recursion depth.
 #### Barrier
 
 ```c++
-enum class MEMORY_TYPE_FLAG : uint {
+enum MEMORY_TYPE_FLAG {
   UAV_MEMORY = 0x00000001,
   GROUP_SHARED_MEMORY = 0x00000002,
   NODE_INPUT_MEMORY = 0x00000004,
@@ -442,7 +456,7 @@ enum class MEMORY_TYPE_FLAG : uint {
   ALL_MEMORY = 0x0000000f,
 };
 
-enum class SEMANTIC_FLAG : uint {
+enum SEMANTIC_FLAG {
   GROUP_SYNC = 0x00000001,
   GROUP_SCOPE = 0x00000002,
   DEVICE_SCOPE = 0x00000004,
@@ -453,7 +467,8 @@ enum class SEMANTIC_FLAG : uint {
 /// @param MemoryTypeFlags Flag bits as defined by MEMORY_TYPE_FLAG.
 /// @param SemanticFlags Flag bits as defined by SEMANTIC_FLAG.
 ///
-/// `Barrier` must be called from thread group uniform control flow.
+/// `Barrier` must be called from thread group uniform control flow when
+/// `SemanticFlags` includes `GROUP_SYNC`.
 void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 
 /// @brief Request a barrier for just the memory used by an object.
@@ -464,7 +479,8 @@ void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 /// The TargetObject parameter can be a particular node input/output record
 /// object or UAV resource. Groupshared variables are not currently supported.
 ///
-/// `Barrier` must be called from thread group uniform control flow.
+/// `Barrier` must be called from thread group uniform control flow when
+/// `SemanticFlags` includes `GROUP_SYNC`.
 void Barrier(Object TargetObject, uint SemanticFlags);
 ```
 
@@ -491,14 +507,14 @@ void AllMemoryBarrierWithGroupSync() {
 }
 
 void DeviceMemoryBarrier() {
-  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY, DEVICE_SCOPE, 0);
+  Barrier(UAV_MEMORY, DEVICE_SCOPE);
 }
 
 void DeviceMemoryBarrierWithGroupSync() {
-  Barrier(UAV_MEMORY | GROUP_SHARED_MEMORY, DEVICE_SCOPE | GROUP_SYNC, 0);
+  Barrier(UAV_MEMORY, DEVICE_SCOPE | GROUP_SYNC);
 }
 
-void GroupMemoryBarrier() { Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE, 0); }
+void GroupMemoryBarrier() { Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE); }
 
 void GroupMemoryBarrierWithGroupSync() {
   Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE | GROUP_SYNC);
