@@ -44,7 +44,8 @@ This export could be part of an existing shared library exposed from clang
 (example: libClang, libTooling, etc) or a completely new library that is HLSL
 specific. (example: libHlsl, libCompile).
 
-Support for [legacy HLSL compiler toolchains](#alternatives-considered-for-supporting-legacy-toolchains) will also be addressed in this proposal. The design will help migration of
+Support for [legacy HLSL compiler toolchains](#alternatives-considered-for-supporting-legacy-toolchains)
+will also be addressed in this proposal. The design will help migration of
 older DXC-based solutions to adopt the new upstream compiler.
 
 ## Detailed design
@@ -67,9 +68,6 @@ The wrapper implementation will call into the new C export for compilation.
 
 This approach combines Alternative 1 and adds compiling the wrapper code into
 formal header/libraries that can be consumed by legacy toolchains.
-
-#### Open Questions:
-* Would a 'dxc.exe' equivalent binary need to also be included in this?
 
 ## Resources
 
