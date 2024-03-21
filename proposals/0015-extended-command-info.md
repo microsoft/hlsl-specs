@@ -170,7 +170,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21 {
 ```
 
 `ExtendedCommandInfo` is a boolean that specifies
- whether the system values definded here expanded comparison sample methods indicated here are supported
+ whether the system values definded here are supported
  by the given hardware and runtime.  For devices that support `D3D_FEATURE_LEVEL_12_2`, `ExtendedCommandInfo` will 
  always be `TRUE`.  The capability check is useful in case running on a device on a lower feature level.
 
