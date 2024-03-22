@@ -2,7 +2,7 @@
 
 # HLSL 202x and 202y
 
-* Proposal: [INF-NNNN HLSL 202x and 202y](NNNN-hlsl-202x-202y.md)
+* Proposal: [INF-NNNN](NNNN-hlsl-202x-202y.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
@@ -27,7 +27,21 @@ This poses a challenge for users as they seek to migrate to Clang. Sources used
 with DXC may not be compatible with Clang by preventing the ability to switch to
 Clang piecemeal or being able to A/B test shaders.
 
-## Proposed solution
+## Version Naming and Management
+
+HLSL versions names match the intended year of completion. Historically we
+missed with HLSL 2021 not completing the implementation and deployment in 2023.
+Due to schedule uncertainty and a desire to not repeat _that mistake_, future
+versions have placeholder names.
+
+The next language version is HLSL 202x. HLSL 202y will release after 202x. As we
+near the final release of 202x the release name will change to the target year.
+The same will follow for 202y.
+
+The expectation is that HLSL `x` is a placeholder integer value less than `y`.
+All features added to HLSL 202x will be implicitly inherited by HLSL 202y.
+
+## Proposed Solution
 
 This proposal adopts the development of two new language versions for HLSL in
 parallel. The proposal adopts a narrowly focused HLSL 202x which will be
@@ -42,7 +56,7 @@ DXC and it is expected to cause potential disruption.
 
 Existing proposals that fall into this category are:
 * [Numeric Constants](/proposals/0003-numeric-constants.md)
-* [Removing literal types](https://github.com/microsoft/hlsl-specs/issues/73)
+* [Conforming Literals](/proposals/0017-conforming-literals.md)
 
 HLSL 202x will not include features for all differences between DXC and Clang.
 Some of the
