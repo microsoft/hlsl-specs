@@ -136,11 +136,43 @@ Validation should confirm:
 
 #### Runtime information
 
-No additions are needed here.
+A new feature info flag is added to SFI0:
+
+|         Tag             | Bit |   Value    | Description                             |
+|-------------------------|-----|------------|-----------------------------------------|
+|ExtendedCommandInfo  | 32  | 0x100000000ull | `SV_StartInstanceLocation` or `SV_StartVertexLocation` are used |
+
+It indicates to the runtime that the shader makes use of any of the above system values.
+
+This indicates to the runtime that that the shader requires the presence of
+ the corresponding capability bit (described below) indicating support.
 
 #### Device Capability
 
-Devices that support `D3D_SHADER_MODEL_6_8` are required to support these system values.
+Applications can query the availability
+ of these features by
+ passing `D3D12_FEATURE_D3D12_OPTIONS21`
+ as the `Feature` parameter
+ and retrieving the `pFeatureSupportData` parameter
+ as a struct of type `D3D12_FEATURE_DATA_D3D12_OPTIONS21`.
+The relevant parts of these structs are defined below.
+
+```C++
+typedef enum D3D12_FEATURE {
+    ...
+    D3D12_FEATURE_D3D12_OPTIONS21
+} D3D12_FEATURE;
+
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS21 {
+    ...
+    BOOL ExtendedCommandInfo;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS21;
+```
+
+`ExtendedCommandInfo` is a boolean that specifies
+ whether the system values definded here are supported
+ by the given hardware and runtime.  For devices that support `D3D_FEATURE_LEVEL_12_2`, `ExtendedCommandInfo` will 
+ always be `TRUE`.  The capability check is useful in case running on a device on a lower feature level.
 
 ## Testing
 
