@@ -244,7 +244,7 @@ class RWDispatchNodeInputRecord
 };
 
 template <typename RecordTy>
-using GroupNodeInputRecord = detail::GroupNodeInputRecordsBase<RecordTy, false>;
+using GroupNodeInputRecords = detail::GroupNodeInputRecordsBase<RecordTy, false>;
 
 template <typename RecordTy>
 using RWGroupNodeInputRecord = detail::GroupNodeInputRecordsBase<RecordTy, true>;
