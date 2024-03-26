@@ -2,12 +2,13 @@
 
 # Work Graphs
 
-* Proposal: [NNNN](NNNN-work-graphs.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
+* Proposal: [0018](0018-work-graphs.md)
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz),
+  [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex
   Riddell](https://github.com/tex3d)
-* Status: **Under Consideration**
-* Planned Version: Shader Model 6.8
+* Status: Complete
+* Version: Shader Model 6.8
 
 ## Introduction
 
@@ -48,7 +49,7 @@ _Node_ shaders have one of three _launch modes_:
 
 _Thread launch_ nodes represent an individual thread of work that processes a
 single _input record_. Thread launch nodes have no visible thread group, do not
-use the `numthreads` attribute, have no access to groupshared memory, and
+require the `numthreads` attribute, have no access to groupshared memory, and
 cannot use group-scope memory or sync barriers.
 
 _Broadcasting launch_ nodes represent a grid of work operating on a single
@@ -71,7 +72,7 @@ uninitialized when created.
 
 ### Node Entry Functions
 
-Node shaders are entry functions built into library targets. Node shaders have
+Node shaders are represented as entry functions built into library targets. Node shaders have
 similar capabilities and execution semantics to compute shaders. Shader entries
 annotated as `[shader("node")]` are usable as work graph nodes.
 
@@ -129,7 +130,7 @@ cannot exceed (2^24)-1 (16,777,215).
 
 ##### **`[NodeMaxDispatchGrid(<x>, <y>, <z>)]`**
 Specifies the maximum dispatch grid size when the dispatch grid size is
-specified on the input record using the `SV_DispatchGrid` semantic. The `x` `y`
+specified on the input record using the [`SV_DispatchGrid`](#SV_DispatchGrid) semantic. The `x` `y`
 and `z` parameters individually cannot exceed (2^16)-1 (65535), and `x*y*z` cannot
 exceed (2^24)-1 (16,777,215).
 
@@ -144,9 +145,6 @@ shaders support two categories of parameters:
 
 * Zero or one [Node Input Parameter](#node-input-objects).
 * Zero or more [Node Output Parameter(s)](#node-output-objects).
-
-[Broadcast and Coalescing Launch](launch-modes) shaders also support optional
-system value parameters.
 
 ##### Node Input Objects
 
@@ -177,10 +175,11 @@ template <typename RecordTy, bool IsRW> class NodeInputRecordInterface {
 /// @brief Interface for GroupNodeInputRecords and RWGroupNodeInputRecords
 template <typename RecordTy, bool IsRW = false> class GroupNodeInputRecordsBase {
   /// @brief Returns the number of records that have been coalesced into the
-  /// current thread group.
-  ///
-  /// Returns 1..._MaxCount_, where _MaxCount_ is specified by the
-  /// `[MaxRecords(_MaxCount_)]` attribute applied to the parameter declaration.
+  /// current thread group
+
+  /// Returned value is in the range [1..._MaxCount_], where _MaxCount_ is
+  /// specified by the `[MaxRecords(_MaxCount_)]` attribute applied to the
+  /// parameter declaration.
   uint Count() const;
 
   /// @brief Get a copy of the underlying record at the specified index.
@@ -263,6 +262,19 @@ class EmptyNodeInput {
   uint Count() const;
 };
 ```
+
+##### System Value Parameters
+
+Broadcast and Coalescing Launch shaders support a subset of compute shader
+system value inputs.
+These have the same types, meanings, and usages as they do for compute shaders.
+
+|system value semantic         | supported launch modes | description |
+|------------------------------|:---------:|-------------|
+| `SV_GroupThreadID` | Broadcasting, Coalescing | Thread ID within group |
+| `SV_GroupIndex` | Broadcasting, Coalescing | Flattened thread index within group |
+| `SV_GroupID` | Broadcasting | Group ID within dispatch |
+| `SV_DispatchThreadID` | Broadcasting | Thread ID within dispatch |
 
 ##### Node Output Objects
 
@@ -484,7 +496,7 @@ void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 void Barrier(Object TargetObject, uint SemanticFlags);
 ```
 
-Work Graphs introduces a new more flexible implementation of the memory barrier
+The Work Graphs feature introduces a new more flexible implementation of the memory barrier
 functions. This function is available in all shader types (including non-node
 shaders).
 
@@ -535,11 +547,15 @@ If a `RWDispatchNodeInputRecord<T>` is used for cross-group sharing and calls
 `[NodeTrackRWInputSharing]` attribute applied to it. This allocates memory in
 the record allocation to track thread completion.
 
-## Alternatives considered (Optional)
+### New Structure System Values
 
-If alternative solutions were considered, please provide a brief overview. This
-section can also be populated based on conversations that occur during
-reviewing.
+#### SV_DispatchGrid
+
+`uint/uint2/uint3/uint16_t/uint16_t2/uint16_t3 SV_DispatchGrid`
+
+`SV_DispatchGrid` can optionally appear anywhere in a record.
+
+If the record arrives at a [broadcasting launch node](#broadcasting-launch-nodes) that doesn't declare a fixed dispatch grid size via `[NodeDispatchGrid(x,y,z)]`, `SV_DispatchGrid` becomes the dynamic grid size used to launch at the node. The value has no special significance in other contexts.
 
 ## Acknowledgments
 
