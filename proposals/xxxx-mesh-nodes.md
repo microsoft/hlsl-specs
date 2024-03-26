@@ -43,8 +43,7 @@ indicating the grid size when `[NodeMaxDispatchGrid(x,y,z)]` is used.
 The same system value inputs supported for broadcast launch nodes and mesh
 shaders are supported in the same way here:
 `SV_DispatchThreadID`, `SV_GroupThreadID`, `SV_GroupIndex`, `SV_GroupID`,
-with the exception (for now) of `SV_ViewID`, which is not supported for this
-experimental feature.
+with the exception of `SV_ViewID` (see [Open Questions](open-questions)).
 
 Outputs to other nodes are not allowed - the mesh node must be a leaf in the
 work graph.
