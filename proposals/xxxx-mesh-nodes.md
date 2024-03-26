@@ -1,7 +1,7 @@
 # Mesh Nodes
 
-* Proposal: [NNNN](NNNN-mesh-nodes.md)
-* Author(s): [Amar Patel](https://github.com/amarpMSFT), [Tex Riddell](https://github.com/tex3d)
+* Proposal: [0019](0019-mesh-nodes.md)
+* Author(s): [Tex Riddell](https://github.com/tex3d), [Amar Patel](https://github.com/amarpMSFT)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
 * Proposed Version: SM 6.9 experimental
