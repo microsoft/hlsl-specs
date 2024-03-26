@@ -4,35 +4,36 @@
 * Author(s): [Amar Patel](https://github.com/amarpMSFT), [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
+* Proposed Version: SM 6.9 experimental
 
 ## Introduction
 
-This proposes the addition of a mesh node to Work Graphs as an experimental
-feature.
-The mesh node acts as a launching off point for a graphics pipeline,
-using an adaptation of a mesh shader entry as a leaf node in a work graph.
-The main changes to the mesh shader entry for use as a node in the work graph
-is the replacement of the input payload with a node input record, and the use
-of shader attributes, including a new launch type: `[NodeLaunch("mesh")]`.
-
-This is an HLSL-focused summary of the graphics nodes feature proposed in the
-[work graphs spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#graphics-nodes).
-For now only mesh node support is considered as an experimental addition.
+This spec describes the HLSL and DXIL shader details for a new 'mesh' launch
+type for the Work Graph node shader, modelled after the existing mesh shader
+stage. See the
+[mesh nodes](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes)
+section of the Work Graphs spec for the surrounding details.
 
 ## Motivation
 
 Work graphs are a great way to generate compute work on the GPU, and there is a
 lot of interest in expanding this to scheduling graphics work as a replacement
 for execute indirect.
-Mesh shader is a natural place to start, as it's already a compute shader, and
-has far fewer details to work out than supporting legacy graphics pipelines.
+Mesh shader is a natural place to start.
+It is already a compute shader, and requires fewer modifications to adapt to a
+node shader than the vertex shader would.
+The input record can replace the mesh payload, and there is no input
+signature that would require special parameter handling and connection to an
+intermediate fixed-function input assembler stage.
+There are also fewer details to work out for the integration with work
+graphs.
 
 ## Proposed solution
 
 Add a new node launch type `"mesh"`, indicating a mesh shader leaf graphics node.
 The new mesh node is based on a combination of a broadcast launch node and a
 mesh shader. See more details about the runtime context in the work graphs spec
-[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#graphics-nodes).
+[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes).
 
 Use the node input record as the mesh shader input payload, instead of an
 explicit `payload` argument.
@@ -72,12 +73,9 @@ then referring to that program in a
 [work graph program node](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_program_node),
 which may optionally override node properties, such as the node ID.
 
-See the [DispatchMesh Launch Nodes](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#dispatchmesh-launch-nodes)
+See the [Mesh Nodes](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes)
 section of the work graphs spec, along with sections linked from there, to
 complete the picture.
-
-In the future, we may add subobjects to specify more of these details within
-the DXIL library for convenience.
 
 ### Example Syntax
 
@@ -90,6 +88,9 @@ struct MyMeshRecord {
 groupshared uint numVerts;
 groupshared uint numPrims;
 
+#define MAX_VERTS 16
+#define MAX_PRIMS 8
+
 [shader("node")]
 [NodeLaunch("mesh")]
 [NodeIsProgramEntry]
@@ -100,14 +101,22 @@ groupshared uint numPrims;
 [OutputTopology("triangle")]
 void MyMeshNode(
     DispatchNodeInputRecord<MyMeshRecord> nodeInput,
-    out vertices PerVertexValues verts[16],
-    out primitives PerPrimitiveValues prim[8],
-    out indices uint3 tris[16] )
+    out vertices PerVertexValues verts[MAX_VERTS],
+    out primitives PerPrimitiveValues prims[MAX_PRIMS],
+    out indices uint3 tris[MAX_PRIMS],
+    in uint gi : SV_GroupIndex )
 {
   float3 data = nodeInput.Get().perMeshConstant;
   // compute numVerts, numPrims...
   SetMeshOutputCounts(numVerts, numPrims);
   // Cooperate across group to write output arrays...
+  if (gi < numVerts) {
+    verts[gi] = ComputeVertexValues(gi);
+  }
+  if (gi < numPrims) {
+    prims[gi] = ComputePrimValues(gi);
+    tris[gi] = ComputeTri(gi);
+  }
 }
 ```
 
@@ -119,11 +128,15 @@ To use the experimental feature, you must compile HLSL with options:
 `-T lib_6_9 -select-validator internal`.
 This produces a DXIL library for use with the state object API in accordance
 with the work graphs spec
-[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#graphics-nodes.
+[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes).
 
 `-select-validator internal` is for use during feature development to avoid
 using an external released validator that does not recognize the feature or
 the in-development shader model being used.
+
+In the API, mesh nodes may be paired with an ordinary pixel shader compiled to
+any `ps_6_*` profile.  The pixel shader would not be compiled into a library
+target like the mesh node is.
 
 ## Detailed design
 
@@ -143,22 +156,22 @@ for more detailed descriptions of the node function attributes.
 
 | Attribute | Required | Description |
 |--|--|--|
-| `[shader("node")]` | Y | Indicates a node shader entry point |
-| `[NodeLaunch("mesh")]` | Y | Signifies a mesh node |
-| `[NumThreads(x,y,z)]` | Y | Specifies the launch size of the threadgroup of the Mesh shader, just like with compute shader. The number of threads can not exceed `X * Y * Z = 128`. See [numthreads](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#numthreads) in the Mesh Shader spec. |
-| `[OutputTopology(`*topology*`)]` | Y | Specifies the topology for the output primitives of the mesh shader. *topology* must be `"line"` or "`triangle"`. See [outputtopology](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#outputtopology) in the Mesh Shader spec. |
+| `[shader("node")]` | Yes | Indicates a node shader entry point |
+| `[NodeLaunch("mesh")]` | Yes | Signifies a mesh node |
+| `[NumThreads(x,y,z)]` | Yes | Specifies the launch size of the threadgroup of the Mesh shader, just like with compute shader. The number of threads can not exceed `X * Y * Z = 128`. See [numthreads](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#numthreads) in the Mesh Shader spec. |
+| `[OutputTopology(`*topology*`)]` | Yes | Specifies the topology for the output primitives of the mesh shader. *topology* must be `"line"` or "`triangle"`. See [outputtopology](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#outputtopology) in the Mesh Shader spec. |
 | `[NodeDispatchGrid(x,y,z)]` | Yes, unless `NodeMaxDispatchGrid` is defined | Declare a fixed dispatch grid size for use with this node. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
 | `[NodeMaxDispatchGrid(x,y,z)]` | Yes, unless `NodeDispatchGrid` is defined | Declare a maximum dispatch grid size for use with this node.  In this case, the dispatch grid size is defined by the record field with the `SV_DispatchGrid` semantic. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
-| `[NodeIsProgramEntry]` | N | Node can be launched directly from the API in addition to or instead of from an upstream node in the work graph. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
-| `[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | N | Name for the node; uses function name if omitted. Optional `uint arrayIndex` overrides the default index of `0`. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
-| `[NodeLocalRootArgumentsTableIndex(index)]` | N | `uint index` indicates the record index into the local root arguments table bound when the work graph is used. May be omitted or set to `-1` (equivalent to omitting).  If omitted and a local root signature is used, the runtime will auto-assign the index. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
-| `[NodeShareInputOf("nodeName")]` or `[NodeShareInputOf("nodeName",arrayIndex)]` | N | Share the input of the specified NodeID with this node. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
+| `[NodeIsProgramEntry]` | No | Node can be launched directly from the API in addition to or instead of from an upstream node in the work graph. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
+| `[NodeID("nodeName")]` or `[NodeID("nodeName",arrayIndex)]` | No | Name for the node; uses function name if omitted. Optional `uint arrayIndex` overrides the default index of `0`. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
+| `[NodeLocalRootArgumentsTableIndex(index)]` | No | `uint index` indicates the record index into the local root arguments table bound when the work graph is used. May be omitted or set to `-1` (equivalent to omitting).  If omitted and a local root signature is used, the runtime will auto-assign the index. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
+| `[NodeShareInputOf("nodeName")]` or `[NodeShareInputOf("nodeName",arrayIndex)]` | No | Share the input of the specified NodeID with this node. ([details](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#shader-function-attributes)) |
 
 #### Function Parameters
 
 ##### Input Record
 
-Zero or one input record declaration is supported for the mesh node entry.
+Zero or one read-only input record declaration is supported for the mesh node entry.
 Types supported are the same as for a broadcasting launch node shader.
 The input record takes the place of the `payload` in the mesh shader.
 
@@ -180,8 +193,10 @@ section under options for broadcasting launch for more detail.
 
 ##### Input System Values
 
-For input values outside the input record, mesh nodes support the `broadcasting` launch [node shader system values](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#node-shader-system-values).
-These are the same [system values supported by mesh shaders](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#hlsl-attributes-and-intrinsics).
+For input values outside the input record, mesh nodes support the `broadcasting` launch
+[node shader system values](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#node-shader-system-values).
+These are the same [system values supported by mesh shaders](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#system-value-semantics),
+with the exception of `SV_ViewID`.
 
 | system value semantic | type    | description |
 |-----------------------|---------|-------------|
@@ -189,11 +204,12 @@ These are the same [system values supported by mesh shaders](https://github.com/
 | `SV_GroupIndex`       | `uint`  | Flattened thread index within group |
 | `SV_GroupID`          | `uint3` | Group ID within dispatch |
 | `SV_DispatchThreadID` | `uint3` | Thread ID within dispatch |
-| Not supported for now: `SV_ViewID` | `uint` | See [definition in Mesh Shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_viewid) |
 
 ##### Node Outputs
 
 No outputs to other nodes are allowed for `[LaunchMode("mesh")]`.
+This means a mesh launch node does not allow any `[Empty]NodeOutput[Array]`
+parameters to be declared.
 
 ##### Mesh Shader Outputs
 
@@ -206,32 +222,38 @@ any of the output arrays.
 
 | Mesh shader shared output arrays                      | Array dimension defines maximum number of | Required  |
 |-|-|-|
-| vertex [`indices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-indices)                   | primitives    | Required  |
-| attributes for [`vertices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-attributes)       | vertices      | Required  |
-| attributes for [`primitives`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#primitive-attributes)  | primitives    | Optional  |
+| vertex [`indices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-indices)                   | primitives    | Yes |
+| attributes for [`vertices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-attributes)       | vertices      | Yes |
+| attributes for [`primitives`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#primitive-attributes)  | primitives    | No  |
 
 See [shared output arrays](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#shared-output-arrays) in the mesh shader spec for more details.
 
 ##### Mesh Node Output System Values
 
-Like mesh shaders, `vertices` and `primitives` outputs require semantics on
-fields to produce corresponding output and primitive signature elements.
+As mentioned earlier, node outputs are not allowed on mesh nodes.
+Instead, this section outlines the system values that may be used on fields in
+structures used for `vertices` and `primitives` arrays.
+
+Like mesh shaders, `vertices` and `primitives` outputs require a semantic on
+each field to produce corresponding output and primitive signature elements.
 Outputs also support the same system values supported by mesh shaders, listed
 below.  See links below for additional details relevant to mesh shaders for
 `SV_PrimitiveID` and `SV_CullPrimitive`.
 
 | system value semantic       | type     | required? | location | notes |
 |-----------------------------|----------|-----------|----------|-------------|
-| `SV_Position`               | `float4`     | Y | `vertices`   |  |
-| `SV_RenderTargetArrayIndex` | `uint`       | N | `primitives` |  |
-| `SV_ViewPortArrayIndex`     | `uint`       | N | `primitives` |  |
-| `SV_ClipDistance`           | `float<1-4>` | N | `vertices`   |  |
-| `SV_CullDistance`           | `float<1-4>` | N | `vertices`   |  |
-| `SV_ShadingRate`            | `uint`       | N | `primitives` |  |
-| `SV_PrimitiveID`            | `uint`       | N | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_primitiveid-in-the-pixel-shader) |
-| `SV_CullPrimitive`          | `uint`       | N | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_cullprimitive) |
+| `SV_Position`               | `float4`     | Yes | `vertices`   |  |
+| `SV_RenderTargetArrayIndex` | `uint`       | No | `primitives` |  |
+| `SV_ViewPortArrayIndex`     | `uint`       | No | `primitives` |  |
+| `SV_ClipDistance`           | `float<1-4>` | No | `vertices`   |  |
+| `SV_CullDistance`           | `float<1-4>` | No | `vertices`   |  |
+| `SV_ShadingRate`            | `uint`       | No | `primitives` |  |
+| `SV_PrimitiveID`            | `uint`       | No | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_primitiveid-in-the-pixel-shader) |
+| `SV_CullPrimitive`          | `uint`       | No | `primitives` | See [mesh shader spec](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_cullprimitive) |
 
 #### SetMeshOutputCounts
+
+`SetMeshOutputCounts` is an existing intrinsic, available in mesh shaders, that is used for the same purpose in mesh launch node shaders.
 
 > Excerpts from [SetMeshOutputCounts](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#setmeshoutputcounts) in the mesh shader spec.
 
@@ -257,14 +279,19 @@ in the mesh shader spec for specific details, restrictions, and examples.
 ### Interchange Format Additions
 
 To the `DXIL::NodeLaunchType` enum, add `Mesh` (4).
+In DXIL metadata, this value is used in the entry function extended property
+metadata with the `NodeLaunchType` tag (13).
 
-New extended shader property metadata tags:
+New extended shader property metadata tags are used to encode details needed
+for the mesh node.  These will start at a special experimental mesh node offset
+of `65536` (`1 << 16`) to prevent collisions with new official tags, if those
+are added.
 
 | Tag | value | description |
 |-|-|-|
-| kDxilNodeMaxVertexCountTag | 23 | `i32` max vertex count based on [`vertices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-attributes) array size. |
-| kDxilNodeMaxPrimitiveCountTag | 24 | `i32` max primitive count based on [`primitives`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#primitive-attributes) array size. |
-| kDxilNodeOutputTopologyTag | 25 | `i32` encoded `DXIL::MeshOutputTopology` from `[OutputTopology(`*topology*`)]` attribute |
+| kDxilNodeMeshOutputTopologyTag | 65536 | `i32` encoded `DXIL::MeshOutputTopology` from `[OutputTopology(`*topology*`)]` attribute |
+| kDxilNodeMeshMaxVertexCountTag | 65537 | `i32` max vertex count based on [`vertices`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#vertex-attributes) array size. |
+| kDxilNodeMeshMaxPrimitiveCountTag | 65538 | `i32` max primitive count based on [`primitives`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#primitive-attributes) array size. |
 
 These new extended attributes are only allowed with mesh node shader entries.
 Mesh node shaders require all three of these extended attributes.
@@ -300,17 +327,17 @@ This will use the existing `MSInfo` structure to encode the required details
 for the mesh shader.
 There are a few redundant fields of this structure, given what's already
 defined for the node shader, but for the experimental feature, the trade-off is
-probably worth the simplicity of not adding another record table at this point.
+probably worth the simplicity of avoiding another record table at this point.
 
-For now, here is a breakdown of the fields in the `MSInfo` structure, and how
+Here is a breakdown of the fields in the `MSInfo` structure, and how
 they will be used in a mesh node:
 - `SigOutputElements` - used for the elements of the `vertices` output array.
 - `SigPrimOutputElements` - used for the elements of the `primitives` output array.
-- `ViewIDOutputMask` - unset for now.
-- `ViewIDPrimOutputMask` - unset for now.
+- `ViewIDOutputMask` - unset.
+- `ViewIDPrimOutputMask` - unset.
 - `NumThreads` - redundant with `NodeShaderFuncAttrib` NumThreads.  Could be used instead of the additional attribute, or we could copy the ref so it's identical in both places.
 - `GroupSharedBytesUsed` - redundant with same field in `NodeShaderInfo`.  Set to same value.
-- `GroupSharedBytesDependentOnViewID` - set to zero for now.
+- `GroupSharedBytesDependentOnViewID` - set to zero.
 - `PayloadSizeInBytes` - redundant with input record size info.  We shouldn't use this one.  Set to zero?
 - `MaxOutputVertices` - based on `vertices` array size
 - `MaxOutputPrimitives` - based on `primitives` array size
@@ -319,11 +346,17 @@ they will be used in a mesh node:
 #### Device Capability
 
 See the work graphs spec
-[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#graphics-nodes)
+[here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes)
 for detail.
 
-Devices that support experimental `D3D_SHADER_MODEL_6_9` and experimental [`D3D12_WORK_GRAPHS_TIER_1_1`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_work_graphs_tier) are required to support these features as part of graphics nodes in work graphs.
+Devices that support mesh shaders, as well as experimental `D3D_SHADER_MODEL_6_9` and experimental [`D3D12_WORK_GRAPHS_TIER_1_1`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_work_graphs_tier) are required to support these features as part of graphics nodes in work graphs.
 
 ## Open Questions
 
 - Should vanilla mesh shaders be supported, or only mesh nodes?
+  - No, only mesh nodes will be supported.  Ordinary mesh shaders lack key information, such as the `SV_DispatchGrid` location in the input record.
+- `[NodeMaxInputRecordsPerGraphEntryRecord(...)]` if proposed [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#helping-mesh-nodes-work-better-on-some-hardware).  Should this attribute be added to HLSL?
+  - It can be specified through the API, and is not currently a priority for feature preview.
+- `SV_ViewID` is a [Mesh Shader input system value](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_viewid).  Should it be supported in this feature preview?
+  - Currently, this is not a priority, so support is not planned for is preview.
+- In the future, subobjects may be added to specify runtime details within the DXIL library for convenience.
