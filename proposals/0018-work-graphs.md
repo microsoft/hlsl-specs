@@ -92,13 +92,13 @@ They also have new annotations unique to node shaders.
 > attributes that take string arguments, the string argument values are
 > case-sensitive.
 
-##### **`[NodeLaunch("<mode>")]`**
+**`[NodeLaunch("<mode>")]`**
+
 Valid values for node launch mode are `broadcasting`, `coalescing`, or `thread`.
 If the `NodeLaunch` attribute is not specified on a node entry the default
 launch mode is `broadcasting`.
 
-##### **`[NodeIsProgramEntry]`**
-
+**`[NodeIsProgramEntry]`**
 
 Indicates a node that may be invoked as an entry directly by the API.
 Shaders that can receive input records from both inside and outside the work
@@ -107,34 +107,42 @@ than one entry shader that receives inputs from outside the graph.
 This property is implied if no other work graph nodes target this node,
 so in that case the attribute is optional and may be omitted.
 
-##### **`[NodeID("<name>", <index> = 0)]`**
-If present the shader represents a node with the provided name. If present, the
-index parameter specifies the index into the named node array. If this attribute
-is not present, the function name is the node name, and the index is `0`.
+**`[NodeID("<name>", <index> = 0)]`**
 
-##### **`[NodeLocalRootArgumentsTableIndex(<index>)]`**
+Use the provided name to represent this node instead of the function name.
+If present, the index parameter specifies the index into the named node array.
+If this attribute is not present, the function name is the node name,
+and the index is `0`.
+
+**`[NodeLocalRootArgumentsTableIndex(<index>)]`**
+
 The specified index indicates the record index into the local root arguments
 table bound to the work graph. If this attribute is not specified and the shader
 has a local root signature, the index defaults to an unallocated table location.
 
-##### **`[NodeShareInputOf("<name>", <index> = 0 )]`**
-Share the inputs for the node specified by name and optional index with this
-node. Both nodes must have identical input records, the same launch mode, and
+**`[NodeShareInputOf("<name>", <index> = 0 )]`**
+
+Share the inputs for the node specified by name and optional index.
+If present, the index parameter specifies the index into the named node array.
+Both nodes must have identical input records, the same launch mode, and
 identical dispatch grid size (if fixed).
 
-##### **`[NodeDispatchGrid(<x>, <y>, <z>)]`**
+**`[NodeDispatchGrid(<x>, <y>, <z>)]`**
+
 Specifies the size of the dispatch grid. Broadcast launch nodes must specify
 either the dispatch grid size or maximum dispatch grid size in source. The `x`
 `y` and `z` parameters individually cannot exceed (2^16)-1 (65535), and `x*y*z`
 cannot exceed (2^24)-1 (16,777,215).
 
-##### **`[NodeMaxDispatchGrid(<x>, <y>, <z>)]`**
+**`[NodeMaxDispatchGrid(<x>, <y>, <z>)]`**
+
 Specifies the maximum dispatch grid size when the dispatch grid size is
-specified on the input record using the [`SV_DispatchGrid`](#SV_DispatchGrid) semantic. The `x` `y`
+specified on the input record using the [`SV_DispatchGrid`](#sv_dispatchgrid) semantic. The `x` `y`
 and `z` parameters individually cannot exceed (2^16)-1 (65535), and `x*y*z` cannot
 exceed (2^24)-1 (16,777,215).
 
-##### **`[NodeMaxRecursionDepth(<count>)]`**
+**`[NodeMaxRecursionDepth(<count>)]`**
+
 Specifies the maximum recursion depth for a node. This attribute is required if
 one of the outputs of a node is the ID of the node itself.
 
@@ -265,7 +273,7 @@ class EmptyNodeInput {
 
 ##### System Value Parameters
 
-Broadcast and Coalescing Launch shaders support a subset of compute shader
+Broadcasting and Coalescing Launch shaders support a subset of compute shader
 system value inputs.
 These have the same types, meanings, and usages as they do for compute shaders.
 
@@ -277,7 +285,6 @@ These have the same types, meanings, and usages as they do for compute shaders.
 | `SV_DispatchThreadID` | Broadcasting | Thread ID within dispatch |
 
 ##### Node Output Objects
-
 
 Node output objects either allocate records or increment a counter for  empty
 records. The following pseudo-HLSL defines the interfaces for the `NodeOutput`
@@ -398,7 +405,8 @@ using GroupNodeOutputRecords = detail::NodeOutputRecordsBase<RecordTy>;
 > attributes that take string arguments, the string argument values are
 > case-sensitive.
 
-###### **`[MaxRecords(<count>)]`**
+**`[MaxRecords(<count>)]`**
+
 Applies to node inputs in coalescing launch nodes or outputs for any launch mode.
 
 Required for node inputs for coalescing launch nodes, this attribute restricts
@@ -412,7 +420,8 @@ applies as the sum of all records across the output array, not per-node.
 Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
 attribute.
 
-###### **`[MaxRecordsSharedWith(<parameter>)]`**
+**`[MaxRecordsSharedWith(<parameter>)]`**
+
 This attribute applies to node outputs. The named parameter must have the
 `MaxRecords` attribute. This attribute and the `MaxRecords` attribute are
 mutually exclusive.
@@ -423,21 +432,24 @@ allocation with the named node output parameter.
 Node outputs require either the `MaxRecords` or `MaxRecordsSharedWith`
 attribute.
 
-###### **`[NodeID("<name>", <index> = 0)]`**
+**`[NodeID("<name>", <index> = 0)]`**
+
 This attribute applies to output nodes and defines the name and index of the
 output node. If not provided, the default index is 0.
 
 If this attribute is not present on an output, the default node ID for the
 output is the name of the parameter, and the index is the default index (0).
 
-###### **`[AllowSparseNodes]`**
+**`[AllowSparseNodes]`**
+
 This attribute applies to outputs and allows the work graph to be created even
 if there is not a node defined for the specified output.  If the output is an
 array, each element may or may not have a downstream node defined in the graph.
 `IsValid()` can be used to determine whether an output node is defined in the
 graph.
 
-###### **`[NodeArraySize(<count>)]`**
+**`[NodeArraySize(<count>)]`**
+
 Specifies the output array size for `NodeOutputArray` or `EmptyNodeOutputArray`
 objects.
 
@@ -555,13 +567,13 @@ the record allocation to track thread completion.
 
 `SV_DispatchGrid` can optionally appear anywhere in a record.
 
-If the record arrives at a [broadcasting launch node](#broadcasting-launch-nodes) that doesn't declare a fixed dispatch grid size via `[NodeDispatchGrid(x,y,z)]`, `SV_DispatchGrid` becomes the dynamic grid size used to launch at the node. The value has no special significance in other contexts.
+If the record arrives at a [broadcasting launch node](#launch-modes) that doesn't declare a fixed dispatch grid size via `[NodeDispatchGrid(x,y,z)]`, `SV_DispatchGrid` becomes the dynamic grid size used to launch at the node. The value has no special significance in other contexts.
 
 ## Acknowledgments
 
 This spec is an extensive collaboration between the Microsoft HLSL and Direct3D
 teams and IHV partners.
 
-Special thanks to Claire Andrews, Amar Patel, Tex Riddell, and Greg Roth.
+Special thanks to Claire Andrews, Amar Patel, and Tex Riddell
 
 <!-- {% endraw %} -->
