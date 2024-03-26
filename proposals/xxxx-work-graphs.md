@@ -247,7 +247,7 @@ template <typename RecordTy>
 using GroupNodeInputRecords = detail::GroupNodeInputRecordsBase<RecordTy, false>;
 
 template <typename RecordTy>
-using RWGroupNodeInputRecord = detail::GroupNodeInputRecordsBase<RecordTy, true>;
+using RWGroupNodeInputRecords = detail::GroupNodeInputRecordsBase<RecordTy, true>;
 ```
 
 Coalescing launch nodes also accept the `EmptyNodeInput` input object for cases
@@ -500,7 +500,7 @@ The pseudo-code below shows implementing the existing HLSL memory barrier
 functions using the new `Barrier` function.
 
 ```C++
-void AllMemoryBarrier() { Barrier(ALL_MEMORY, DEVICE_SCOPE, 0); }
+void AllMemoryBarrier() { Barrier(ALL_MEMORY, DEVICE_SCOPE); }
 
 void AllMemoryBarrierWithGroupSync() {
   Barrier(ALL_MEMORY, DEVICE_SCOPE | GROUP_SYNC);
