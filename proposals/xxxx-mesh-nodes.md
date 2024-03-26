@@ -348,13 +348,13 @@ See the work graphs spec
 [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#mesh-nodes)
 for detail.
 
-Devices that support mesh shaders, as well as experimental `D3D_SHADER_MODEL_6_9` and experimental [`D3D12_WORK_GRAPHS_TIER_1_1`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_work_graphs_tier) are required to support these features as part of graphics nodes in work graphs.
+Devices that support experimental `D3D_SHADER_MODEL_6_9` and experimental [`D3D12_WORK_GRAPHS_TIER_1_1`](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#d3d12_work_graphs_tier) are required to support these features as part of graphics nodes in work graphs.  Note: mesh shader support is already required for experimental `D3D12_WORK_GRAPHS_TIER_1_1` support.
 
 ## Open Questions
 
 - Should vanilla mesh shaders be supported, or only mesh nodes?
   - No, only mesh nodes will be supported.  Ordinary mesh shaders lack key information, such as the `SV_DispatchGrid` location in the input record.
-- `[NodeMaxInputRecordsPerGraphEntryRecord(...)]` if proposed [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#helping-mesh-nodes-work-better-on-some-hardware).  Should this attribute be added to HLSL?
+- `[NodeMaxInputRecordsPerGraphEntryRecord(...)]` is proposed [here](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/WorkGraphs.md#helping-mesh-nodes-work-better-on-some-hardware).  Should this attribute be added to HLSL?
   - It can be specified through the API, and is not currently a priority for feature preview.
 - `SV_ViewID` is a [Mesh Shader input system value](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/MeshShader.md#sv_viewid).  Should it be supported in this feature preview?
   - Currently, this is not a priority, so support is not planned for is preview.
