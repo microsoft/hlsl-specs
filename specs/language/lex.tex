@@ -203,10 +203,10 @@ source file names in an implementation defined way.
 followed by valid identifier characters and floating point literal suffixes
 (\texttt{e+}, \texttt{e-}, \texttt{E+}, \texttt{E-}, \texttt{p+}, \texttt{p-},
 \texttt{P+}, and \texttt{P-}). Preprocessing number tokens lexically include all
-\textit{integer-literal} and \textit{floating-point-literal} tokens.
+\textit{integer-literal} and \textit{floating-literal} tokens.
 
 \p Preprocessing numbers do not have types or values. Types and values are
-assigned to \textit{integer-literal}, \textit{floating-point-literal}, and
+assigned to \textit{integer-literal}, \textit{floating-literal}, and
 \textit{vector-literal} tokens on successful conversion from preprocessing
 numbers.
 
@@ -230,7 +230,7 @@ LL(2) parser.}.
   \define{literal}\br
   integer-literal\br
   character-literal\br
-  floating-point-literal\br
+  floating-literal\br
   string-literal\br
   boolean-literal\br
   vector-literal
@@ -240,7 +240,43 @@ LL(2) parser.}.
 
 %\Sub{Character Literals}{Lex.Literal.Char}
 
-%\Sub{Floating-point Literals}{Lex.Literal.Float}
+\Sub{Floating-point Literals}{Lex.Literal.Float}
+
+\begin{grammar}
+  \define{floating-literal}\br
+  fractional-constant \opt{exponent-part} \opt{floating-suffix}\br
+  digit-sequence exponent-part \opt{floating-suffx}\br
+  \define{fractional-constant}\br
+  \opt{digit-sequence} \texttt{.} digit-sequence\br
+  digit-sequence \texttt{.}\br
+  \define{exponent-part}\br
+  \texttt{e} \opt{sign} digit-sequence\br
+  \texttt{E} \opt{sign} digit-sequence\br
+  \define{sign} \textnormal{one of}\br
+  \texttt{+} \texttt{-}
+  \define{digit-sequence}\br
+  digit\br
+  digit-sequence digit
+  \define{floating-suffix} \textnormal{one of}
+  \texttt{h} \texttt{f} \texttt{l} \texttt{H} \texttt{F} \texttt{L}
+\end{grammar}
+
+\p A floating literal is written either as a \textit{fractional-constant} with
+an optional \textit{exponent-part} and optional \textit{floating-suffix}, or as
+an integer \textit{digit-sequence} with a required \textit{exponent-part} and
+optional \textit{floating-suffix}.
+
+\p The type of a floating literal is \texttt{float}, unless explicitly specified
+by a suffix. The suffixes \texttt{h} and \texttt{H} specify \texttt{half}, the
+suffixes \texttt{f} and \texttt{F} specify \texttt{float}, and the suffixes
+\texttt{l} and \texttt{L} specify \texttt{double}.\footnote{This substantially
+deviates from the implementations in \acrshort{fxc} and \acrshort{dxc}, but is
+consistent with the
+\href{https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-appendix-grammar\#floating-point-numbers}
+{official documentation} and the behavior of GLSL. It is also
+substantially simpler to implement and more regular than the existing
+behaviors.} If a value specified in the source is not in the range of
+representable values for its type, the program is ill-formed.
 
 %\Sub{String Literals}{Lex.Literal.String}
 
@@ -251,7 +287,7 @@ LL(2) parser.}.
 \begin{grammar}
   \define{vector-literal}\br
   integer-literal \texttt{.} scalar-element-sequence\br
-  floating-point-literal \texttt{.} scalar-element-sequence
+  floating-literal \texttt{.} scalar-element-sequence
 
   \define{scalar-element-sequence}\br
   scalar-element-sequence-x\br
@@ -274,4 +310,4 @@ LL(2) parser.}.
 where only the first vector element accessor is valid (\texttt{x} or
 \texttt{r}). A \textit{scalar-element-sequence} is equivalent to a vector splat
 conversion performed on the \textit{integer-literal} or
-\textit{floating-point-literal} value (\ref{Conv.vsplat}).
+\textit{floating-literal} value (\ref{Conv.vsplat}).
