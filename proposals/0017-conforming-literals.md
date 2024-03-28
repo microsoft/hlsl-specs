@@ -167,12 +167,14 @@ to different language semantics implemented by different shader compilers.
 
 #### Conclusions Drawn
 
-The testing here holds with the core thesis that developer impact will be
-minimal and that most shaders are resilient to the changes in precision. Further
-since the only title to experience catastrophic rendering defects is an Xbox and
-Windows exclusive title, the reasoning behind the thesis that most shaders are
-resilient due to required compatibility with other shader compilers seems a
-likely factor.
+The testing here holds with the core thesis that the number of impacted software
+titles will be minimal and that most shaders are resilient to the changes in
+precision. The presence of catastrophic rendering defects does indicate that
+there may be severe cases where an individual developer may need to put
+significant effort in to resolve issues that arise. Further since the only title
+to experience catastrophic rendering defects is an Xbox and Windows exclusive
+title, the reasoning behind the thesis that most shaders are resilient due to
+required compatibility with other shader compilers seems a likely factor.
 
 The testing also revealed that the lack of complete overload sets for
 `asfloat16` is a barrier for users. Further discussion is needed to determine
