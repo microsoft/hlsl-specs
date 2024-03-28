@@ -90,8 +90,8 @@ undocumented, complex, and different from other shader compilers (including
 DXC's SPIR-V generator). The last point is important and relevant because a
 large percentage of shader code is compiled with multiple different shader
 compilers which implement different language semantics. Because of this, it is
-believed that shaders need to be resilient to subtle behavioral differences like
-the ones this change would cause.
+believed that many existing shaders are engineered to be resilient to subtle
+behavioral differences like the ones this change would cause.
 
 #### Methodology
 
@@ -162,6 +162,8 @@ overall image still rendered mostly correctly.
 We have 6 test cases, all from the same software title which had severe
 obviously incorrect rendering which would make the title unplayable. One
 important note about this title is that it is an Xbox & Windows exclusive title.
+Since the title is platform exclusive its shaders may not need to be resilient
+to different language semantics implemented by different shader compilers.
 
 #### Conclusions Drawn
 
