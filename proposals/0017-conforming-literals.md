@@ -50,8 +50,12 @@ which states:
 
 This proposal adopts this behavior for floating literals.
 
-Similarly this proposal adopts 32-bit integer as the default representation for
-integer literals.
+Similarly this proposal adopts C rules for non-suffixed integer literals. The
+type of a base-10 non-suffixed integer literal is the first integer type from
+the list [`int32_t`, `int64_t`] which can represent the specified literal value.
+The type of an octal, hexadecimal or binary non-suffixed integer literal is the
+first type from the list [`int32_t`, `uint32_t`, `int64_t`, `uint64_t`] that can
+represent the specified literal value.
 
 ### Benefits of this solution
 
