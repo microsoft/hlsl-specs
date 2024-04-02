@@ -172,6 +172,32 @@ important note about this title is that it is an Xbox & Windows exclusive title.
 Since the title is platform exclusive its shaders may not need to be resilient
 to different language semantics implemented by different shader compilers.
 
+#### Rendering Defect Root Cause
+
+Continued investigation of the rendering defects tracked in
+[#184](https://github.com/microsoft/hlsl-specs/issues/184) revealed that the
+problems in both the catastrophic and subtle cases are not caused by loss of
+floating point precision. Instead they are the result of a subtle behavioral
+difference for literal integers. In HLSL `literal int` is always a signed
+integer, whereas in C a non-base 10 literal integer may be unsigned if the most
+significant bit is 1.
+
+This difference in rules results in a subtle behavioral difference for bit
+shifts. Given the following code:
+
+```c++
+export float Fn(int inInt, inFloat) {
+  int Val = (inInt & 0xffff0000) >> 16);
+  return Val* inFloat
+}
+```
+
+Following HLSL rules, the `literal int` is always signed, so the bit shift is an
+arithmetic shift (most significant bit is filled with the sign bit). In the C
+rules that this proposal adopts, a non-base 10 integer literal is `unsigned` if
+the msb is 1, so the bit shift is a logical shift (most significant bit is
+filled with 0).
+
 #### Conclusions Drawn
 
 The testing here holds with the core thesis that the number of impacted software
@@ -186,6 +212,24 @@ required compatibility with other shader compilers seems a likely factor.
 The testing also revealed that the lack of complete overload sets for
 `asfloat16` is a barrier for users. Further discussion is needed to determine
 how best to address this problem.
+
+### Mitigating Migration Pain
+
+There are no observed instances of the change in floating point behavior causing
+disruption. If such cases exist the existing `-Wconversion` diagnostics will
+sufficiently notify users of implicit conversions that result in precision loss.
+
+The change in integer behavior inc more important. The behavior of bit shifts in
+HLSL has historically changed independent of language version, and ambiguity of
+bit shifts on literal operands does produce a compiler diagnostic (see:
+[dxc/#300](https://github.com/microsoft/DirectXShaderCompiler/pull/3400)).
+
+This proposal will introduce a new diagnostic for 32-bit literal integers values
+that will become `unsigned` with this proposal. This diagnostic will be under
+the `-Wfuture-compatability` diagnostic group.
+
+This proposal will also add a new diagnostic for calls to `asfloat16` with
+floating point arguments to notify users that they should use a cast instead.
 
 ## Detailed Design
 
