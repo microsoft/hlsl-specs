@@ -7,11 +7,14 @@
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
 * Planned Version: HLSL 202x
-* PRs: #175
-* Issues: #73, microsoft/DirectXShaderCompiler#6147,
-  microsoft/DirectXShaderCompiler#3973, microsoft/DirectXShaderCompiler#4683,
-  microsoft/DirectXShaderCompiler#5493, microsoft/DirectXShaderCompiler#6410,
-  shader-slang/slang#1185
+* PRs: [#175](https://github.com/microsoft/hlsl-specs/pull/175)
+* Issues: [#73](https://github.com/microsoft/hlsl-specs/issue/73),
+  [microsoft/DirectXShaderCompiler#6147](https://github.com/microsoft/DirectXShaderCompiler/issue/6147),
+  [microsoft/DirectXShaderCompiler#3973](https://github.com/microsoft/DirectXShaderCompiler/issue/3973),
+  [microsoft/DirectXShaderCompiler#4683](https://github.com/microsoft/DirectXShaderCompiler/issue/4683),
+  [microsoft/DirectXShaderCompiler#5493](https://github.com/microsoft/DirectXShaderCompiler/issue/5493),
+  [microsoft/DirectXShaderCompiler#6410](https://github.com/microsoft/DirectXShaderCompiler/issue/6410),
+  [shader-slang/slang#1185](https://github.com/shader-slang/slang/issue/1185)
 
 ## Introduction
 
