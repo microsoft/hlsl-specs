@@ -49,8 +49,19 @@ As an example of the annotations in action take the following declaration from
 
 ```c++
 __attribute__((availability(shadermodel, introduced = 6.0)))
+__attribute__((availability(vulkan, introduced = 1.0)))
 __attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
 uint WaveActiveCountBits(bool Bit);
+
+// This function is available starting in SM 2.0 for pixel shaders, but SM 6.6
+// for compute, mesh and amplification shaders.
+__attribute__((availability(shadermodel_pixel, introduced = 2.0)))
+__attribute__((availability(shadermodel_compute, introduced = 6.6)))
+__attribute__((availability(shadermodel_mesh, introduced = 6.6)))
+__attribute__((availability(shadermodel_amplification, introduced = 6.6)))
+__attribute__((availability(vulkan, introduced = 1.0)))
+__attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
+uint ddx(bool Bit);
 ```
 
 > Note: the actual header uses macros to condense the attribute descriptions.
@@ -112,7 +123,7 @@ Unlike in the _default_ or _relaxed_ mode, the compiler will emit diagnostics
 for mismatched shader model version without the use of a call graph and
 regardless of reachability.
 
-A user enables strict mode by passing `-fhlsl-strict-diagnostics`. 
+A user enables strict mode by passing `-fhlsl-strict-diagnostics`.
 
 ### Comparison Against Existing Behavior
 
@@ -128,7 +139,7 @@ SamplerState samplerState : register(s0);
 
 FeedbackTexture2D<SAMPLER_FEEDBACK_MIN_MIP> map : register(u0);
 
-[numthreads(4, 4, 1)] 
+[numthreads(4, 4, 1)]
 void main(uint3 threadId : SV_DispatchThreadId) {
   float2 uv = threadId.xy;
   uv /= 256;
@@ -144,9 +155,11 @@ note: at 'call void @dx.op.writeSamplerFeedbackLevel(i32 176, %dx.types.Handle %
 Validation failed.
 ```
 
-This error displays the LLVM IR text for the error site. In a trivial example
-like the one above finding the error is easy. In a complex shader that could be
-thousands of lines long this is unmanageable.
+This error displays the LLVM IR text for the error site, and attempts to
+attribute a line location in the HLSL source, it can be error prone. In a
+trivial example like the one above finding the error may be straightforward, but
+it does involve recognizing textual LLVM IR and the HLSL source that generated
+it.
 
 With this proposal under the _relaxed_ mode, clang will emit the following
 warning:
@@ -181,7 +194,7 @@ void fn(uint3 threadId) {
   map.WriteSamplerFeedbackLevel(texture, samplerState, uv, threadId.x % 8);
 }
 
-[numthreads(4, 4, 1)] 
+[numthreads(4, 4, 1)]
 void main(uint3 threadId : SV_DispatchThreadId) { }
 ```
 
@@ -197,9 +210,6 @@ diagnostics. In the _strict_ mode, clang emits the following diagnostic:
 
 In this case the DXIL validator will emit no diagnostic since the call to the
 unavailable API is not present in the final output.
-
-In all three cases above the DXIL validator will also emit the same diagnostic
-as it does today.
 
 To illustrate the behavior for library shaders consider the following example:
 
@@ -228,7 +238,7 @@ When compiled with the `lib_6_3` profile under the _default_ mode, clang will
 emit the following error:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0 
+<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
    9 |   return ddx(f);
      |          ^~~
 ```
@@ -237,10 +247,10 @@ When compiled with the `lib_6_3` profile under the _strict_ mode, clang will
 emit the following errors:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0 
+<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
    9 |   return ddx(f);
      |          ^~~
-<>:6:9: error: 'WaveMultiPrefixSum' is available beginning with Shader Model 6.5 
+<>:6:9: error: 'WaveMultiPrefixSum' is available beginning with Shader Model 6.5
    9 |   return WaveMultiPrefixSum(f, 1.xxxx);
      |          ^~~~~~~~~~~~~~~~~~
 ```
