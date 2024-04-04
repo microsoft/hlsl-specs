@@ -2,7 +2,7 @@
 
 # Strict Availability Diagnostics
 
-* Proposal: [INF-NNNN](INF-NNNN-availability-diagnostics.md)
+* Proposal: [INF-0001](INF-0001-availability-diagnostics.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
