@@ -116,8 +116,8 @@ value is comprised of elements \( [0..y) \), dropping elements [y+1..x).
 \texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
 converted to a prvalue of type \texttt{matrix<T,z,w>} only if \( x \leq z \)
 and \(y \leq w \). Matrix truncation is performed on each row and column
-dimension separately. The resulting value is comprised of vectors \( [0..x) \)
-which are each separately comprised of elements \( [0..y) \). Trailing vectors
+dimension separately. The resulting value is comprised of vectors \( [0..z) \)
+which are each separately comprised of elements \( [0..w) \). Trailing vectors
 and elements are dropped.
 
 \Sec{Component-wise conversions}{Conv.cwise}
