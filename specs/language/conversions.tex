@@ -110,7 +110,7 @@ value replicated into each element of the destination.
 \p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
 \texttt{vector<T,y>}, or a prvalue of type \texttt{vector<T,x>} can be converted
 to a prvalue of type \texttt{vector<T,y>} only if \( y < x \). The resulting
-value is comprised of elements \( [0..y) \), dropping trailing elements.
+value is comprised of elements \( [0..y) \), dropping elements [y+1..x).
 
 \p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of type
 \texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
