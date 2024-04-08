@@ -52,9 +52,13 @@ generate the SerializedRS mentioned above.
 
 A HLSLRootSignatureAttr will be created when meet RootSignature attribute in
 HLSL.
-
-For case compile to a standalone root signature blob, the
-HLSLRootSignatureAttr will be bind to a fake empty entry.
+Because the RootSignature attribute in hlsl only have the string, it is easier
+to add a StringArgument to save the string first.
+A HLSLRootSignatureDecl will be created and added to the HLSLRootSignatureAttr
+ for diagnostic and saved to the HLSLEntryRootSignatureAttr for clang 
+ code generation.
+The HLSLRootSignatureDecl will save StringLiteral instead StringRef for 
+diagnostic.
 
 In clang code generation, the HLSLRootSignatureAttr in AST will be translated
 into a global variable with struct type to express the layout and metadata to
@@ -63,6 +67,16 @@ save things like static sampler, root flags, space and NumDescriptors in LLVM IR
 CGHLSLRuntime will generate metadata to link the global variable as root
 signature for given entry function.
 
+For case compile to a standalone root signature blob, the
+HLSLRootSignatureAttr will be bind to a fake empty entry.
+
+In the case of local or global root signatures, only the HLSLRootSignatureDecl 
+will be created.
+
+Additionally, a new AST node, SubobjectToExportsAssociationDecl, should be 
+added to handle the SubobjectToExportsAssociation statement in HLSL. 
+The SubobjectToExportsAssociationDecl will contain a HLSLRootSignatureDecl and 
+a list of FunctionDecls.
 
 ## Detailed design
 
