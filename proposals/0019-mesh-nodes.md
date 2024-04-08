@@ -276,11 +276,11 @@ See [SetMeshOutputCounts](https://github.com/microsoft/DirectX-Specs/blob/master
 in the mesh shader spec for specific details, restrictions, and examples.
 
 ### Derivative Operations
+
 Because mesh shaders and node shaders with the broadcasting launch mode both support
 derivative operations, the new `mesh` node will also support derivative
 operations. The support of derivative operations is part of the 
 `DerivativesInMeshAndAmplificationShadersSupported` optional feature.
-
 
 ### Interchange Format Additions
 
