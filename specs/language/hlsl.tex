@@ -11,6 +11,8 @@
 \usepackage{titlesec}
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata,positioning}
 
 \titleformat{\chapter}
   {\LARGE\bfseries}{\thechapter}{10pt}{}
@@ -48,6 +50,7 @@
 }
 \pagestyle{body}
 
+\setcounter{secnumdepth}{3}
 \newcommand{\parnum}{\textbf{\arabic{parcount}}}
 
 \setlength\parindent{0cm}
@@ -70,6 +73,8 @@
    \par%
    \everypar{\noindent \stepcounter{parcount}\parnum \hspace{1em}}%
 }{}
+
+\newcommand{\Par}[2]{\paragraph[#1]{#1\hfill[#2]\\}\label{#2}\p}
 
 \begin{document}
 \input{macros} 
