@@ -217,8 +217,9 @@ it produces are discarded. \textit{Helper} lanes may be required for
 \gls{lane}-cooperative operations to execute correctly.
 
 \p A \textit{inactive} \gls{lane} is a lane that is not executed by the initial
-launch conditions. This occurs when there is not sufficient inputs to fill the
-all \gls{lane}s in the \gls{wave}.
+launch conditions. This can occur if there are insufficient inputs to fill all
+\gls{lane}s in the \gls{wave}, or to reduce per-thread memory requirements or
+register pressure.
 
 \p A \textit{predicated off} \gls{lane} is a lane that is not being executed due
 to program control flow. A \gls{lane} may be \textit{predicated off} when
