@@ -154,63 +154,7 @@ a list of FunctionDecls.
 
 ```
 
-* LLVM IR for the root signature.
-
-```
-
-  ; %0 is the type for the whole serialzed root signature.
-  %0 = type { %"dxbc::RootSignature::ContainerRootSignatureDesc",
-              [6 x %"dxbc::RootSignature::ContainerRootParameter"],
-              [2 x %"dxbc::RootSignature::StaticSamplerDesc"],
-              %1 }
-  ; %1 is the type for extra parameter information for each RootParameter in rootParameters.
-  %1 = type { %"dxbc::RootSignature::ContainerRootDescriptor",
-              %"dxbc::RootSignature::ContainerRootDescriptor",
-              %"dxbc::RootSignature::ContainerRootDescriptor",
-              %2,
-              %3,
-              %"dxbc::RootSignature::ContainerRootConstants" }
-  ; %2 is the type for first DescriptorTable in RootParameter.
-  %2 = type { %"dxbc::RootSignature::ContainerRootDescriptorTable", [3 x %"dxbc::RootSignature::ContainerDescriptorRange"] }
-  ; %3 is the type for second DescriptorTable in RootParameter.
-  %3 = type { %"dxbc::RootSignature::ContainerRootDescriptorTable", [1 x %"dxbc::RootSignature::ContainerDescriptorRange"] }
-
-  %"dxbc::RootSignature::ContainerRootSignatureDesc" = type { i32, i32, i32, i32, i32, i32 }
-  %"dxbc::RootSignature::ContainerRootParameter" = type { i32, i32, i32 }
-  %"dxbc::RootSignature::StaticSamplerDesc" = type { i32, i32, i32, i32, float, i32, i32, i32, float, float, i32, i32, i32 }
-  %"dxbc::RootSignature::ContainerRootDescriptor" = type { i32, i32, i32 }
-  %"dxbc::RootSignature::ContainerRootDescriptorTable" = type { i32, i32 }
-  %"dxbc::RootSignature::ContainerDescriptorRange" = type { i32, i32, i32, i32, i32, i32 }
-  %"dxbc::RootSignature::ContainerRootConstants" = type { i32, i32, i32 }
-  ; The global variable which save the serialized root signature ConstantStruct as init.
-  @RootSig = internal constant %0 {
-    %"dxbc::RootSignature::ContainerRootSignatureDesc" { i32 2, i32 0, i32 24, i32 0, i32 96, i32 3 },
-    [6 x %"dxbc::RootSignature::ContainerRootParameter"]
-      [%"dxbc::RootSignature::ContainerRootParameter" { i32 2, i32 0, i32 200 },
-       %"dxbc::RootSignature::ContainerRootParameter" { i32 3, i32 0, i32 212 },
-       %"dxbc::RootSignature::ContainerRootParameter" { i32 4, i32 0, i32 224 },
-       %"dxbc::RootSignature::ContainerRootParameter" { i32 0, i32 0, i32 236 },
-       %"dxbc::RootSignature::ContainerRootParameter" { i32 0, i32 0, i32 316 },
-       %"dxbc::RootSignature::ContainerRootParameter" { i32 1, i32 0, i32 348 }],
-    [2 x %"dxbc::RootSignature::StaticSamplerDesc"]
-      [%"dxbc::RootSignature::StaticSamplerDesc" { i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, i32 0, i32 0 },
-       %"dxbc::RootSignature::StaticSamplerDesc" { i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0 }],
-    %1 {
-      %"dxbc::RootSignature::ContainerRootDescriptor" { i32 0, i32 1, i32 8 },
-      %"dxbc::RootSignature::ContainerRootDescriptor" zeroinitializer,
-      %"dxbc::RootSignature::ContainerRootDescriptor" zeroinitializer,
-      %2 { %"dxbc::RootSignature::ContainerRootDescriptorTable" { i32 3, i32 244 },
-        [3 x %"dxbc::RootSignature::ContainerDescriptorRange"]
-          [%"dxbc::RootSignature::ContainerDescriptorRange" { i32 2, i32 1, i32 1, i32 0, i32 0, i32 -1 },
-          %"dxbc::RootSignature::ContainerDescriptorRange" { i32 0, i32 8, i32 1, i32 0, i32 1, i32 -1 },
-          %"dxbc::RootSignature::ContainerDescriptorRange" { i32 1, i32 -1, i32 1, i32 0, i32 1, i32 -1 }] },
-      %3 { %"dxbc::RootSignature::ContainerRootDescriptorTable" { i32 1, i32 324 },
-        [1 x %"dxbc::RootSignature::ContainerDescriptorRange"]
-          [%"dxbc::RootSignature::ContainerDescriptorRange" { i32 3, i32 4, i32 0, i32 1, i32 0, i32 -1 }] },
-      %"dxbc::RootSignature::ContainerRootConstants" { i32 10, i32 0, i32 3 } } }
-
-```
-* Metadata to pair entry and root signature.
+* LLVM IR for the root signature saved in ConstantStruct.
 
 ```
 
@@ -218,7 +162,94 @@ a list of FunctionDecls.
   !hlsl.entry.rootsignatures = !{!2}
   …
   ; link the global variable to entry function
-  !2 = !{ptr @main, ptr @RootSig}
+  !2 = !{ptr @main,
+    %0 {
+       %"dxbc::RootSignature::ContainerRootSignatureDesc" 
+          { i32 2, i32 0, i32 24, i32 0, i32 96, i32 3 }, 
+      [6 x %"dxbc::RootSignature::ContainerRootParameter"]  
+        [%"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 2, i32 0, i32 200 }, 
+        %"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 3, i32 0, i32 212 }, 
+        %"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 4, i32 0, i32 224 }, 
+        %"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 0, i32 0, i32 236 }, 
+        %"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 0, i32 0, i32 316 }, 
+        %"dxbc::RootSignature::ContainerRootParameter" 
+        { i32 1, i32 0, i32 348 }], 
+      [2 x %"dxbc::RootSignature::StaticSamplerDesc"]
+         [%"dxbc::RootSignature::StaticSamplerDesc" 
+           { i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, 
+             i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, 
+             i32 0, i32 0 }, 
+          %"dxbc::RootSignature::StaticSamplerDesc" 
+           { i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, 
+           i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, 
+           i32 0, i32 0 }], 
+      %1 { 
+        %"dxbc::RootSignature::ContainerRootDescriptor" 
+          { i32 0, i32 1, i32 8 }, 
+        %"dxbc::RootSignature::ContainerRootDescriptor" 
+          zeroinitializer, 
+        %"dxbc::RootSignature::ContainerRootDescriptor" 
+          zeroinitializer, 
+        %2 { %"dxbc::RootSignature::ContainerRootDescriptorTable" 
+        { i32 3, i32 244 }, 
+        [3 x %"dxbc::RootSignature::ContainerDescriptorRange"] 
+         [%"dxbc::RootSignature::ContainerDescriptorRange" 
+           { i32 2, i32 1, i32 1, i32 0, i32 0, i32 -1 }, 
+          %"dxbc::RootSignature::ContainerDescriptorRange" 
+           { i32 0, i32 8, i32 1, i32 0, i32 1, i32 -1 }, 
+          %"dxbc::RootSignature::ContainerDescriptorRange" 
+           { i32 1, i32 -1, i32 1, i32 0, i32 1, i32 -1 }] 
+       }, 
+       %3 {
+           %"dxbc::RootSignature::ContainerRootDescriptorTable" 
+           { i32 1, i32 324 }, 
+           [1 x %"dxbc::RootSignature::ContainerDescriptorRange"] 
+           [%"dxbc::RootSignature::ContainerDescriptorRange" 
+             { i32 3, i32 4, i32 0, i32 1, i32 0, i32 -1 }] }, 
+           %"dxbc::RootSignature::ContainerRootConstants" 
+             { i32 10, i32 0, i32 3 } 
+       }
+      }
+    }
+
+```
+
+* LLVM IR for root signature saved in metadata.
+
+```
+
+  ; named metadata for entry root signature
+  !hlsl.entry.rootsignatures = !{!2}
+  …
+  !3 = !{ptr @main, !4}
+  !4 = !{i32 2, i32 0, i32 24, i32 0, i32 96, i32 3, !5, !12, !15}
+  !5 = !{!6, !7, !8, !9, !10, !11}
+  !6 = !{i32 2, i32 0, i32 200}
+  !7 = !{i32 3, i32 0, i32 212}
+  !8 = !{i32 4, i32 0, i32 224}
+  !9 = !{i32 0, i32 0, i32 236}
+  !10 = !{i32 0, i32 0, i32 316}
+  !11 = !{i32 1, i32 0, i32 348}
+  !12 = !{!13, !14}
+  !13 = !{i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, i32 0, i32 0}
+  !14 = !{i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0}
+  !15 = !{!16, !17, !17, !18, !23, !26}
+  !16 = !{i32 0, i32 1, i32 8}
+  !17 = !{i32 0, i32 0, i32 0}
+  !18 = !{!19}
+  !19 = !{!20, !21, !22}
+  !20 = !{i32 2, i32 1, i32 1, i32 0, i32 0, i32 -1}
+  !21 = !{i32 0, i32 8, i32 1, i32 0, i32 1, i32 -1}
+  !22 = !{i32 1, i32 -1, i32 1, i32 0, i32 1, i32 -1}
+  !23 = !{!24}
+  !24 = !{!25}
+  !25 = !{i32 3, i32 4, i32 0, i32 1, i32 0, i32 -1}
+  !26 = !{i32 10, i32 0, i32 3}
 
 ```
 
