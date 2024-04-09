@@ -224,7 +224,7 @@ a list of FunctionDecls.
 ```
 
   ; named metadata for entry root signature
-  !hlsl.entry.rootsignatures = !{!2}
+  !hlsl.entry.rootsignatures = !{!3}
   …
   !3 = !{ptr @main, !4}
   !4 = !{i32 2, i32 0, i32 24, i32 0, i32 96, i32 3, !5, !12, !15}
