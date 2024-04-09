@@ -55,6 +55,56 @@ where this document diverges from \gls{isoC} and \gls{isoCPP}, the definitions
 in this section, the remaining sections in this chapter, and the attached
 glossary (\ref{main}) supersede other sources.
 
+\Sec{Common Definitions}{Intro.Defs}
+
+\p The following definitions are consistent between \acrshort{hlsl} and the
+\gls{isoC} and \gls{isoCPP} specifications, however they are included here for
+reader convenience.
+
+\Sub{Correct Data}{Intro.Defs.CorrectData}
+\p Data is correct if it represents values that have specified or unspecified
+but not undefined behavior for all the operations in which it is used. Data that
+is the result of undefined behavior is not correct, and may be treated as
+undefined.
+
+\Sub{Diagnostic Message}{Intro.Defs.Diags}
+\p An implementation defined message belonging to a subset of the
+implementation's output messages which communicates diagnostic information to
+the user.
+
+\Sub{Ill-formed Program}{Intro.Defs.IllFormed}
+\p A program that is not well-formed, for which the implementation is expected
+to return unsuccessfully and produce one or more diagnostic messages.
+
+\Sub{Implementation-defined Behavior}{Intro.Defs.ImpDef}
+\p Behavior of a well-formed program and correct data which may vary by the
+implementation, and the implementation is expected to document the behavior.
+
+\Sub{Implementation Limits}{Intro.Defs.ImpLimits}
+\p Restrictions imposed upon programs by the implementation of either the
+compiler or runtime environment. The compiler may seek to surface
+runtime-imposed limits to the user for improved user experience.
+
+\Sub{Undefined Behavior}{Intro.Defs.Undefined}
+\p Behavior of invalid program constructs or incorrect data for which this
+standard imposes no requirements, or does not sufficiently detail.
+
+\Sub{Unspecified Behavior}{Intro.Defs.Unspecified}
+\p Behavior of a well-formed program and correct data which may vary by the
+implementation, and the implementation is not expected to document the behavior.
+
+\Sub{Well-formed Program}{Intro.Defs.WellFormed}
+\p An \acrshort{hlsl} program constructed according to the syntax rules,
+diagnosable semantic rules, and the One Definition Rule.
+
+\Sub{Runtime Implementation}{Intro.Defs.Runtime}
+\p A runtime implementation
+refers to a full-stack implementation of a software runtime that can facilitate
+the execution of \acrshort{hlsl} programs. This broad definition includes
+libraries and device driver implementations. The \acrshort{hlsl} specification
+does not distinguish between the user-facing programming interfaces and the
+vendor-specific backing implementation.
+
 \Sec{Runtime Targeting}{Intro.Runtime}
 
 \p \acrshort{hlsl} emerged from the evolution of \gls{dx} to grant greater
@@ -65,7 +115,7 @@ integral part of the description for \acrshort{hlsl} . Some \acrshort{hlsl}
 features require specific \gls{sm} features, and are only supported by compilers
 when targeting those \gls{sm} versions or later.
 
-\Sec{\acrfull{spmd} Programming Model}{Intro.Model}
+\Sec{\acrlong{spmd} Programming Model}{Intro.Model}
 
 \p \acrshort{hlsl} uses a \acrfull{spmd} programming model where a program
 describes operations on a single element of data, but when the program executes
@@ -78,45 +128,148 @@ time.
 architecture and the way they relate to the \acrshort{spmd} program model. In
 this document we will use the terms as defined in the following subsections.
 
-\Sub{\gls{lane}}{Intro.Model.Lane}
+\Sub{\acrshort{spmd} Terminology}{Intro.Model.Terms}
+
+\SubSub{Host and Device}{Intro.Model.Terms.HostDevice}
+
+\p \acrshort{hlsl} is a data-parallel programming language designed for
+programming auxiliary processors in a larger system. In this context the
+\textit{host} refers to the primary processing unit that runs the application
+which in turn uses a runtime to execute \acrshort{hlsl} programs on a supported
+\textit{device}. There is no strict requirement that the host and device be
+different physical hardware, although they commonly are. The separation of host
+and device in this specification is useful for defining the execution and memory
+model as well as specific semantics of language constructs.
+
+\SubSub{\gls{lane}}{Intro.Model.Terms.Lane}
 
 \p A \gls{lane} represents a single computed element in an \acrshort{spmd}
 program. In a traditional programming model it would be analogous to a thread of
 execution, however it differs in one key way. In multi-threaded programming
 threads advance independent of each other. In \acrshort{spmd} programs, a group
-of \gls{lane}s execute instructions in lock step because each instruction is a
-\acrshort{simd} instruction computing the results for multiple \gls{lane}s
-simultaneously.
+of \gls{lane}s may execute instructions in lockstep because each instruction may
+be a \acrshort{simd} instruction computing the results for multiple \gls{lane}s
+simultaneously, or synchronizing execution across multiple \gls{lane}s or
+\gls{wave}s. A \gls{lane} has an associated \textit{lane state} which denotes
+the execution status of the lane (\ref{Intro.Model.Terms.LaneState}).
 
-\Sub{\gls{wave}}{Intro.Model.Wave}
+\SubSub{\gls{wave}}{Intro.Model.Terms.Wave}
 
-\p A grouping of \gls{lane}s for execution is called a \gls{wave}. \gls{wave}
-sizes vary by hardware architecture. Some hardware implementations support
-multiple wave sizes. Generally wave sizes are powers of two, but there is no
-requirement that be the case. \acrshort{hlsl} is explicitly designed to run on
-hardware with arbitrary \gls{wave} sizes.
+\p A grouping of \gls{lane}s for execution is called a \gls{wave}. The size of a
+\gls{wave} is defined as the maximum number of \textit{active} \gls{lane}s the
+\gls{wave} supports. \gls{wave} sizes vary by hardware architecture, and are required
+to be powers of two. The number of \textit{active} \gls{lane}s in a \gls{wave}
+can be any value between one and the \gls{wave} size.
 
-\Sub{\gls{quad}}{Intro.Model.Quad}
+\p Some hardware implementations support multiple \gls{wave} sizes. There is no
+overall minimum wave size requirement, although some language features do have
+minimum \gls{lane} size requirements.
+
+\p \acrshort{hlsl} is explicitly designed to run on hardware with arbitrary
+\gls{wave} sizes. Hardware architectures may implement \gls{wave}s as
+\acrfull{simt} where each thread executes instructions in lockstep. This is not
+a requirement of the model. Some constructs in \acrshort{hlsl} require
+synchronized execution. Such constructs will explicitly specify that
+requirement.
+
+\SubSub{\gls{quad}}{Intro.Model.Terms.Quad}
 
 \p A \gls{quad} is a subdivision of four \gls{lane}s in a \gls{wave} which are
 computing adjacent values. In pixel shaders a \gls{quad} may represent four
 adjacent pixels and \gls{quad} operations allow passing data between adjacent
-lanes. In compute shaders quads may be one or two dimensional depending on the
-workload dimensionality described in the \texttt{numthreads} attribute on the
-entry function (\ref{Decl.Attr.Entry}).
+\gls{lane}s. In compute shaders quads may be one or two dimensional depending
+on the workload dimensionality. Quad operations require four active \gls{lane}s.
 
-\Sub{\gls{threadgroup}}{Intro.Model.Group}
+\SubSub{\gls{threadgroup}}{Intro.Model.Terms.Group}
 
-\p A grouping of \gls{wave}s executing the same shader to produce a combined
-result is called a \gls{threadgroup}. \gls{threadgroup}s are executed on
-separate \acrshort{simd} hardware and are not instruction locked with other
-\gls{threadgroup}s.
+\p A grouping of \gls{lane}s executing the same shader to produce a combined
+result is called a \gls{threadgroup}. \gls{threadgroup}s are independent of
+\acrshort{simd} hardware specifications. The dimensions of a \gls{threadgroup}
+are defined in three dimensions. The maximum extent along each dimension of a
+\gls{threadgroup}, and the total size of a \gls{threadgroup} are implementation
+limits defined by the runtime and enforced by the compiler. If a
+\gls{threadgroup}'s size is not a whole multiple of the hardware \gls{wave}
+size, the unused hardware \gls{lane}s are implicitly inactive.
 
-\Sub{\gls{dispatch}}{Intro.Model.Dispatch}
+\p If a \gls{threadgroup} size is smaller than the \gls{wave} size , or if the
+\gls{threadgroup} size is not an even multiple of the \gls{wave} size, the
+remaining \gls{lane} are \textit{inactive} \gls{lane}s.
+
+\SubSub{\gls{dispatch}}{Intro.Model.Terms.Dispatch}
 
 \p A grouping of \gls{threadgroup}s which represents the full execution of a
 \acrshort{hlsl} program and results in a completed result for all input data
 elements.
+
+\SubSub{\gls{lane} States}{Intro.Model.Terms.LaneState}
+
+\p \gls{lane}s may be in three primary states: \textit{active}, \textit{helper},
+\textit{inactive}, and \textit{predicated off}.
+
+\p An \textit{active} \gls{lane} is enabled to perform computations and produce
+output results based on the initial launch conditions and program control flow.
+
+\p A \textit{helper} \gls{lane} is a lane which would not be executed by the
+initial launch conditions except that its computations are required for adjacent
+pixel operations in pixel fragment shaders. A \textit{helper} \gls{lane} will
+execute all computations but will not perform writes to buffers, and any outputs
+it produces are discarded. \textit{Helper} lanes may be required for
+\gls{lane}-cooperative operations to execute correctly.
+
+\p A \textit{inactive} \gls{lane} is a lane that is not executed by the initial
+launch conditions. This can occur if there are insufficient inputs to fill all
+\gls{lane}s in the \gls{wave}, or to reduce per-thread memory requirements or
+register pressure.
+
+\p A \textit{predicated off} \gls{lane} is a lane that is not being executed due
+to program control flow. A \gls{lane} may be \textit{predicated off} when
+control flow for the \gls{lane}s in a \gls{wave} diverge and one or more lanes
+are temporarily not executing.
+
+\p The diagram blow illustrates the state transitions between \gls{lane} states:
+
+\begin{tikzpicture}[shorten >=1pt,node distance=3cm,auto, squarednode/.style={rectangle,minimum size=7mm}]
+  \node[squarednode,state,initial above] (active) {$active$};
+  \node[squarednode,state,initial above] (inactive)[right of=active] {$inactive$};
+  \node[squarednode,state] (helper)[below of=active] {$helper$};
+  \node[squarednode,state] (off1)[below left of=active] {off};
+  \node[squarednode,state] (off2)[right of=helper] {off};
+
+
+  \path[->] (active) edge node {discard} (inactive);
+  \path[->] (active) edge node {discard} (helper);
+  \path[->] (active) edge node {branch} (off1);
+  \path[->] (off1) edge node {} (active);
+
+  \path[->] (helper) edge node {branch} (off2);
+  \path[->] (off2) edge node {} (helper);
+\end{tikzpicture}
+
+\Sub{\acrshort{spmd} Execution Model}{Intro.Model.Exec}
+
+\p A runtime implementation shall provide an implementation-defined mechanism
+for defining a \gls{dispatch}. A runtime shall manage hardware resources and
+schedule execution to conform to the behaviors defined in this specification in
+an implementation-defined way. A runtime implementation may sort the
+\gls{threadgroup}s of a \gls{dispatch} into \gls{wave}s in an
+implementation-defined way. During execution no guarantees are made that all
+\gls{lane}s in a \gls{wave} are actively executing.
+
+\p \gls{wave}, \gls{quad}, and \gls{threadgroup} operations require execution
+synchronization of applicable active and helper \gls{lane}s as defined by the
+individual operation.
+
+\Sub{Optimization Restrictions}{Intro.Model.Restrictions}
+
+\p An optimizing compiler may not optimize code generation such that it changes
+the behavior of a well-formed program except in the presence of
+\textit{implementation-defined} or \textit{unspecified} behavior.
+
+\p The presence of \gls{wave}, \gls{quad}, or \gls{threadgroup} operations
+may further limit the valid transformations of a program. Specifically, control
+flow operations which result in changing which \gls{lane}s, \gls{quad}s, or
+\gls{wave}s are actively executing are illegal in the presence of cooperative
+operations if the optimization alters the behavior of the program.
 
 \Sec{\acrshort{hlsl} Memory Models}{Intro.Memory}
 
@@ -131,37 +284,38 @@ multiples are supported with \gls{sm} 6.0. \gls{sm} features are fully
 documented in the \gls{dx} Specifications, and this document will not attempt to
 elaborate further.
 
-\Sec{Common Definitions}{Intro.Defs}
+\Sub{Memory Spaces}{Intro.Memory.Spaces}
 
-\p The following definitions are consistent between \acrshort{hlsl} and the
-\gls{isoC} and \gls{isoCPP} specifications, however they are included here for
-reader convenience.
+\p \acrshort{hlsl} programs manipulate data stored in four distinct memory
+spaces: thread, threadgroup, device and constant.
 
-\Sub{Diagnostic Message}{Intro.Defs.Diags}
-\p An implementation defined message belonging to a subset of the
-implementation's output messages which communicates diagnostic information to
-the user.
+\SubSub{Thread Memory}{Intro.Memory.Spaces.Thread}
 
-\Sub{Ill-formed Program}{Intro.Defs.IllFormed}
-\p A program that is not well formed, for which the implementation is expected
-to return unsuccessfully and produce one or more diagnostic messages.
+\p Thread memory is local to the \gls{lane}. It is the default memory space used to
+store local variables. Thread memory cannot be directly read from other threads
+without the use of intrinsics to synchronize execution and memory.
 
-\Sub{Implementation-defined Behavior}{Intro.Defs.ImpDef}
-\p Behavior of a well formed program and correct data which may vary by the
-implementation, and the implementation is expected to document the behavior.
+\SubSub{\gls{threadgroup} Memory}{Intro.Memory.Spaces.Group}
 
-\Sub{Implementation Limits}{Intro.Defs.ImpLimits}
-\p Restrictions imposed upon programs by the implementation.
+\p \gls{threadgroup} memory is denoted in \acrshort{hlsl} with the
+\texttt{groupshared} keyword. The underlying memory for any declaration
+annotated with \texttt{groupshared} is shared across an entire
+\gls{threadgroup}. Reads and writes to \gls{threadgroup} Memory, may occur in
+any order except as restricted by synchronization intrinsics or other memory
+annotations.
 
-\Sub{Undefined Behavior}{Intro.Defs.Undefined}
+\SubSub{Device Memory}{Intro.Memory.Spaces.Device}
 
-\p Behavior of invalid program constructs or incorrect data which this standard
-imposes no requirements, or does not sufficiently detail.
+\p Device memory is memory available to all \gls{lane}s executing on the device.
+This memory may be read or written to by multiple \gls{threadgroup}s that are
+executing concurrently. Reads and writes to device memory may occur in any order
+except as restricted by synchronization intrinsics or other memory annotations.
+Some device memory may be visible to the host. Device memory that is visible to
+the host may have additional synchronization concerns for host visibility.
 
-\Sub{Unspecified Behavior}{Intro.Defs.Unspecified}
-\p Behavior of a well formed program and correct data which may vary by the
-implementation, and the implementation is not expected to document the behavior.
+\SubSub{Constant Memory}{Intro.Memory.Spaces.Constant}
 
-\Sub{Well-formed Program}{Intro.Defs.WellFormed}
-\p An HLSL program constructed according to the syntax rules, diagnosable
-semantic rules, and the One Definition Rule.
+\p Constant memory is similar to device memory in that it is available to all
+\gls{lane}s executing on the device. Constant memory is read-only, and an
+implementation can assume that constant memory is immutable and cannot change
+during execution.
