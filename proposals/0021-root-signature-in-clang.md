@@ -23,18 +23,18 @@ To support root signature in clang-dxc.
 
 ## Requirements
 
-1) Clang-dxc should parse existing root signature grammars and provide 
+1) Compiler must parse existing root signature grammars and provide 
 diagnostics.
-2) Clang-dxc should translate textual root signatures into binary encoded 
+2) Compiler must translate textual root signatures into binary encoded 
 formats.
-3) Clang-dxc should support reading and writing binary encoded root 
+3) Compiler must support reading and writing binary encoded root 
 ignatures to and from DXContainer files.
-4) Clang-dxc should validate root signatures before emitting them.
-5) Clang-dxc should have a comprehensive test infrastructure to test all 
+4) Compiler must validate root signatures before emitting them.
+5) Compiler must have a comprehensive test infrastructure to test all 
 software components.
 
 Non-requirements
-1) Clang-dxc is not required to validate or manipulate root signatures read 
+1) Compiler is not required to validate or modify root signatures read 
 from a DXContainer.
 
 Other requirements for the overall effort that need to influence the design:
