@@ -143,7 +143,7 @@ struct IDxcResult : public IDxcOperationResult {
 ```
 #### Helper library
 The shader compiler library also provides a helper library IDxcUtils that is
-provided to create/consume the different data forms referred to above.
+used to create/consume the different data in the forms referred to above.
 
 ```c++
 struct IDxcUtils : public IUnknown {
@@ -346,7 +346,46 @@ struct IDxcContainerReflection : public IUnknown {
 ```
 
 #### Shader PDBs
-TBD
+The PDB utility library works on an existing PDB or DXIL and provides access
+to symbol information for a shader. This is useful for tooling that want
+a deeper view into the symbols for a better shader debugging experience. 
+```c++
+struct IDxcPdbUtils : public IUnknown {
+  HRESULT Load(IDxcBlob *pPdbOrDxil);
+
+  HRESULT GetSourceCount(UINT32 *pCount);
+  HRESULT GetSource(UINT32 uIndex, IDxcBlobEncoding **ppResult);
+  HRESULT GetSourceName(UINT32 uIndex, BSTR *pResult);
+
+  HRESULT GetFlagCount(UINT32 *pCount);
+  HRESULT GetFlag(UINT32 uIndex, BSTR *pResult);
+
+  HRESULT GetArgCount(UINT32 *pCount);
+  HRESULT GetArg(UINT32 uIndex, BSTR *pResult);
+
+  HRESULT GetArgPairCount(UINT32 *pCount);
+  HRESULT GetArgPair(UINT32 uIndex, BSTR *pName, BSTR *pValue);
+
+  HRESULT GetDefineCount(UINT32 *pCount);
+  HRESULT GetDefine(UINT32 uIndex, BSTR *pResult);
+
+  HRESULT GetTargetProfile(BSTR *pResult);
+  HRESULT GetEntryPoint(BSTR *pResult);
+  HRESULT GetMainFileName(BSTR *pResult);
+
+  HRESULT GetHash(IDxcBlob **ppResult);
+  HRESULT GetName(BSTR *pResult);
+
+  BOOL IsFullPDB();
+  HRESULT GetFullPDB(IDxcBlob **ppFullPDB) = 0;
+  HRESULT GetVersionInfo(IDxcVersionInfo **ppVersionInfo) = 0;
+
+  HRESULT SetCompiler(IDxcCompiler3 *pCompiler);
+  HRESULT CompileForFullPDB(IDxcResult **ppResult);
+  HRESULT OverrideArgs(DxcArgPair *pArgPairs, UINT32 uNumArgPairs);
+  HRESULT OverrideRootSignature(const WCHAR *pRootSignature);
+};
+```
 
 #### Shader Validation
 Validates a shader with/without debug information. This is useful for
@@ -374,6 +413,28 @@ struct IDxcValidator2 : public IDxcValidator {
     DxcBuffer *pOptDebugBitcode,     // optional debug module bitcode to
                                      // provide line numbers
     IDxcOperationResult **ppResult); // output status, buffer, and errors
+};
+```
+
+#### Shader Optimizer
+An optimizer can be run over a shader and return information about the
+different passes involved.
+```c++
+struct IDxcOptimizerPass : public IUnknown {
+  HRESULT GetOptionName(LPWSTR *ppResult);
+  HRESULT GetDescription(LPWSTR *ppResult);
+  HRESULT GetOptionArgCount(UINT32 *pCount);
+  HRESULT GetOptionArgName(UINT32 argIndex, LPWSTR *ppResult);
+  HRESULT GetOptionArgDescription(UINT32 argIndex, LPWSTR *ppResult);
+};
+
+struct IDxcOptimizer : public IUnknown {
+  HRESULT GetAvailablePassCount(_Out_ UINT32 *pCount) = 0;
+  HRESULT GetAvailablePass(UINT32 index, IDxcOptimizerPass** ppResult);
+  HRESULT RunOptimizer(IDxcBlob *pBlob,
+    LPCWSTR *ppOptions, UINT32 optionCount,
+    IDxcBlob **pOutputModule,
+    IDxcBlobEncoding **ppOutputText);
 };
 ```
 
