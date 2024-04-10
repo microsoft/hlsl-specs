@@ -455,7 +455,7 @@ struct IDxcOptimizer : public IUnknown {
 
 ### Optimizing a shader
 ```c++
-// How to inspect reflection data
+// How to optimize a shader
 ```
 
 ### Inspecting reflection data and working with DXIL containers
