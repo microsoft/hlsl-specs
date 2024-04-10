@@ -55,6 +55,7 @@ supports the following features.
 * [Include Handlers](#include-handlers)
 * [Compiler](#compile-shader)
 * [Linker](#link-shader)
+* [Validation](#shader-validation)
 * [Reflection Data Access](#shader-reflection)
 * [DXIL Container Access](#dxil-container-access)
 * [PDB Symbol Access](#shader-pdbs)
@@ -273,16 +274,108 @@ struct IDxcCompiler3 : public IUnknown {
 };
 ```
 #### Link Shader
-TBD
+Links a shader and produces a shader blob that can be consumed by the D3D
+runtime.
 
-#### Shader Reflection
-TBD
+TODO: Does IDxcCompiler3 cover this already?
+
+```c++
+struct IDxcLinker : public IUnknown {
+public:
+  // Register a library with name to reference it later.
+  HRESULT RegisterLibrary(
+    LPCWSTR pLibName,
+    IDxcBlob *pLib);
+
+  // Links the shader and produces a shader blob that the Direct3D runtime can
+  // use.
+  HRESULT Link(
+    LPCWSTR pEntryName,              // Entry point name
+    LPCWSTR pTargetProfile,          // shader profile to link
+    const LPCWSTR *pLibNames,        // Array of library names to link
+    UINT32 libCount,                 // Number of libraries to link
+    const LPCWSTR *pArguments,       // Array of pointers to arguments
+    UINT32 argCount,                 // Number of arguments
+    IDxcOperationResult **ppResult); // output status, buffer, and errors
+};
+```
 
 #### DXIL Container Access
-TBD
+The following interfaces are used to create/manipulate DXIL containers.
+```c++
+struct IDxcContainerBuilder : public IUnknown {
+  HRESULT Load(IDxcBlob *pDxilContainerHeader);      // Loads a container
+  HRESULT AddPart(UINT32 fourCC, IDxcBlob *pSource); // Add a part to container
+  HRESULT RemovePart(UINT32 fourCC);               // Remove part from container
+  // Builds a container of the given container builder state
+  HRESULT SerializeContainer(IDxcOperationResult **ppResult); 
+};
+
+struct IDxcAssembler : public IUnknown {
+  // Assemble dxil in ll or llvm bitcode to DXIL container.
+  HRESULT AssembleToContainer(
+    IDxcBlob *pShader,               // shader to assemble
+    IDxcOperationResult **ppResult); // output status, buffer, and errors
+};
+```
+
+#### Shader Reflection
+A DXIL container can be inspected and different parts can be accessed using
+IDxcContinerReflection.
+
+```c++
+#define DXC_PART_PDB                      DXC_FOURCC('I', 'L', 'D', 'B')
+#define DXC_PART_PDB_NAME                 DXC_FOURCC('I', 'L', 'D', 'N')
+#define DXC_PART_PRIVATE_DATA             DXC_FOURCC('P', 'R', 'I', 'V')
+#define DXC_PART_ROOT_SIGNATURE           DXC_FOURCC('R', 'T', 'S', '0')
+#define DXC_PART_DXIL                     DXC_FOURCC('D', 'X', 'I', 'L')
+#define DXC_PART_REFLECTION_DATA          DXC_FOURCC('S', 'T', 'A', 'T')
+#define DXC_PART_SHADER_HASH              DXC_FOURCC('H', 'A', 'S', 'H')
+#define DXC_PART_INPUT_SIGNATURE          DXC_FOURCC('I', 'S', 'G', '1')
+#define DXC_PART_OUTPUT_SIGNATURE         DXC_FOURCC('O', 'S', 'G', '1')
+#define DXC_PART_PATCH_CONSTANT_SIGNATURE DXC_FOURCC('P', 'S', 'G', '1')
+
+struct IDxcContainerReflection : public IUnknown {
+  HRESULT Load(IDxcBlob *pContainer); // Container to load.
+  HRESULT GetPartCount(UINT32 *pResult);
+  HRESULT GetPartKind(UINT32 idx, UINT32 *pResult);
+  HRESULT GetPartContent(UINT32 idx, IDxcBlob **ppResult);
+  HRESULT FindFirstPartKind(UINT32 kind, UINT32 *pResult);
+  HRESULT GetPartReflection(UINT32 idx, REFIID iid, void **ppvObject);
+};
+```
 
 #### Shader PDBs
 TBD
+
+#### Shader Validation
+Validates a shader with/without debug information. This is useful for
+tooling that wants to deeper inspect and understand the quality of a shader.
+```c++
+static const UINT32 DxcValidatorFlags_Default = 0;
+static const UINT32 DxcValidatorFlags_InPlaceEdit = 1;  // validator is allowed
+                                                        // to update shader
+                                                        // blob in-place.
+static const UINT32 DxcValidatorFlags_RootSignatureOnly = 2;
+static const UINT32 DxcValidatorFlags_ModuleOnly = 4;
+static const UINT32 DxcValidatorFlags_ValidMask = 0x7;
+
+struct IDxcValidator : public IUnknown {
+  HRESULT Validate(
+    IDxcBlob *pShader,               // shader to validate
+    UINT32 Flags,                    // Validation flags
+    IDxcOperationResult **ppResult); // output status, buffer, and errors
+};
+
+struct IDxcValidator2 : public IDxcValidator {
+  HRESULT ValidateWithDebug(
+    IDxcBlob *pShader,               // shader to validate.
+    UINT32 Flags,                    // validation flags.
+    DxcBuffer *pOptDebugBitcode,     // optional debug module bitcode to
+                                     // provide line numbers
+    IDxcOperationResult **ppResult); // output status, buffer, and errors
+};
+```
 
 ## Alternatives considered for supporting legacy toolchains
 
