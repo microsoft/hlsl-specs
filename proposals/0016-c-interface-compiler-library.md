@@ -49,12 +49,14 @@ will also be addressed in this proposal. The design will help migration of
 older DXC-based solutions to adopt clang as the preferred HLSL compiler.
 
 ## Detailed design
+
+### What is provided today in the DXC api?
 The current DirectX shader compiler library is a nano-COM implementation that
 supports the following features.
 
 * [Include Handlers](#include-handlers)
-* [Compiler](#compile-shader)
-* [Linker](#link-shader)
+* [Compiler](#shader-compiler)
+* [Linker](#shader-linker)
 * [Validation](#shader-validation)
 * [Reflection Data Access](#shader-reflection)
 * [DXIL Container Access](#dxil-container-access)
@@ -250,7 +252,7 @@ struct IDxcIncludeHandler : public IUnknown {
 };
 ```
 
-#### Compile Shader
+#### Shader Compiler
 IDxcCompiler3 is the most current entrypoint for compiling a shader or 
 disassembling DXIL containers/bitcode.
 
@@ -278,7 +280,7 @@ struct IDxcCompiler3 : public IUnknown {
                                          // text, and errors
 };
 ```
-#### Link Shader
+#### Shader Linker
 Links a shader and produces a shader blob that can be consumed by the D3D
 runtime.
 
