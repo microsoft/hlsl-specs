@@ -227,25 +227,84 @@ a list of FunctionDecls.
   !hlsl.entry.rootsignatures = !{!3}
   …
   !3 = !{ptr @main, !4}
-  !4 = !{i32 2, i32 3, !5, !18}      ; version 1.1, flag 3, root params, statis samplers.
-  !5 = !{!6, !7, !8, !9, !14, !17}  ; root parameters.
-  !6 = !{i32 2, i32 0, i32 0, i32 1, i32 8}
-  !7 = !{i32 3, i32 0, i32 0, i32 0, i32 0}
-  !8 = !{i32 4, i32 0, i32 0, i32 0, i32 0}
-  !9 = !{i32 0, i32 0, !10}  ; first table
-  !10 = !{!11, !12, !13} ; table ranges.
-  !11 = !{i32 2, i32 1, i32 1, i32 0, i32 0}
-  !12 = !{i32 0, i32 8, i32 1, i32 0, i32 1}
-  !13 = !{i32 1, i32 -1, i32 1, i32 0, i32 1}
-  !14 = !{i32 0, i32 0, !15}  ; second table
-  !15 = !{!16}  ; table ranges.
-  !16 = !{i32 3, i32 4, i32 0, i32 1, i32 0}
-  !17 = !{i32 1, i32 0, i32 10, i32 0, i32 3}
-  !18 = !{!19, !20} ; static samplers.
-  !19 = !{i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, i32 0, i32 0}
-  !20 = !{i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0}
+  !4 = !{i32 2, i32 3, !5, !21}
+
+  !5 = !{!6, !8, !10, !11, !16, !19}
+
+  !6 = !{i32 2, i32 0, !7}
+  !7 = !{i32 0, i32 1, i32 8}
+
+  !8 = !{i32 3, i32 0, !9}
+  !9 = !{i32 0, i32 0, i32 0}
+
+  !10 = !{i32 4, i32 0, !9}
+
+  !11 = !{i32 0, i32 0, !12}
+  !12 = !{!13, !14, !15}
+  !13 = !{i32 2, i32 1, i32 1, i32 0, i32 0}
+  !14 = !{i32 0, i32 8, i32 1, i32 0, i32 1}
+  !15 = !{i32 1, i32 -1, i32 1, i32 0, i32 1}
+
+  !16 = !{i32 0, i32 0, !17}
+  !17 = !{!18}
+  !18 = !{i32 3, i32 4, i32 0, i32 1, i32 0}
+
+  !19 = !{i32 1, i32 0, !20}
+  !20 = !{i32 10, i32 0, i32 3}
+
+  !21 = !{!22, !23}
+  !22 = !{i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, i32 0, i32 0}
+  !23 = !{i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0}
 
 ```
+
+* Metadata format
+
+Root Signature
+| Version | Flag | RootParameters | StaticSamplers |
+| --- | --- | --- | --- |
+| i32 2 | i32 3 | !5 | !21 |
+
+RootParameter
+| ParameterType | Visibility | Extra |
+| --- | --- | --- |
+| i32 2 |  i32 0 |  !7 | 
+| i32 3 |  i32 0 |  !9 | 
+| i32 4 |  i32 0 |  !9 | 
+| i32 0 |  i32 0 |  !12 | 
+| i32 0 |  i32 0 |  !17 | 
+| i32 1 |  i32 0 |  !20 | 
+
+
+RootConstantExtra
+| Register | Space | Num32BitValues |
+| --- | --- | --- |
+| i32 10 | i32 0 | i32 3 |
+
+RootDescriptorExtra
+| Register | Space | Flags |
+| --- | --- | --- |
+| i32 0 | i32 1 | i32 8 |
+| i32 0 | i32 0 | i32 0 |
+| i32 0 | i32 0 | i32 0 |
+
+DescriptorTableExtra
+List of DescriptorRange
+
+DescriptorRange
+| RangeType | NumDescriptors | BaseShaderRegister | Space | Flags |
+| --- | --- | --- | --- | --- |
+| i32 2 | i32 1 | i32 1 | i32 0 | i32 0 |
+| i32 0 | i32 8 | i32 1 | i32 0 | i32 1 |
+| i32 1 | i32 -1 | i32 1 | i32 0 | i32 1 |
+| i32 3 | i32 4 | i32 0 | i32 1 | i32 0 |
+
+StaticSampler
+
+| Filter | AddressU | AddressV | AddressW | MipLODBias | MaxAnisotropy | ComparisonFunc | BoarderColor | MinLOD | MaxLOD | Register | Space | Visibility |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| i32 85 | i32 1 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 1 | i32 0 | i32 0 |
+| i32 21 | i32 3 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 2 | i32 0 | i32 0 |
 
 ## Alternatives considered (Optional)
 
