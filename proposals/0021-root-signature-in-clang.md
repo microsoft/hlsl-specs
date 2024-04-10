@@ -98,6 +98,9 @@ added to handle the SubobjectToExportsAssociation statement in HLSL.
 The SubobjectToExportsAssociationDecl will contain a HLSLRootSignatureDecl and 
 a list of FunctionDecls.
 
+The default root signature version number is 2 which maps to rootsig_1_1.
+With option -force-rootsig-ver rootsig_1_0 could make it to 1.
+
 ## Detailed design
 
 
