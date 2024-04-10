@@ -60,6 +60,11 @@ supports the following features.
 * [DXIL Container Access](#dxil-container-access)
 * [PDB Symbol Access](#shader-pdbs)
 
+These features will also need to be supported by the new c-style library.
+Code snippets on how to compile a shader using the COM library are located
+in [DXC api code snippets](#dxc-code-snippets).
+
+
 The following interfaces are used to work with data being passed to/from the
 library.
 
@@ -346,9 +351,10 @@ struct IDxcContainerReflection : public IUnknown {
 ```
 
 #### Shader PDBs
-The PDB utility library works on an existing PDB or DXIL and provides access
-to symbol information for a shader. This is useful for tooling that want
-a deeper view into the symbols for a better shader debugging experience. 
+A PDB utility library is provided and can operate on existing PDB data or
+DXIL and provides access to symbol information for a shader. This is useful for
+inspecting symbols to get a deeper view and provide better shader debugging
+experience. 
 ```c++
 struct IDxcPdbUtils : public IUnknown {
   HRESULT Load(IDxcBlob *pPdbOrDxil);
@@ -437,6 +443,24 @@ struct IDxcOptimizer : public IUnknown {
     IDxcBlobEncoding **ppOutputText);
 };
 ```
+
+## DXC Code Snippets
+
+### Compiling a shader
+```c++
+// How to compile a shader
+```
+
+### Optimizing a shader
+```c++
+// How to inspect reflection data
+```
+
+### Inspecting reflection data and working with DXIL containers
+```c++
+// How to inspect reflection data
+```
+
 
 ## Alternatives considered for supporting legacy toolchains
 
