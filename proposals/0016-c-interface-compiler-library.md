@@ -49,8 +49,109 @@ will also be addressed in this proposal. The design will help migration of
 older DXC-based solutions to adopt clang as the preferred HLSL compiler.
 
 ## Detailed design
+The current DirectX shader compiler library is a nano-COM implementation that
+supports the following features.
 
-_The detailed design is not required until the feature is under review._
+* [Include Handlers](#include-handlers)
+* [Compiler](#compile-shader)
+* [Linker](#link-shader)
+* [Reflection Data Access](#shader-reflection)
+* [DXIL Container Access](#dxil-container-access)
+* [PDB Symbol Access](#shader-pdbs)
+
+The following interfaces are used to work with data being passed to/from the
+library.
+
+#### Buffers
+```c++
+// Structure for supplying bytes or text input to Dxc APIs. Represents both
+// text (DxcText) and non-text byte buffers (DxcBuffer).
+struct DxcBuffer {
+  LPCVOID Ptr;
+  SIZE_T Size;
+  UINT Encoding;
+};
+typedef DxcBuffer DxcText;
+
+// General purpose buffers
+struct IDxcBlob : public IUnknown {
+public:
+  LPVOID GetBufferPointer();
+  SIZE_T GetBufferSize();
+};
+
+// String buffers that guarantee null-terminated text and the stated encoding
+struct IDxcBlobEncoding : public IDxcBlob {
+public:
+  HRESULT GetEncoding(BOOL *pKnown, UINT32 *pCodePage);
+};
+
+struct IDxcBlobUtf16 : public IDxcBlobEncoding {
+public:
+  LPCWSTR GetStringPointer();
+  SIZE_T GetStringLength();
+};
+
+struct IDxcBlobUtf8 : public IDxcBlobEncoding {
+public:
+  LPCSTR GetStringPointer();
+  SIZE_T GetStringLength();
+};
+```
+
+### Features supported in DirectX shader compiler library (dxcapi.h)
+#### Include Handlers
+Provided to customize the handling of include directives. An implementation of
+the following interface is provided as a hook into compilation. A default
+implementation that reads include files from the filesystem can also be created
+using IDxcUtils::CreateDefaultIncludeHandler.
+
+```c++
+struct IDxcIncludeHandler : public IUnknown {
+  HRESULT STDMETHODCALLTYPE LoadSource(
+    LPCWSTR pFilename,            // candidate filename.
+    IDxcBlob **ppIncludeSource);  // resultant source object for included file,
+                                  // nullptr if not found.
+};
+```
+
+#### Compile Shader
+IDxcCompiler3 is the most current entrypoint for compiling a shader or 
+disassembling DXIL containers/bitcode.
+
+Provides support for:
+* Compiling a single entry point to the target shader model
+* Compiling a library to a library target (using -R lib_*)
+* Compiling a rootsignature (-T rootsig_*)
+* Preprocessing HLSL source (-P)
+* Disassembling DXIL container or bitcode
+
+```c++
+struct IDxcCompiler3 : public IUnknown {
+  HRESULT Compile(
+    const DxcBuffer *pSource,            // source text to compile
+    LPCWSTR *pArguments,                 // array of pointers to arguments
+    UINT32 argCount,                     // number of arguments
+    IDxcIncludeHandler *pIncludeHandler, // user-provided interface to handle
+                                         // #include directives (optional)
+    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, buffer, and errors
+
+  HRESULT Disassemble(
+    const DxcBuffer *pObject,            // program to disassemble: dxil container or bitcode.
+    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, disassembly text, and errors
+};
+```
+#### Link Shader
+TBD
+
+#### Shader Reflection
+TBD
+
+#### DXIL Container Access
+TBD
+
+#### Shader PDBs
+TBD
 
 ## Alternatives considered for supporting legacy toolchains
 
