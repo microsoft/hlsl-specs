@@ -98,6 +98,135 @@ public:
   SIZE_T GetStringLength();
 };
 ```
+#### Status and other data
+Errors, status, and other kinds of data are returned as an IDxcResult
+interface. A unique DXC_OUT_KIND is defined for each different type of data
+being returned.  The type of data is determined by the interface method used to
+produce the IDxcResult.
+
+Example:
+IDxcCompiler3::Compile() and IDxcCompiler3::Disassemble() both return an 
+IDxcResult.
+
+```c++
+typedef enum DXC_OUT_KIND {
+  DXC_OUT_NONE = 0,
+  DXC_OUT_OBJECT = 1,         // IDxcBlob - Shader or library object
+  DXC_OUT_ERRORS = 2,         // IDxcBlobUtf8 or IDxcBlobUtf16
+  DXC_OUT_PDB = 3,            // IDxcBlob
+  DXC_OUT_SHADER_HASH = 4,    // IDxcBlob - DxcShaderHash of shader or shader
+                              // with source info (-Zsb/-Zss)
+  DXC_OUT_DISASSEMBLY = 5,    // IDxcBlobUtf8/16 - from Disassemble
+  DXC_OUT_HLSL = 6,           // IDxcBlobUtf8/16 - from Preprocessor or Rewriter
+  DXC_OUT_TEXT = 7,           // IDxcBlobUtf8/16 - other text, such as -ast-dump
+                              // or -Odump
+  DXC_OUT_REFLECTION = 8,     // IDxcBlob - RDAT part with reflection data
+  DXC_OUT_ROOT_SIGNATURE = 9, // IDxcBlob - Serialized root signature output
+  DXC_OUT_EXTRA_OUTPUTS  = 10,// IDxcExtraResults - Extra outputs
+
+  DXC_OUT_FORCE_DWORD = 0xFFFFFFFF
+} DXC_OUT_KIND;
+
+struct IDxcOperationResult : public IUnknown {
+  HRESULT GetStatus(HRESULT *pStatus);
+
+struct IDxcResult : public IDxcOperationResult {
+  BOOL HasOutput(DXC_OUT_KIND dxcOutKind);
+  HRESULT GetOutput(DXC_OUT_KIND dxcOutKind,
+                    REFIID iid, void **ppvObject,
+                    IDxcBlobUtf16 **ppOutputName);
+  UINT32 GetNumOutputs();
+  DXC_OUT_KIND GetOutputByIndex(UINT32 Index);
+  DXC_OUT_KIND PrimaryOutput();
+};
+```
+#### Helper library
+The shader compiler library also provides a helper library IDxcUtils that is
+provided to create/consume the different data forms referred to above.
+
+```c++
+struct IDxcUtils : public IUnknown {
+  // Create a sub-blob that holds a reference to the outer blob and points to
+  // its memory.
+  HRESULT CreateBlobFromBlob(
+    IDxcBlob *pBlob,
+    UINT32 offset,
+    UINT32 length,
+    IDxcBlob **ppResult);
+
+  // Creates a blob referencing existing memory, with no copy.
+  HRESULT CreateBlobFromPinned(
+    LPCVOID pData,
+    UINT32 size,
+    UINT32 codePage,
+    IDxcBlobEncoding **pBlobEncoding);
+
+  // Create blob, taking ownership of memory allocated with supplied allocator.
+  HRESULT MoveToBlob(
+    LPCVOID pData,
+    IMalloc *pIMalloc,
+    UINT32 size,
+    UINT32 codePage,
+    IDxcBlobEncoding **pBlobEncoding);
+
+  // Copy blob contents to memory owned by the new blob.
+  HRESULT CreateBlob(
+    LPCVOID pData,
+    UINT32 size,
+    UINT32 codePage,
+    IDxcBlobEncoding **pBlobEncoding);
+
+  HRESULT LoadFile(
+    LPCWSTR pFileName,
+    UINT32* pCodePage,
+    IDxcBlobEncoding **pBlobEncoding);
+
+  HRESULT CreateReadOnlyStreamFromBlob(
+    IDxcBlob *pBlob,
+    IStream **ppStream);
+
+  HRESULT CreateDefaultIncludeHandler(
+    IDxcIncludeHandler **ppResult);
+
+  // Convert or return matching encoded text blobs
+  HRESULT GetBlobAsUtf8(
+    IDxcBlob *pBlob,
+    IDxcBlobUtf8 **pBlobEncoding);
+
+  HRESULT GetBlobAsUtf16(
+    IDxcBlob *pBlob,
+    IDxcBlobUtf16 **pBlobEncoding);
+
+  HRESULT GetDxilContainerPart(
+    const DxcBuffer *pShader,
+    UINT32 DxcPart,
+    void **ppPartData,
+    UINT32 *pPartSizeInBytes);
+
+  // Create reflection interface from serialized Dxil container, or 
+  // DXC_PART_REFLECTION_DATA.
+  HRESULT CreateReflection(
+    const DxcBuffer *pData,
+    REFIID iid, void **ppvReflection);
+
+  // Create arguments for IDxcCompiler2::Compile
+  HRESULT BuildArguments(
+    LPCWSTR pSourceName,      // Optional file name for pSource. Used in errors
+                              // and include handlers.
+    LPCWSTR pEntryPoint,      // Entry point name. (-E)
+    LPCWSTR pTargetProfile,   // Shader profile to compile. (-T)
+    LPCWSTR *pArguments,      // Array of pointers to arguments
+    UINT32 argCount,          // Number of arguments
+    const DxcDefine *pDefines,// Array of defines
+    UINT32 defineCount,       // Number of defines
+    IDxcCompilerArgs **ppArgs); // Arguments you can use with Compile() method
+
+  // Takes the shader PDB and returns the hash and the container inside it
+  HRESULT GetPDBContents(
+    IDxcBlob *pPDBBlob, IDxcBlob **ppHash,
+    IDxcBlob **ppContainer);
+};
+```
 
 ### Features supported in DirectX shader compiler library (dxcapi.h)
 #### Include Handlers
@@ -134,11 +263,13 @@ struct IDxcCompiler3 : public IUnknown {
     UINT32 argCount,                     // number of arguments
     IDxcIncludeHandler *pIncludeHandler, // user-provided interface to handle
                                          // #include directives (optional)
-    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, buffer, and errors
+    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, buffer, and
+                                         // errors
 
   HRESULT Disassemble(
-    const DxcBuffer *pObject,            // program to disassemble: dxil container or bitcode.
-    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, disassembly text, and errors
+    const DxcBuffer *pObject,            // dxil container or bitcode
+    REFIID riid, LPVOID *ppResult);      // IDxcResult: status, disassembly
+                                         // text, and errors
 };
 ```
 #### Link Shader
