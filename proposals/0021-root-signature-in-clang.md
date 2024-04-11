@@ -81,8 +81,8 @@ The HLSLRootSignatureDecl will save StringLiteral instead StringRef for
 diagnostic.
 
 In clang code generation, the HLSLRootSignatureAttr in AST will be translated
-into a global variable with struct type to express the layout and metadata to
-save things like static sampler, root flags, space and NumDescriptors in LLVM IR.
+into metadata to express the layout and things like static sampler, root 
+flags, space and NumDescriptors in LLVM IR.
 
 CGHLSLRuntime will generate metadata to link the global variable as root
 signature for given entry function.
@@ -157,71 +157,6 @@ With option -force-rootsig-ver rootsig_1_0 could make it to 1.
 
 ```
 
-* LLVM IR for the root signature saved in ConstantStruct.
-
-```
-
-  ; named metadata for entry root signature
-  !hlsl.entry.rootsignatures = !{!2}
-  …
-  ; link the global variable to entry function
-  !2 = !{ptr @main,
-    %0 {
-       %"dxbc::RootSignature::ContainerRootSignatureDesc" 
-          { i32 2, i32 0, i32 24, i32 0, i32 96, i32 3 }, 
-      [6 x %"dxbc::RootSignature::ContainerRootParameter"]  
-        [%"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 2, i32 0, i32 200 }, 
-        %"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 3, i32 0, i32 212 }, 
-        %"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 4, i32 0, i32 224 }, 
-        %"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 0, i32 0, i32 236 }, 
-        %"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 0, i32 0, i32 316 }, 
-        %"dxbc::RootSignature::ContainerRootParameter" 
-        { i32 1, i32 0, i32 348 }], 
-      [2 x %"dxbc::RootSignature::StaticSamplerDesc"]
-         [%"dxbc::RootSignature::StaticSamplerDesc" 
-           { i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, 
-             i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, 
-             i32 0, i32 0 }, 
-          %"dxbc::RootSignature::StaticSamplerDesc" 
-           { i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, 
-           i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, 
-           i32 0, i32 0 }], 
-      %1 { 
-        %"dxbc::RootSignature::ContainerRootDescriptor" 
-          { i32 0, i32 1, i32 8 }, 
-        %"dxbc::RootSignature::ContainerRootDescriptor" 
-          zeroinitializer, 
-        %"dxbc::RootSignature::ContainerRootDescriptor" 
-          zeroinitializer, 
-        %2 { %"dxbc::RootSignature::ContainerRootDescriptorTable" 
-        { i32 3, i32 244 }, 
-        [3 x %"dxbc::RootSignature::ContainerDescriptorRange"] 
-         [%"dxbc::RootSignature::ContainerDescriptorRange" 
-           { i32 2, i32 1, i32 1, i32 0, i32 0, i32 -1 }, 
-          %"dxbc::RootSignature::ContainerDescriptorRange" 
-           { i32 0, i32 8, i32 1, i32 0, i32 1, i32 -1 }, 
-          %"dxbc::RootSignature::ContainerDescriptorRange" 
-           { i32 1, i32 -1, i32 1, i32 0, i32 1, i32 -1 }] 
-       }, 
-       %3 {
-           %"dxbc::RootSignature::ContainerRootDescriptorTable" 
-           { i32 1, i32 324 }, 
-           [1 x %"dxbc::RootSignature::ContainerDescriptorRange"] 
-           [%"dxbc::RootSignature::ContainerDescriptorRange" 
-             { i32 3, i32 4, i32 0, i32 1, i32 0, i32 -1 }] }, 
-           %"dxbc::RootSignature::ContainerRootConstants" 
-             { i32 10, i32 0, i32 3 } 
-       }
-      }
-    }
-
-```
-
 * LLVM IR for root signature saved in metadata.
 
 ```
@@ -242,12 +177,12 @@ With option -force-rootsig-ver rootsig_1_0 could make it to 1.
   !7 = !{i32 4, i32 0, i32 0, i32 0, i32 0}
 
   !8 = !{i32 0, i32 0, !9, !10, !11}
-  !9 = !{i32 2, i32 1, i32 1, i32 0, i32 0}
-  !10 = !{i32 0, i32 8, i32 1, i32 0, i32 1}
-  !11 = !{i32 1, i32 -1, i32 1, i32 0, i32 1}
+  !9 = !{i32 2, i32 1, i32 1, i32 0, i32 0, i32 -1}
+  !10 = !{i32 0, i32 8, i32 1, i32 0, i32 1, i32 -1}
+  !11 = !{i32 1, i32 -1, i32 1, i32 0, i32 1, i32 -1}
 
   !12 = !{i32 0, i32 0, !13}
-  !13 = !{i32 3, i32 4, i32 0, i32 1, i32 0}
+  !13 = !{i32 3, i32 4, i32 0, i32 1, i32 0, i32 -1}
 
   !14 = !{i32 1, i32 0, i32 10, i32 0, i32 3}
 
@@ -283,12 +218,12 @@ DescriptorTable
 | !12 | i32 0 |  i32 0 | !13 |
 
 DescriptorRange
-| | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags |
-|-| --- | --- | --- | --- | --- |
-| !9 | i32 2 | i32 1 | i32 1 | i32 0 | i32 0 |
-| !10 | i32 0 | i32 8 | i32 1 | i32 0 | i32 1 |
-| !11 | i32 1 | i32 -1 | i32 1 | i32 0 | i32 1 |
-| !13 | i32 3 | i32 4 | i32 0 | i32 1 | i32 0 |
+| | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags | Offset |
+|-| --- | --- | --- | --- | --- | --- |
+| !9 | i32 2 | i32 1 | i32 1 | i32 0 | i32 0 | i32 -1 |
+| !10 | i32 0 | i32 8 | i32 1 | i32 0 | i32 1 | i32 -1 |
+| !11 | i32 1 | i32 -1 | i32 1 | i32 0 | i32 1 | i32 -1 |
+| !13 | i32 3 | i32 4 | i32 0 | i32 1 | i32 0 | i32 -1 |
 
 StaticSampler
 
