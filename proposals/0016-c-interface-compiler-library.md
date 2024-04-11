@@ -328,7 +328,9 @@ struct IDxcAssembler : public IUnknown {
 
 #### Shader Reflection
 A DXIL container can be inspected and different parts can be accessed using
-IDxcContinerReflection.
+IDxcContinerReflection. ID3D12ShaderReflection can also be retrieved using
+IDxcUtils::CreateReflection and passing REFLECTION_DATA returned from 
+IDxcResult::GetOutput().
 
 ```c++
 #define DXC_PART_PDB                      DXC_FOURCC('I', 'L', 'D', 'B')
@@ -498,6 +500,35 @@ else {
 ### Inspecting reflection data and working with DXIL containers
 ```c++
 // How to inspect reflection data
+// ID3D12ShaderReflection
+
+com_ptr<IDxcResult> compileResult; // Obtained by calling Compile()
+
+// Get reflection data if present
+if (compileResult->HasOutput(DXC_OUT_REFLECTION)) {
+    com_ptr<IDxcBlob> reflectionData;
+    check_hresult(compileResult->GetOutput(
+      DXC_OUT_REFLECTION, IID_PPV_ARGS(reflectionData.put()), nullptr));
+    if (reflectionData)
+    {
+        DxcBuffer reflectionBuffer;
+        reflectionBuffer.Ptr = reflectionData->GetBufferPointer();
+        reflectionBuffer.Size = reflectionData->GetBufferSize();
+        reflectionBuffer.Encoding = 0;
+        com_ptr<ID3D12ShaderReflection> shaderReflection;
+        check_hresult(utils->CreateReflection(
+          &reflectionBuffer, IID_PPV_ARGS(shaderReflection.put())));
+
+        // Get shader description from reflection information
+        D3D12_SHADER_DESC desc{};
+        check_hresult(shaderReflection->GetDesc(&desc));
+    }
+    else
+    {
+        // No reflection data found
+    }
+}
+
 ```
 
 ## Alternatives considered for supporting legacy toolchains
