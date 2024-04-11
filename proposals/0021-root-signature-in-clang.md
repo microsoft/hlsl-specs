@@ -84,7 +84,7 @@ In clang code generation, the HLSLRootSignatureAttr in AST will be translated
 into metadata to express the layout and things like static sampler, root 
 flags, space and NumDescriptors in LLVM IR.
 
-CGHLSLRuntime will generate metadata to link the global variable as root
+CGHLSLRuntime will generate metadata to link the metadata as root
 signature for given entry function.
 
 For case compile to a standalone root signature blob, the
