@@ -264,10 +264,15 @@ Root Signature
 | --- | --- | --- | --- |
 | i32 2 | i32 3 | !4 | !15 |
 
+!3 = !{i32 2, i32 3, !4, !15} is a Root Siganture in the example.
+
+
 RootConstant
 | ParameterType | Visibility | Register | Space | Num32BitValues |
 | --- | --- | --- | --- | --- |
 | i32 1 |  i32 0 | i32 10 | i32 0 | i32 3 |
+
+!14 = !{i32 1, i32 0, i32 10, i32 0, i32 3} is a RootConstant in the example.
 
 RootDescriptor
 | ParameterType | Visibility | Register | Space | Flags |
@@ -276,12 +281,25 @@ RootDescriptor
 | i32 3 |  i32 0 | i32 0 | i32 0 | i32 0 |
 | i32 4 |  i32 0 | i32 0 | i32 0 | i32 0 |
 
+  !5 = !{i32 2, i32 0, i32 0, i32 1, i32 8}
+
+  !6 = !{i32 3, i32 0, i32 0, i32 0, i32 0}
+
+  !7 = !{i32 4, i32 0, i32 0, i32 0, i32 0}
+
+  are RootDescriptors in the example.
+
 DescriptorTable
 | ParameterType | Visibility | DescriptorRanges
 | --- | --- | --- | 
 | i32 0 |  i32 0 | !9, !10, !11 |
 | i32 0 |  i32 0 | !13 |
-List of DescriptorRange
+
+  !8 = !{i32 0, i32 0, !9, !10, !11}
+
+  !12 = !{i32 0, i32 0, !13}
+
+  are DescriptorTables in the example
 
 DescriptorRange
 | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags |
@@ -291,12 +309,28 @@ DescriptorRange
 | i32 1 | i32 -1 | i32 1 | i32 0 | i32 1 |
 | i32 3 | i32 4 | i32 0 | i32 1 | i32 0 |
 
+
+  !9 = !{i32 2, i32 1, i32 1, i32 0, i32 0}
+
+  !10 = !{i32 0, i32 8, i32 1, i32 0, i32 1}
+
+  !11 = !{i32 1, i32 -1, i32 1, i32 0, i32 1}
+
+  !13 = !{i32 3, i32 4, i32 0, i32 1, i32 0}
+  
+  are DescriptorRange in the example.
+
 StaticSampler
 
 | Filter | AddressU | AddressV | AddressW | MipLODBias | MaxAnisotropy | ComparisonFunc | BoarderColor | MinLOD | MaxLOD | Register | Space | Visibility |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | i32 85 | i32 1 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 1 | i32 0 | i32 0 |
 | i32 21 | i32 3 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 2 | i32 0 | i32 0 |
+
+  !16 = !{i32 85, i32 1, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 1, i32 0, i32 0}
+
+  !17 = !{i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0}
+  are StaticSamplers in the example.
 
 ## Alternatives considered (Optional)
 
