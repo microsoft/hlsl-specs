@@ -450,7 +450,44 @@ struct IDxcOptimizer : public IUnknown {
 
 ### Compiling a shader
 ```c++
-// How to compile a shader
+com_ptr<IDxcUtils> utils;
+check_hresult(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.put())));
+
+com_ptr<IDxcBlobEncoding> shaderSource;
+check_hresult(utils->LoadFile(L"shader.hlsl", nullptr, shaderSource.put()));
+
+DxcBuffer sourceBuffer;
+sourceBuffer.Ptr = shaderSource->GetBufferPointer();
+sourceBuffer.Size = shaderSource->GetBufferSize();
+sourceBuffer.Encoding = 0;
+
+com_ptr<IDxcCompiler3> compiler;
+check_hresult(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(compiler.put())));
+
+std::vector<const wchar_t*> arguments;
+arguments.push_back(L"-E");
+arguments.push_back(L"VSMain");
+arguments.push_back(L"-T");
+arguments.push_back(L"vs_6_6");
+arguments.push_back(DXC_ARG_WARNINGS_ARE_ERRORS); //-WX
+arguments.push_back(DXC_ARG_DEBUG);               //-Zi
+
+com_ptr<IDxcResult> compileResult;
+check_hresult(compiler->Compile(
+    &sourceBuffer,
+    arguments.data(),
+    static_cast<uint32_t>(arguments.size()),
+    nullptr,
+    IID_PPV_ARGS(compileResult.put())));
+
+com_ptr<IDxcBlobUtf8> errors;
+check_hresult(compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(errors.put()),nullptr));
+if (errors && errors->GetStringLength() > 0) {
+    // Compile failed, details are in errors->GetStringPointer()
+}
+else {
+    // Compile succeeded
+}
 ```
 
 ### Optimizing a shader
@@ -462,7 +499,6 @@ struct IDxcOptimizer : public IUnknown {
 ```c++
 // How to inspect reflection data
 ```
-
 
 ## Alternatives considered for supporting legacy toolchains
 
