@@ -55,28 +55,19 @@ generated.
 
 A new AST node HLSLRootSignatureDecl will be added to represent the root
 signature in the AST.
-Assuming the cost to parse root signature string is cheap,
-HLSLRootSignatureDecl will follow common Clang approach which only save the
-string in the AST.
-
-A root signature will be parsed twice, once in Sema for diagnostic and once in
-clang code generation for generating the serialized root signature.
-The first parsing will check register overlap and run on all root signatures
-in the translation unit.
-The second parsing will calculate the offset for serialized root signature and
-only run on the root signature for the entry function or local/global root
-signature which used in SubobjectToExportsAssociation.
-
-HLSLRootSignatureDecl will have method to parse the string for diagnostic and
-generate the SerializedRS mentioned above.
+To avoid parsing root signature string twice, HLSLRootSignatureDecl will 
+save the parsed root siganture instead of the string.
+This will require more work for print and serialization the AST node.
+Since DirectX backend also need to print and serialzation root signature, 
+the code should be able to share between the frontend and backend.
 
 A HLSLRootSignatureAttr will be created when meet RootSignature attribute in
 HLSL.
 Because the RootSignature attribute in hlsl only have the string, it is easier
 to add a StringArgument to save the string first.
-A HLSLRootSignatureDecl will be created and added to the HLSLRootSignatureAttr
- for diagnostic and saved to the HLSLEntryRootSignatureAttr for clang 
- code generation.
+A HLSLRootSignatureDecl will be created and added to the HLSLRootSignatureAttr 
+for diagnostic and saved to the HLSLEntryRootSignatureAttr for clang 
+code generation.
 The HLSLRootSignatureDecl will save StringLiteral instead StringRef for 
 diagnostic.
 
@@ -234,12 +225,19 @@ StaticSampler
 
 ## Alternatives considered (Optional)
 
-* Save parsed root signature to AST. 
+* Save root signature string to AST. 
 
-  This could avoid parse the root signature more than once.
+  Assuming the cost to parse root signature string is cheap,
+  HLSLRootSignatureDecl could follow common Clang approach which only save 
+  the string in the AST.
 
-  Since root signature parsing doesn't cost much, decide following the common 
-  clang approach which only save the string.
+  A root signature will be parsed twice, once in Sema for diagnostic and once 
+  in clang code generation for generating the serialized root signature.
+  The first parsing will check register overlap and run on all root signatures 
+  in the translation unit.
+  The second parsing will calculate the offset for serialized root signature 
+  and only run on the root signature for the entry function or local/global 
+  root signature which used in SubobjectToExportsAssociation.
 
 
 ## Acknowledgments (Optional)
