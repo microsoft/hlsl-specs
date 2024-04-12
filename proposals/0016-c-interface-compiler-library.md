@@ -486,8 +486,7 @@ com_ptr<IDxcBlobUtf8> errors;
 check_hresult(compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(errors.put()),nullptr));
 if (errors && errors->GetStringLength() > 0) {
     // Compile failed, details are in errors->GetStringPointer()
-}
-else {
+} else {
     // Compile succeeded
 }
 ```
@@ -499,18 +498,14 @@ else {
 
 ### Inspecting reflection data and working with DXIL containers
 ```c++
-// How to inspect reflection data
-// ID3D12ShaderReflection
-
 com_ptr<IDxcResult> compileResult; // Obtained by calling Compile()
 
-// Get reflection data if present
+// Get reflection data with ID3D12ShaderReflection
 if (compileResult->HasOutput(DXC_OUT_REFLECTION)) {
     com_ptr<IDxcBlob> reflectionData;
     check_hresult(compileResult->GetOutput(
       DXC_OUT_REFLECTION, IID_PPV_ARGS(reflectionData.put()), nullptr));
-    if (reflectionData)
-    {
+    if (reflectionData) {
         DxcBuffer reflectionBuffer;
         reflectionBuffer.Ptr = reflectionData->GetBufferPointer();
         reflectionBuffer.Size = reflectionData->GetBufferSize();
@@ -522,11 +517,25 @@ if (compileResult->HasOutput(DXC_OUT_REFLECTION)) {
         // Get shader description from reflection information
         D3D12_SHADER_DESC desc{};
         check_hresult(shaderReflection->GetDesc(&desc));
-    }
-    else
-    {
+    } else {
         // No reflection data found
     }
+}
+
+// Get DXIL container reflection data
+if (compileResult->HasOutput(DXC_OUT_OBJECT)) {
+    com_ptr<IDxcBlob> objectData;
+    check_hresult(compileResult->GetOutput(
+      DXC_OUT_OBJECT, IID_PPV_ARGS(objectData.put()), nullptr));
+
+    com_ptr<IDxcContainerReflection> containerReflection;
+    check_hresult(DxcCreateInstance(
+      CLSID_DxcContainerReflection, IID_PPV_ARGS(containerReflection.put())));
+    check_hresult(containerReflection->Load(objectData.get()));
+
+    // DXIL Container reflection data is ready to be accessed
+} else {
+    // No compiler object data found
 }
 
 ```
