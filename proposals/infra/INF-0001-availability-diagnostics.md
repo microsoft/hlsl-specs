@@ -61,7 +61,7 @@ __attribute__((availability(shadermodel_mesh, introduced = 6.6)))
 __attribute__((availability(shadermodel_amplification, introduced = 6.6)))
 __attribute__((availability(vulkan, introduced = 1.0)))
 __attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
-uint ddx(bool Bit);
+float ddx(float val);
 ```
 
 > Note: the actual header uses macros to condense the attribute descriptions.
@@ -84,8 +84,7 @@ has been fully parsed, and requires construction of a call graph. In the relaxed
 mode, an AST visitor will traverse to all `CallExpr` nodes that are reachable
 from exported functions (either library exports or entry functions). If the
 callee of a `CallExpr` has availability annotations that signify that the API is
-unavailable for the target shader model and stage the compiler emits an
-_error_.
+unavailable for the target shader model and stage the compiler emits an _error_.
 
 Clang encodes the target shader model version in the target triple, and the
 shader stage in the `HLSLShaderAttr` which is implicitly or explicitly applied
@@ -238,7 +237,7 @@ When compiled with the `lib_6_3` profile under the _default_ mode, clang will
 emit the following error:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
+<>:1:9: error: 'ddx' is not available in vertex shaders
    9 |   return ddx(f);
      |          ^~~
 ```
@@ -247,7 +246,7 @@ When compiled with the `lib_6_3` profile under the _strict_ mode, clang will
 emit the following errors:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
+<>:1:9: error: 'ddx' is not available in vertex shaders
    9 |   return ddx(f);
      |          ^~~
 <>:6:9: error: 'WaveMultiPrefixSum' is available beginning with Shader Model 6.5
@@ -268,5 +267,29 @@ One presentation of such a case is if a call to an unavailable API occurs under
 control flow. If the compiler optimizes away the control flow it may remove the
 API call. In these cases shaders that compile and verify successfully with DXC
 may produce warnings or errors with Clang.
+
+### Diagnostic text
+
+The diagnostic message should reflect whether the intrisics is not available
+just for the particular target shader stage or the whole shader model version.
+In other words, it should be relevant to the entry point type. 
+
+If intrinsic `a` is available in a shader model higher than the target shader
+model regardless of target shader stage the diagnostic message should be:
+```
+'a' is available beginning with Shader Model x.y
+```
+
+If intrinsic `a` is not available in shader stage `S` regardless of shader model
+version the diagnostic message should be:
+```
+'a' is not available in S shaders
+```
+
+If intrinsic `a` is available in shader stage `S` in shader model higher than
+the target shader model the diagnostic message should be:
+```
+'a' is available in S shaders beginning with Shader Model x.y
+```
 
 <!-- {% endraw %} -->
