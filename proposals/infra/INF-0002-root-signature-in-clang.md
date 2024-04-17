@@ -363,7 +363,8 @@ struct StaticSamplerDesc {
 };
 
 struct ParsedRootSignature {
-  dxbc::RootSignature::ContainerRootSignatureDesc RSDesc;
+  RootSignature::RootSignatureVersion Version;
+  uint32_t RootFlags;
   llvm::SmallVector<RootSignature::ContainerRootParameter, 8>
       RSParameters;
   llvm::SmallVector<RootSignature::StaticSamplerDesc, 8> StaticSamplers;
