@@ -417,17 +417,35 @@ float4 main(float4 coord : COORD) : SV_Target
 
 ```
 
-Because the RootSignature attribute in hlsl only have the string, it is easier
-to add a StringArgument to save the string first.
-A HLSLRootSignatureDecl will be created and added to the HLSLRootSignatureAttr 
-for diagnostic and saved to the HLSLEntryRootSignatureAttr for clang 
-code generation.
-The HLSLRootSignatureDecl will save StringLiteral instead StringRef for 
-diagnostic.
+For RootSignature attribute in hlsl, a clang Attribute will be added like this:
+```
+
+    def HLSLEntryRootSignature: InheritableAttr {
+      let Spellings = [GNU<"RootSignature">];
+      let Subjects = Subjects<[HLSLEntry]>;
+      let LangOpts = [HLSL];
+      let Args = [StringArgument<"InputString">, DeclArgument<HLSLRootSignature, "RootSignature", 0, /*fake*/ 1>];
+    }
+
+```
+
+The StringArgument was introduced to capture the root signature string. 
+The DeclArgument was implemented to store the parsed root signature in a 
+HLSLRootSignatureDecl AST node.
+
+During the construction of the HLSLRootSignatureAttr, the StringArgument 
+is parsed first. If the string is not well-formed, the parsing process will
+emit a diagnostic. 
+A ParsedRootSignature object, which is the result of the parsing, is then
+used to create a HLSLRootSignatureDecl.
+
+Then the HLSLRootSignatureDecl is added to the HLSLRootSignatureAttr for 
+Clang code generation.
 
 In clang code generation, the HLSLRootSignatureAttr in AST will be translated
 into metadata to express the layout and things like static sampler, root 
-flags, space and NumDescriptors in LLVM IR.
+flags, space and NumDescriptors in LLVM IR with the ParsedRootSignature object 
+saved in its HLSLRootSignatureDecl.
 
 CGHLSLRuntime will generate metadata to link the metadata as root
 signature for given entry function. 
@@ -542,18 +560,6 @@ StaticSampler
 
 ```
 
-* Define of HLSLEntryRootSignatureAttr
-
-```
-
-    def HLSLEntryRootSignature: InheritableAttr {
-      let Spellings = [GNU<"RootSignature">];
-      let Subjects = Subjects<[HLSLEntry]>;
-      let LangOpts = [HLSL];
-      let Args = [StringArgument<"InputString">, DeclArgument<HLSLRootSignature, "RootSignature", 0, /*fake*/ 1>];
-    }
-
-```
 
 * HLSLEntryRootSignatureAttr in AST.
 
