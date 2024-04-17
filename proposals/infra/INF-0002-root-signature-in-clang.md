@@ -486,6 +486,47 @@ a list of FunctionDecls.
 The default root signature version number is 2 which maps to rootsig_1_1.
 With option -force-rootsig-ver rootsig_1_0 could make it to 1.
 
+## Metadata format
+
+Here is the metadata presentation for the root signature.
+An example can be found in the Example section..
+
+Root Signature
+| | Version | Flag | RootParameters | StaticSamplers |
+|-| --- | --- | --- | --- |
+| | i32 | i32 | list of RootParameters (RootConstant, RootDescriptor, DescriptorTable) | list of StaticSamplers |
+
+RootConstant
+| | ParameterType | Visibility | Register | Space | Num32BitValues |
+|-| --- | --- | --- | --- | --- |
+| | i32 |  i32 | i32 | i32 | i32 |
+
+
+RootDescriptor
+| | ParameterType | Visibility | Register | Space | Flags |
+|-| --- | --- | --- | --- | --- |
+| | i32 |  i32 | i32 | i32 | i32 |
+
+
+DescriptorTable
+| | ParameterType | Visibility | DescriptorRanges
+|-| --- | --- | --- |
+|  | i32 |  i32 | list of DescriptorRanges |
+
+
+DescriptorRange
+| | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags | Offset |
+|-| --- | --- | --- | --- | --- | --- |
+| | i32 | i32 | i32 | i32 | i32 | i32 |
+
+
+StaticSampler
+
+|| Filter | AddressU | AddressV | AddressW | MipLODBias | MaxAnisotropy | ComparisonFunc | BoarderColor | MinLOD | MaxLOD | Register | Space | Visibility |
+| - | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| | i32 | i32 | i32 | i32 | float | i32 | i32 | i32 | float | float | i32 | i32 | i32 |
+
+
 ## Examples
 
 
@@ -590,10 +631,9 @@ HLSLRootSignatureDecl dump.
   !17 = !{i32 21, i32 3, i32 1, i32 1, float 0.000000e+00, i32 16, i32 4, i32 2, float 0.000000e+00, float 0x47EFFFFFE0000000, i32 2, i32 0, i32 0}
 
 ```
-
-* Metadata format
-
-Root Signature
+Put the metadata into format table so it is easier to understand.
+```
+  Root Signature
 | | Version | Flag | RootParameters | StaticSamplers |
 |-| --- | --- | --- | --- |
 | | i32 | i32 | list of RootParameters (RootConstant, RootDescriptor, DescriptorTable) | list of StaticSamplers |
@@ -636,6 +676,9 @@ StaticSampler
 | | i32 | i32 | i32 | i32 | float | i32 | i32 | i32 | float | float | i32 | i32 | i32 |
 | !16 | i32 85 | i32 1 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 1 | i32 0 | i32 0 |
 | !17 | i32 21 | i32 3 | i32 1 | i32 1 | float 0.000000e+00 | i32 16 | i32 4 | i32 2 | float 0.000000e+00 | float 0x47EFFFFFE0000000 | i32 2 | i32 0 | i32 0 |
+
+```
+
 
 ## Alternatives considered (Optional)
 
