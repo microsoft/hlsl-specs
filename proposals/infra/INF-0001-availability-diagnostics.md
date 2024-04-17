@@ -270,7 +270,7 @@ may produce warnings or errors with Clang.
 
 ### Diagnostic text
 
-The diagnostic message should reflect whether the intrisics is not available
+The diagnostic message should reflect whether the intrisic is not available
 just for the particular target shader stage or the whole shader model version.
 In other words, it should be relevant to the entry point type. 
 
