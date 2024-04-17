@@ -1,0 +1,30 @@
+\Ch{Classes}{Classes}
+
+\begin{grammar}
+  \define{class-name}\br
+  identifier\br
+  simple-template-id\br
+
+  \define{class-head}\br
+  class-key class-name-specifier \opt{base-clause}\br
+  class-key \opt{base-clause}\br
+
+  \define{class-name-specifier}\br
+  \opt{nested-name-specifier} class-name\br
+
+  \define{base-clause}\br
+  \terminal{:} class-name-specifier\br
+
+  \define{class-key}\br
+  \terminal{class}\br
+  \terminal{struct}
+\end{grammar}
+
+\Sec{Properties of classes}{Classes.properties}
+
+\p A \textit{simple-layout class} is a class that:
+\begin{itemize}
+  \item has no non-static data members of type non-simple-layout class or array
+  of such types, and
+  \item has no non-simple-layout base classes.
+\end{itemize}

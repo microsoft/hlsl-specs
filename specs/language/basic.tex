@@ -23,24 +23,23 @@ declared as incomplete at one point in a translation unit via a \textit{forward
 declaration}, and complete later with a full definition. The type \texttt{T} is
 the same type throughout the translation unit.
 
-\p There are two special implementation-defined types: \textit{handle types},
-and \textit{minimum precision types}. These types are collectively called
-\textit{standard intangible types}. Intangible types are types that have no
-defined object representation or value representation, as such the size is
-unknown at compile time.
+\p There are special implementation-defined types such as \textit{handle types},
+which fall into a category of \textit{standard intangible types}. Intangible
+types are types that have no defined object representation or value
+representation, as such the size is unknown at compile time.
 % Note: The above definition is likely incomplete, and it is unclear if minimum
 % precision types should be intangible.
 
 \p A class type \texttt{T} is an \textit{intangible class type} if it contains
 an base classes or members of intangible class type, standard intangible type,
 or arrays of such types. Standard intangible types and intangible class types
-are collectively called \textit{intangible types}.
+are collectively called \textit{intangible types}(\ref{Intangible}).
 
-\p An object type is an \textit{incomplete type} if the
-compiler lacks sufficient information to determine the size of an object of type
-\texttt{T}, and a \textit{complete type} if the compiler has sufficient
-information to determine the size of an object of type \texttt{T}. An object may
-not be defined to have an \textit{incomplete} type.
+\p An object type is an \textit{incomplete type} if the compiler lacks
+sufficient information to determine the size of an object of type \texttt{T},
+and a \textit{complete type} if the compiler has sufficient information to
+determine the size of an object of type \texttt{T}. An object may not be defined
+to have an \textit{incomplete} type.
 
 \p Arithmetic types (\ref{Basic.types.arithmetic}), enumeration types, and
 \textit{cv-qualified} versions of these types are collectively called
@@ -57,11 +56,10 @@ explicitly named for the size in bits of the type's object representation. There
 is also the type alias \texttt{int} which is an alias of \texttt{int32\_t}.
 There are three \textit{minimum precision signed integer types}:
 \texttt{min10int}, \texttt{min12int}, and \texttt{min16int}. Each of the minimum
-precision signed integer types are intangible types named for the required
-minimum type size in bits. The object and value representations are
-implementation defined, but shall not exceed the size of \texttt{int}. The
-standard signed integer types and minimum precision signed integer types are
-collectively called \textit{signed integer types}.
+precision signed integer types are named for the required minimum value
+representation size in bits. The object representation of all minimum precision
+types is \texttt{int}. The standard signed integer types and minimum precision
+signed integer types are collectively called \textit{signed integer types}.
 
 \p There are three \textit{standard unsigned integer types}: \texttt{uint16\_t},
 \texttt{uint32\_t}, and \texttt{uint64\_t}. Each of the unsigned integer types
@@ -69,11 +67,11 @@ is explicitly named for the size in bits of the type's object representation.
 There is also the type alias \texttt{uint} which is an alias of
 \texttt{uint32\_t}. There are three \textit{minimum precision unsigned integer
 types}: \texttt{min10uint}, \texttt{min12uint}, and \texttt{min16uint}. Each of
-the minimum precision unsigned integer types are intangible types named for the
-required minimum type size in bits. The object and value representations are
-implementation defined, but shall not exceed the size of \texttt{uint}. The
-standard unsigned integer types and minimum precision unsigned integer types are
-collectively called \textit{unsigned integer types}.
+the minimum precision unsigned integer types are named for the required minimum
+value representation size in bits. The object representation of all minimum
+precision types is \texttt{uint}. The standard unsigned integer types and
+minimum precision unsigned integer types are collectively called
+\textit{unsigned integer types}.
 
 \p The signed integer types and unsigned integer types are collectively called
 \textit{integer types}. Integer types inherit the object representation of
@@ -93,10 +91,11 @@ format defined in \gls{IEEE754}\footnote{IEEE-754 only defines a binary encoding
 for 16-bit floating point values, it does not fully specify the behavior of such
 types.}. There are three \textit{minimum precision floating point types}:
 \texttt{min10float}, \texttt{min12float}, and \texttt{min16float}. Each of the
-minimum precision floating point types are intangible types named for the
-required minimum size in bits. The object and value representations are
-implementation defined, but shall not exceed the size of \texttt{float}. The
-standard floating point types and minimum precision floating point types are
+minimum precision floating point types are named for the required minimum value
+representation size in bits. The object representation of all minimum precision
+types is \texttt{float}\footnote{This means when stored to memory minimum
+precision types are stored as \textbf{binary32} as defined in \gls{IEEE754}.}.
+The standard floating point types and minimum precision floating point types are
 collectively called \textit{floating point types}.
 
 \p Integer and floating point types are collectively called \textit{arithmetic
