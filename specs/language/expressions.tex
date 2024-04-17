@@ -86,7 +86,7 @@ non-static member functions. The \keyword{this} parameter is always a
   \href{https://github.com/microsoft/hlsl-specs/blob/main/proposals/0007-const-instance-methods.md}
   {HLSL Specs Proposal 0007} proposes adopting C++-like syntax and semantics for
   \textit{cv-qualified} \keyword{this} references.}
-  
+
 \p A \keyword{this} expression shall not appear outside the declaration of a
 non-static member function.
 
@@ -125,6 +125,7 @@ as the same non-parenthesized expression.
 \begin{grammar}
   \define{qualified-id}\br
   nested-name-specifier \opt{\keyword{template}} unqualified-id\br
+
   \define{nested-name-specifier}\br
   \terminal{::}\br
   type-name \terminal{::}\br

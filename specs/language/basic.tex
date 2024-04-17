@@ -4,14 +4,15 @@
 
 \p The \textit{object representation} of an object of type \texttt{T} is the
 sequence of \textit{N} bytes taken up by the object of type \texttt{T}, where
-\textit{N} equals \texttt{sizeof(T)}\footnote{\texttt{sizeof(T)}, returns the
-size of an object of type \texttt{T} in bytes as stored in device memory.
-The size may be different in other memory spaces and no operator exists to query
-it.}. The \textit{object representation} of an object may be different based on
-the \textit{memory space} it is stored in (\ref{Intro.Memory.Spaces}).
+\textit{N} equals \texttt{sizeof(T)}\footnote{\texttt{sizeof(T)}eturns the size
+of the struct as-if it's stored in device memory, and determining the size if
+it's stored in another memory space is not possible.}. The \textit{object
+representation} of an object may be different based on the \textit{memory space}
+it is stored in (\ref{Intro.Memory.Spaces}).
 
 \p The \textit{value representation} of an object is the set of bits that hold
-the value of type \texttt{T}.
+the value of type \texttt{T}. Bits in the object representation that are not
+part of the value representation are \textit{padding bits}.
 
 \p An \textit{object type} \texttt{T} is an \textit{incomplete type} if the
 compiler lacks sufficient information to determine the size of an object of type
@@ -35,11 +36,6 @@ reference type, and not a void type.
 \p Vectors of scalar types declared with the built-in \texttt{vector<T,N>}
 template are \textit{vector types}.
 
-\p \textit{POD types}\footnote{POD is an initialism for Plain-Old-Data which is
-referenced in the C++ specification but never expanded.} are POD class types,
-scalar types, vector types, and arrays of such types. \textit{POD class types}
-are class types that only contain members POD types.
-
 \Sub{Arithmetic Types}{Basic.types.arithmetic}
 
 \p There are three \textit{standard signed integer types}: \texttt{int16\_t},
@@ -54,8 +50,7 @@ types}.
 explicitly named for the size in bits of the type's object representation. There
 is also the type alias \texttt{uint} which is an alias of \texttt{uint32\_t}. The
 standard unsigned integer types are collectively called \textit{unsigned integer
-types}\footnote{HLSL does not inherit C's default type rule, nor does it
-inherit the \texttt{unsigned} keyword.}.
+types}.
 
 \p The signed integer types and unsigned integer types are collectively called
 \textit{integer types}. Integer types inherit the object representation of
@@ -83,14 +78,6 @@ having an empty set of values and being an incomplete type that can never be
 completed. The \texttt{void} type is used to signify the return type of a
 function that returns no value. Any expression can be explicitly converted to
 \texttt{void}.
-
-\Sub{Special Classes}{Basic.types.special}
-
-\p A class type may be an \textit{ordinary class} or a \textit{special class}.
-An ordinary class is a class type that contains no members of special class,
-array of special class, or cv-qualified versions of these types. Special class
-objects can only exist in thread memory: they cannot be stored to any other
-memory space (\ref{Intro.Memory.Spaces}).
 
 \Sec{Lvalues and rvalues}{Basic.lval}
 
