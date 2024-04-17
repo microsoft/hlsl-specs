@@ -71,7 +71,15 @@ The following interfaces are used to work with data being passed to/from the
 library.
 
 #### Buffers
+
 ```c++
+// Encoding defines to use with DxcBuffer
+// For convenience, equivalent definitions to CP_UTF8 and CP_UTF16.
+#define DXC_CP_UTF8 65001
+#define DXC_CP_UTF16 1200
+// Use DXC_CP_ACP for: Binary;  ANSI Text;  Autodetect UTF with BOM
+#define DXC_CP_ACP 0
+
 // Structure for supplying bytes or text input to Dxc APIs. Represents both
 // text (DxcText) and non-text byte buffers (DxcBuffer).
 struct DxcBuffer {
@@ -106,6 +114,7 @@ public:
   SIZE_T GetStringLength();
 };
 ```
+
 #### Status and other data
 Errors, status, and other kinds of data are returned as an IDxcResult
 interface. A unique DXC_OUT_KIND is defined for each different type of data
@@ -137,6 +146,7 @@ typedef enum DXC_OUT_KIND {
 
 struct IDxcOperationResult : public IUnknown {
   HRESULT GetStatus(HRESULT *pStatus);
+};
 
 struct IDxcResult : public IDxcOperationResult {
   BOOL HasOutput(DXC_OUT_KIND dxcOutKind);
@@ -148,9 +158,16 @@ struct IDxcResult : public IDxcOperationResult {
   DXC_OUT_KIND PrimaryOutput();
 };
 ```
+
 #### Helper library
 The shader compiler library also provides a helper library IDxcUtils that is
 used to create/consume the different data in the forms referred to above.
+It is obtained by calling DxcCreateInstance().
+
+```c++
+com_ptr<IDxcUtils> utils;
+check_hresult(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.put())));
+```
 
 ```c++
 struct IDxcUtils : public IUnknown {
@@ -280,6 +297,7 @@ struct IDxcCompiler3 : public IUnknown {
                                          // text, and errors
 };
 ```
+
 #### Shader Linker
 Links a shader and produces a shader blob that can be consumed by the D3D
 runtime.
@@ -309,6 +327,7 @@ public:
 
 #### DXIL Container Access
 The following interfaces are used to create/manipulate DXIL containers.
+
 ```c++
 struct IDxcContainerBuilder : public IUnknown {
   HRESULT Load(IDxcBlob *pDxilContainerHeader);      // Loads a container
@@ -354,11 +373,326 @@ struct IDxcContainerReflection : public IUnknown {
 };
 ```
 
+ID3D12ShaderReflection provides access to descriptions and other information
+about the many different parts of the shader.
+
+* [Shader Description](#shader-description)
+* [Buffers](#shader-buffers-description)
+* [Variables and type information](#shader-types=and-variables)
+* [Functions and parameters](#shader-functions-and-parameters)
+
+PIX uses this interface to obtain nice buffer formatting behavior for the UI.
+
+```c++
+struct ID3D12ShaderReflection : public IUnknown {
+    HRESULT GetDesc(D3D12_SHADER_DESC *pDesc);
+    
+    ID3D12ShaderReflectionConstantBuffer* GetConstantBufferByIndex(UINT Index);
+    ID3D12ShaderReflectionConstantBuffer* GetConstantBufferByName(LPCSTR Name);
+    
+    HRESULT GetResourceBindingDesc(UINT ResourceIndex,
+                                   D3D12_SHADER_INPUT_BIND_DESC *pDesc);
+    
+    HRESULT GetInputParameterDesc(UINT ParameterIndex,
+                                  D3D12_SIGNATURE_PARAMETER_DESC *pDesc);
+    HRESULT GetOutputParameterDesc(UINT ParameterIndex,
+                                   D3D12_SIGNATURE_PARAMETER_DESC *pDesc);
+    HRESULT GetPatchConstantParameterDesc(UINT ParameterIndex,
+                                          D3D12_SIGNATURE_PARAMETER_DESC *pDesc);
+
+    ID3D12ShaderReflectionVariable* GetVariableByName(LPCSTR Name);
+
+    HRESULT GetResourceBindingDescByName(LPCSTR Name,
+                                         D3D12_SHADER_INPUT_BIND_DESC *pDesc);
+
+    UINT GetMovInstructionCount();
+    UINT GetMovcInstructionCount();
+    UINT GetConversionInstructionCount();
+    UINT GetBitwiseInstructionCount();
+    
+    D3D_PRIMITIVE GetGSInputPrimitive();
+    BOOL IsSampleFrequencyShader();
+
+    UINT GetNumInterfaceSlots();
+    HRESULT GetMinFeatureLevel(D3D_FEATURE_LEVEL* pLevel);
+
+    UINT GetThreadGroupSize(UINT* pSizeX,
+                            UINT* pSizeY,
+                            UINT* pSizeZ);
+
+    UINT64 GetRequiresFlags();
+};
+
+```
+
+#### Shader Description
+The shader description reports stats/totals for the different types in a shader.
+
+```c++
+typedef D3D_TESSELLATOR_DOMAIN D3D12_TESSELLATOR_DOMAIN;
+typedef D3D_TESSELLATOR_PARTITIONING D3D12_TESSELLATOR_PARTITIONING;
+typedef D3D_TESSELLATOR_OUTPUT_PRIMITIVE D3D12_TESSELLATOR_OUTPUT_PRIMITIVE;
+
+typedef struct _D3D12_SHADER_DESC
+{
+    UINT Version;                // Shader version
+    LPCSTR Creator;              // Creator string
+    UINT Flags;                  // Shader compilation/parse flags
+         
+    UINT ConstantBuffers;        // Number of constant buffers
+    UINT BoundResources;         // Number of bound resources
+    UINT InputParameters;        // Number of parameters in the input signature
+    UINT OutputParameters;       // Number of parameters in the output signature
+     
+    UINT InstructionCount;       // Number of emitted instructions
+    UINT TempRegisterCount;      // Number of temporary registers used 
+    UINT TempArrayCount;         // Number of temporary arrays used
+    UINT DefCount;               // Number of constant defines 
+    UINT DclCount;               // Number of declarations (input + output)
+    UINT TextureNormalInstructions;   // Number of non-categorized texture
+                                      // instructions
+    UINT TextureLoadInstructions;     // Number of texture load instructions
+    UINT TextureCompInstructions;     // Number of texture comparison
+                                      // instructions
+    UINT TextureBiasInstructions;     // Number of texture bias instructions
+    UINT TextureGradientInstructions; // Number of texture gradient instructions
+    UINT FloatInstructionCount;       // Number of floating point arithmetic
+                                      // instructions used
+    UINT IntInstructionCount;         // Number of signed integer arithmetic
+                                      // instructions used
+    UINT UintInstructionCount;        // Number of unsigned integer arithmetic
+                                      // instructions used
+    UINT StaticFlowControlCount;      // Number of static flow control
+                                      // instructions used
+    UINT DynamicFlowControlCount;     // Number of dynamic flow control
+                                      // instructions used
+    UINT MacroInstructionCount;       // Number of macro instructions used
+    UINT ArrayInstructionCount;       // Number of array instructions used
+    UINT CutInstructionCount;         // Number of cut instructions used
+    UINT EmitInstructionCount;        // Number of emit instructions used
+    D3D_PRIMITIVE_TOPOLOGY  GSOutputTopology; // Geometry shader output topology
+    UINT GSMaxOutputVertexCount; // Geometry shader maximum output vertex count
+    D3D_PRIMITIVE InputPrimitive;// GS/HS input primitive
+    UINT PatchConstantParameters;// Number of parameters in the patch constant
+                                 // signature
+    UINT cGSInstanceCount;       // Number of Geometry shader instances
+    UINT cControlPoints;         // Number of control points in the HS->DS stage
+    D3D_TESSELLATOR_OUTPUT_PRIMITIVE HSOutputPrimitive; // Primitive output by
+                                                        // the tessellator
+    D3D_TESSELLATOR_PARTITIONING HSPartitioning; // Partitioning mode of the
+                                                 // tessellator
+    D3D_TESSELLATOR_DOMAIN  TessellatorDomain;   // Domain of the tessellator
+                                                 // (quad, tri, isoline)
+    // instruction counts
+    UINT cBarrierInstructions;     // Number of barrier instructions in a
+                                   // compute shader
+    UINT cInterlockedInstructions; // Number of interlocked instructions
+    UINT cTextureStoreInstructions;// Number of texture writes
+} D3D12_SHADER_DESC;
+```
+
+#### Shader Buffers Description
+
+```c++
+typedef enum _D3D_CBUFFER_TYPE
+{
+  D3D_CT_CBUFFER	= 0,
+  D3D_CT_TBUFFER	= ( D3D_CT_CBUFFER + 1 ) ,
+  D3D_CT_INTERFACE_POINTERS	= ( D3D_CT_TBUFFER + 1 ) ,
+  D3D_CT_RESOURCE_BIND_INFO	= ( D3D_CT_INTERFACE_POINTERS + 1 ) ,
+  D3D10_CT_CBUFFER	= D3D_CT_CBUFFER,
+  D3D10_CT_TBUFFER	= D3D_CT_TBUFFER,
+  D3D11_CT_CBUFFER	= D3D_CT_CBUFFER,
+  D3D11_CT_TBUFFER	= D3D_CT_TBUFFER,
+  D3D11_CT_INTERFACE_POINTERS	= D3D_CT_INTERFACE_POINTERS,
+  D3D11_CT_RESOURCE_BIND_INFO	= D3D_CT_RESOURCE_BIND_INFO
+}	D3D_CBUFFER_TYPE;
+
+typedef D3D_CBUFFER_TYPE D3D12_CBUFFER_TYPE;
+
+typedef struct _D3D12_SHADER_BUFFER_DESC
+{
+    LPCSTR           Name;      // Name of the constant buffer
+    D3D_CBUFFER_TYPE Type;      // Indicates type of buffer content
+    UINT             Variables; // Number of member variables
+    UINT             Size;      // Size of CB (in bytes)
+    UINT             uFlags;    // Buffer description flags
+} D3D12_SHADER_BUFFER_DESC;
+
+
+struct ID3D12ShaderReflectionConstantBuffer : public IUnknown {
+    HRESULT GetDesc(D3D12_SHADER_BUFFER_DESC *pDesc);    
+    ID3D12ShaderReflectionVariable* GetVariableByIndex(UINT Index);
+    ID3D12ShaderReflectionVariable* GetVariableByName(LPCSTR Name);
+};
+
+```
+
+#### Shader Types and Variables
+
+```c++
+typedef struct _D3D12_SHADER_TYPE_DESC
+{
+    D3D_SHADER_VARIABLE_CLASS   Class; // (e.g. object, matrix, etc.)
+    D3D_SHADER_VARIABLE_TYPE    Type;  // (e.g. float, sampler, etc.)
+    UINT Rows;    // Number of rows (for matrices, 1 for other numeric, 0 if
+                  // not applicable)
+    UINT Columns; // Number of columns (for vectors & matrices, 1 for other
+                  // numeric, 0 if not applicable)
+    UINT Elements;// Number of elements (0 if not an array)
+    UINT Members; // Number of members (0 if not a structure)
+    UINT Offset;  // Offset from the start of structure (0 if not a structure
+                  // member)
+    LPCSTR Name;  // Name of type, can be NULL
+} D3D12_SHADER_TYPE_DESC;
+
+struct ID3D12ShaderReflectionType : public IUnknown {
+    HRESULT GetDesc(D3D12_SHADER_TYPE_DESC *pDesc);
+    ID3D12ShaderReflectionType* GetMemberTypeByIndex(UINT Index);
+    ID3D12ShaderReflectionType* GetMemberTypeByName(LPCSTR Name);
+    LPCSTR, GetMemberTypeName(UINT Index);
+    HRESULT IsEqual(ID3D12ShaderReflectionType* pType);
+    ID3D12ShaderReflectionType* GetSubType();
+    ID3D12ShaderReflectionType* GetBaseClass();
+    UINT GetNumInterfaces();
+    ID3D12ShaderReflectionType* GetInterfaceByIndex(UINT uIndex);
+    HRESULT IsOfType(ID3D12ShaderReflectionType* pType);
+    HRESULT ImplementsInterface(ID3D12ShaderReflectionType* pBase);
+};
+
+typedef struct _D3D12_SHADER_VARIABLE_DESC
+{
+    LPCSTR Name;           // Name of the variable
+    UINT   StartOffset;    // Offset in constant buffer's backing store
+    UINT   Size;           // Size of variable (in bytes)
+    UINT   uFlags;         // Variable flags
+    LPVOID DefaultValue;   // Raw pointer to default value
+    UINT   StartTexture;   // First texture index (or -1 if no textures used)
+    UINT   TextureSize;    // Number of texture slots possibly used.
+    UINT   StartSampler;   // First sampler index (or -1 if no textures used)
+    UINT   SamplerSize;    // Number of sampler slots possibly used.
+} D3D12_SHADER_VARIABLE_DESC;
+
+struct ID3D12ShaderReflectionVariable : public IUnknown {
+    HRESULT GetDesc(D3D12_SHADER_VARIABLE_DESC *pDesc);
+    ID3D12ShaderReflectionType* GetType();
+    ID3D12ShaderReflectionConstantBuffer* GetBuffer();
+    UINT GetInterfaceSlot(UINT uArrayIndex);
+};
+
+```
+
+#### Shader Functions and Parameters
+
+```c++
+typedef struct _D3D12_LIBRARY_DESC
+{
+    LPCSTR Creator;     // The name of the originator of the library.
+    UINT Flags;         // Compilation flags.
+    UINT FunctionCount; // Number of functions exported from the library.
+} D3D12_LIBRARY_DESC;
+
+struct ID3D12LibraryReflection : public IUnknown {
+    HRESULT GetDesc(D3D12_LIBRARY_DESC* pDesc);    
+    ID3D12FunctionReflection* GetFunctionByIndex(INT FunctionIndex);
+};
+
+typedef struct _D3D12_FUNCTION_DESC
+{
+    UINT Version;                   // Shader version
+    LPCSTR Creator;                 // Creator string
+    UINT Flags;                     // Shader compilation/parse flags
+    
+    UINT ConstantBuffers;           // Number of constant buffers
+    UINT BoundResources;            // Number of bound resources
+
+    UINT InstructionCount;          // Number of emitted instructions
+    UINT TempRegisterCount;         // Number of temporary registers used 
+    UINT TempArrayCount;            // Number of temporary arrays used
+    UINT DefCount;                  // Number of constant defines 
+    UINT DclCount;                  // Number of declarations (input + output)
+    UINT TextureNormalInstructions; // Number of non-categorized texture
+                                    // instructions
+    UINT TextureLoadInstructions;   // Number of texture load instructions
+    UINT TextureCompInstructions;   // Number of texture comparison instructions
+    UINT TextureBiasInstructions;   // Number of texture bias instructions
+    UINT TextureGradientInstructions; // Number of texture gradient instructions
+    UINT FloatInstructionCount;     // Number of floating point arithmetic
+                                    // instructions used
+    UINT IntInstructionCount;       // Number of signed integer arithmetic
+                                    // instructions used
+    UINT UintInstructionCount;      // Number of unsigned integer arithmetic
+                                    // instructions used
+    UINT StaticFlowControlCount;    // Number of static flow control
+                                    // instructions used
+    UINT DynamicFlowControlCount;   // Number of dynamic flow control
+                                    // instructions used
+    UINT MacroInstructionCount;     // Number of macro instructions used
+    UINT ArrayInstructionCount;     // Number of array instructions used
+    UINT MovInstructionCount;       // Number of mov instructions used
+    UINT MovcInstructionCount;      // Number of movc instructions used
+    UINT ConversionInstructionCount;// Number of type conversion instructions
+                                    // used
+    UINT BitwiseInstructionCount;   // Number of bitwise arithmetic instructions
+                                    // used
+    D3D_FEATURE_LEVEL MinFeatureLevel;  // Min target of the function byte code
+    UINT64 RequiredFeatureFlags;    // Required feature flags
+
+    LPCSTR Name;                    // Function name
+    INT FunctionParameterCount;     // Number of logical parameters in the
+                                    // function signature (not including return)
+    BOOL HasReturn;                 // TRUE, if function returns a value,
+                                    // false - it is a subroutine
+    BOOL Has10Level9VertexShader;   // TRUE, if there is a 10L9 VS blob
+    BOOL Has10Level9PixelShader;    // TRUE, if there is a 10L9 PS blob
+} D3D12_FUNCTION_DESC;
+
+struct ID3D12FunctionReflection : public IUnknown {
+    HRESULT GetDesc(D3D12_FUNCTION_DESC* pDesc); 
+    ID3D12ShaderReflectionConstantBuffer* GetConstantBufferByIndex(UINT BufferIndex);
+    ID3D12ShaderReflectionConstantBuffer* GetConstantBufferByName(LPCSTR Name);
+    HRESULT GetResourceBindingDesc(UINT ResourceIndex,
+                                   D3D12_SHADER_INPUT_BIND_DESC* pDesc);
+    
+    ID3D12ShaderReflectionVariable* GetVariableByName(LPCSTR Name);
+    HRESULT GetResourceBindingDescByName(LPCSTR Name,
+                                         D3D12_SHADER_INPUT_BIND_DESC * pDesc) PURE;
+
+    // Use D3D_RETURN_PARAMETER_INDEX to get description of the return value.
+    ID3D12FunctionParameterReflection *, GetFunctionParameter)(THIS_ _In_ INT ParameterIndex) PURE;
+};
+
+typedef struct _D3D12_PARAMETER_DESC
+{
+    LPCSTR Name;                     // Parameter name.
+    LPCSTR SemanticName;             // Parameter semantic name (+index).
+    D3D_SHADER_VARIABLE_TYPE Type;   // Element type.
+    D3D_SHADER_VARIABLE_CLASS Class; // Scalar/Vector/Matrix.
+    UINT Rows;                       // Rows are for matrix parameters.
+    UINT Columns;                    // Components or Columns in matrix.
+    D3D_INTERPOLATION_MODE InterpolationMode;  // Interpolation mode.
+    D3D_PARAMETER_FLAGS Flags; // Parameter modifiers.
+
+    UINT FirstInRegister;      // The first input register for this parameter.
+    UINT FirstInComponent;     // The first input register component for this
+                               // parameter.
+    UINT FirstOutRegister;     // The first output register for this parameter.
+    UINT FirstOutComponent;    // The first output register component for this
+                               // parameter.
+} D3D12_PARAMETER_DESC;
+
+struct ID3D12FunctionParameterReflection : public IUnknown {
+    HRESULT GetDesc(D3D12_PARAMETER_DESC* pDesc);
+};
+
+```
+
 #### Shader PDBs
 A PDB utility library is provided and can operate on existing PDB data or
 DXIL and provides access to symbol information for a shader. This is useful for
 inspecting symbols to get a deeper view and provide better shader debugging
 experience. 
+
 ```c++
 struct IDxcPdbUtils : public IUnknown {
   HRESULT Load(IDxcBlob *pPdbOrDxil);
@@ -400,6 +734,7 @@ struct IDxcPdbUtils : public IUnknown {
 #### Shader Validation
 Validates a shader with/without debug information. This is useful for
 tooling that wants to deeper inspect and understand the quality of a shader.
+
 ```c++
 static const UINT32 DxcValidatorFlags_Default = 0;
 static const UINT32 DxcValidatorFlags_InPlaceEdit = 1;  // validator is allowed
@@ -429,6 +764,7 @@ struct IDxcValidator2 : public IDxcValidator {
 #### Shader Optimizer
 An optimizer can be run over a shader and return information about the
 different passes involved.
+
 ```c++
 struct IDxcOptimizerPass : public IUnknown {
   HRESULT GetOptionName(LPWSTR *ppResult);
@@ -451,6 +787,7 @@ struct IDxcOptimizer : public IUnknown {
 ## DXC Code Snippets
 
 ### Compiling a shader
+
 ```c++
 com_ptr<IDxcUtils> utils;
 check_hresult(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.put())));
@@ -492,11 +829,13 @@ if (errors && errors->GetStringLength() > 0) {
 ```
 
 ### Optimizing a shader
+
 ```c++
 // How to optimize a shader
 ```
 
 ### Inspecting reflection data and working with DXIL containers
+
 ```c++
 com_ptr<IDxcResult> compileResult; // Obtained by calling Compile()
 
