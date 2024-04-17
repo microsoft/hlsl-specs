@@ -338,6 +338,9 @@ struct ContainerRootParameter {
   hlsl::RootSignature::RootParameterType ParameterType;
   hlsl::RootSignature::ShaderVisibility ShaderVisibility =
       hlsl::RootSignature::ShaderVisibility::All;
+  std::variant<RootSignature::ContainerRootConstants,
+                   RootSignature::ContainerRootDescriptor,
+                   RootSignature::ContainerRootDescriptorTable> Extra;
 };
 
 struct StaticSamplerDesc {
@@ -369,12 +372,6 @@ struct ParsedRootSignature {
   llvm::SmallVector<RootSignature::ContainerRootParameter, 8>
       RSParameters;
   llvm::SmallVector<RootSignature::StaticSamplerDesc, 8> StaticSamplers;
-  llvm::SmallVector<
-      std::variant<RootSignature::ContainerRootConstants,
-                   RootSignature::ContainerRootDescriptor,
-                   RootSignature::ContainerRootDescriptorTable>,
-      8>
-      RSParamExtras;
 };
 
 }
