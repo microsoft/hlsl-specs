@@ -406,7 +406,6 @@ void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
   Code = serialization::DECL_HLSL_ROOT_SIGNATURE;
 }
 
-
 ```
 
 If we don't want to share the serializationRootSignature code.
@@ -432,8 +431,9 @@ void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
 }
 
 ```
-Unless there's other correct way to serialize the data, share serialization 
-code between clang and llvm seems better.
+Compare to share serialization code with DirectX backend, this will save the 
+extra work to build the offset and space to save those offset which required 
+by root signature serialization format.
 
 A HLSLRootSignatureAttr will be created when meet RootSignature attribute in
 HLSL.
