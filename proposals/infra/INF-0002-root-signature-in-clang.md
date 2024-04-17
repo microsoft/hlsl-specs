@@ -390,25 +390,7 @@ struct ParsedRootSignature {
 ```
 
 This will require more work for print and serialization the AST node.
-Since DirectX backend also need to print and serialzation root signature, 
-the code should be able to share between the frontend and backend.
-The code to serialize a HLSLRootSignatureDecl will be looked like this:
 
-```
-
-void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
-  VisitNamedDecl(D);
-  Record.AddSourceLocation(D->getKeywordLoc());
-  SmallVector<uint32_t, 64> Data = hlsl::serializationRootSignature(D->getRootSignature());
-  Record.writeUInt32(Data.size());
-  for (uint32_t Val : Data)
-    Record.push_back(Val);
-  Code = serialization::DECL_HLSL_ROOT_SIGNATURE;
-}
-
-```
-
-If we don't want to share the serializationRootSignature code.
 The AST node serialization code might be looked like this:
 ```
 void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
@@ -431,9 +413,7 @@ void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
 }
 
 ```
-Compare to share serialization code with DirectX backend, this will save the 
-extra work to build the offset and space to save those offset which required 
-by root signature serialization format.
+
 
 A HLSLRootSignatureAttr will be created when meet RootSignature attribute in
 HLSL.
