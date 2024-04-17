@@ -324,7 +324,8 @@ struct ContainerDescriptorRange {
 };
 
 struct ContainerRootDescriptorTable {
-  uint32_t NumDescriptorRanges;
+  llvm::SmallVector<RootSignature::ContainerDescriptorRange, 8>
+      DescriptorRanges;
 };
 
 struct ContainerRootConstants {
@@ -368,15 +369,6 @@ struct ParsedRootSignature {
   llvm::SmallVector<RootSignature::ContainerRootParameter, 8>
       RSParameters;
   llvm::SmallVector<RootSignature::StaticSamplerDesc, 8> StaticSamplers;
-  // All ranges for the descriptor tables are consolidated into a single array.
-  // These ranges are organized in the same order as the descriptor tables in 
-  // the RSParamExtras. 
-  // In the RS example root signature string, the first table has 3 ranges, 
-  // while the second table has 1 range.
-  // DescriptorRanges[0] through DescriptorRanges[2] correspond to the first
-  // table, and DescriptorRanges[3] corresponds to the second table
-  llvm::SmallVector<RootSignature::ContainerDescriptorRange, 8>
-      DescriptorRanges;
   llvm::SmallVector<
       std::variant<RootSignature::ContainerRootConstants,
                    RootSignature::ContainerRootDescriptor,
