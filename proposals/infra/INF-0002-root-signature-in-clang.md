@@ -28,7 +28,7 @@ diagnostics.
 2) Compiler must translate textual root signatures into binary encoded 
 formats.
 3) Compiler must support reading and writing binary encoded root 
-ignatures to and from DXContainer files.
+signatures to and from DXContainer files.
 4) Compiler must validate root signatures before emitting them.
 5) Compiler must have a comprehensive test infrastructure to test all 
 software components.
