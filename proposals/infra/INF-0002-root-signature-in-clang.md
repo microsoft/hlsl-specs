@@ -388,14 +388,14 @@ void ASTDeclWriter::VisitHLSLRootSignatureDecl(HLSLRootSignatureDecl *D) {
   hlsl::ParsedRootSignature &RS = D->getRootSignature();
   Record.push_back(RS.RSDesc.Version);
   Record.push_back(RS.RSDesc.Flags);
+  
+  Record.push_back(ParsedRS.RSParameters.size());
   for (const auto &P : ParsedRS.RSParameters) {
     // push_back all the fields of root parameters.
   }
+  Record.push_back(ParsedRS.StaticSamplers.size());
   for (const auto &SS : ParsedRS.StaticSamplers) {
     // push_back all the fields of static samplers.
-  }
-  for (const auto &Range : ParsedRS.DescriptorRanges) {
-    // push_back all the descriptor ranges.
   }
   
   Code = serialization::DECL_HLSL_ROOT_SIGNATURE;
