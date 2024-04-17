@@ -37,9 +37,10 @@ are collectively called \textit{intangible types}(\ref{Intangible}).
 
 \p An object type is an \textit{incomplete type} if the compiler lacks
 sufficient information to determine the size of an object of type \texttt{T},
-and a \textit{complete type} if the compiler has sufficient information to
-determine the size of an object of type \texttt{T}. An object may not be defined
-to have an \textit{incomplete} type.
+and it is not an intangible type. It is a \textit{complete type} if the compiler
+has sufficient information to determine the size of an object of type
+\texttt{T}, or if the type is known to be an intangible type. An object may not
+be defined to have an \textit{incomplete} type.
 
 \p Arithmetic types (\ref{Basic.types.arithmetic}), enumeration types, and
 \textit{cv-qualified} versions of these types are collectively called
