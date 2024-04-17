@@ -52,16 +52,6 @@ __attribute__((availability(shadermodel, introduced = 6.0)))
 __attribute__((availability(vulkan, introduced = 1.0)))
 __attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
 uint WaveActiveCountBits(bool Bit);
-
-// This function is available starting in SM 2.0 for pixel shaders, but SM 6.6
-// for compute, mesh and amplification shaders.
-__attribute__((availability(shadermodel_pixel, introduced = 2.0)))
-__attribute__((availability(shadermodel_compute, introduced = 6.6)))
-__attribute__((availability(shadermodel_mesh, introduced = 6.6)))
-__attribute__((availability(shadermodel_amplification, introduced = 6.6)))
-__attribute__((availability(vulkan, introduced = 1.0)))
-__attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
-float ddx(float val);
 ```
 
 > Note: the actual header uses macros to condense the attribute descriptions.
@@ -71,6 +61,39 @@ The example above declares the `WaveActiveCountBits` function to require shader
 model 6.0+. This AST annotation allows clangd to communicate to users the
 availability information to language server protocol clients. This can drive
 more informed auto-complete, refactoring, and in-editor diagnostics.
+
+The Clang availability attribute works well when a function availability depends
+only on the shader model version. However, some functions in HLSL are available
+depending on both shader model version and target shader stage. For example the
+derivative functions `ddx` and `ddy` were introduced in Shader Model 2.0 for use
+only in pixel shaders and in Shader Model 6.6 their support was extended to
+compute, mesh and amplification shaders.
+
+In order to encode this information we propose adding a new `environment`
+parameter to the Clang availability attribute. The allowed values would be
+identical to the environment component of the `llvm::Triple`. If the
+`environment` parameters is present, the declared availability would apply only
+for targets with the same environment c.
+
+With the new `environment` parameter the per-stage availability annotation for
+the derivative function `ddx` would look like this:
+
+```
+__attribute__((availability(shadermodel, introduced = 2.0, environment = pixel)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = compute)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = mesh)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = amplification)))
+__attribute__((availability(vulkan, introduced = 1.0)))
+__attribute__((clang_builtin_alias(__builtin_hlsl_ddx)))
+float ddx(float val);
+```
+
+If the `environment` parameter is not present, it means the function is available
+for all shader stages starting with the specified shader model version. If the
+parameter is present, then for non-library shaders it will be checked against the
+environment component of the target triple. For library shaders the
+`environment` parameter will be checked against the `[shader("...")]` attribute
+on the shader entry function.
 
 ### Diagnostic Modes
 
@@ -270,24 +293,24 @@ may produce warnings or errors with Clang.
 
 ### Diagnostic text
 
-The diagnostic message should reflect whether the intrisic is not available
-just for the particular target shader stage or the whole shader model version.
-In other words, it should be relevant to the entry point type. 
+The diagnostic message should reflect whether the function is not available just
+for the particular target shader stage or the whole shader model version. In
+other words, it should be relevant to the entry point type. 
 
-If intrinsic `a` is available in a shader model higher than the target shader
+If function `a` is available in a shader model higher than the target shader
 model regardless of target shader stage the diagnostic message should be:
 ```
 'a' is available beginning with Shader Model x.y
 ```
 
-If intrinsic `a` is not available in shader stage `S` regardless of shader model
+If function `a` is not available in shader stage `S` regardless of shader model
 version the diagnostic message should be:
 ```
 'a' is not available in S shaders
 ```
 
-If intrinsic `a` is available in shader stage `S` in shader model higher than
-the target shader model the diagnostic message should be:
+If function `a` is available in shader stage `S` in shader model higher than the
+target shader model the diagnostic message should be:
 ```
 'a' is available in S shaders beginning with Shader Model x.y
 ```
