@@ -898,10 +898,7 @@ formal header/libraries that can be consumed by legacy toolchains.
 ## Resources
 
 * [DXC Api](https://learn.microsoft.com/en-us/windows/win32/api/dxcapi/)
-* [IDxcCompiler](https://learn.microsoft.com/en-us/windows/win32/api/dxcapi/ns-dxcapi-idxccompiler)
-* [IDxCompiler2](https://learn.microsoft.com/en-us/windows/win32/api/dxcapi/ns-dxcapi-idxccompiler2)
-* [IDxCompiler3](https://learn.microsoft.com/en-us/windows/win32/api/dxcapi/ns-dxcapi-idxccompiler3)
-* [IDxcCompilerArgs](https://learn.microsoft.com/en-us/windows/win32/api/dxcapi/ns-dxcapi-idxccompilerargs)
+* [ID3D12ShaderReflection](https://learn.microsoft.com/en-us/windows/win32/api/d3d12shader/nn-d3d12shader-id3d12shaderreflection)
 
 ## Acknowledgments
 
