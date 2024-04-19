@@ -236,7 +236,83 @@ LL(2) parser.}.
   vector-literal
 \end{grammar}
 
-%\Sub{Integer Literals}{Lex.Literal.Int}
+\Sub{Integer Literals}{Lex.Literal.Int}
+
+\begin{grammar}
+  \define{integer-literal}\br
+  decimal-literal \opt{integer-suffix}\br
+  octal-literal \opt{integer-suffix}\br
+  hexadecimal-literal \opt{integer-suffix}\br
+
+  \define{decimal-literal}\br
+  nonzero-digit\br
+  decimal-literal digit\br
+
+  \define{octal-literal}
+  \terminal{0}\br
+  octal-literal octal-digit\br
+
+  \define{hexadecimal-literal}\br
+  \terminal{0x} hexadecimal-digit\br
+  \terminal{0X} hexadecimal-digit\br
+  hexadecimal-literal hexadecimal-digit\br
+
+  \define{nonzero-digit} \textnormal{one of}\br
+  \terminal{1 2 3 4 5 6 7 8 9}\br
+
+  \define{octal-digit} \textnormal{one of}\br
+  \terminal{0 1 2 3 4 5 6 7}\br
+
+  \define{hexadecimal-digit} \textnormal{one of}\br
+  \terminal{0 1 2 3 4 5 6 7 8 9}\br
+  \terminal{a b c d e f}\br
+  \terminal{A B C D E F}\br
+
+  \define{integer-suffix}\br
+  unsigned-suffix \opt{long-suffix}\br
+  long-suffix \opt{unsigned-suffix}\br
+
+  \define{unsigned-suffix} \textnormal{one of}\br
+  \terminal{u U}\br
+
+  \define{long-suffix} \textnormal{one of}\br
+  \terminal{l L}
+\end{grammar}
+
+\p An \textit{integer literal} is an optional base prefix, a sequence of digits
+in the appropriate base, and an optional type suffix. An integer literal shall
+not contain a period or exponent specifier.
+
+\p The type of an integer literal is the first of the corresponding list in the
+table below in which its value can be represented\footnote{This behavior matches
+\gls{isoC} but is reduced in scope because HLSL has fewer data types.}.
+
+\begin{center}
+  \begin{tabular}{|| c | c | c ||}
+    \hline
+    Suffix & Decimal constant & Octal or hexadecimal constant \\
+    \hline
+    \hline
+    none & \texttt{int32\_t} & \texttt{int32\_t} \\
+         & \texttt{int64\_t} & \texttt{uint32\_t} \\
+         &         & \texttt{int64\_t} \\
+         &         & \texttt{uint64\_t} \\
+    \hline
+    \texttt{u} or \texttt{U} & \texttt{uint32\_t} & \texttt{uint32\_t} \\
+                             & \texttt{uint64\_t} & \texttt{uint64\_t} \\
+    \hline
+    \texttt{l} or \texttt{L} & \texttt{uint32\_t} & \texttt{uint32\_t} \\
+                             & \texttt{uint64\_t} & \texttt{uint64\_t} \\
+    \hline
+    Both \texttt{u} or \texttt{U} & \texttt{uint64\_t} & \texttt{uint64\_t} \\
+    and \texttt{l} or \texttt{L}  &  &  \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\p If the specified value of an integer literal cannot be represented by any
+type in the corresponding list, the integer literal has no type and the program
+is ill-formed.
 
 %\Sub{Character Literals}{Lex.Literal.Char}
 
