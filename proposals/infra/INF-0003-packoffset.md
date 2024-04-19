@@ -102,6 +102,36 @@ HLSLBufferDecl cbuffer MyBuffer
 
 ### llvm IR
 
+#### Layout struct for cbuffer
+In HLSL, constants inside a cbuffer have the cbuffer as their declaration 
+context. 
+However, the variable scope of these constants is similar to a regular 
+global variable. For instance, in the MyBuffer example, the constants are 
+accessed as Element1 instead of MyBuffer::Element1. 
+his implementation treats these constants as global variables.
+At the end of Clang’s code generation, cbuffer will be translated into a 
+global variable layout the cbuffer as a struct and replace the use of all 
+the constants with fields for the global variable.
+If translate into C,
+ ```
+ cbuffer A {
+   float a;
+   float b;
+ }
+ float foo() { return a + b; }
+```
+ will be translated into
+```
+ struct A {
+   float a;
+   float b;
+ } cbuffer_A;
+ float foo() { return cbuffer_A.a + cbuffer_A.b; }
+```
+struct A will created as the layout struct.
+The use of a and b will be replaced with cbuffer_A.a and cbuffer_A.b.
+
+#### packoffset on layout struct
 To apply the packoffset to a cbuffer, the layout of the struct constructed for 
 the cbuffer requires reordering of its fields, and padding should be introduced
 if any gaps exist between the fields.
