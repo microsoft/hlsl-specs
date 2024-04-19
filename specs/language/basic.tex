@@ -1,5 +1,114 @@
 \Ch{Basic Concepts}{Basic}
 
+\Sec{Types}{Basic.types}
+
+\p The \textit{object representation} of an object of type \texttt{T} is the
+sequence of \textit{N} bytes taken up by the object of type \texttt{T}, where
+\textit{N} equals \texttt{sizeof(T)}\footnote{\texttt{sizeof(T)} returns the
+size of the object as-if it's stored in device memory, and determining the size
+if it's stored in another memory space is not possible.}. The \textit{object
+representation} of an object may be different based on the \textit{memory space}
+it is stored in (\ref{Intro.Memory.Spaces}).
+
+\p The \textit{value representation} of an object is the set of bits that hold
+the value of type \texttt{T}. Bits in the object representation that are not
+part of the value representation are \textit{padding bits}.
+
+\p An \textit{object type} is a type that is not a function type, not a
+reference type, and not a void type.
+
+\p A \textit{class type} is a data type declared with either the \texttt{class}
+or \texttt{struct} keywords (\ref{Classes}). A class type \texttt{T} may be
+declared as incomplete at one point in a translation unit via a \textit{forward
+declaration}, and complete later with a full definition. The type \texttt{T} is
+the same type throughout the translation unit.
+
+\p There are special implementation-defined types such as \textit{handle types},
+which fall into a category of \textit{standard intangible types}. Intangible
+types are types that have no defined object representation or value
+representation, as such the size is unknown at compile time.
+% Note: The above definition is likely incomplete, and it is unclear if minimum
+% precision types should be intangible.
+
+\p A class type \texttt{T} is an \textit{intangible class type} if it contains
+an base classes or members of intangible class type, standard intangible type,
+or arrays of such types. Standard intangible types and intangible class types
+are collectively called \textit{intangible types}(\ref{Intangible}).
+
+\p An object type is an \textit{incomplete type} if the compiler lacks
+sufficient information to determine the size of an object of type \texttt{T},
+and it is not an intangible type. It is a \textit{complete type} if the compiler
+has sufficient information to determine the size of an object of type
+\texttt{T}, or if the type is known to be an intangible type. An object may not
+be defined to have an \textit{incomplete} type.
+
+\p Arithmetic types (\ref{Basic.types.arithmetic}), enumeration types, and
+\textit{cv-qualified} versions of these types are collectively called
+\textit{scalar types}.
+
+\p Vectors of scalar types declared with the built-in \texttt{vector<T,N>}
+template are \textit{vector types}. Vector lengths must be between 1 and 4 (i.e.
+\( 1 \leq N \leq 4 \) ).
+
+\Sub{Arithmetic Types}{Basic.types.arithmetic}
+
+\p There are three \textit{standard signed integer types}: \texttt{int16\_t},
+\texttt{int32\_t}, and \texttt{int64\_t}. Each of the signed integer types is
+explicitly named for the size in bits of the type's object representation. There
+is also the type alias \texttt{int} which is an alias of \texttt{int32\_t}.
+There are three \textit{minimum precision signed integer types}:
+\texttt{min10int}, \texttt{min12int}, and \texttt{min16int}. Each of the minimum
+precision signed integer types are named for the required minimum value
+representation size in bits. The object representation of all minimum precision
+types is \texttt{int}. The standard signed integer types and minimum precision
+signed integer types are collectively called \textit{signed integer types}.
+
+\p There are three \textit{standard unsigned integer types}: \texttt{uint16\_t},
+\texttt{uint32\_t}, and \texttt{uint64\_t}. Each of the unsigned integer types
+is explicitly named for the size in bits of the type's object representation.
+There is also the type alias \texttt{uint} which is an alias of
+\texttt{uint32\_t}. There are three \textit{minimum precision unsigned integer
+types}: \texttt{min10uint}, \texttt{min12uint}, and \texttt{min16uint}. Each of
+the minimum precision unsigned integer types are named for the required minimum
+value representation size in bits. The object representation of all minimum
+precision types is \texttt{uint}. The standard unsigned integer types and
+minimum precision unsigned integer types are collectively called
+\textit{unsigned integer types}.
+
+\p The signed integer types and unsigned integer types are collectively called
+\textit{integer types}. Integer types inherit the object representation of
+integers defined in \glsdesc{isoC23}\footnote{C23 adopts two's compliment as the
+object representation for integer types.}. Integer types shall satisfy the
+constraints defined in \glsdesc{isoCPP}, section \textbf{basic.fundamental}.
+
+\p There are three \textit{standard floating point types}: \texttt{half},
+\texttt{float}, and \texttt{double}. The \texttt{float} type is a 32-bit
+floating point type. The \texttt{double} type is a 64-bit floating point type.
+Both the \texttt{float} and \texttt{double} types have object representations as
+defined in \gls{IEEE754}. The \texttt{half} type may be either 16-bit or 32-bit
+as controlled by implementation defined compiler settings. If \texttt{half} is
+32-bit it will have an object representation as defined in \gls{IEEE754},
+otherwise it will have an object representation matching the \textbf{binary16}
+format defined in \gls{IEEE754}\footnote{IEEE-754 only defines a binary encoding
+for 16-bit floating point values, it does not fully specify the behavior of such
+types.}. There are three \textit{minimum precision floating point types}:
+\texttt{min10float}, \texttt{min12float}, and \texttt{min16float}. Each of the
+minimum precision floating point types are named for the required minimum value
+representation size in bits. The object representation of all minimum precision
+types is \texttt{float}\footnote{This means when stored to memory minimum
+precision types are stored as \textbf{binary32} as defined in \gls{IEEE754}.}.
+The standard floating point types and minimum precision floating point types are
+collectively called \textit{floating point types}.
+
+\p Integer and floating point types are collectively called \textit{arithmetic
+types}.
+
+\p The \texttt{void} type is inherited from \gls{isoCPP}, which defines it as
+having an empty set of values and being an incomplete type that can never be
+completed. The \texttt{void} type is used to signify the return type of a
+function that returns no value. Any expression can be explicitly converted to
+\texttt{void}.
+
 \Sec{Lvalues and rvalues}{Basic.lval}
 
 \p Expressions are classified by the type(s) of values they produce. The valid
