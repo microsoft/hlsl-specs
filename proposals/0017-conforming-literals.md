@@ -192,11 +192,29 @@ export float Fn(int inInt, inFloat) {
 }
 ```
 
-Following HLSL rules, the `literal int` is always signed, so the bit shift is an
-arithmetic shift (most significant bit is filled with the sign bit). In the C
-rules that this proposal adopts, a non-base 10 integer literal is `unsigned` if
-the msb is 1, so the bit shift is a logical shift (most significant bit is
-filled with 0).
+In DXC, the `literal int` is always signed, so the bit shift is an arithmetic
+shift (most significant bit is filled with the sign bit). In the C rules that
+this proposal adopts, a non-base 10 integer literal is `unsigned` if the msb is
+1, so the bit shift is a logical shift (most significant bit is filled with 0).
+
+The behaviors in FXC are not documented. Observationally hexadecimal literals
+are `uint` and octal literals are not supported. Treating hexadecimal literals
+as unsigned produces the same behavior when shifting a literal as C, however
+FXC's behavior for decimal literals is subtly different from C.
+
+The following differences have been identified between FXC's literal behavior
+and C:
+
+* Non-base 10 literals that would fit in 32 bits without the high-bit set result
+  in uint in HLSL int in C.
+* No promotion to uint occurs for decimal literals that are greater than
+  `INT32_MAX` but less than `UINT32_MAX` (e.g. 4026531840).
+* FXC can't parse literals larger than UINT32_MAX without a suffix (error reported on token following the literal).
+* If `L` or `UL` suffix is present, it will parse a literal larger than
+  UINT32_MAX , though it will be truncated to 32-bits when used, since there is
+  no 64-bit integer support in DXBC.
+* FXC has unexpected behavior in corner cases for constant evaluation, such as
+  overflow from multiply resulting in `INT32_MIN` `((int)0x80000000)`
 
 #### Conclusions Drawn
 
@@ -233,7 +251,25 @@ floating point arguments to notify users that they should use a cast instead.
 
 ## Detailed Design
 
-The full proposed specification for floating literals in HLSL is in #175. A
-Separate PR will propose the specification for integer literals.
+The full proposed specification for floating point literals in HLSL is in
+[#175](https://github.com/microsoft/hlsl-specs/pull/175).
+
+The full proposed specification for integer literals in HLSL is in
+[#208](https://github.com/microsoft/hlsl-specs/pull/208).
+
+Documentation for related conversion rank behavior is in the **[Conv.rank]**
+section of the language spec (minimum precision types added in
+[#206](https://github.com/microsoft/hlsl-specs/pull/206)).
+
+### Notes on minimum precision types
+
+HLSL minimum precision types are unusual for programming languages. Since the
+size of the value is unknown at compile time the diagnostics that can be
+provided are limited.
+
+With this change the minimum precision types are lower in conversion rank to all
+the literal types that can be explicitly specified. This will result in
+conversion warnings on implicit conversion to minimum precision types which will
+notify users of the places where their code may need to be updated.
 
 <!-- {% endraw %} -->
