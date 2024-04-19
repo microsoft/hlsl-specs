@@ -75,11 +75,15 @@ precision types is \texttt{uint}. The standard unsigned integer types and
 minimum precision unsigned integer types are collectively called
 \textit{unsigned integer types}.
 
-\p The signed integer types and unsigned integer types are collectively called
-\textit{integer types}. Integer types inherit the object representation of
-integers defined in \glsdesc{isoC23}\footnote{C23 adopts two's compliment as the
-object representation for integer types.}. Integer types shall satisfy the
-constraints defined in \glsdesc{isoCPP}, section \textbf{basic.fundamental}.
+\p The minimum precision signed integer types and minimum precision unsigned
+integer types are collectively called \textit{minimum precision integer types}.
+The standard signed integer types and standard unsigned integer types are
+collectively called \textit{standard integer types}. The signed integer types
+and unsigned integer types are collectively called \textit{integer types}.
+Integer types inherit the object representation of integers defined in
+\glsdesc{isoC23}\footnote{C23 adopts two's compliment as the object
+representation for integer types.}. Integer types shall satisfy the constraints
+defined in \glsdesc{isoCPP}, section \textbf{basic.fundamental}.
 
 \p There are three \textit{standard floating point types}: \texttt{half},
 \texttt{float}, and \texttt{double}. The \texttt{float} type is a 32-bit

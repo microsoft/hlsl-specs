@@ -159,6 +159,11 @@ to a higher conversion rank.
   corresponding signed integer type.
   \item The rank of \texttt{bool} shall be less than the rank of all other
   standard integer types.
+  \item The rank of a minimum precision integer type shall be less than the rank
+  of any other minimum precision integer type with a larger minimum value
+  representation size.
+  \item The rank of a minimum precision integer type shall be less than the rank
+  of all standard integer types.
   \item For all integer types \texttt{T1}, \texttt{T2}, and \texttt{T3}: if
   \texttt{T1} has greater rank than \texttt{T2} and \texttt{T2} has greater rank
   than \texttt{T3}, then \texttt{T1} shall have greater rank than \texttt{T3}.
@@ -172,6 +177,11 @@ to a higher conversion rank.
   \item The rank of a floating point type shall be greater than the rank of any
   floating point type with a smaller size.
   \item The rank \texttt{float} shall be greater than the rank of \texttt{half}.
+  \item The rank of a minimum precision floating point type shall be less than
+  the rank of any other minimum precision floating point type with a larger
+  minimum value representation size.
+  \item The rank of a minimum precision floating point type shall be less than
+  the rank of all standard floating point types.
   \item For all floating point types \texttt{T1}, \texttt{T2}, and \texttt{T3}:
   if \texttt{T1} has greater rank than \texttt{T2} and \texttt{T2} has greater
   rank than \texttt{T3}, then \texttt{T1} shall have greater rank than
