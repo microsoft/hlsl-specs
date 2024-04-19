@@ -829,9 +829,96 @@ if (errors && errors->GetStringLength() > 0) {
 ```
 
 ### Optimizing a shader
+A shader can be optimized by providing different passes lists to the optimizer.
+The code below shows how to get the optimizations performed and how to call
+into the IDxcOptimizer with a pass list.
+
+Passes can also be added as arguments for compilation.
 
 ```c++
-// How to optimize a shader
+    // Collect optimization passes and list them
+    arguments.push_back(L"-Odump");
+
+    com_ptr<IDxcResult> dumpResult;
+    check_hresult(compiler->Compile(
+        &sourceBuffer,
+        arguments.data(),
+        static_cast<uint32_t>(arguments.size()),
+        nullptr,
+        IID_PPV_ARGS(dumpResult.put())));
+
+    check_hresult(dumpResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(errors.put()), nullptr));
+    if (errors && errors->GetStringLength() > 0) {
+        // Compile failed, details are in errors->GetStringPointer()
+    } else {
+        // Compile succeeded
+    }
+
+    com_ptr<IDxcBlobUtf8> passes;
+    check_hresult(dumpResult->GetOutput(DXC_OUT_TEXT, IID_PPV_ARGS(passes.put()), nullptr));
+    if (passes && passes->GetStringLength() > 0) {
+        // Passes are crlf separated and are in passes->GetStringPointer()
+    }
+    else {
+        // no passes found
+    }
+```
+
+#### Example output of passes
+```
+# Per-function passes
+-opt-fn-passes
+-tti
+-verify
+-targetlibinfo
+-tbaa
+-scoped-noalias
+-basicaa
+-simplifycfg
+-lower-expect
+# Per-module passes
+-opt-mod-passes
+-tti
+-hlsl-hlensure
+-dxil-rewrite-output-arg-debug-info
+-hl-legalize-parameter
+-always-inline,InlineThreshold=2294967296,InsertLifetime=t
+-hlsl-dxil-cleanup-addrspacecast
+-hl-preprocess
+-hl-dfe
+-static-global-to-alloca
+-hl-expand-store-intrinsics
+-scalarrepl-param-hlsl
+-hlmatrixlower
+
+< removed others to make this example shorter>
+```
+
+```c++
+// Example of passing a custom passes list and calling the optimizer
+
+com_ptr<IDxcOperationResult> compResult;
+check_hresult(compiler->Compile(
+    &sourceBuffer,
+    arguments.data(),
+    static_cast<uint32_t>(arguments.size()),
+    nullptr,
+    IID_PPV_ARGS(compResult.put())));
+
+com_ptr<IDxcBlob> objectData;
+check_hresult(compResult->GetResult(objectData.put()));
+
+const wchar_t* thePasses[] = {
+    L"-opt-mod-passes",
+    L"-tti"
+};
+
+com_ptr<IDxcBlob> optimizedResult;
+check_hresult(optimizer->RunOptimizer(
+    objectData.get(),
+    thePasses,
+    _countof(thePasses),
+    optimizedResult.put(), nullptr));
 ```
 
 ### Inspecting reflection data and working with DXIL containers
