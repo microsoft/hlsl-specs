@@ -5,7 +5,7 @@
 * Proposal: [0017](0017-conforming-literals.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: HLSL 202x
 * PRs: [#175](https://github.com/microsoft/hlsl-specs/pull/175)
 * Issues: [#73](https://github.com/microsoft/hlsl-specs/issue/73),
