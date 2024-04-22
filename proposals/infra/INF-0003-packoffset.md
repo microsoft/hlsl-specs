@@ -1,6 +1,6 @@
 <!-- {% raw %} -->
 
-# Strict Availability Diagnostics
+# packoffset attribute
 
 * Proposal: [INF-0003](INF-0003-packoffset.md)
 * Author(s): [Xiang Li](https://github.com/python3kgae)
