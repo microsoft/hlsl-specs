@@ -488,7 +488,8 @@ enum SEMANTIC_FLAG {
 
 /// @brief Request a barrier for a set of memory types and/or thread group
 /// execution sync.
-/// @param MemoryTypeFlags Flag bits as defined by MEMORY_TYPE_FLAG.
+/// @param MemoryTypeFlags Flag bits as defined by MEMORY_TYPE_FLAG. Specifying
+/// ALL_MEMORY means all valid memory types given the context.
 /// @param SemanticFlags Flag bits as defined by SEMANTIC_FLAG.
 ///
 /// `Barrier` must be called from thread group uniform control flow when
@@ -508,17 +509,22 @@ void Barrier(uint MemoryTypeFlags, uint SemanticFlags);
 void Barrier(Object TargetObject, uint SemanticFlags);
 ```
 
-The Work Graphs feature introduces a new more flexible implementation of the memory barrier
-functions. This function is available in all shader types (including non-node
-shaders).
+The Work Graphs feature introduces a new more flexible implementation of the
+memory barrier functions. This function is available in all shader types
+(including non-node shaders).
 
 The new `Barrier` function implements a superset of the existing memory barrier
 functions which are still supported (i.e. `AllMemoryBarrier{WithGroupSync}()`,
 `GroupMemoryBarrier{WithGroupSync}()`, `DeviceMemoryBarrier{WithGroupSync}()`).
 
-In the context of a node shader, `Barrier` enables requesting a memory barrier on
-input and/or output record memory specifically, while the implementation is free
-to store the data in any memory region.
+In the context of a node shader, `Barrier` enables requesting a memory barrier
+on input and/or output record memory specifically, while the implementation is
+free to store the data in any memory region.
+
+When specifying `ALL_MEMORY` for `MemoryTypeFlags`, the compiler will limit
+effective flags to the ones available given the context.  Otherwise, explicitly
+using a memory flag for a memory type that is unavailable given the context
+will result in an error.
 
 The pseudo-code below shows implementing the existing HLSL memory barrier
 functions using the new `Barrier` function.
@@ -543,8 +549,11 @@ void GroupMemoryBarrier() { Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE); }
 void GroupMemoryBarrierWithGroupSync() {
   Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE | GROUP_SYNC);
 }
-
 ```
+
+> Note: These equivalent forms are not currently mapped to the previous DXIL
+> Barrier operation on prior shader models.  The new barrier is only available
+> on SM 6.8 and above, for now.
 
 ### New Structure Attributes
 
