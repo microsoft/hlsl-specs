@@ -108,7 +108,7 @@ context.
 However, the variable scope of these constants is similar to a regular 
 global variable. For instance, in the MyBuffer example, the constants are 
 accessed as Element1 instead of MyBuffer::Element1. 
-his implementation treats these constants as global variables.
+These constants are treated as global variables in clang AST.
 At the end of Clang’s code generation, cbuffer will be translated into a 
 global variable layout the cbuffer as a struct and replace the use of all 
 the constants with fields for the global variable.
