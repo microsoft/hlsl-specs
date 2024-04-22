@@ -172,6 +172,50 @@ important note about this title is that it is an Xbox & Windows exclusive title.
 Since the title is platform exclusive its shaders may not need to be resilient
 to different language semantics implemented by different shader compilers.
 
+#### Rendering Defect Root Cause
+
+Continued investigation of the rendering defects tracked in
+[#184](https://github.com/microsoft/hlsl-specs/issues/184) revealed that the
+problems in both the catastrophic and subtle cases are not caused by loss of
+floating point precision. Instead they are the result of a subtle behavioral
+difference for literal integers. In HLSL `literal int` is always a signed
+integer, whereas in C a non-base 10 literal integer may be unsigned if the most
+significant bit is 1.
+
+This difference in rules results in a subtle behavioral difference for bit
+shifts. Given the following code:
+
+```c++
+export float Fn(int inInt, inFloat) {
+  int Val = (inInt & 0xffff0000) >> 16);
+  return Val* inFloat
+}
+```
+
+In DXC, the `literal int` is always signed, so the bit shift is an arithmetic
+shift (most significant bit is filled with the sign bit). In the C rules that
+this proposal adopts, a non-base 10 integer literal is `unsigned` if the msb is
+1, so the bit shift is a logical shift (most significant bit is filled with 0).
+
+The behaviors in FXC are not documented. Observationally hexadecimal literals
+are `uint` and octal literals are not supported. Treating hexadecimal literals
+as unsigned produces the same behavior when shifting a literal as C, however
+FXC's behavior for decimal literals is subtly different from C.
+
+The following differences have been identified between FXC's literal behavior
+and C:
+
+* Non-base 10 literals that would fit in 32 bits without the high-bit set result
+  in uint in HLSL int in C.
+* No promotion to uint occurs for decimal literals that are greater than
+  `INT32_MAX` but less than `UINT32_MAX` (e.g. 4026531840).
+* FXC can't parse literals larger than UINT32_MAX without a suffix (error reported on token following the literal).
+* If `L` or `UL` suffix is present, it will parse a literal larger than
+  UINT32_MAX , though it will be truncated to 32-bits when used, since there is
+  no 64-bit integer support in DXBC.
+* FXC has unexpected behavior in corner cases for constant evaluation, such as
+  overflow from multiply resulting in `INT32_MIN` `((int)0x80000000)`
+
 #### Conclusions Drawn
 
 The testing here holds with the core thesis that the number of impacted software
@@ -187,9 +231,45 @@ The testing also revealed that the lack of complete overload sets for
 `asfloat16` is a barrier for users. Further discussion is needed to determine
 how best to address this problem.
 
+### Mitigating Migration Pain
+
+There are no observed instances of the change in floating point behavior causing
+disruption. If such cases exist the existing `-Wconversion` diagnostics will
+sufficiently notify users of implicit conversions that result in precision loss.
+
+The change in integer behavior inc more important. The behavior of bit shifts in
+HLSL has historically changed independent of language version, and ambiguity of
+bit shifts on literal operands does produce a compiler diagnostic (see:
+[dxc/#300](https://github.com/microsoft/DirectXShaderCompiler/pull/3400)).
+
+This proposal will introduce a new diagnostic for 32-bit literal integers values
+that will become `unsigned` with this proposal. This diagnostic will be under
+the `-Wfuture-compatability` diagnostic group.
+
+This proposal will also add a new diagnostic for calls to `asfloat16` with
+floating point arguments to notify users that they should use a cast instead.
+
 ## Detailed Design
 
-The full proposed specification for floating literals in HLSL is in #175. A
-Separate PR will propose the specification for integer literals.
+The full proposed specification for floating point literals in HLSL is in
+[#175](https://github.com/microsoft/hlsl-specs/pull/175).
+
+The full proposed specification for integer literals in HLSL is in
+[#208](https://github.com/microsoft/hlsl-specs/pull/208).
+
+Documentation for related conversion rank behavior is in the **[Conv.rank]**
+section of the language spec (minimum precision types added in
+[#206](https://github.com/microsoft/hlsl-specs/pull/206)).
+
+### Notes on minimum precision types
+
+HLSL minimum precision types are unusual for programming languages. Since the
+size of the value is unknown at compile time the diagnostics that can be
+provided are limited.
+
+With this change the minimum precision types are lower in conversion rank to all
+the literal types that can be explicitly specified. This will result in
+conversion warnings on implicit conversion to minimum precision types which will
+notify users of the places where their code may need to be updated.
 
 <!-- {% endraw %} -->
