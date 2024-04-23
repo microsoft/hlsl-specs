@@ -553,7 +553,7 @@ void GroupMemoryBarrierWithGroupSync() {
 
 > Note: These equivalent forms are not currently mapped to the previous DXIL
 > Barrier operation on prior shader models.  The new barrier is only available
-> on SM 6.8 and above, for now.
+> on SM 6.8 and above.
 
 ### New Structure Attributes
 
