@@ -63,19 +63,20 @@ availability information to language server protocol clients. This can drive
 more informed auto-complete, refactoring, and in-editor diagnostics.
 
 The Clang availability attribute works well when a function availability depends
-only on the shader model version. However, some functions in HLSL are available
-depending on both shader model version and target shader stage. For example the
-derivative functions `ddx` and `ddy` were introduced in Shader Model 2.0 for use
-only in pixel shaders and in Shader Model 6.6 their support was extended to
-compute, mesh and amplification shaders.
+only on the shader model version. However, the availability of some HLSL
+functions depends not only on the shader model version but also on the target
+shader stage. For example the derivative functions `ddx` and `ddy` were
+introduced in Shader Model 2.0 for use only in pixel shaders. In Shader Model
+6.6 their support was extended to compute, mesh and amplification shaders, and
+they are not available in any other shader stage.
 
 In order to encode this information we propose adding a new `environment`
 parameter to the Clang availability attribute. The allowed values would be
 identical to the environment component of the `llvm::Triple`. If the
-`environment` parameters is present, the declared availability would apply only
-for targets with the same environment c.
+`environment` parameters is present, the declared availability attribute would
+apply only for targets with the same environment.
 
-With the new `environment` parameter the per-stage availability annotation for
+Using the new `environment` parameter the per-stage availability annotation for
 the derivative function `ddx` would look like this:
 
 ```
@@ -293,26 +294,26 @@ may produce warnings or errors with Clang.
 
 ### Diagnostic text
 
-The diagnostic message should reflect whether the function is not available just
-for the particular target shader stage or the whole shader model version. In
-other words, it should be relevant to the entry point type. 
+The diagnostic message should reflect whether the function is not available for
+the shader model version or just for the specific shader stage. In other words,
+it should be relevant to the entry point type. 
 
 If function `a` is available in a shader model higher than the target shader
 model regardless of target shader stage the diagnostic message should be:
 ```
-'a' is available beginning with Shader Model x.y
+'a' is only available on HLSL Shader Model x.y or newer
 ```
 
 If function `a` is not available in shader stage `S` regardless of shader model
 version the diagnostic message should be:
 ```
-'a' is not available in S shaders
+'a' is not available in S shader environment on HLSL Shader Model x.y
 ```
 
 If function `a` is available in shader stage `S` in shader model higher than the
 target shader model the diagnostic message should be:
 ```
-'a' is available in S shaders beginning with Shader Model x.y
+'a' is only available in S shader environment on HLSL Shader Model x.y or newer
 ```
 
 <!-- {% endraw %} -->
