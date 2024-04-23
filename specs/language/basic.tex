@@ -56,24 +56,23 @@ template are \textit{vector types}. Vector lengths must be between 1 and 4 (i.e.
 \texttt{int32\_t}, and \texttt{int64\_t}. Each of the signed integer types is
 explicitly named for the size in bits of the type's object representation. There
 is also the type alias \texttt{int} which is an alias of \texttt{int32\_t}.
-There are three \textit{minimum precision signed integer types}:
-\texttt{min10int}, \texttt{min12int}, and \texttt{min16int}. Each of the minimum
-precision signed integer types are named for the required minimum value
-representation size in bits. The object representation of all minimum precision
-types is \texttt{int}. The standard signed integer types and minimum precision
-signed integer types are collectively called \textit{signed integer types}.
+There are two \textit{minimum precision signed integer types}:
+\texttt{min12int}, and \texttt{min16int}. Each of the minimum precision signed
+integer types are named for the required minimum value representation size in
+bits. The object representation of all minimum precision types is \texttt{int}.
+The standard signed integer types and minimum precision signed integer types are
+collectively called \textit{signed integer types}.
 
 \p There are three \textit{standard unsigned integer types}: \texttt{uint16\_t},
 \texttt{uint32\_t}, and \texttt{uint64\_t}. Each of the unsigned integer types
 is explicitly named for the size in bits of the type's object representation.
 There is also the type alias \texttt{uint} which is an alias of
-\texttt{uint32\_t}. There are three \textit{minimum precision unsigned integer
-types}: \texttt{min10uint}, \texttt{min12uint}, and \texttt{min16uint}. Each of
-the minimum precision unsigned integer types are named for the required minimum
-value representation size in bits. The object representation of all minimum
-precision types is \texttt{uint}. The standard unsigned integer types and
-minimum precision unsigned integer types are collectively called
-\textit{unsigned integer types}.
+\texttt{uint32\_t}. There is one \textit{minimum precision unsigned integer
+type}: \texttt{min16uint}. The minimum precision unsigned integer type is named
+for the required minimum value representation size in bits. The object
+representation of \texttt{min16uint} is \texttt{uint}. The standard unsigned
+integer types and minimum precision unsigned integer type are collectively
+called \textit{unsigned integer types}.
 
 \p The minimum precision signed integer types and minimum precision unsigned
 integer types are collectively called \textit{minimum precision integer types}.
@@ -95,14 +94,14 @@ as controlled by implementation defined compiler settings. If \texttt{half} is
 otherwise it will have an object representation matching the \textbf{binary16}
 format defined in \gls{IEEE754}\footnote{IEEE-754 only defines a binary encoding
 for 16-bit floating point values, it does not fully specify the behavior of such
-types.}. There are three \textit{minimum precision floating point types}:
-\texttt{min10float}, \texttt{min12float}, and \texttt{min16float}. Each of the
-minimum precision floating point types are named for the required minimum value
-representation size in bits. The object representation of all minimum precision
-types is \texttt{float}\footnote{This means when stored to memory minimum
-precision types are stored as \textbf{binary32} as defined in \gls{IEEE754}.}.
-The standard floating point types and minimum precision floating point types are
-collectively called \textit{floating point types}.
+types.}. There are two \textit{minimum precision floating point types}:
+\texttt{min10float}, and \texttt{min16float}. Each of the minimum precision
+floating point types are named for the required minimum value representation
+size in bits. The object representation of all minimum precision types is
+\texttt{float}\footnote{This means when stored to memory minimum precision types
+are stored as \textbf{binary32} as defined in \gls{IEEE754}.}. The standard
+floating point types and minimum precision floating point types are collectively
+called \textit{floating point types}.
 
 \p Integer and floating point types are collectively called \textit{arithmetic
 types}.
