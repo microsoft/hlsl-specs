@@ -1,4 +1,4 @@
-* Proposal: [0013](0013-semantic-index-assignment.md)
+* Proposal: [0021](0021-semantic-index-assignment.md)
 * Author(s): [Joshua Batista](https://github.com/bob80905)
 * Sponsor: TBD
 * Status: **Under Consideration**
