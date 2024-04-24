@@ -29,6 +29,7 @@ no existing infrastructure to check for SV conflicts. For compiler developers, t
 exist an infrastructure for adding SV conflict detection based on known semantic indices.
 
 ## Proposed solution
+
 The proposed solution is to copy and perhaps simplify the infrastructure in SROA for semantic
 index collision detection, and move it into Sema. 
 For compiler developers, it would be beneficial to define an infrastructure for semantic index
@@ -40,7 +41,7 @@ the information will be provided sooner, decreasing compile time.
 
 ## Detailed design
 
-*Entry function selection (specifics outside scope of this proposal)
+* Entry function selection (specifics outside scope of this proposal)
 The compiler will find the entry function requested by the compilation option, 
 or for a library profile, visit all entry functions in the library. 
 For each function, all parameters are analyzed, along with the return type and any semantic applied to
@@ -52,7 +53,7 @@ or both (inout), and determining which specific signature point(s) the parameter
 for applicable shader stages. 
 The parameter type for recursive flattening and semantic assignment is determined here as well,
 potentially from the template type of a special HLSL object parameter, such as InputPatch<>.
-*Parameter classification for diagnostics (IDENTIFYING SIGNATURE POINT):
+* Parameter classification for diagnostics (IDENTIFYING SIGNATURE POINT):
 The compiler will interpret parameters depending on entry type, qualifiers,
 and special HLSL object types, then dispatch to a parameter handling function
 with initial top-level details. 
@@ -67,7 +68,7 @@ to assign semantic indices.
 Additionally, there will be a top-level map, where the key is the signature point identifier,
 and the value is a pair, where the pair types are the two data structures defined below,
 Sems and pairsAssigned. As signature points are identified, this map will be constructed.
-*How semantic indices are assigned per parameter type once sigpoints are assigned
+* How semantic indices are assigned per parameter type once sigpoints are assigned
 Basic HLSL types (scalar, vector, matrix), and arrays of such:
 ⦁	Determine number of rows based on array size * matrix rows, 
 	assign this many consecutively increasing indices starting from the start index.
@@ -89,7 +90,7 @@ or the number of semantic indices that were assigned to any sub-type of the para
 (at any field or structure contained within the parameter). 
 This structure will be useful in SROA to validate that assignment took place correctly.
 
-*Parameter handling functions:
+* Parameter handling functions:
 A parameter handling function already exists for Work Graphs to handle record type
 and look for a particular system value.  Since the record is not flattened into signature elements,
 the approach is different compared to entries with signature elements.
@@ -102,7 +103,7 @@ This example shows how semantic index assignment works with struct fields and ar
 Diagnostic logic will need to compute the signature elements from a structure
 to match this flattening for diagnostics.
 
-*Signature element diagnostics
+* Signature element diagnostics
 Diagnosis on first detection of duplicate semantic assignment is possible with these data structures:
 ```c++
 std::map<std::pair<semanticNameLowercased StringRef, int semanticIndex>, SourceLocation> pairsAssigned;
@@ -128,7 +129,7 @@ For this inner map, the key is a semantic index for the specified semantic name,
 and the value is a pointer to the signatureElement object associated with that semantic + index pair. 
 During the assignment of semantic + index pairs, both of these structures will be constructed.
 
-*To determine the set of parameters involved in the same signature point context, 
+* To determine the set of parameters involved in the same signature point context, 
 hctdb.py will be used. 
 Depending on the shader kind and other factors, diagnostics will be emitted 
 only for parameters that are within the same signature point subcontext, 
