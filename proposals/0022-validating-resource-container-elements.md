@@ -58,22 +58,42 @@ field is saved, and the source location is used in the diagnostic output.
 
 * Examples:
 ```
-RWBuffer<int> // valid
-RWBuffer<float> // valid
-RWBuffer<float4> // valid
 struct x {
 	int i;
 };
-RWBuffer<x> // valid
+
+struct a {
+   int aa;
+   int ab;
+};
+
+struct b {
+   x bx;
+};
+
+struct c {
+  a ca;
+  float4 cb;
+};
+
 struct bad {
 	x a;
 	bool b;	
 };
 
-// "'bad' is an invalid resource element type because 'b' is not a valid primitive 
+RWBuffer<int> // valid
+RWBuffer<float> // valid
+RWBuffer<float4> // valid
+RWBuffer<x> // valid
+RWBuffer<a> // valid - all fields are valid primitive types
+RWBuffer<b> // valid - all fields (the struct) has valid primitive types for all its fields
+RWBuffer<c> // valid - combo of above, valid primitive field, and struct that contains valid primitive fields.
+
+
+// "'bad' is an invalid resource element type because 'b' has type 'bool', which is not a valid primitive 
 // bool b;
 //      ^ (located here)
-RWBuffer<bad> // invalid
+RWBuffer<bad> // invalid - bool is not a valid primitive type for resource elements.
 
 ```
 ## Alternatives considered (Optional)
