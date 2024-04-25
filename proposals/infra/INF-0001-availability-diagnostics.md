@@ -52,16 +52,6 @@ __attribute__((availability(shadermodel, introduced = 6.0)))
 __attribute__((availability(vulkan, introduced = 1.0)))
 __attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
 uint WaveActiveCountBits(bool Bit);
-
-// This function is available starting in SM 2.0 for pixel shaders, but SM 6.6
-// for compute, mesh and amplification shaders.
-__attribute__((availability(shadermodel_pixel, introduced = 2.0)))
-__attribute__((availability(shadermodel_compute, introduced = 6.6)))
-__attribute__((availability(shadermodel_mesh, introduced = 6.6)))
-__attribute__((availability(shadermodel_amplification, introduced = 6.6)))
-__attribute__((availability(vulkan, introduced = 1.0)))
-__attribute__((clang_builtin_alias(__builtin_hlsl_wave_active_count_bits)))
-uint ddx(bool Bit);
 ```
 
 > Note: the actual header uses macros to condense the attribute descriptions.
@@ -71,6 +61,40 @@ The example above declares the `WaveActiveCountBits` function to require shader
 model 6.0+. This AST annotation allows clangd to communicate to users the
 availability information to language server protocol clients. This can drive
 more informed auto-complete, refactoring, and in-editor diagnostics.
+
+The Clang availability attribute works well when a function's availability
+depends only on the shader model version. However, the availability of some HLSL
+functions depends not only on the shader model version but also on the target
+shader stage. For example the derivative functions `ddx` and `ddy` were
+introduced in Shader Model 2.0 for use only in pixel shaders. In Shader Model
+6.6 their support was extended to compute, mesh and amplification shaders, and
+they are not available in any other shader stage.
+
+In order to encode this information we propose adding a new `environment`
+parameter to the Clang availability attribute. The allowed values would be
+identical to the environment component of the `llvm::Triple`. If the
+`environment` parameters is present, the declared availability attribute would
+apply only for targets with the same environment.
+
+Using the new `environment` parameter, the per-stage availability annotation for
+the derivative function `ddx` would look like this:
+
+```
+__attribute__((availability(shadermodel, introduced = 2.0, environment = pixel)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = compute)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = mesh)))
+__attribute__((availability(shadermodel, introduced = 6.6, environment = amplification)))
+__attribute__((availability(vulkan, introduced = 1.0)))
+__attribute__((clang_builtin_alias(__builtin_hlsl_ddx)))
+float ddx(float val);
+```
+
+If the `environment` parameter is not present, it means the function is available
+for all shader stages starting with the specified shader model version. If the
+parameter is present, then for non-library shaders it will be checked against the
+environment component of the target triple. For library shaders the
+`environment` parameter will be checked against the `[shader("...")]` attribute
+on the shader entry function.
 
 ### Diagnostic Modes
 
@@ -84,8 +108,7 @@ has been fully parsed, and requires construction of a call graph. In the relaxed
 mode, an AST visitor will traverse to all `CallExpr` nodes that are reachable
 from exported functions (either library exports or entry functions). If the
 callee of a `CallExpr` has availability annotations that signify that the API is
-unavailable for the target shader model and stage the compiler emits an
-_error_.
+unavailable for the target shader model and stage the compiler emits an _error_.
 
 Clang encodes the target shader model version in the target triple, and the
 shader stage in the `HLSLShaderAttr` which is implicitly or explicitly applied
@@ -238,7 +261,7 @@ When compiled with the `lib_6_3` profile under the _default_ mode, clang will
 emit the following error:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
+<>:1:9: error: 'ddx' is not available in vertex shaders
    9 |   return ddx(f);
      |          ^~~
 ```
@@ -247,7 +270,7 @@ When compiled with the `lib_6_3` profile under the _strict_ mode, clang will
 emit the following errors:
 
 ```
-<>:1:9: error: 'ddx' is available for pixel shaders beginning with Shader Model 2.0
+<>:1:9: error: 'ddx' is not available in vertex shaders
    9 |   return ddx(f);
      |          ^~~
 <>:6:9: error: 'WaveMultiPrefixSum' is available beginning with Shader Model 6.5
@@ -268,5 +291,29 @@ One presentation of such a case is if a call to an unavailable API occurs under
 control flow. If the compiler optimizes away the control flow it may remove the
 API call. In these cases shaders that compile and verify successfully with DXC
 may produce warnings or errors with Clang.
+
+### Diagnostic text
+
+The diagnostic message should reflect whether the function is not available for
+the shader model version or just for the specific shader stage. In other words,
+it should be relevant to the entry point type. 
+
+If function `a` is available in a shader model higher than the target shader
+model regardless of target shader stage the diagnostic message should be:
+```
+'a' is only available on Shader Model x.y or newer
+```
+
+If function `a` is not available in shader stage `S` regardless of shader model
+version the diagnostic message should be:
+```
+'a' is not available in S shader environment on Shader Model x.y
+```
+
+If function `a` is available in shader stage `S` in shader model higher than the
+target shader model the diagnostic message should be:
+```
+'a' is only available in S shader environment on Shader Model x.y or newer
+```
 
 <!-- {% endraw %} -->
