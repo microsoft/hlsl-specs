@@ -63,12 +63,13 @@ supports the following features.
 * [PDB Symbol Access](#shader-pdbs)
 
 These features will also need to be supported by the new c-style library.
-Code snippets on how to compile a shader using the COM library are located
+Code snippets on how to use the COM library are located
 in [DXC api code snippets](#dxc-code-snippets).
 
+### DXC Library Api descriptions and code snippets
 
 The following interfaces are used to work with data being passed to/from the
-library.
+DXC library.
 
 #### Buffers
 
