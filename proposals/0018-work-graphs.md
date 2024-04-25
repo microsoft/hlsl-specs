@@ -551,9 +551,11 @@ void GroupMemoryBarrierWithGroupSync() {
 }
 ```
 
-> Note: These equivalent forms are not currently mapped to the previous DXIL
-> Barrier operation on prior shader models.  The new barrier is only available
-> on SM 6.8 and above.
+> Note: The new barrier is only available on shader model 6.8 and above.
+> Although there are some cases where there is an equivalent DXIL operation
+> for prior shader models, there is not a complete mapping from one to the
+> other, which would only make it partially available. This design allows for a
+> consistent set of rules that can easily be validated early on in compilation.
 
 ### New Structure Attributes
 
