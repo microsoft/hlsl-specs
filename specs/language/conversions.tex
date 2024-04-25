@@ -172,16 +172,9 @@ to a higher conversion rank.
 \Sub{Floating Point Conversion Rank}{Conv.rank.float}
 
 \begin{itemize}
-  \item No two floating point types shall have the same conversion rank even if
-  they have the same representation.
-  \item The rank of a floating point type shall be greater than the rank of any
-  floating point type with a smaller size.
+  \item The rank \texttt{half} shall be greater than the rank of \texttt{min16float}.
   \item The rank \texttt{float} shall be greater than the rank of \texttt{half}.
-  \item The rank of a minimum precision floating point type shall be less than
-  the rank of any other minimum precision floating point type with a larger
-  minimum value representation size.
-  \item The rank of a minimum precision floating point type shall be less than
-  the rank of all standard floating point types.
+  \item The rank \texttt{double} shall be greater than the rank of \texttt{float}.
   \item For all floating point types \texttt{T1}, \texttt{T2}, and \texttt{T3}:
   if \texttt{T1} has greater rank than \texttt{T2} and \texttt{T2} has greater
   rank than \texttt{T3}, then \texttt{T1} shall have greater rank than
