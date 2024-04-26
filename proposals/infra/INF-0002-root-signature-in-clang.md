@@ -193,8 +193,7 @@ there are remaining validations performed during backend codegen.
 
 The in-memory representation is guaranteed to be valid as far as the above
 checks are concerned. For example, this means that the in-memory format cannot
-represent incorrect register types. See [AST In-memory
-format](#ast-in-memory-format) for details.
+represent incorrect register types. 
 
 The root signature AST nodes are serialized / deserialized as normal bitcode.
 
@@ -209,20 +208,22 @@ RootSignature[
  "RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),"
  "CBV(b0, space=1),"
  "StaticSampler(s1),"
- "DescriptorTable(SRV(t0, numDescriptors=unbounded))"
+ "DescriptorTable("
+ "  SRV(t0, numDescriptors=unbounded),"
+ "  UAV(u5, space=1, numDescriptors=10))"
 ]
 ```
 
 When parsed will produce a the equivalent of:
 
 ```c++
-// placeholder: update this once detailed design complete
 parsedRootSignature = RootSignature{
   RootFlags(ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
-  RootCBV(0, 1),
-  StaticSampler(1),
+  RootCBV(0, 1), // register 0, space 1
+  StaticSampler(1, 0), // register 1, space 0
   DescriptorTable({
-    SRV(0, unbounded)
+    SRV(0, 0, unbounded), // register 0, space 0, unbounded
+    UAV(5, 1, 10) // register 5, space 10, 10 descriptors
   })
 };
 ```
@@ -246,12 +247,13 @@ Example for same root signature as above:
 ; placeholder - update this once detailed design complete
 !directx.rootsignatures = !{!2}
 !2 = !{ptr @main, !3 }
-!3 = !{ !4, !5, !6, !7 }
-!4 = !{ !"RootFlags", i32 1 }
-!5 = !{ !"RootCBV", i32 1, i32 0 }
-!6 = !{ !"StaticSampler", i32 1, i32 0, ... }
-!7 = !{ !"DescriptorTable", !8 }
-!8 = !{ !"SRV", i32 0, i32 -1 }
+!3 = !{ !4, !5, !6, !7 } ; reference 4 root parameters
+!4 = !{ !"RootFlags", i32 1 } ; root flags, 1 is numeric value of flags
+!5 = !{ !"RootCBV", i32 0, i32 1, i32 0, i32 0 } ; register 0, space 1, 0 = visiblity, 0 = flags
+!6 = !{ !"StaticSampler", i32 1, i32 0, ... } ; register 1, space 0, (additional params omitted)
+!7 = !{ !"DescriptorTable", i32 0, !8, !9 } ;  0 = visibility, 2 ranges,!8 and !9
+!8 = !{ !"SRV", i32 0, i32 0, i32 -1, i32 0 } ; register 0, space 0, unbounded, flags 0
+!9 = !{ !"UAV", i32 5, i32 1, i32 10, i32 0 } ; register 5, space 1, 10 descriptors, flags 0
 ```
 
 
@@ -272,11 +274,12 @@ rootSignature = RootSignature(
   { // parameters
     RootCBV(0, 1),
     DescriptorTable({
-      SRV(0, unbounded)
+      SRV(0, 0, unbounded, 0),
+      UAV(5, 0, 10, 0)
     })
   },
   { // static samplers
-    StaticSampler(1)
+    StaticSampler(1, 0)
   });
 ```
 
@@ -306,10 +309,6 @@ elimation has completed.
 ## Detailed design
 
 ### Validations in Sema
-
-TODO
-
-### AST In-memory format
 
 TODO
 
