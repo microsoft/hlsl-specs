@@ -298,14 +298,6 @@ against the shader to ensure that any registers that the shader uses are bound
 in the root signature. This validation needs to occur after any dead-code
 elimation has completed.
 
-
-> **Open Question** - could we just use the D3D12
-> `D3D12_VERSIONED_ROOT_SIGNATURE_DESC` datastructures for this, rather than
-> building our own parallel versions? If so, could we even try and get D3D's
-> serialization code open-sourced so we don't need to maintain multiple
-> implementations of it?
-
-
 ## Detailed design
 
 ### Validations in Sema
@@ -378,6 +370,19 @@ As this would strictly be an optimization and isn't required for correctness,
 this is something that will be considered if profiling shows us that
 * multiple duplicate root signatures is a common scenario and
 * parsing them takes a significant amount of time.
+
+### Reused / share D3D code
+
+We could conceivably just use the D3D12 `D3D12_VERSIONED_ROOT_SIGNATURE_DESC`
+datastructures for this, rather than building our own parallel versions. Also,
+we could even try and get D3D's serialization code open-sourced so we don't need
+to maintain multiple implementations of it. This doesn't mesh well with LLVM
+since it would be adding external dependencies. We would also need to ensure
+that LLVM can be built in all the host environments it supports - this means
+binary dependencies are not viable, and any existing code would likely need to
+be reworked so much for portability and comformance with LLVM coding conventions
+that the effort would not be worthwhile.
+
 
 
 ## Acknowledgments (Optional)
