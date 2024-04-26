@@ -369,6 +369,18 @@ feature without state object support and accept that some refactoring in this
 area may be necessary to share code between root signatures in attributes and
 root signatures in subojects.
 
+### Deduplicate root signatures
+
+It's possible that the same root signature string could be presented to the
+compiler multiple times. An extra layer of indirection in the parsing code could
+allow us to avoid parsing the root signature multiple times.
+
+As this would strictly be an optimization and isn't required for correctness,
+this is something that will be considered if profiling shows us that
+* multiple duplicate root signatures is a common scenario and
+* parsing them takes a significant amount of time.
+
+
 ## Acknowledgments (Optional)
 
 
