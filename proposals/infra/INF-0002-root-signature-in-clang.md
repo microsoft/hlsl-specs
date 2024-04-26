@@ -121,7 +121,7 @@ float4 main(float4 coord : COORD) : SV_TARGET {
 The compiler can then verify that any resources used from this entry point are
 compatible with this root signature.
 
-In addition, when using [DXR State
+In addition, when using [HLSL State
 Objects](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-state-object)
 root signatures can also be specified using `GlobalRootSignature` and
 `LocalRootSignature`, where the same string format is used with the state object. eg:
@@ -140,6 +140,10 @@ SubobjectToExportsAssociation my_association = {
     "MyMissShader"
 };
 ```
+
+> Note: HLSL State Objects are out of scope for this proposal, and so support
+> for LocalRootSignature and GlobalRootSignature is not covered in this
+> document.
 
 #### Note on the root signature domain specific language
 
@@ -172,11 +176,9 @@ float4 eg2() : SV_TARGET { return b[0]; }
 
 ### Root Signatures in the AST
 
-Following the pattern used for other attributes such as
-[Uuid](https://github.com/llvm/llvm-project/blob/llvmorg-18.1.4/clang/include/clang/Basic/Attr.td#L3173),
-two new AST nodes are added.  `HLSLRootSignatureAttr` (defined in `Attr.td`)
-stores the root signature's string definition.  `HLSLRootSignatureDecl` (defined
-in C++ code) stores the parsed root signature.
+A new attribute, `HLSLRootSignatureAttr` (defined in `Attr.td`), is added to
+capture the string defining the root signature. `AdditionalMembers` is used to
+add a member that holds the parsed representation of the root signature.
 
 Parsing of the root signature string happens in Sema, and some validation and
 diagnostics can be produced at this stage. For example:
@@ -195,9 +197,6 @@ represent incorrect register types. See [AST In-memory
 format](#ast-in-memory-format) for details.
 
 The root signature AST nodes are serialized / deserialized as normal bitcode.
-
-> **Open Question** - how do Global/Local root signatures appear in the AST? Can
-> this be deferred until we start working on ray tracing later?
 
 In the root signature DSL, a root signature is made up of a list of "root
 elements". The in-memory datastructures are designed around this concept where
@@ -358,12 +357,17 @@ In addition, the specific serialized format is subject to change as the
 root signature specification evolves and it seems that this is something that
 Clang and LLVM should be decoupled from as much as possible.
 
+### Introduce a HLSLRootSignatureDecl
 
-<!--
-If alternative solutions were considered, please provide a brief overview. This
-section can also be populated based on conversations that occur during
-reviewing.
--->
+Although the current design does not support HLSL state objects - specifically
+the `LocalRootSignature` and `GlobalRootSignature` subobjects - we could
+anticipate their needs and add a `HLSLRootSignatureDecl` that could be shared
+between `HLSLRootSignatureAttr` and whatever AST nodes are introduces for these
+subojects. The problem is that we'd need to design pretty much the entire HLSL
+state objects feature to do this properly. Instead, we chose to build a complete
+feature without state object support and accept that some refactoring in this
+area may be necessary to share code between root signatures in attributes and
+root signatures in subojects.
 
 ## Acknowledgments (Optional)
 
