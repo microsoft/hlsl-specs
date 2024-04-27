@@ -186,14 +186,11 @@ diagnostics can be produced at this stage. For example:
 * is the root signature string syntactically correct?
 * is the specified root signature internally consistent?
   * is the right type of register used in each parameter / descriptor range?
+* is each register bound only once?
 * see [Validations in Sema](#validations-in-sema) for full list
 
-Note that the root signature is not guaranteed to be valid at this point, and
-there are remaining validations performed during backend codegen.
-
 The in-memory representation is guaranteed to be valid as far as the above
-checks are concerned. For example, this means that the in-memory format cannot
-represent incorrect register types. 
+checks are concerned.
 
 The root signature AST nodes are serialized / deserialized as normal bitcode.
 
@@ -237,6 +234,15 @@ itself is a straightforward transcription of the in-memory data structure - so
 it is a list of root elements.
 
 See [Metadata Schema](#metadata-schema) for details.
+
+The IR schema has been designed so that many of the things that need to be
+validated during parsing can only be represented in valid way. For example, it
+is not possible to have an incorrect register type for a root parameter /
+descriptor range. However, it is possible to represent root signatures where
+registers are bound multiple times, or where there are multiple RootFlags
+entries, so subsequent stages should not assume that any given root signature in
+IR is valid.
+
 
 > **Open Question**: what should the named metadata be?  There's options I
 > think...
@@ -285,13 +291,9 @@ rootSignature = RootSignature(
 
 At this point, final validation is performed to ensure that the root signature
 itself is valid. One key validation here is to check that each register is only
-bound once in the root signature. Validation is performed this late to avoid
-requiring every frontend implementation to perform the same validation.
-
-> **Open Question** - although it seems important to perform the above
-> validation here for IR that didn't come directly from clang, maybe there'd
-> still be value in performing the same validation in Sema? Maybe it's ok to
-> just trust the IR root signature?
+bound once in the root signature. Even though this validation has been performed
+in the Clang frontend, we also need to support scenarios where the IR comes from
+other frontends and so the validation must be performed here as well.
 
 Once the root signature itself has been validated, validation is performed
 against the shader to ensure that any registers that the shader uses are bound
