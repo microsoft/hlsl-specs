@@ -109,6 +109,12 @@ struct S;                    // declares S
 typedef int Int;             // declares Int
 using N::d;                  // declares d
 using Float = float;         // declares Float
+cbuffer CB {                 // does not declare CB
+  int z;                     // declares z
+}
+tbuffer TB {                 // does not declare TB
+  int w;                     // declares w
+}
 \end{HLSL}
 
 \Sec{Types}{Basic.types}
