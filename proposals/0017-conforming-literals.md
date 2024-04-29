@@ -272,4 +272,27 @@ the literal types that can be explicitly specified. This will result in
 conversion warnings on implicit conversion to minimum precision types which will
 notify users of the places where their code may need to be updated.
 
+### New -Wdouble-promotion Warnings
+
+Along with the implementation of this proposal a new warning group
+`-Wdouble-promotion` is introduced to identify implicit promotions for floating
+point types. Implicit promotions can have significant performance impact on
+code, and this proposal may introduce new cases where minimum precision or
+16-bit types are promoted to larger types.
+
+The new warnings will be modeled off Clang's `-Wdouble-promotion` warning of the
+form:
+
+```
+warning: implicit conversion increases floating-point precision: 'min16float' to 'float'
+```
+
+These warnings will be default disabled, but available in all language modes.
+
+> Note: The title of the new warning is chosen to match Clang's existing warning
+> _which does_ cover all promotion cases for floating point types even if the
+> end value isn't `double`. By adopting this name, no change is required to
+> support these warnings in Clang, and users will have the same command line
+> option to enable this warning for DXC and Clang.
+
 <!-- {% endraw %} -->
