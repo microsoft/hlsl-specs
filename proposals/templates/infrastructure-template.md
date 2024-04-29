@@ -29,6 +29,7 @@
 * PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
 * Issues:
   [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
+* Posts: [LLVM Discourse](https://discourse.llvm.org/)
 
 ## Introduction
 
@@ -53,14 +54,17 @@ safer, or more efficient?
 
 _The detailed design is not required until the feature is under review._
 
-This section should grow into a specification that will live in the
-specifications directory once complete. Each feature will need different levels
-of detail here, but some common things to think through are:
+This section should grow into a full specification that will provide enough
+information for someone who isn't the proposal author to implement the feature.
+It should also serve as the basis for documentation for the feature. Each
+feature will need different levels of detail here, but some common things to
+think through are:
 
 * Is there any potential for changed behavior?
 * Will this expose new interfaces that will have support burden?
 * How will this proposal be tested?
 * Does this require additional hardware/software/human resources?
+* What documentation should be updated or authored?
 
 ## Alternatives considered (Optional)
 
