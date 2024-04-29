@@ -80,11 +80,17 @@ overloads.
 
 ### Problems with this solution
 
-This is a significant change in behavior which will cause subtle issues for
-existing shaders due to variations in precision of compile-time constant
-evaluation. This behavior difference will cause subtle bugs that will be
-challenging to diagnose in the midst of a larger compiler transition (i.e.
-adopting Clang).
+This is a significant change in behavior which will cause issues for existing
+shaders. We have observed rendering defects caused by the difference in
+classifying types for integer literals (more details below). We have also
+speculated that issues could arise for two further reasons: (1) variations in
+precision of compile-time constant evaluation, and (2) the change in conversion
+rank for un-suffixed literals (`literal float` was the lowest rank `float` ranks
+above smaller types).
+
+In the observed case and the two hypothetical cases, this behavior difference
+will cause bugs that will be challenging to diagnose in the midst of a larger
+compiler transition (i.e. adopting Clang).
 
 For that reason, this feature proposal targets HLSL 202x, with support for the
 new literal behavior in DXC.
