@@ -91,6 +91,63 @@ deferred may be provided with some justification for the deferral although the
 requirements for justification are not high and could be as simple as
 "insufficient resources".
 
+### Differences for Infrastructure Proposals
+
+Infrastructure proposals may skip the **Under Review** phase and go straight
+from **Under Consideration** to **Accepted**. This flow is expected in cases
+where the proposal does not impact end users, and may garner little to no
+feedback from outside the core developers.
+
+In cases where contributions are being made to the LLVM-Project, the **Under
+Review** phase may be useful for communicating when a proposal has been posted
+as an RFC to [LLVM's Discourse](https://discourse.llvm.org/). In this case the
+proposal header should be updated to include a link to the Discord post.
+
+### Moving Through States
+
+#### Merging a New Proposal
+
+The bar for a proposal to be merged should be kept low. Ideally a PR introducing
+a new proposal should be reviewed for obvious mistakes (typos, grammar, etc),
+and general alignment with project goals and direction. If the proposal aligns
+with the goals and direction, it should be merged as **Under Consideration**,
+and the authors should file issues tracking the work to flesh out and complete
+the detailed design.
+
+#### Completing the Detailed Design
+
+As the proposal authors and sponsors work through issues with the proposal and
+flesh out a complete design each change to the proposal will be reviewed.
+
+#### Final Review
+
+Once the authors and sponsors feel that all outstanding issues are resolved a
+sponsor will file an issue to propose a review period, and create a PR to mark
+the proposal as **Under Review**.
+
+During the review period the sponsor will reach out to stakeholders (users,
+partners, etc) to collect feedback about the proposal. Any issues that need to
+be addressed will be filed and tracked.
+
+If there are outstanding issues at the end of the scheduled review period, the
+review period will be extended by one week. The extensions will continue
+week-by-week until all outstanding issues are addressed.
+
+#### Accepting a Proposal
+
+After the review period concludes and all outstanding issues are addressed, a
+sponsor will create a PR to mark the proposal as **Accepted**, at which time we
+will accept PRs to begin implementation.
+
+#### Implementation
+
+During implementation a proposal may need to further evolve as the implementors
+discover issues. Those issues will be addressed with PRs to the proposal and
+reviewed.
+
+Once the implementation is complete and all associated issues are resolved, a
+sponsor will create a PR to mark the proposal as **Completed**.
+
 ## Filing Issues
 
 Issues in this repository publicly tracks feature requests for the HLSL language
