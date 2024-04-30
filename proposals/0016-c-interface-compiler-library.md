@@ -61,6 +61,7 @@ supports the following features.
 * [Reflection Data Access](#shader-reflection)
 * [DXIL Container Access](#dxil-container-access)
 * [PDB Symbol Access](#shader-pdbs)
+* [Intellisense Apis](#intellisense)
 
 These features will also need to be supported by the new c-style library.
 Code snippets on how to use the COM library are located
@@ -160,10 +161,10 @@ struct IDxcResult : public IDxcOperationResult {
 };
 ```
 
-#### Helper library
-The shader compiler library also provides a helper library IDxcUtils that is
-used to create/consume the different data in the forms referred to above.
-It is obtained by calling DxcCreateInstance().
+#### IDxcUtils
+The shader compiler library also provides a set of utility functions via
+IDxcUtils. This can be used to create/consume the different data in the forms
+referred to above. It is obtained by calling DxcCreateInstance().
 
 ```c++
 com_ptr<IDxcUtils> utils;
@@ -381,8 +382,6 @@ about the many different parts of the shader.
 * [Buffers](#shader-buffers-description)
 * [Variables and type information](#shader-types=and-variables)
 * [Functions and parameters](#shader-functions-and-parameters)
-
-PIX uses this interface to obtain nice buffer formatting behavior for the UI.
 
 ```c++
 struct ID3D12ShaderReflection : public IUnknown {
@@ -730,6 +729,36 @@ struct IDxcPdbUtils : public IUnknown {
   HRESULT OverrideArgs(DxcArgPair *pArgPairs, UINT32 uNumArgPairs);
   HRESULT OverrideRootSignature(const WCHAR *pRootSignature);
 };
+```
+
+#### Intellisense
+There is a whole additional set of interfaces shipped as part of the dxc
+compiler download included in dxcisense.h.  These interfaces are used to
+implement shader source GUI experiences.  
+
+This document will not go into much detail on these interfaces but they do
+need to be called out as supported by the DXC library.  PIX is an example of a
+tool that currently uses these interfaces.  Support for things like this in
+clang can be done via a language server protocol.  Language service protocols
+standardize the communication between tooling and code editors.
+[Language Server Protocol](https://learn.microsoft.com/en-us/visualstudio/extensibility/language-server-protocol?view=vs-2022)
+
+```c++
+struct IDxcCursor;
+struct IDxcDiagnostic;
+struct IDxcFile;
+struct IDxcInclusion;
+struct IDxcIntelliSense;
+struct IDxcIndex;
+struct IDxcSourceLocation;
+struct IDxcSourceRange;
+struct IDxcToken;
+struct IDxcTranslationUnit;
+struct IDxcType;
+struct IDxcUnsavedFile;
+struct IDxcCodeCompleteResults;
+struct IDxcCompletionResult;
+struct IDxcCompletionString;
 ```
 
 #### Shader Validation
