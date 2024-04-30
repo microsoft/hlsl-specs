@@ -301,8 +301,8 @@ table below in which its value can be represented\footnote{This behavior matches
     \texttt{u} or \texttt{U} & \texttt{uint32\_t} & \texttt{uint32\_t} \\
                              & \texttt{uint64\_t} & \texttt{uint64\_t} \\
     \hline
-    \texttt{l} or \texttt{L} & \texttt{uint32\_t} & \texttt{uint32\_t} \\
-                             & \texttt{uint64\_t} & \texttt{uint64\_t} \\
+    \texttt{l} or \texttt{L} & \texttt{int64\_t} & \texttt{int64\_t} \\
+                             &  & \texttt{uint64\_t} \\
     \hline
     Both \texttt{u} or \texttt{U} & \texttt{uint64\_t} & \texttt{uint64\_t} \\
     and \texttt{l} or \texttt{L}  &  &  \\
@@ -313,6 +313,9 @@ table below in which its value can be represented\footnote{This behavior matches
 \p If the specified value of an integer literal cannot be represented by any
 type in the corresponding list, the integer literal has no type and the program
 is ill-formed.
+
+\p An implementation may support the integer suffixes \texttt{ll} and
+\texttt{ull} as equivalent to \texttt{l} and \texttt{ul} respectively.
 
 %\Sub{Character Literals}{Lex.Literal.Char}
 
