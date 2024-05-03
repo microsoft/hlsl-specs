@@ -278,7 +278,9 @@ the literal types that can be explicitly specified. This will result in
 conversion warnings on implicit conversion to minimum precision types which will
 notify users of the places where their code may need to be updated.
 
-### New -Wdouble-promotion Warnings
+### New Warnings
+
+#### -Wdouble-promotion
 
 Along with the implementation of this proposal a new warning group
 `-Wdouble-promotion` is introduced to identify implicit promotions for floating
@@ -300,5 +302,23 @@ These warnings will be default disabled, but available in all language modes.
 > end value isn't `double`. By adopting this name, no change is required to
 > support these warnings in Clang, and users will have the same command line
 > option to enable this warning for DXC and Clang.
+
+#### -Whlsl-legacy-literal
+
+The new `-Whlsl-legacy-literal` warning group identifies hexadecimal and octal
+literal values that will change signedness under the new HLSL language rules.
+The change in sign behavior can have a huge impact on bitwise operations as
+described in the cases above.
+
+These warnings will be default disabled, but available in all language modes.
+
+The following warning text will be emitted for any octal or hexadecimal literal
+that has its most-significant bit set. For legacy language modes, the position
+of the most significant bit is based on a 32-bit representation if the value is
+less than or equal to `UINT32_MAX`, otherwise it is 64-bit.
+
+```
+warning: literal value is treated as signed in HLSL before 202x, and unsigned in 202x and later
+```
 
 <!-- {% endraw %} -->
