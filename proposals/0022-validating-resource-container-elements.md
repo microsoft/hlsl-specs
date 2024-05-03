@@ -12,8 +12,13 @@
 ## Introduction
 
 There's a specific closed set of types that are valid as element types for an HLSL
-resource, which includes int/uint of sizes 16/32/64, half, float, and double. Arrays of
-these types are not valid. If someone writes `RWBuffer<MyCustomType>` we should reject it
+resource, which includes int/uint of sizes 16/32/64, half, float, and double. Structs that
+contain fields of these primitive types (where all fields in the struct have the same type)
+are also allowed as resouce element types. Structs that have structs as fields or arrays of
+structs as fields are also allowed, as long as everything can fit in 4 32-bit quantities.
+Arrays of these types are not valid as resource element types. Additionally, resource types 
+are not allowed as resource element types, even if the underlyinh resource type has a valid
+primitive element type. If someone writes `RWBuffer<MyCustomType>` we should reject it 
 and give the user a nice diagnostic. 
 
 ## Motivation
