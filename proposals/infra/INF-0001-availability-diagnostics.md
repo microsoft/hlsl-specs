@@ -3,9 +3,9 @@
 # Strict Availability Diagnostics
 
 * Proposal: [INF-0001](INF-0001-availability-diagnostics.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Helena Kotas](https://github.com/hekota)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Accepted**
 * Planned Version: 20YY (Clang-only)
 
 ## Introduction
