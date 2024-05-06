@@ -31,23 +31,24 @@ used, but the compiler doesn't communicate that to the user.
 
 | Resource Class | Resource Kind | Binding Prefix | Diagnostic |
 |-|-|-|-|
-| SRV | "Texture1D" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "Texture2D" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "Texture2DMS" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "Texture3D" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "TextureCube" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "Texture1DArray" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "Texture2DMSArray" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "TextureCubeArray" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "TypedBuffer" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "RTAccelerationStructure" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "FeedbackTexture2D" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| SRV | "FeedbackTexture2DArray" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| UAV | "RawBuffer" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| UAV | "StructuredBuffer" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| UAV | "TBuffer" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| CBuffer | "CBuffer" | b | no error | c | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
-| Sampler | "Sampler" | s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture1D" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture2D" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture2DMS" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture3D" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "TextureCube" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture1DArray" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture2DArray" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "Texture2DMSArray" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "TextureCubeArray" | t, s | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "TypedBuffer" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. (e.g. RWBuffer) |
+| SRV | "RTAccelerationStructure" | ? | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| SRV | "FeedbackTexture2D" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. SAMPLER_FEEDBACK_MIN_MIP was used as a template argument.|
+| SRV | "FeedbackTexture2DArray" | u | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. SAMPLER_FEEDBACK_MIN_MIP was used as a template argument.|
+| UAV | "RawBuffer" | ? | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| UAV | "StructuredBuffer" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| UAV | "TBuffer" | ? | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| CBuffer | "CBuffer" | ? | no error | c | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. |
+| Sampler | "Sampler" | t | If the binding prefix doesn't match, emit an error that the expected binding prefix is expected. (e.g. sampler) |
 | None | intangible types | any | Any intangible type will emit a warning declaring that it cannot be used as a resource. The warning will be treated as an error by default, but a compiler option may be used to treat it as just a warning. |
 | None | unions| any | Unions will emit a warning declaring that it cannot be used as a resource. The warning will be treated as an error by default, but a compiler option may be used to treat it as just a warning. |
 | None | bitfields | any | Bitfields will emit a warning declaring that it cannot be used as a resource. The warning will be treated as an error by default, but a compiler option may be used to treat it as just a warning. |
