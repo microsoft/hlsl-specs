@@ -1,5 +1,121 @@
 \Ch{Basic Concepts}{Basic}
 
+\begin{note}
+  \p HLSL inherits a great deal if its behavior from C and C++. Some of that was
+  intentional by aligning syntax early in the development of the language, some
+  of it was a side effect of DXC being implemented on top of Clang.
+
+  \p This chapter includes a lot of definitions that are inherited from C and C++.
+  Some are identical to C or C++, others are slightly different. HLSL is neither
+  a subset nor a superset of C or C++, and cannot be simply described in terms
+  of C or C++. This specification includes all definitions for clarity to the
+  reader.
+\end{note}
+
+\Sec{Preamble}{Basic.preamble}
+
+\p An \textit{entity} is a value, object, function, enumerator, type, class
+member, bit-field, template, template specialization, namespace, or pack.
+
+\p A \textit{name} is a use of an \textit{identifier} (\ref{Expr.Primary.ID}),
+\textit{operator-function-id} (\ref{Overload.operator}),
+\textit{conversion-function-id} (\ref{Classes.Conversions}),
+or \textit{template-id} (\ref{Template}) that denotes any entity or
+\textit{label} (\ref{Stmt.Label}).
+
+\p Every name that denotes an entity is introduced by a \textit{declaration}.
+Every name that denotes a label is introduced by a \textit{labeled statement}
+(\ref{Stmt.Label})\footnote{HLSL does not have \texttt{goto}, and labeled
+statements are only valid within \texttt{switch} statements.}.
+
+\p A \textit{variable} is introduced by the declaration of a reference other
+than a non-static data member of an object. The variable's name denotes the
+reference or object.
+
+\p Whenever a name is encountered it is necessary to determine if the name
+denotes an entity that is a type or template. The process for determining if a
+name refers to a type or template is called \textit{name lookup}.
+
+\p Two names are the same name if:
+\begin{itemize}
+\item they are identifiers comprised of the same character sequence, or
+\item they are operator-function-ids formed with the same operator, or
+\item they are conversion-function-ids formed with the same type, or
+\item they are template-ids that refer to the same class or function.
+\end{itemize}
+
+\p \begin{note}
+  This section matches \gls{isoCPP} section \textbf{[basic]} except for the
+  exclusion of \texttt{goto} and \textit{literal operators}.
+\end{note}
+
+\Sec{Declarations and definitions}{Basic.Decl}
+
+\p A declaration (\ref{Decl}) may introduce one or more names into a translation
+unit or redeclare names introduced by previous declarations. If a declaration
+introduces names, it specifies the interpretation and attributes of these names.
+A declaration may also have effects such as:
+\begin{itemize}
+\item verifying a static assertion (\ref{Decl}),
+\item use of attributes (\ref{Decl}), and
+\item controlling template instantiation (\ref{Template.Inst}).
+\end{itemize}
+
+\p A declaration is a \textit{definition} unless:
+\begin{itemize}
+\item it declares a function without specifying the function's body
+(\ref{Decl.Function}),
+\item it is a parameter declaration in a function declaration that does not
+specify the function's body (\ref{Decl.Function}),
+\item it is a global or namespace member declaration without the \texttt{static}
+specifier\footnote{Global variable declarations are implicitly constant and
+external in HLSL.},
+\item it declares a static data member in a class definition,
+\item it is a class name declaration,
+\item it is a template parameter,
+\item it is a \texttt{typedef} declaration (\ref{Decl}),
+\item it is an \textit{alias-declaration} (\ref{Decl}),
+\item it is a \textit{using-declaration} (\ref{Decl}),
+\item it is a \textit{static\_assert-declaration} (\ref{Decl}),
+\item it is an \textit{empty-declaration} (\ref{Decl}),
+\item or a \textit{using-directive} (\ref{Decl}).
+\end{itemize}
+
+\p The two examples below is adapted from \gls{isoCPP} \textbf{[basic.def]}. All
+but one of the following are definitions:
+\begin{HLSL}
+int f(int x) { return x+1; } // defines f and x
+struct S {int a;int b;};     // defines S, S::a, and S::b
+struct X {                   // defines X
+  int x;                     // defines non-static member x
+  static int y;              // declares static data member y
+};
+int X::y = 1;                // defines X::y
+enum { up, down };           // defines up and down
+namespace N {                // defines N
+int d;                       // declares N::d
+static int i;                // defines N::i
+}
+\end{HLSL}
+
+\p All of the following are declarations:
+\begin{HLSL}
+int a;                       // declares a
+const int c;                 // declares c
+X anX;                       // declares anX
+int f(int);                  // declares f
+struct S;                    // declares S
+typedef int Int;             // declares Int
+using N::d;                  // declares d
+using Float = float;         // declares Float
+cbuffer CB {                 // does not declare CB
+  int z;                     // declares z
+}
+tbuffer TB {                 // does not declare TB
+  int w;                     // declares w
+}
+\end{HLSL}
+
 \Sec{Types}{Basic.types}
 
 \p The \textit{object representation} of an object of type \texttt{T} is the
