@@ -26,6 +26,13 @@ an error will be emitted recommending the use of the 'b, c, or i' binding
 prefix, however these prefixes are no longer in support. Additionally,
 it is possible the user is unaware that this resource won't actually be
 used, but the compiler doesn't communicate that to the user.
+It would be great for any HLSL developer to immedaitely have access to 
+the following questions:
+For any valid resource type that needs to be bound, what are the set of
+valid binding prefixes for that resource, and what are all the possible 
+diagnostics that can be emitted if the resource is given a binding 
+prefix that isn't in the set of valid binding prefixes?
+The design below aims to specify the answer to these questions.
 
 ## Proposed solution
 
@@ -61,7 +68,7 @@ resource class can be determined. Once these are known, the binding prefix is
 checked for validity. If there is an incompatibility, a diagnostic will be
 emitted. In the case that there is no resource attribute, futher analysis is
 required. The compiler will run some analysis on the given type to see whether
-or not it is among the prohibited types. If the type is intangible, a union,
+or not it is among the prohibited types. If the type is non-intangible, a union,
 or a bitfield, an error will be emitted. Otherwise, the type will be assumed
 to be an aggregate type, a UDT. The UDT will be analyzed to determine whether
 any valid resource objects exist within. If none exist, then an error will be 
@@ -71,5 +78,5 @@ within the struct.
 ## Alternatives considered (Optional)
 
 ## Acknowledgments (Optional)
-
+* Tex Riddell
 <!-- {% endraw %} -->
