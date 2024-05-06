@@ -1,0 +1,97 @@
+\Ch{Overloading}{Overload}
+
+\begin{note}
+\p HLSL inherits much of its overloading behavior from C++. This chapter is
+extremely similar to \gls{isoCPP} clause \textbf{[over]}. Notable differences
+exist around HLSL's parameter modifier keywords, program entry points, and
+overload conversion sequence ranking.
+\end{note}
+
+\p When a single name is declared with two or more different declarations in the
+same scope, the name is \textit{overloaded}. A declaration that declares an
+overloaded name is called an \textit{overloaded declaration}. The set of
+overloaded declarations that declare the same overloaded name are that name's
+\textit{overload set}.
+
+\p Only function and template declarations can be overloaded; variable and type
+declarations cannot be overloaded.
+
+\Sec{Overloadable Declarations}{Overload.Decl}
+
+\p This section specifies the cases in which a function declaration cannot be
+overloaded. Any program that contains an invalid overload set is ill-formed.
+
+\p In overload set is invalid if:
+\begin{itemize}
+  \item One or more declaration in the overload set only differ by return type.
+\begin{HLSL}
+int Yeet();
+uint Yeet(); // ill-formed: decls differ only by return type
+\end{HLSL}
+
+  \item An overload set contains more than one member function declarations with
+  the same \textit{parameter-type-list}, and one of those declarations is a
+  \texttt{static} member function declaration (\ref{Classes.Static}).
+\begin{HLSL}
+class Doggo {
+  static void pet();
+  void pet();              // ill-formed: static pet has the same parameter-type-list
+  void pet() const;        // ill-formed: static pet has the same parameter-type-list
+
+  void wagTail();          // valid: no conflicting static declaration.
+  void wagTail() const;    // valid: no conflicting static declaration.
+
+  static void bark(Doggo D);
+  void bark();             // valid: static bark parameter-type-list is different
+  void bark() const;       // valid: static bark parameter-type-list is different
+};
+\end{HLSL}
+
+  \item An overload set contains more than one entry function declaration
+  (\ref{Decl.Attr.Entry}).
+\begin{HLSL}
+[shader("vertex")]
+void VS();
+void VS(int);              // valid: only one entry point.
+
+[shader("vertex")]
+void Entry();
+
+[shader("compute")]
+void Entry(int);           // ill-formed: an overload set cannot have more than one entry function
+\end{HLSL}
+
+  \item An overload set contains more than one function declaration which only
+  differ in parameter declarations of equivalent types.
+\begin{HLSL}
+void F(int4 I);
+void F(vector<int, 4> I);  // ill-formed: int4 is a type alias of vector<int, 4>
+\end{HLSL}
+
+  \item An overload set contains more than one function declaration which only
+  differ in \texttt{const} specifiers.
+\begin{HLSL}
+void G(int);
+void G(const int);         // ill-formed: redeclaration of G(int)
+void G(int) {}
+void G(const int) {}       // ill-formed: redefinition of G(int)
+\end{HLSL}
+
+  \item An overload set contains more than one function declaration which only
+  differ in parameters mismatching \texttt{out} and \texttt{inout}.
+\begin{HLSL}
+void H(int);
+void H(in int);            // valid: redeclaration of H(int)
+void H(inout int);         // valid: overloading between in and inout is allowed
+
+void I(in int);
+void I(out int);           // valid: overloading between in and out is allowed
+
+void J(out int);
+void J(inout int);         // ill-formed: Cannot overload based on out/inout mismatch
+\end{HLSL}
+\end{itemize}
+
+\Sec{Overload Resolution}{Overload.Resoluiton}
+
+\Sec{Operators}{Overload.Operators}
