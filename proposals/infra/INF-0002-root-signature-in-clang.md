@@ -220,7 +220,7 @@ parsedRootSignature = RootSignature{
   StaticSampler(1, 0), // register 1, space 0
   DescriptorTable({
     SRV(0, 0, unbounded), // register 0, space 0, unbounded
-    UAV(5, 1, 10) // register 5, space 10, 10 descriptors
+    UAV(5, 1, 10) // register 5, space 1, 10 descriptors
   })
 };
 ```
@@ -281,7 +281,7 @@ rootSignature = RootSignature(
     RootCBV(0, 1),
     DescriptorTable({
       SRV(0, 0, unbounded, 0),
-      UAV(5, 0, 10, 0)
+      UAV(5, 1, 10, 0)
     })
   },
   { // static samplers
