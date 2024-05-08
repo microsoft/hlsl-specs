@@ -79,8 +79,8 @@ given some examples of different UDT's:
 | struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>  RWBuffer<float> RWBuf;<br>  RWBuffer<float> RWBuf2;<br>};<br> | register(t0) : register(s0); | None. Success because Buf gets bound to t0  and RWBuf gets bound to s0, and f is skipped. RWBuf2 gets assigned to s1  even though there is no explicit binding for s1. |
 | struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>}; <br>| register(t0) : register(s0); | None. Success because Buf gets bound to t0. Buf will also be bound to s0.|
 | struct Foo {<br>  struct Bar {<br>    RWBuffer<int> a;<br>    };<br>    Bar b;<br>}; | register(t0) | None. Success because Bar, the struct within Foo, has a valid resource that can be bound to t0. |
-| struct Foo {<br>  float f;<br>}; <br>| register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
-| struct Foo {<br>  struct Bar {<br>      float f;<br>    }<br>    Bar b;<br>};<br> | register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
+| struct Foo {<br>  float f;<br>}; <br>| register(t0) | DefaultError warning. "UDT resource 'Foo' does not contain an applicable resource type for binding prefix 't'"|
+| struct Foo {<br>  struct Bar {<br>      float f;<br>    }<br>    Bar b;<br>};<br> | register(t0) | DefaultError warning. "UDT resource 'Foo' does not contain an applicable resource type for binding prefix 't'"|
 
 Finally, if the candidate type is not a valid resource type or not a
 UDT, the final case will be entered. If the resource is among any
@@ -92,13 +92,13 @@ adheres to legacy behavior. All other binding prefixes applied to such
 a type will emit an error diagnostic that "the given type '%0' cannot be
 bound as a resource". If the binding prefix is 'b', a warning will be 
 emitted instead, that will be treated as an error by default:
-"binding prefix 'b' used for resource type '%0' which cannot be used
+"binding prefix 'b' used for resource type '%0', which cannot be used
 as a resource". Below are some examples:
 
 | non-intangible type | Binding statements | Diagnostic |
 |-|-|-|
-| `float f` | register(t0) | "error: the given type 'float' cannot be bound resource 'UAV'." |
-| `float f` | register(b0) | "warning: binding prefix 'b' used for resource type 'float' which cannot be used as a resource" |
+| `float f` | register(t0) | "error: 'float' is an invalid resource type for binding prefix 't'." |
+| `float f` | register(b0) | "warning: binding prefix 'b' used for resource type 'float', which cannot be used as a resource" |
 
 
 
@@ -187,11 +187,13 @@ M -- Yes -->N{Is the given
 binding prefix 'b'?}
 M -- No --> S[Assert, this should 
 be impossible]
-N -- Yes -->T[DefaultError warning: 
-resource &ltT&gt will be unused.]
+N -- Yes -->T[warning: binding prefix 
+'b' used for resource type 
+'&ltT&gt', which cannot 
+be used as a resource."]
 N -- No -->U[error: &ltT&gt is an invalid 
-resource for binding 
-prefix '&ltp&gt']
+resource type for 
+binding prefix '&ltp&gt']
 ```
 
 
