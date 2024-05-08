@@ -135,7 +135,7 @@ A[Type T bound to binding prefix p] --> B{Does T have or contain any type with t
 B -- Yes -->C{Is T a UDT?}
 B -- No --> M{Is T non-intangible?}
 C -- Yes -->D{Does T contain at least one valid resource for p?}
-C -- No -->G{Is T sampleable (is it a Texture* resource?)}
+C -- No -->G{Is T sampleable \(is it a Texture* resource?\)}
 D -- Yes -->E[No error]
 D -- No -->F[error: "UDT resource '<T>' does not contain an applicable resource type for binding prefix '<p>'"]
 G -- Yes -->H{Is the binding prefix 't' or 's'?}
