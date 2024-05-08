@@ -96,7 +96,7 @@ emitted instead, that will be treated as an error by default:
 as a resource". Below are some examples:
 
 | non-intangible type | Binding statements | Diagnostic |
-|-|-|
+|-|-|-|
 | `float f` | register(t0) | "error: the given type 'float' cannot be bound as a resource." |
 | `float f` | register(b0) | "warning: binding prefix 'b' used for resource type 'float' which cannot be used as a resource" |
 
