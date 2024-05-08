@@ -1,4 +1,4 @@
-* Proposal: [0002](0023-binding-prefixes.md)
+* Proposal: [0004](0004-binding-prefixes.md)
 * Author(s): [Joshua Batista](https://github.com/bob80905)
 * Sponsor: TBD
 * Status: **Under Consideration**
@@ -6,7 +6,7 @@
 
 *During the review process, add the following fields as needed:*
 
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
+* PRs: [#87578](https://github.com/llvm/llvm-project/pull/87578)
 * Issues: [#57886](https://github.com/llvm/llvm-project/issues/57886)
 
 ## Introduction
@@ -47,10 +47,10 @@ specified resource class.
 
 | Resource Class | Binding Prefix | Diagnostic |
 |-|-|-|
-| Sampler | s | "Object type '%0' with resource class "Sampler" expects binding prefix 's', but binding prefix '%1' was given. |
-| SRV | t | "Object type '%0' with resource class "SRV" expects binding prefix 't', but binding prefix '%1' was given. |
-| UAV | u | "Object type '%0' with resource class "UAV" expects binding prefix 'u', but binding prefix '%1' was given. |
-| CBuffer | b |  "Object type '%0' with resource class "CBuffer" expects binding prefix 'b', but binding prefix '%1' was given. |
+| Sampler | s | "Object type '%0' with resource class "Sampler" expects binding prefix 's', but binding prefix '%1' was given." |
+| SRV | t | "Object type '%0' with resource class "SRV" expects binding prefix 't', but binding prefix '%1' was given." |
+| UAV | u | "Object type '%0' with resource class "UAV" expects binding prefix 'u', but binding prefix '%1' was given." |
+| CBuffer | b |  "Object type '%0' with resource class "CBuffer" expects binding prefix 'b', but binding prefix '%1' was given." |
 
 There are certain resource kinds within the SRV resource
 class that are "sampleable". These resources are typically
@@ -97,7 +97,7 @@ as a resource". Below are some examples:
 
 | non-intangible type | Binding statements | Diagnostic |
 |-|-|-|
-| `float f` | register(t0) | "error: the given type 'float' cannot be bound as a resource." |
+| `float f` | register(t0) | "error: the given type 'float' cannot be bound resource 'UAV'." |
 | `float f` | register(b0) | "warning: binding prefix 'b' used for resource type 'float' which cannot be used as a resource" |
 
 
@@ -117,14 +117,48 @@ to be validated to see whether it can properly be assigned to the geiven binding
 prefix. If the UDT does not have at least one resource that matches the given binding 
 prefixes, then an error will be emitted. The only remaining case is when there
 is no resource attribute, which implies the type is non-intangible. In this case,
-if the type is strictly numeric, the only acceptable binding prefix is 'b'. In 
-this case, a warning will be emitted that will be treated as an error by default,
-which states that a numeric type is not usable as a resource. Any other binding
-prefix will cause an error to be emitted, stating that the given type cannot be 
-bound as a resource.
+if the type is strictly numeric, the only acceptable binding prefix is 'b', which 
+is legacy behavior. In this case, a warning will be emitted that will be treated as 
+an error by default, which states that a numeric type is not usable as a resource. 
+Any other binding prefix will cause an error to be emitted, stating that the given 
+type cannot be bound as a resource.
+Legacy behavior can be allowed with the --Wno-disallow-legacy-binding-rules
+flag. When this flag is active, and legacy behavior is present, a warning will 
+be emitted instead of an error.
+
+Below is a flowchart that describes the process that is used to determine
+what kind of diagnostic to emit in each case:
+
+```mermaid
+flowchart TD
+A[Type T bound to binding prefix p] --> B{Does T have or contain any type with the ResourceAttr attribute?}
+B -- Yes -->C{Is T a UDT?}
+B -- No --> M{Is T non-intangible?}
+C -- Yes -->D{Does T contain at least one valid resource for p?}
+C -- No -->G{Is T sampleable (is it a Texture* resource?)}
+D -- Yes -->E[No error]
+D -- No -->F[error: "UDT resource '<T>' does not contain an applicable resource type for binding prefix '<p>'"]
+G -- Yes -->H{Is the binding prefix 't' or 's'?}
+G -- No --> I{Was the binding prefix given 's'?}
+H -- Yes -->L{Was the binding prefix given 's'?}
+H -- No --> J[error: Object type '<T>' with resource class "<resource class>" expects binding prefix 't' or 's', but binding prefix '<p>' was given.]
+I -- Yes --> J[DefaultError warning: binding prefix 's' can only be used on sampleable resource types, but resource type <T> was given. Disable with]
+I -- No -->K{Is T a valid resource class for the given prefix 'p'?}
+K -- Yes -->[No error]
+K -- No --> [error: Object type '<T>' with resource class "<resource class>" expects binding prefix '<expected binding prefix>', but binding prefix '<p>' was given.]
+L -- Yes -->O[warning: resource type <T> is being sampled.]
+L -- No -->P[No error.]
+M -- Yes -->N{Is the given binding prefix 'b'?}
+M -- No --> O[Assert, this should be impossible]
+N -- Yes -->[DefaultError warning: resource <T> will be unused.]
+N -- No -->[error: <T> is an invalid resource for binding prefix '<p>']
+```
+
 
 ## Alternatives considered (Optional)
 
 ## Acknowledgments (Optional)
 * Tex Riddell
+* Chris Bieneman
+* Justin Bogner
 <!-- {% endraw %} -->
