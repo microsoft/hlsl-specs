@@ -131,27 +131,67 @@ what kind of diagnostic to emit in each case:
 
 ```mermaid
 flowchart TD
-A[Type T bound to binding prefix p] --> B{Does T have or contain any type with the ResourceAttr attribute?}
+A[Type T bound to 
+binding prefix p] --> B{Does T have or 
+contain any type
+with the ResourceAttr
+attribute?}
 B -- Yes -->C{Is T a UDT?}
 B -- No --> M{Is T non-intangible?}
-C -- Yes -->D{Does T contain at least one valid resource for p?}
-C -- No -->G{"Is T sampleable (is it a Texture* resource?)"}
+C -- Yes -->D{Does T contain
+at least one 
+valid resource 
+for p?}
+C -- No -->G{"Is T sampleable 
+(is it a Texture* resource?)"}
 D -- Yes -->E[No error]
-D -- No -->F[error: UDT resource '<T>' does not contain an applicable resource type for binding prefix '<p>']
-G -- Yes -->H{Is the binding prefix 't' or 's'?}
-G -- No --> I{Was the binding prefix given 's'?}
-H -- Yes -->L{Was the binding prefix given 's'?}
-H -- No --> J[error: Object type '<T>' with resource class '<resource class>' expects binding prefix 't' or 's', but binding prefix '<p>' was given.]
-I -- Yes --> J[DefaultError warning: binding prefix 's' can only be used on sampleable resource types, but resource type <T> was given. Disable with]
-I -- No -->K{Is T a valid resource class for the given prefix 'p'?}
+D -- No -->F[error: UDT resource '<T>'
+does not contain an 
+applicable resource 
+type for binding 
+prefix '<p>']
+G -- Yes -->H{Is the binding 
+prefix 't' or 's'?}
+G -- No --> I{Was the binding 
+prefix given 's'?}
+H -- Yes -->L{Was the binding 
+prefix given 's'?}
+H -- No --> J[error: Object type '<T>' 
+with resource class 
+'<resource class>' expects 
+binding prefix 't' or 's', 
+but binding prefix 
+'<p>' was given.]
+I -- Yes --> V[DefaultError warning: 
+binding prefix 's' 
+can only be used on 
+sampleable resource types, 
+but resource type <T> 
+was given. Disable with
+--Wno-disallow-legacy-binding-rules]
+I -- No -->K{Is T a valid resource
+class for the given
+prefix 'p'?}
 K -- Yes -->Q[No error]
-K -- No --> R[error: Object type '<T>' with resource class '<resource class>' expects binding prefix '<expected binding prefix>', but binding prefix '<p>' was given.]
-L -- Yes -->O[warning: resource type <T> is being sampled.]
+K -- No --> R[error: Object type '<T>'
+with resource class 
+'<resource class>' expects
+binding prefix 
+'<expected binding prefix>', 
+but binding prefix 
+'<p>' was given.]
+L -- Yes -->O[warning: resource type 
+<T> is being sampled.]
 L -- No -->P[No error.]
-M -- Yes -->N{Is the given binding prefix 'b'?}
-M -- No --> S[Assert, this should be impossible]
-N -- Yes -->T[DefaultError warning: resource <T> will be unused.]
-N -- No -->U[error: <T> is an invalid resource for binding prefix '<p>']
+M -- Yes -->N{Is the given 
+binding prefix 'b'?}
+M -- No --> S[Assert, this should 
+be impossible]
+N -- Yes -->T[DefaultError warning: 
+resource <T> will be unused.]
+N -- No -->U[error: <T> is an invalid 
+resource for binding 
+prefix '<p>']
 ```
 
 
