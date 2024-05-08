@@ -75,36 +75,65 @@ given some examples of different UDT's:
 
 | UDT | Binding statements | Diagnostic |
 |-|-|-|
-| struct Foo {
+|
+ ```
+struct Foo {
   float f;
   Buffer<float> Buf;
   RWBuffer<float> RWBuf;
-}; | register(t0) : register(s0); | None. Success because Buf gets bound to t0 and RWBuf gets bound to s0, and f is skipped. |
-| struct Foo {
+};
+```
+| register(t0) : register(s0); | None. Success because Buf gets bound to
+ t0 and RWBuf gets bound to s0, and f is skipped. |
+| 
+```
+struct Foo {
   float f;
   Buffer<float> Buf;
   RWBuffer<float> RWBuf;
   RWBuffer<float> RWBuf2;
-}; | register(t0) : register(s0); | None. Success because Buf gets bound to t0 and RWBuf gets bound to s0, and f is skipped. RWBuf2 gets assigned to s1 even though there is no explicit binding for s1. |
-| struct Foo {
+};
+```
+ | register(t0) : register(s0); | None. Success because Buf gets bound to t0 
+ and RWBuf gets bound to s0, and f is skipped. RWBuf2 gets assigned to s1 
+ even though there is no explicit binding for s1. |
+| 
+```
+struct Foo {
   float f;
   Buffer<float> Buf;
-}; | register(t0) : register(s0); | None. Success because Buf gets bound to t0. Buf will also be bound to s0.|
-|struct Foo {
+}; 
+```
+| register(t0) : register(s0); | None. Success because Buf gets bound to t0.
+ Buf will also be bound to s0.|
+|
+```
+struct Foo {
   struct Bar {
     RWBuffer<int> a;
     };
     Bar b;
-}; | register(t0) | None. Success because Bar, the struct within Foo, has a valid resource that can be bound to t0. |
-| struct Foo {
+}; 
+```
+| register(t0) | None. Success because Bar, the struct within Foo, has a valid
+ resource that can be bound to t0. |
+| 
+```
+struct Foo {
   float f;
-}; | register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
-| struct Foo {
+}; 
+```
+| register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
+| 
+```
+struct Foo {
     struct Bar {
       float f;
     }
     Bar b;
-}; | register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
+};
+```
+ | register(t0) | DefaultError warning. "UDT resource does not contain an applicable resource type for binding prefix 't'"|
 
 Finally, if the candidate type is not a valid resource type or not a
 UDT, the final case will be entered. If the resource is among any
@@ -121,8 +150,8 @@ as a resource". Below are some examples:
 
 | non-intangible type | Binding statements | Diagnostic |
 |-|-|
-| float f | register(t0) | "error: the given type 'float' cannot be bound as a resource." |
-| float f | register(b0) | "warning: binding prefix 'b' used for resource type 'float' which cannot be used as a resource" |
+| `float f` | register(t0) | "error: the given type 'float' cannot be bound as a resource." |
+| `float f` | register(b0) | "warning: binding prefix 'b' used for resource type 'float' which cannot be used as a resource" |
 
 
 
