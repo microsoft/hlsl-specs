@@ -137,7 +137,7 @@ B -- No --> M{Is T non-intangible?}
 C -- Yes -->D{Does T contain at least one valid resource for p?}
 C -- No -->G{"Is T sampleable (is it a Texture* resource?)"}
 D -- Yes -->E[No error]
-D -- No -->F[error: "UDT resource '<T>' does not contain an applicable resource type for binding prefix '<p>'"]
+D -- No -->F[error: UDT resource '<T>' does not contain an applicable resource type for binding prefix '<p>']
 G -- Yes -->H{Is the binding prefix 't' or 's'?}
 G -- No --> I{Was the binding prefix given 's'?}
 H -- Yes -->L{Was the binding prefix given 's'?}
