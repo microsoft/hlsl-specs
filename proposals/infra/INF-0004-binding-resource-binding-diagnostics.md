@@ -145,53 +145,53 @@ for p?}
 C -- No -->G{"Is T sampleable 
 (is it a Texture* resource?)"}
 D -- Yes -->E[No error]
-D -- No -->F[error: UDT resource '<T>'
+D -- No -->F[error: UDT resource '&ltT&gt'
 does not contain an 
 applicable resource 
 type for binding 
-prefix '<p>']
+prefix '&ltp&gt']
 G -- Yes -->H{Is the binding 
 prefix 't' or 's'?}
 G -- No --> I{Was the binding 
 prefix given 's'?}
 H -- Yes -->L{Was the binding 
 prefix given 's'?}
-H -- No --> J[error: Object type '<T>' 
+H -- No --> J[error: Object type '&ltT&gt' 
 with resource class 
-'<resource class>' expects 
+'&ltresource class&gt' expects 
 binding prefix 't' or 's', 
 but binding prefix 
-'<p>' was given.]
+'&ltp&gt' was given.]
 I -- Yes --> V[DefaultError warning: 
 binding prefix 's' 
 can only be used on 
 sampleable resource types, 
-but resource type <T> 
+but resource type &ltT&gt 
 was given. Disable with
 --Wno-disallow-legacy-binding-rules]
 I -- No -->K{Is T a valid resource
 class for the given
 prefix 'p'?}
 K -- Yes -->Q[No error]
-K -- No --> R[error: Object type '<T>'
+K -- No --> R[error: Object type '&ltT&gt'
 with resource class 
-'<resource class>' expects
+'&ltresource class&gt' expects
 binding prefix 
-'<expected binding prefix>', 
+'&ltexpected binding prefix&gt', 
 but binding prefix 
-'<p>' was given.]
+'&ltp&gt' was given.]
 L -- Yes -->O[warning: resource type 
-<T> is being sampled.]
+&ltT> is being sampled.]
 L -- No -->P[No error.]
 M -- Yes -->N{Is the given 
 binding prefix 'b'?}
 M -- No --> S[Assert, this should 
 be impossible]
 N -- Yes -->T[DefaultError warning: 
-resource <T> will be unused.]
-N -- No -->U[error: <T> is an invalid 
+resource &ltT&gt will be unused.]
+N -- No -->U[error: &ltT&gt is an invalid 
 resource for binding 
-prefix '<p>']
+prefix '&ltp&gt']
 ```
 
 
