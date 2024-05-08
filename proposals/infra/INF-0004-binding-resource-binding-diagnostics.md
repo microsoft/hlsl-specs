@@ -141,11 +141,11 @@ D -- No -->F[error: UDT resource '<T>' does not contain an applicable resource t
 G -- Yes -->H{Is the binding prefix 't' or 's'?}
 G -- No --> I{Was the binding prefix given 's'?}
 H -- Yes -->L{Was the binding prefix given 's'?}
-H -- No --> J[error: Object type '<T>' with resource class "<resource class>" expects binding prefix 't' or 's', but binding prefix '<p>' was given.]
+H -- No --> J[error: Object type '<T>' with resource class '<resource class>' expects binding prefix 't' or 's', but binding prefix '<p>' was given.]
 I -- Yes --> J[DefaultError warning: binding prefix 's' can only be used on sampleable resource types, but resource type <T> was given. Disable with]
 I -- No -->K{Is T a valid resource class for the given prefix 'p'?}
 K -- Yes -->[No error]
-K -- No --> [error: Object type '<T>' with resource class "<resource class>" expects binding prefix '<expected binding prefix>', but binding prefix '<p>' was given.]
+K -- No --> [error: Object type '<T>' with resource class '<resource class>' expects binding prefix '<expected binding prefix>', but binding prefix '<p>' was given.]
 L -- Yes -->O[warning: resource type <T> is being sampled.]
 L -- No -->P[No error.]
 M -- Yes -->N{Is the given binding prefix 'b'?}
