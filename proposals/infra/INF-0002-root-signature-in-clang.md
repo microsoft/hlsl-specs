@@ -467,7 +467,6 @@ Only list special rule here.
 
 ##### StaticSampler
 - Max/MinLOD cannot be NaN.
-- Comparison filter must have ComparisonFunc not equal to 0.
 - MaxAnisotropy cannot exceed 16.
 - MipLODBias must be within range of [-16, 15.99].
 
@@ -493,6 +492,9 @@ TODO
 #### All the things validated in Sema.
   In DXIL generation, values like ShaderVisibility/ParameterType need to be
   checked to make sure they are in correct range.
+
+##### StaticSampler
+- Comparison filter must have ComparisonFunc not equal to 0.
 
 #### Resource used in DXIL must be fully bound in root signature.
 ```
