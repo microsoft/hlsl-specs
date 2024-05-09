@@ -306,113 +306,78 @@ elimation has completed.
 
 #### All the values should be legal.
 
-  ShaderVisibility
+Some of these values are covered by syntactical checks in Sema.
+List all here for reference during DXIL generation checks.
 
-      'SHADER_VISIBILITY_ALL'
-      'SHADER_VISIBILITY_VERTEX'
-      'SHADER_VISIBILITY_HULL'
-      'SHADER_VISIBILITY_DOMAIN'
-      'SHADER_VISIBILITY_GEOMETRY'
-      'SHADER_VISIBILITY_PIXEL'
-      'SHADER_VISIBILITY_AMPLIFICATION'
-      'SHADER_VISIBILITY_MESH'
+##### ShaderVisibility
+- SHADER_VISIBILITY_ALL
+- SHADER_VISIBILITY_ALL
+- SHADER_VISIBILITY_VERTEX
+- SHADER_VISIBILITY_HULL
+- SHADER_VISIBILITY_DOMAIN
+- SHADER_VISIBILITY_GEOMETRY
+- SHADER_VISIBILITY_PIXEL
+- SHADER_VISIBILITY_AMPLIFICATION
+- SHADER_VISIBILITY_MESH
 
-  ParameterType
+##### ParameterType
+- CBV
+- SRV
+- UAV
+- DescriptorTable
+- Constants32Bit
 
-      CBV
-      SRV
-      UAV
-      DescriptorTable
-      Constants32Bit
+##### RootDescriptorFlags
+- None
+- DataVolatile
+- DataStaticWihleSetAtExecute
+- DataStatic
 
-  RootDescriptorFlags
+##### DescriptorRangeFlags
 
-      None
-      DataVolatile
-      DataStaticWihleSetAtExecute
-      DataStatic
+###### Sampler
+- None
+- DescriptorsVolatile
+- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
 
-  DescriptorRangeFlags
+###### Resource
+- None
+- DESCRIPTORS_VOLATILE,
+- DATA_VOLATILE,
+- DATA_STATIC,
+- DATA_STATIC_WHILE_SET_AT_EXECUTE,
+- DESCRIPTORS_VOLATILE | DATA_VOLATILE,
+- DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE,
+- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS,
+- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE,
+- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC,
+- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE,
 
-    For Sampler
-      None
-      DescriptorsVolatile
-      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+##### StaticSampler
+- Max/MinLOD cannot be NaN.
+- Comparison filter must have ComparisonFunc not equal to 0.
+- MaxAnisotropy cannot exceed 16.
+- MipLODBias must be within range of [-16, 15.99].
 
-    For resource
-      None
-      DESCRIPTORS_VOLATILE,
-      DATA_VOLATILE,
-      DATA_STATIC,
-      DATA_STATIC_WHILE_SET_AT_EXECUTE,
-      DESCRIPTORS_VOLATILE | DATA_VOLATILE,
-      DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE,
+##### Register Space
 
-      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS,
-      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE,
-      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC,
-      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE,
-
-  StaticSampler
-
-      Max/MinLOD cannot be NaN.
-      Comparison filter must have ComparisonFunc not equal to 0.
-      MaxAnisotropy cannot exceed 16.
-      MipLODBias must be within range of [-16, 15.99].
-
-  Space
-
-      The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
-      "CBV(b0, space=4294967295)" is invalid duo to the use of reserved space 0xFFFFFFFF.
+  The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
+```
+  "CBV(b0, space=4294967295)" is invalid due to the use of reserved space 0xFFFFFFFF.
+```
 
 #### Resource ranges must not overlap.
-
-      "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an 
-      error due to overlapping at b2.
-
+```
+  "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an error
+  due to overlapping at b2.
+```
 
 ### Metadata Schema
 
-Here is the metadata presentation for the root signature.
+TODO
 
-Root Signature
-| | Version | Flag | RootParameters | StaticSamplers |
-|-| --- | --- | --- | --- |
-| | i32 | i32 | list of RootParameters (RootConstant, RootDescriptor, DescriptorTable) | list of StaticSamplers |
-
-RootConstant
-| | ParameterType | Visibility | Register | Space | Num32BitValues |
-|-| --- | --- | --- | --- | --- |
-| | i32 |  i32 | i32 | i32 | i32 |
-
-
-RootDescriptor
-| | ParameterType | Visibility | Register | Space | Flags |
-|-| --- | --- | --- | --- | --- |
-| | i32 |  i32 | i32 | i32 | i32 |
-
-
-DescriptorTable
-| | ParameterType | Visibility | DescriptorRanges
-|-| --- | --- | --- |
-|  | i32 |  i32 | list of DescriptorRanges |
-
-
-DescriptorRange
-| | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags | Offset |
-|-| --- | --- | --- | --- | --- | --- |
-| | i32 | i32 | i32 | i32 | i32 | i32 |
-
-
-StaticSampler
-
-|| Filter | AddressU | AddressV | AddressW | MipLODBias | MaxAnisotropy | ComparisonFunc | BoarderColor | MinLOD | MaxLOD | Register | Space | Visibility |
-| - | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| | i32 | i32 | i32 | i32 | float | i32 | i32 | i32 | float | float | i32 | i32 | i32 |
-
-
-### Validations during Codegen
-
+### Validations during DXIL generation
+  [Validations In Sema](#validations-in-sema)
 #### All the things validated in Sema.
 
 #### Resource used in DXIL must be fully bound in root signature.
@@ -430,7 +395,7 @@ StaticSampler
   // Used dynamic resource but missing CBVSRVUAVHeapDirectlyIndexed flag.
   [RootSignature("")]
   void main() : SV_Target {
-    Buffer<float> B = ResourceDescriptorHead[0];
+    Buffer<float> B = ResourceDescriptorHeap[0];
     return B[0];
   }
 ```
