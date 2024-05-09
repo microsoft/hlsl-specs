@@ -304,15 +304,147 @@ elimation has completed.
 
 ### Validations in Sema
 
-TODO
+#### All the values should be legal.
+
+  ShaderVisibility
+
+      'SHADER_VISIBILITY_ALL'
+      'SHADER_VISIBILITY_VERTEX'
+      'SHADER_VISIBILITY_HULL'
+      'SHADER_VISIBILITY_DOMAIN'
+      'SHADER_VISIBILITY_GEOMETRY'
+      'SHADER_VISIBILITY_PIXEL'
+      'SHADER_VISIBILITY_AMPLIFICATION'
+      'SHADER_VISIBILITY_MESH'
+
+  ParameterType
+
+      CBV
+      SRV
+      UAV
+      DescriptorTable
+      Constants32Bit
+
+  RootDescriptorFlags
+
+      None
+      DataVolatile
+      DataStaticWihleSetAtExecute
+      DataStatic
+
+  DescriptorRangeFlags
+
+    For Sampler
+      None
+      DescriptorsVolatile
+      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+
+    For resource
+      None
+      DESCRIPTORS_VOLATILE,
+      DATA_VOLATILE,
+      DATA_STATIC,
+      DATA_STATIC_WHILE_SET_AT_EXECUTE,
+      DESCRIPTORS_VOLATILE | DATA_VOLATILE,
+      DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE,
+
+      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS,
+      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE,
+      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC,
+      DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE,
+
+  StaticSampler
+
+      Max/MinLOD cannot be NaN.
+      Comparison filter must have ComparisonFunc not equal to 0.
+      MaxAnisotropy cannot exceed 16.
+      MipLODBias must be within range of [-16, 15.99].
+
+  Space
+
+      The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
+      "CBV(b0, space=4294967295)" is invalid duo to the use of reserved space 0xFFFFFFFF.
+
+#### Resource ranges must not overlap.
+
+      "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an 
+      error due to overlapping at b2.
+
 
 ### Metadata Schema
 
-TODO
+Here is the metadata presentation for the root signature.
+
+Root Signature
+| | Version | Flag | RootParameters | StaticSamplers |
+|-| --- | --- | --- | --- |
+| | i32 | i32 | list of RootParameters (RootConstant, RootDescriptor, DescriptorTable) | list of StaticSamplers |
+
+RootConstant
+| | ParameterType | Visibility | Register | Space | Num32BitValues |
+|-| --- | --- | --- | --- | --- |
+| | i32 |  i32 | i32 | i32 | i32 |
+
+
+RootDescriptor
+| | ParameterType | Visibility | Register | Space | Flags |
+|-| --- | --- | --- | --- | --- |
+| | i32 |  i32 | i32 | i32 | i32 |
+
+
+DescriptorTable
+| | ParameterType | Visibility | DescriptorRanges
+|-| --- | --- | --- |
+|  | i32 |  i32 | list of DescriptorRanges |
+
+
+DescriptorRange
+| | RangeType | NumDescriptors | BaseShaderRegister | Space | Flags | Offset |
+|-| --- | --- | --- | --- | --- | --- |
+| | i32 | i32 | i32 | i32 | i32 | i32 |
+
+
+StaticSampler
+
+|| Filter | AddressU | AddressV | AddressW | MipLODBias | MaxAnisotropy | ComparisonFunc | BoarderColor | MinLOD | MaxLOD | Register | Space | Visibility |
+| - | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| | i32 | i32 | i32 | i32 | float | i32 | i32 | i32 | float | float | i32 | i32 | i32 |
+
 
 ### Validations during Codegen
 
-TODO
+#### All the things validated in Sema.
+
+#### Resource used in DXIL must be fully bound in root signature.
+```
+  // B is bound to t1, but not in root descriptor.
+  Buffer<float> B : register(t1);
+  [RootSignature("")]
+  void main() : SV_Target {
+    return B[0];
+  }
+```
+
+#### Root Signature Flag must match DXIL.
+```
+  // Used dynamic resource but missing CBVSRVUAVHeapDirectlyIndexed flag.
+  [RootSignature("")]
+  void main() : SV_Target {
+    Buffer<float> B = ResourceDescriptorHead[0];
+    return B[0];
+  }
+```
+
+#### Textures/TypedBuffers cannot be bound to root descriptors.
+```
+  // B is TypedBuffer, but bound as a root descriptor.
+  Buffer<float> B : register(t0);
+  [RootSignature("SRV(t0)")]
+  void main() : SV_Target {
+    return B[0];
+  }
+```
+
 
 <!--
 * Is there any potential for changed behavior?
