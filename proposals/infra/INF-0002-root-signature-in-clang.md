@@ -202,7 +202,7 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
 
     Sampler : 'Sampler' '(' sReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
-          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' NUMBER)? ')'
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' DATA_FLAGS)? ')'
 
     SHADER_VISIBILITY : 'SHADER_VISIBILITY_ALL' | 'SHADER_VISIBILITY_VERTEX' |
                         'SHADER_VISIBILITY_HULL' |
@@ -442,33 +442,8 @@ elimation has completed.
 
 #### All the values should be legal.
 
-Some of these values are covered by syntactical checks in Sema.
-
-List all here for reference during DXIL generation checks.
-
-##### ShaderVisibility
-- SHADER_VISIBILITY_ALL
-- SHADER_VISIBILITY_ALL
-- SHADER_VISIBILITY_VERTEX
-- SHADER_VISIBILITY_HULL
-- SHADER_VISIBILITY_DOMAIN
-- SHADER_VISIBILITY_GEOMETRY
-- SHADER_VISIBILITY_PIXEL
-- SHADER_VISIBILITY_AMPLIFICATION
-- SHADER_VISIBILITY_MESH
-
-##### ParameterType
-- CBV
-- SRV
-- UAV
-- DescriptorTable
-- Constants32Bit
-
-##### RootDescriptorFlags
-- None
-- DataVolatile
-- DataStaticWihleSetAtExecute
-- DataStatic
+Most values like ShaderVisibility/ParameterType are covered by syntactical checks in Sema.
+Only list special rule here.
 
 ##### DescriptorRangeFlags
 
@@ -516,6 +491,8 @@ TODO
 ### Validations during DXIL generation
   [Validations In Sema](#validations-in-sema)
 #### All the things validated in Sema.
+  In DXIL generation, values like ShaderVisibility/ParameterType need to be
+  checked to make sure they are in correct range.
 
 #### Resource used in DXIL must be fully bound in root signature.
 ```
