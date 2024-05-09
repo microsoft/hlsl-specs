@@ -193,11 +193,11 @@ N -- Yes -->T[warning: binding prefix
 be used as a resource.]
 N -- No -->U{Is the given
 binding prefix 'c' or 'i'?}
-U -- Yes --> V[DefaultError warning:
+U -- Yes --> W[DefaultError warning:
 Using binding prefix '&ltp&gt' 
 is deprecated, resource 
 won't be used.]
-U -- No -->W[error: &ltT&gt is an invalid 
+U -- No -->X[error: &ltT&gt is an invalid 
 resource type for 
 binding prefix '&ltp&gt']
 ```
