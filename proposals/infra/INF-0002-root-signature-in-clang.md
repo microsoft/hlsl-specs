@@ -456,12 +456,13 @@ elimation has completed.
 Most values like ShaderVisibility/ParameterType are covered by syntactical checks in Sema.
 Only list special rule here.
 
-- DESCRIPTOR_RANGE_FLAGS for Sampler
+- For DESCRIPTOR_RANGE_FLAGS on a Sampler, only the following values are valid
   - 0
   - DESCRIPTORS_VOLATILE
   - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
 
-- DESCRIPTOR_RANGE_FLAGS for resource
+- For DESCRIPTOR_RANGE_FLAGS on a CBV/SRV/UAV, only the following values are
+   valid
   - 0
   - DESCRIPTORS_VOLATILE
   - DATA_VOLATILE
@@ -480,7 +481,6 @@ Only list special rule here.
   - MipLODBias must be within range of [-16, 15.99].
 
 - Register Space
-
   -The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
   ```
   "CBV(b0, space=4294967295)" is invalid due to the use of reserved space 0xFFFFFFFF.
