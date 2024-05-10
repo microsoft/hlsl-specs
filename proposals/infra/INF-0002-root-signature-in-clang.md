@@ -525,7 +525,7 @@ TODO
   - DataStaticWihleSetAtExecute
   - DataStatic
 
-- DescriptorRangeFlags
+- DescriptorRangeFlags on Resource
   - 0
   - DESCRIPTORS_VOLATILE
   - DATA_VOLATILE
