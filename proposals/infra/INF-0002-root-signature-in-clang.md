@@ -168,41 +168,64 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
            bReg (',' 'space' '=' NUMBER)?
            (',' 'visibility' '=' SHADER_VISIBILITY)? ')'
 
+    ROOT_DESCRIPTOR_FLAGS : 0 | 'DATA_STATIC' |
+                            'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
+                            'DATA_VOLATILE'
+
     RootCBV : 'CBV' '(' bReg (',' 'space' '=' NUMBER)?
           (',' 'visibility' '=' SHADER_VISIBILITY)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
 
     RootSRV : 'SRV' '(' tReg (',' 'space' '=' NUMBER)?
           (',' 'visibility' '=' SHADER_VISIBILITY)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
 
     RootUAV : 'UAV' '(' uReg (',' 'space' '=' NUMBER)?
           (',' 'visibility' '=' SHADER_VISIBILITY)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
 
     DescriptorTable : 'DescriptorTable' '(' (DTClause(|DTClause)?)?
           (',' 'visibility' '=' SHADER_VISIBILITY)? ')'
 
     DTClause : CBV | SRV | UAV | Sampler
 
+    DESCRIPTOR_RANGE_FLAGS :
+        0 |
+        'DESCRIPTORS_VOLATILE' |
+        'DATA_VOLATILE' |
+        'DATA_STATIC' |
+        'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
+        'DESCRIPTORS_VOLATILE' '|' 'DATA_VOLATILE' |
+        'DESCRIPTORS_VOLATILE' '|' 'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_VOLATILE' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_STATIC' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_STATIC_WHILE_SET_AT_EXECUTE'
+
+    SAMPLER_RANGE_FLAGS : 
+        0 |
+        'DESCRIPTORS_VOLATILE' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS'
+                          
+
     CBV : 'CBV' '(' bReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
           (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
 
     SRV : 'SRV' '(' tReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
           (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
 
     UAV : 'UAV' '(' uReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
           (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
-          (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
 
     Sampler : 'Sampler' '(' sReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
-          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' DATA_FLAGS)? ')'
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' SAMPLER_RANGE_FLAGS)? ')'
 
     SHADER_VISIBILITY : 'SHADER_VISIBILITY_ALL' | 'SHADER_VISIBILITY_VERTEX' |
                         'SHADER_VISIBILITY_HULL' |
@@ -211,8 +234,6 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
                         'SHADER_VISIBILITY_PIXEL' |
                         'SHADER_VISIBILITY_AMPLIFICATION' |
                         'SHADER_VISIBILITY_MESH'
-
-    DATA_FLAGS : 'DATA_STATIC_WHILE_SET_AT_EXECUTE' | 'DATA_VOLATILE'
 
     DESCRIPTOR_RANGE_OFFSET : 'DESCRIPTOR_RANGE_OFFSET_APPEND' | NUMBER
 
@@ -445,39 +466,19 @@ elimation has completed.
 Most values like ShaderVisibility/ParameterType are covered by syntactical checks in Sema.
 Only list special rule here.
 
-##### DescriptorRangeFlags
+- StaticSampler
+  - Max/MinLOD cannot be NaN.
+  - MaxAnisotropy cannot exceed 16.
+  - MipLODBias must be within range of [-16, 15.99].
 
-###### Sampler
-- None
-- DescriptorsVolatile
-- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+- Register Space
 
-###### Resource
-- None
-- DESCRIPTORS_VOLATILE,
-- DATA_VOLATILE,
-- DATA_STATIC,
-- DATA_STATIC_WHILE_SET_AT_EXECUTE,
-- DESCRIPTORS_VOLATILE | DATA_VOLATILE,
-- DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE,
-- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS,
-- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE,
-- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC,
-- DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE,
-
-##### StaticSampler
-- Max/MinLOD cannot be NaN.
-- MaxAnisotropy cannot exceed 16.
-- MipLODBias must be within range of [-16, 15.99].
-
-##### Register Space
-
-  The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
+  -The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
 ```
   "CBV(b0, space=4294967295)" is invalid due to the use of reserved space 0xFFFFFFFF.
 ```
 
-#### Resource ranges must not overlap.
+- Resource ranges must not overlap.
 ```
   "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an error
   due to overlapping at b2.
@@ -493,8 +494,50 @@ TODO
   In DXIL generation, values like ShaderVisibility/ParameterType need to be
   checked to make sure they are in correct range.
 
-##### StaticSampler
-- Comparison filter must have ComparisonFunc not equal to 0.
+- ShaderVisibility
+  - SHADER_VISIBILITY_ALL
+  - SHADER_VISIBILITY_ALL
+  - SHADER_VISIBILITY_VERTEX
+  - SHADER_VISIBILITY_HULL
+  - SHADER_VISIBILITY_DOMAIN
+  - SHADER_VISIBILITY_GEOMETRY
+  - SHADER_VISIBILITY_PIXEL
+  - SHADER_VISIBILITY_AMPLIFICATION
+  - SHADER_VISIBILITY_MESH
+
+- ParameterType
+  - CBV
+  - SRV
+  - UAV
+  - DescriptorTable
+  - Constants32Bit
+
+- RootDescriptorFlags
+  - 0
+  - DataVolatile
+  - DataStaticWihleSetAtExecute
+  - DataStatic
+
+- DescriptorRangeFlags
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DATA_VOLATILE
+  - DATA_STATIC
+  - DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_VOLATILE | DATA_VOLATILE
+  - DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE
+
+- DescriptorRangeFlags on Sampler
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+
+- StaticSampler
+  - Comparison filter must have ComparisonFunc not equal to 0.
 
 #### Resource used in DXIL must be fully bound in root signature.
 ```
