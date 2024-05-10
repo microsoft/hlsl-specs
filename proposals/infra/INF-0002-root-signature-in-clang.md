@@ -189,24 +189,14 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
 
     DTClause : CBV | SRV | UAV | Sampler
 
-    DESCRIPTOR_RANGE_FLAGS :
-        0 |
+    DESCRIPTOR_RANGE_FLAGS : DESCRIPTOR_RANGE_FLAGS(|DESCRIPTOR_RANGE_FLAGS)?
+
+    DESCRIPTOR_RANGE_FLAG : 0 |
         'DESCRIPTORS_VOLATILE' |
         'DATA_VOLATILE' |
         'DATA_STATIC' |
         'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
-        'DESCRIPTORS_VOLATILE' '|' 'DATA_VOLATILE' |
-        'DESCRIPTORS_VOLATILE' '|' 'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
-        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' |
-        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_VOLATILE' |
-        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_STATIC' |
-        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS' '|' 'DATA_STATIC_WHILE_SET_AT_EXECUTE'
-
-    SAMPLER_RANGE_FLAGS : 
-        0 |
-        'DESCRIPTORS_VOLATILE' |
-        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS'
-                          
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS'                          
 
     CBV : 'CBV' '(' bReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
@@ -225,7 +215,7 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
 
     Sampler : 'Sampler' '(' sReg (',' 'numDescriptors' '=' NUMBER)?
           (',' 'space' '=' NUMBER)?
-          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' SAMPLER_RANGE_FLAGS)? ')'
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
 
     SHADER_VISIBILITY : 'SHADER_VISIBILITY_ALL' | 'SHADER_VISIBILITY_VERTEX' |
                         'SHADER_VISIBILITY_HULL' |
@@ -466,6 +456,24 @@ elimation has completed.
 Most values like ShaderVisibility/ParameterType are covered by syntactical checks in Sema.
 Only list special rule here.
 
+- DESCRIPTOR_RANGE_FLAGS for Sampler
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+
+- DESCRIPTOR_RANGE_FLAGS for resource
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DATA_VOLATILE
+  - DATA_STATIC
+  - DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_VOLATILE | DATA_VOLATILE
+  - DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE
+
 - StaticSampler
   - Max/MinLOD cannot be NaN.
   - MaxAnisotropy cannot exceed 16.
@@ -474,15 +482,15 @@ Only list special rule here.
 - Register Space
 
   -The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
-```
+  ```
   "CBV(b0, space=4294967295)" is invalid due to the use of reserved space 0xFFFFFFFF.
-```
+  ```
 
 - Resource ranges must not overlap.
-```
+  ```
   "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an error
   due to overlapping at b2.
-```
+  ```
 
 ### Metadata Schema
 
