@@ -532,13 +532,6 @@ TODO
   - SHADER_VISIBILITY_AMPLIFICATION
   - SHADER_VISIBILITY_MESH
 
-- Valid values for ParameterType
-  - CBV
-  - SRV
-  - UAV
-  - DescriptorTable
-  - Constants32Bit
-
 - Valid values for RootDescriptorFlags
   - 0
   - DataVolatile
