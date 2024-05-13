@@ -161,8 +161,20 @@ to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
 
     RootFlags : 'RootFlags' '(' (RootFlag(|RootFlag)?)? ')'
 
-    RootFlag : 'ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT' |
-               'DENY_VERTEX_SHADER_ROOT_ACCESS'
+    RootFlag : 0 |
+               'ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT' |
+               'DENY_VERTEX_SHADER_ROOT_ACCESS' |
+               'DENY_HULL_SHADER_ROOT_ACCESS' |
+               'DENY_DOMAIN_SHADER_ROOT_ACCESS' |
+               'DENY_GEOMETRY_SHADER_ROOT_ACCESS' |
+               'DENY_PIXEL_SHADER_ROOT_ACCESS' |
+               'DENY_AMPLIFICATION_SHADER_ROOT_ACCESS' |
+               'DENY_MESH_SHADER_ROOT_ACCESS' |
+               'ALLOW_STREAM_OUTPUT' |
+               'LOCAL_ROOT_SIGNATURE' |
+               'CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED' |
+               'SAMPLER_HEAP_DIRECTLY_INDEXED' |
+               'AllowLowTierReservedHwCbLimit'
 
     RootConstants : 'RootConstants' '(' 'num32BitConstants' '=' NUMBER ','
            bReg (',' 'space' '=' NUMBER)?
@@ -453,7 +465,8 @@ elimation has completed.
 
 #### All the values should be legal.
 
-Most values like ShaderVisibility/ParameterType are covered by syntactical checks in Sema.
+Most values like ShaderVisibility/ParameterType are covered by syntactical 
+checks in Sema.
 Only list special rule here.
 
 - For DESCRIPTOR_RANGE_FLAGS on a Sampler, only the following values are valid
@@ -497,10 +510,17 @@ Only list special rule here.
 TODO
 
 ### Validations during DXIL generation
-  [Validations In Sema](#validations-in-sema)
+
 #### All the things validated in Sema.
-  In DXIL generation, values like ShaderVisibility/ParameterType need to be
-  checked to make sure they are in correct range.
+  All the validation rules mentioned in [Validations In Sema](#validations-in-sema)
+  need to be checked during DXIL generation as well.
+  The difference between checks in Sema and DXIL generation is that Sema could
+  rely on syntactical checks to validate values in many cases.
+  However, in DXIL generation, all values need to be checked to ensure they 
+  fall within the correct range:
+
+- RootFlags
+  - (RootFlags & 0x80000fff) should equals 0.
 
 - Valid values for ShaderVisibility
   - SHADER_VISIBILITY_ALL
