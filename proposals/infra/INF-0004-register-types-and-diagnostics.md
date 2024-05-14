@@ -81,7 +81,7 @@ Below is a table that represents the different behaviors that could arise
 given some examples of different UDT's:
 
 | Code | Diagnostic |
-|-|-|-|
+|-|-|
 | struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>  RWBuffer<float> RWBuf;<br>};<br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0 and RWBuf gets bound to s0, and f is skipped. 
 | struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>  RWBuffer<float> RWBuf;<br>  RWBuffer<float> RWBuf2;<br>};<br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0  and RWBuf gets bound to s0, and f is skipped. RWBuf2 gets assigned to s1 even though there is no explicit binding for s1. |
 | struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>}; <br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0. Buf will also be bound to s0.|
@@ -105,7 +105,7 @@ default: "register type 'b' used for resource type '%0', which cannot be used
 as a resource". Below are some examples:
 
 | Code | Diagnostic |
-|-|-|-|
+|-|-|
 | `float f : register(t0)` | "error: 'float' is an invalid resource type for register type 't'." |
 | `float f : register(b0)` | "warning: register type 'b' used for resource type 'float', which cannot be used as a resource" |
 
