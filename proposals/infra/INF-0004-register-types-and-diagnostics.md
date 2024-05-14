@@ -77,36 +77,77 @@ than there are register binding statements, the resources will be bound to
 the next available space automatically, and so compilation can succeed.
 Additionally, a singular resource can be bound multiple times to different
 spaces, so multiple register types are allowed for a single resource.
-Below is a table that represents the different behaviors that could arise
-given some examples of different UDT's:
+Below are some examples of different UDT's and the diagnostics that
+would be emitted when they are bound:
+
+```
+struct Eg1 {
+  float f;
+  Buffer<float> Buf;
+  RWBuffer<float> RWBuf;
+  };
+Eg1 e1 : register(t0) : register(s0); 
+// Valid: f is skipped, Buf is bound to t0, RWBuf is bound to s0
+
+struct Eg2 {
+  float f;
+  Buffer<float> Buf;
+  RWBuffer<float> RWBuf;
+  RWBuffer<float> RWBuf2;
+  };
+Eg2 e2 : register(t0) : register(s0); 
+// Valid: f is skipped, Buf is bound to t0, RWBuf is bound to s0. RWBuf2 gets assigned to s1 even though there is no explicit binding for s1.
+
+struct Eg3 {
+  float f;
+  Buffer<float> Buf;
+  }; 
+Eg3 e3 : register(t0) : register(s0);
+// Valid: Buf gets bound to t0. Buf will also be bound to s0.
+
+struct Eg4 {
+  struct Bar {
+    RWBuffer<int> a;
+    };
+    Bar b;
+};
+Eg4 e4 : register(t0) 
+// Valid: Bar, the struct within Eg4, has a valid resource that can be bound to t0. 
+
+struct Eg5 {
+  float f;
+}; 
+Eg5 e5 : register(t0) 
+// DefaultError warning: "UDT resource 'Eg5' does not contain an applicable resource type for register type 't'"
+
+struct Eg6 {
+  struct Bar {
+      float f;
+    }
+    Bar b;
+};
+Eg6 e6 : register(t0) 
+// DefaultError warning: "UDT resource 'Eg6' does not contain an applicable resource type for register type 't'"|
+
+```
+
+Finally, if the candidate type is not a valid resource type or not a UDT, the
+final case will be entered. Types that are or contain a resource are known as
+"intangible". In this case, we are dealing with types that cannot be intangible.
+Types that can be immediately determined to not be intangible (that is, types that
+cannot be a resource type or not contain a resource type) are types like booleans,
+int, float, float4, etc. If the resource type is among any numerics or a type that
+cannot be an intangible type, there is only one exception where it can be treated
+as a resource. The only valid register type for such resource types is 'b', which
+adheres to legacy behavior. All other register types applied to such a type will 
+emit an error diagnostic that "the given type '%0' cannot be bound as a resource".
+If the register type is 'b', a warning will be emitted instead, that will be
+treated as an error by default: "register type 'b' used for resource type '%0', 
+which cannot be used as a resource". Below are some examples:
 
 | Code | Diagnostic |
 |-|-|
-| struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>  RWBuffer<float> RWBuf;<br>};<br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0 and RWBuf gets bound to s0, and f is skipped. 
-| struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>  RWBuffer<float> RWBuf;<br>  RWBuffer<float> RWBuf2;<br>};<br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0  and RWBuf gets bound to s0, and f is skipped. RWBuf2 gets assigned to s1 even though there is no explicit binding for s1. |
-| struct Foo {<br>  float f;<br>  Buffer<float> Buf;<br>}; <br> Foo f : register(t0) : register(s0); | None. Success because Buf gets bound to t0. Buf will also be bound to s0.|
-| struct Foo {<br>  struct Bar {<br>    RWBuffer<int> a;<br>    };<br>    Bar b;<br>};<br> Foo f : register(t0) | None. Success because Bar, the struct within Foo, has a valid resource that can be bound to t0. |
-| struct Foo {<br>  float f;<br>}; <br> Foo f : register(t0) | DefaultError warning. "UDT resource 'Foo' does not contain an applicable resource type for register type 't'"|
-| struct Foo {<br>  struct Bar {<br>      float f;<br>    }<br>    Bar b;<br>};<br> Foo f : register(t0) | DefaultError warning. "UDT resource 'Foo' does not contain an applicable resource type for register type 't'"|
-
-Finally, if the candidate type is not a valid resource type or not a UDT,
-the final case will be entered. Types that can be immediately determined
-to not be a resource type or not contain a resource type (types like booleans,
-int, float, float4, etc) are known as "non-intangible". This is because
-types that are or contain a resource are known as "intangible". If the resource
-is among any numeric or non-intangible types, there is only one exception 
-where it can be treated as a resource. That is, for all non-intangible types,
-types that obviously are not, or cannot contain, a valid resource type, the
-only valid register type is 'b', which adheres to legacy behavior. All other 
-register types applied to such a type will emit an error diagnostic that 
-"the given type '%0' cannot be bound as a resource". If the register type is
-'b', a warning will be emitted instead, that will be treated as an error by
-default: "register type 'b' used for resource type '%0', which cannot be used
-as a resource". Below are some examples:
-
-| Code | Diagnostic |
-|-|-|
-| `float f : register(t0)` | "error: 'float' is an invalid resource type for register type 't'." |
+| `float f : register(t0)` | "error: 'float' is an invalid resource type for register type 't'" |
 | `float f : register(b0)` | "warning: register type 'b' used for resource type 'float', which cannot be used as a resource" |
 
 
@@ -218,4 +259,5 @@ register type '&ltp&gt']
 * Tex Riddell
 * Chris Bieneman
 * Justin Bogner
+* Damyan Pepper
 <!-- {% endraw %} -->
