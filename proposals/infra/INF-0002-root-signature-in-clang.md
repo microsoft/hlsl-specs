@@ -151,6 +151,165 @@ We have received feedback that the DSL for root signatures is not something that
 every language that targets DirectX would want to adopt. For this reason we need
 to ensure that our solution doesn't unnecessarily tie the non-HLSL parts to it.
 
+### Root Signature Grammar
+
+```
+    RootSignature : (RootElement(,RootElement)?)?
+
+    RootElement : RootFlags | RootConstants | RootCBV | RootSRV | RootUAV |
+                  DescriptorTable | StaticSampler
+
+    RootFlags : 'RootFlags' '(' (RootFlag(|RootFlag)?)? ')'
+
+    RootFlag : 0 |
+               'ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT' |
+               'DENY_VERTEX_SHADER_ROOT_ACCESS' |
+               'DENY_HULL_SHADER_ROOT_ACCESS' |
+               'DENY_DOMAIN_SHADER_ROOT_ACCESS' |
+               'DENY_GEOMETRY_SHADER_ROOT_ACCESS' |
+               'DENY_PIXEL_SHADER_ROOT_ACCESS' |
+               'DENY_AMPLIFICATION_SHADER_ROOT_ACCESS' |
+               'DENY_MESH_SHADER_ROOT_ACCESS' |
+               'ALLOW_STREAM_OUTPUT' |
+               'LOCAL_ROOT_SIGNATURE' |
+               'CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED' |
+               'SAMPLER_HEAP_DIRECTLY_INDEXED' |
+               'AllowLowTierReservedHwCbLimit'
+
+    RootConstants : 'RootConstants' '(' 'num32BitConstants' '=' NUMBER ','
+           bReg (',' 'space' '=' NUMBER)?
+           (',' 'visibility' '=' SHADER_VISIBILITY)? ')'
+
+    ROOT_DESCRIPTOR_FLAGS : 0 | 'DATA_STATIC' |
+                            'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
+                            'DATA_VOLATILE'
+
+    RootCBV : 'CBV' '(' bReg (',' 'space' '=' NUMBER)?
+          (',' 'visibility' '=' SHADER_VISIBILITY)?
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
+
+    RootSRV : 'SRV' '(' tReg (',' 'space' '=' NUMBER)?
+          (',' 'visibility' '=' SHADER_VISIBILITY)?
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
+
+    RootUAV : 'UAV' '(' uReg (',' 'space' '=' NUMBER)?
+          (',' 'visibility' '=' SHADER_VISIBILITY)?
+          (',' 'flags' '=' ROOT_DESCRIPTOR_FLAGS)? ')'
+
+    DescriptorTable : 'DescriptorTable' '(' (DTClause(|DTClause)?)?
+          (',' 'visibility' '=' SHADER_VISIBILITY)? ')'
+
+    DTClause : CBV | SRV | UAV | Sampler
+
+    DESCRIPTOR_RANGE_FLAGS : DESCRIPTOR_RANGE_FLAGS(|DESCRIPTOR_RANGE_FLAGS)?
+
+    DESCRIPTOR_RANGE_FLAG : 0 |
+        'DESCRIPTORS_VOLATILE' |
+        'DATA_VOLATILE' |
+        'DATA_STATIC' |
+        'DATA_STATIC_WHILE_SET_AT_EXECUTE' |
+        'DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS'                          
+
+    CBV : 'CBV' '(' bReg (',' 'numDescriptors' '=' NUMBER)?
+          (',' 'space' '=' NUMBER)?
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
+
+    SRV : 'SRV' '(' tReg (',' 'numDescriptors' '=' NUMBER)?
+          (',' 'space' '=' NUMBER)?
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
+
+    UAV : 'UAV' '(' uReg (',' 'numDescriptors' '=' NUMBER)?
+          (',' 'space' '=' NUMBER)?
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)?
+          (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
+
+    Sampler : 'Sampler' '(' sReg (',' 'numDescriptors' '=' NUMBER)?
+          (',' 'space' '=' NUMBER)?
+          (',' 'offset' '=' DESCRIPTOR_RANGE_OFFSET)? (',' 'flags' '=' DESCRIPTOR_RANGE_FLAGS)? ')'
+
+    SHADER_VISIBILITY : 'SHADER_VISIBILITY_ALL' | 'SHADER_VISIBILITY_VERTEX' |
+                        'SHADER_VISIBILITY_HULL' |
+                        'SHADER_VISIBILITY_DOMAIN' |
+                        'SHADER_VISIBILITY_GEOMETRY' |
+                        'SHADER_VISIBILITY_PIXEL' |
+                        'SHADER_VISIBILITY_AMPLIFICATION' |
+                        'SHADER_VISIBILITY_MESH'
+
+    DESCRIPTOR_RANGE_OFFSET : 'DESCRIPTOR_RANGE_OFFSET_APPEND' | NUMBER
+
+    StaticSampler : 'StaticSampler' '(' sReg (',' 'filter' '=' FILTER)?
+             (',' 'addressU' '=' TEXTURE_ADDRESS)?
+             (',' 'addressV' '=' TEXTURE_ADDRESS)?
+             (',' 'addressW' '=' TEXTURE_ADDRESS)?
+             (',' 'mipLODBias' '=' NUMBER)?
+             (',' 'maxAnisotropy' '=' NUMBER)?
+             (',' 'comparisonFunc' '=' COMPARISON_FUNC)?
+             (',' 'borderColor' '=' STATIC_BORDER_COLOR)?
+             (',' 'minLOD' '=' NUMBER)?
+             (',' 'maxLOD' '=' NUMBER)? (',' 'space' '=' NUMBER)?
+             (',' 'visibility' '=' SHADER_VISIBILITY)? ')'
+  
+    bReg : 'b' NUMBER
+
+    tReg : 't' NUMBER
+
+    uReg : 'u' NUMBER
+
+    sReg : 's' NUMBER
+
+    FILTER : 'FILTER_MIN_MAG_MIP_POINT' |
+             'FILTER_MIN_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MIN_POINT_MAG_MIP_LINEAR' |
+             'FILTER_MIN_LINEAR_MAG_MIP_POINT' |
+             'FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MIN_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MIN_MAG_MIP_LINEAR' |
+             'FILTER_ANISOTROPIC' |
+             'FILTER_COMPARISON_MIN_MAG_MIP_POINT' |
+             'FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR' |
+             'FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT' |
+             'FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR' |
+             'FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT' |
+             'FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR' |
+             'FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT' |
+             'FILTER_COMPARISON_MIN_MAG_MIP_LINEAR' |
+             'FILTER_COMPARISON_ANISOTROPIC' |
+             'FILTER_MINIMUM_MIN_MAG_MIP_POINT' |
+             'FILTER_MINIMUM_MIN_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR' |
+             'FILTER_MINIMUM_MIN_LINEAR_MAG_MIP_POINT' |
+             'FILTER_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MINIMUM_MIN_MAG_MIP_LINEAR' |
+             'FILTER_MINIMUM_ANISOTROPIC' |
+             'FILTER_MAXIMUM_MIN_MAG_MIP_POINT' |
+             'FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR' |
+             'FILTER_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT' |
+             'FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR' |
+             'FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT' |
+             'FILTER_MAXIMUM_MIN_MAG_MIP_LINEAR' |
+             'FILTER_MAXIMUM_ANISOTROPIC'
+
+    TEXTURE_ADDRESS : 'TEXTURE_ADDRESS_WRAP' |
+                      'TEXTURE_ADDRESS_MIRROR' | 'TEXTURE_ADDRESS_CLAMP' |
+                      'TEXTURE_ADDRESS_BORDER' | 'TEXTURE_ADDRESS_MIRROR_ONCE'
+
+    COMPARISON_FUNC : 'COMPARISON_NEVER' | 'COMPARISON_LESS' |
+                      'COMPARISON_EQUAL' | 'COMPARISON_LESS_EQUAL' |
+                      'COMPARISON_GREATER' | 'COMPARISON_NOT_EQUAL' |
+                      'COMPARISON_GREATER_EQUAL' | 'COMPARISON_ALWAYS'
+
+    STATIC_BORDER_COLOR : 'STATIC_BORDER_COLOR_TRANSPARENT_BLACK' |
+                          'STATIC_BORDER_COLOR_OPAQUE_BLACK' |
+                          'STATIC_BORDER_COLOR_OPAQUE_WHITE'
+```
+
 ### Validation and Diagnostics
 
 As well as validating that the root signature is syntactically correct, the
@@ -304,15 +463,197 @@ elimation has completed.
 
 ### Validations in Sema
 
-TODO
+#### All the values should be legal.
+
+Most values like ShaderVisibility/ParameterType are covered by syntactical 
+checks in Sema.
+Only list special rule here.
+
+- For DESCRIPTOR_RANGE_FLAGS on a Sampler, only the following values are valid
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+
+- For DESCRIPTOR_RANGE_FLAGS on a CBV/SRV/UAV, only the following values are
+   valid
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DATA_VOLATILE
+  - DATA_STATIC
+  - DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_VOLATILE | DATA_VOLATILE
+  - DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE
+
+- StaticSampler
+  - Max/MinLOD cannot be NaN.
+  - MaxAnisotropy cannot exceed 16.
+  - MipLODBias must be within range of [-16, 15.99].
+
+- Register Space
+  -The range 0xFFFFFFF0 to 0xFFFFFFFF is reserved.
+  ```
+  "CBV(b0, space=4294967295)" is invalid due to the use of reserved space 0xFFFFFFFF.
+  ```
+
+- Resource ranges must not overlap.
+  ```
+  "CBV(b2), DescriptorTable(CBV(b0, numDescriptors=5))" will result in an error
+  due to overlapping at b2.
+  ```
 
 ### Metadata Schema
 
 TODO
 
-### Validations during Codegen
+### Validations during DXIL generation
 
-TODO
+#### All the things validated in Sema.
+  All the validation rules mentioned in [Validations In Sema](#validations-in-sema)
+  need to be checked during DXIL generation as well.
+  The difference between checks in Sema and DXIL generation is that Sema could
+  rely on syntactical checks to validate values in many cases.
+  However, in DXIL generation, all values need to be checked to ensure they 
+  fall within the correct range:
+
+- RootFlags
+  - (RootFlags & 0x80000fff) should equals 0.
+
+- Valid values for ShaderVisibility
+  - SHADER_VISIBILITY_ALL
+  - SHADER_VISIBILITY_VERTEX
+  - SHADER_VISIBILITY_HULL
+  - SHADER_VISIBILITY_DOMAIN
+  - SHADER_VISIBILITY_GEOMETRY
+  - SHADER_VISIBILITY_PIXEL
+  - SHADER_VISIBILITY_AMPLIFICATION
+  - SHADER_VISIBILITY_MESH
+
+- Valid values for RootDescriptorFlags
+  - 0
+  - DataVolatile
+  - DataStaticWihleSetAtExecute
+  - DataStatic
+
+- Valid values for DescriptorRangeFlags on CBV/SRV/UAV
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DATA_VOLATILE
+  - DATA_STATIC
+  - DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_VOLATILE | DATA_VOLATILE
+  - DESCRIPTORS_VOLATILE | DATA_STATIC_WHILE_SET_AT_EXECUTE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS | DATA_STATIC_WHILE_SET_AT_EXECUTE
+
+- Valid values for DescriptorRangeFlags on Sampler
+  - 0
+  - DESCRIPTORS_VOLATILE
+  - DESCRIPTORS_STATIC_KEEPING_BUFFER_BOUNDS_CHECKS
+
+- StaticSampler
+  - Valid values for Filter
+    - FILTER_MIN_MAG_MIP_POINT
+    - FILTER_MIN_MAG_POINT_MIP_LINEAR
+    - FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT
+    - FILTER_MIN_POINT_MAG_MIP_LINEAR
+    - FILTER_MIN_LINEAR_MAG_MIP_POINT
+    - FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+    - FILTER_MIN_MAG_LINEAR_MIP_POINT
+    - FILTER_MIN_MAG_MIP_LINEAR
+    - FILTER_ANISOTROPIC
+    - FILTER_COMPARISON_MIN_MAG_MIP_POINT
+    - FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR
+    - FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT
+    - FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR
+    - FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT
+    - FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+    - FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT
+    - FILTER_COMPARISON_MIN_MAG_MIP_LINEAR
+    - FILTER_COMPARISON_ANISOTROPIC
+    - FILTER_MINIMUM_MIN_MAG_MIP_POINT
+    - FILTER_MINIMUM_MIN_MAG_POINT_MIP_LINEAR
+    - FILTER_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT
+    - FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR
+    - FILTER_MINIMUM_MIN_LINEAR_MAG_MIP_POINT
+    - FILTER_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+    - FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT
+    - FILTER_MINIMUM_MIN_MAG_MIP_LINEAR
+    - FILTER_MINIMUM_ANISOTROPIC
+    - FILTER_MAXIMUM_MIN_MAG_MIP_POINT
+    - FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR
+    - FILTER_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT
+    - FILTER_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR
+    - FILTER_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT
+    - FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+    - FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT
+    - FILTER_MAXIMUM_MIN_MAG_MIP_LINEAR
+    - FILTER_MAXIMUM_ANISOTROPIC
+
+  - Valid values for TextureAddress
+    - TEXTURE_ADDRESS_WRAP 
+    - TEXTURE_ADDRESS_MIRROR  
+    - TEXTURE_ADDRESS_CLAMP 
+    - TEXTURE_ADDRESS_BORDER 
+    - TEXTURE_ADDRESS_MIRROR_ONCE
+
+  - Valid values for ComparisonFunc
+    - 0
+    - COMPARISON_NEVER 
+    - COMPARISON_LESS 
+    - COMPARISON_EQUAL 
+    - COMPARISON_LESS_EQUAL 
+    - COMPARISON_GREATER 
+    - COMPARISON_NOT_EQUAL 
+    - COMPARISON_GREATER_EQUAL 
+    - COMPARISON_ALWAYS
+
+  - Valid values for StaticBorderColor
+    - STATIC_BORDER_COLOR_TRANSPARENT_BLACK 
+    - STATIC_BORDER_COLOR_OPAQUE_BLACK 
+    - STATIC_BORDER_COLOR_OPAQUE_WHITE
+
+  - Comparison filter must have ComparisonFunc not equal to 0.
+      ```
+      When the Filter of a StaticSampler is FILTER_COMPARISON*,
+      the ComparisonFunc cannot be 0.
+      ```
+
+#### Resource used in DXIL must be fully bound in root signature.
+```
+  // B is bound to t1, but not in root descriptor.
+  Buffer<float> B : register(t1);
+  [RootSignature("")]
+  void main() : SV_Target {
+    return B[0];
+  }
+```
+
+#### Root Signature Flag must match DXIL.
+```
+  // Used dynamic resource but missing CBVSRVUAVHeapDirectlyIndexed flag.
+  [RootSignature("")]
+  void main() : SV_Target {
+    Buffer<float> B = ResourceDescriptorHeap[0];
+    return B[0];
+  }
+```
+
+#### Textures/TypedBuffers cannot be bound to root descriptors.
+```
+  // B is TypedBuffer, but bound as a root descriptor.
+  Buffer<float> B : register(t0);
+  [RootSignature("SRV(t0)")]
+  void main() : SV_Target {
+    return B[0];
+  }
+```
+
 
 <!--
 * Is there any potential for changed behavior?
