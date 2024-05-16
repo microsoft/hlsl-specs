@@ -626,7 +626,7 @@ TODO
 
 #### Resource used in DXIL must be fully bound in root signature.
 ```
-  // B is bound to t1, but not in root signature.
+  // B is bound to t1, but no root parameters cover t1.
   Buffer<float> B : register(t1);
   [RootSignature("")]
   void main() : SV_Target {
