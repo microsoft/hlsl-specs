@@ -467,7 +467,7 @@ elimation has completed.
 
 Most values like ShaderVisibility/ParameterType are covered by syntactical 
 checks in Sema.
-Only list special rule here.
+The additional semantic rules not already covered by the grammar are listed here.
 
 - For DESCRIPTOR_RANGE_FLAGS on a Sampler, only the following values are valid
   - 0
@@ -626,7 +626,7 @@ TODO
 
 #### Resource used in DXIL must be fully bound in root signature.
 ```
-  // B is bound to t1, but not in root descriptor.
+  // B is bound to t1, but no root parameters cover t1.
   Buffer<float> B : register(t1);
   [RootSignature("")]
   void main() : SV_Target {
