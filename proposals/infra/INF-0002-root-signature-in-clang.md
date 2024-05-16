@@ -467,7 +467,7 @@ elimation has completed.
 
 Most values like ShaderVisibility/ParameterType are covered by syntactical 
 checks in Sema.
-The additional sematic rules not already covered by the grammar are listed here.
+The additional semantic rules not already covered by the grammar are listed here.
 
 - For DESCRIPTOR_RANGE_FLAGS on a Sampler, only the following values are valid
   - 0
