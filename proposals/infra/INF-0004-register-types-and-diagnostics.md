@@ -59,12 +59,16 @@ specified resource class.
 | UAV | u | "Object type '%0' with resource class "UAV" expects register type 'u', but register type '%1' was given." |
 | CBuffer | b |  "Object type '%0' with resource class "CBuffer" expects register type 'b', but register type '%1' was given." |
 
-There are certain resource kinds within the SRV resource
-class that are "sampleable". These resources are typically
-prefixed with "Texture" in actual HLSL source. So, there will
-be a special check to see whether the candidate resource is 
-prefixed with "Texture", and if so, the "s" register type will
-also be permitted for that resource.
+There are certain exceptions to the table above. While we would like to
+reserve a register type for each resource class, and create a one-to-one
+mapping, there is legacy behavior that must be preserved in two specific
+cases. A Sampler resource class may use the 't' register type, and an
+SRV resource class may use the 's' register type. However, the compiler
+will not actively use such resources. This legacy behavior was permitted
+in prior versions of the compiler, but will now emit a warning that will
+be treated as an error by default. So, there will be a special exception
+for Samplers and SRVs, which may accept 't' and 's' respectively if the
+warning (--Wno-disallow-legacy-binding-rules) is disabled.
 
 If the given candidate resource is a user-defined type (UDT), then further
 analysis is necessary. The first step is to gather all registers that
@@ -159,14 +163,13 @@ the ResourceAttr attribute can be fetched, with which the resource
 class can be determined. Once this is known, we then check if the resource
 type is a user-defined type or if it is a standard resource type. If the 
 resource type is among the standard resource types (e.g., cbuffer, tbuffer,
-RWBuffer, etc.), then the register type is checked for validity. The resource
-is also checked for sampleability (i.e., is it a texture resource?). If there is
+RWBuffer, etc.), then the register type is checked for validity. If there is
 an incompatibility between resource class and register type, a diagnostic will
 be emitted. Otherwise, the resource is a user-defined type, and so the type needs
 to be validated to see whether it can properly be assigned to the given register 
 type. If the UDT does not have at least one resource that matches the given register 
 types, then an error will be emitted. The only remaining case is when there
-is no resource attribute, which implies the type is non-intangible. In this case,
+is no resource attribute, which implies the type cannot be intangible. In this case,
 if the type is strictly numeric, the only acceptable register type is 'b', which 
 is legacy behavior. In this case, a warning will be emitted that will be treated as 
 an error by default, which states that a numeric type is not usable as a resource. 
@@ -187,41 +190,27 @@ contain any type
 with the ResourceAttr
 attribute?}
 B -- Yes -->C{Is T a UDT?}
-B -- No --> M{Is T non-intangible?}
+B -- No --> N{Is the given 
+register type 'b'?}
 C -- Yes -->D{Does T contain
 at least one 
 valid resource 
 for p?}
-C -- No -->G{"Is T sampleable 
-(is it a Texture* resource?)"}
+C -- No -->G{"Is T a sampler or an SRV?)"}
 D -- Yes -->E[No error]
 D -- No -->F[error: UDT resource '&ltT&gt'
 does not contain an 
 applicable resource 
 type for register 
 type '&ltp&gt']
-G -- Yes -->H{Is the register 
-type 't' or 's'?}
-G -- No --> I{Was the register 
-type given 's'?}
-H -- Yes -->L{Was the register 
-type given 's'?}
-H -- No --> J[error: Object type '&ltT&gt' 
-with resource class 
-'&ltresource class&gt' expects 
-register type 't' or 's', 
-but register type 
-'&ltp&gt' was given.]
-I -- Yes --> V[DefaultError warning: 
-register type 's' 
-can only be used on 
-sampleable resource types, 
-but resource type &ltT&gt 
-was given. Disable with
---Wno-disallow-legacy-binding-rules]
-I -- No -->K{Is T a valid resource
+G -- Yes -->H{Is T a sampler?}
+G -- No --> K{Is T a valid resource
 class for the given
 prefix 'p'?}
+H -- Yes -->L{Is the prefix 't'?}
+H -- No --> J{Is the prefix 's'?}
+J -- Yes --> O
+J -- No --> K 
 K -- Yes -->Q[No error]
 K -- No --> R[error: Object type '&ltT&gt'
 with resource class 
@@ -230,13 +219,13 @@ register type
 '&ltexpected register type&gt', 
 but register type 
 '&ltp&gt' was given.]
-L -- Yes -->O[warning: resource type 
-&ltT> is being sampled.]
-L -- No -->P[No error.]
-M -- Yes -->N{Is the given 
-register type 'b'?}
-M -- No --> S[Assert, this should 
-be impossible]
+L -- Yes -->O[DefaultError warning: 
+resource type 
+&ltT&gt has unexpected
+register type '&ltp&gt'
+Disable with
+--Wno-disallow-legacy-binding-rules]
+L -- No -->K
 N -- Yes -->T[warning: register type
 'b' used for resource type 
 '&ltT&gt', which cannot 
