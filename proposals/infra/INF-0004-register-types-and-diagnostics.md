@@ -59,22 +59,11 @@ specified resource class.
 | UAV | u | "Object type '%0' with resource class "UAV" expects register type 'u', but register type '%1' was given." |
 | CBuffer | b |  "Object type '%0' with resource class "CBuffer" expects register type 'b', but register type '%1' was given." |
 
-There are certain exceptions to the table above. While we would like to
-reserve a register type for each resource class, and create a one-to-one
-mapping, there is legacy behavior that must be preserved in two specific
-cases. A Sampler resource class may use the 't' register type, and an
-SRV resource class may use the 's' register type. However, the compiler
-will not actively use such resources. This legacy behavior was permitted
-in prior versions of the compiler, but will now emit a warning that will
-be treated as an error by default. So, there will be a special exception
-for Samplers and SRVs, which may accept 't' and 's' respectively if the
-warning (--Wno-disallow-legacy-binding-rules) is disabled.
-
 If the given candidate resource is a user-defined type (UDT), then further
 analysis is necessary. The first step is to gather all registers that
 are being bound to this declaration, and collect the register types
 that are being specified. The UDT must have at least one valid resource
-that can be bound to the provided register type. If not, an error must be
+that can be bound to the provided register type(s). If not, an error must be
 emitted stating that "No resource contained in struct '%0' can be bound
 to register type '%1'". There are no issues if a UDT has more resources
 than there are register binding statements, the resources will be bound to
@@ -139,7 +128,7 @@ Finally, if the candidate type is not a valid resource type or not a UDT, the
 final case will be entered. Types that are or contain a resource are known as
 "intangible". In this case, we are dealing with types that cannot be intangible.
 Types that can be immediately determined to not be intangible (that is, types that
-cannot be a resource type or not contain a resource type) are types like booleans,
+cannot be a resource type or cannot contain a resource type) are types like booleans,
 int, float, float4, etc. If the resource type is among any numerics or a type that
 cannot be an intangible type, there is only one exception where it can be treated
 as a resource. The only valid register type for such resource types is 'b', which
@@ -152,7 +141,7 @@ which cannot be used as a resource". Below are some examples:
 | Code | Diagnostic |
 |-|-|
 | `float f : register(t0)` | "error: 'float' is an invalid resource type for register type 't'" |
-| `float f : register(b0)` | "warning: register type 'b' used for resource type 'float', which cannot be used as a resource" |
+| `float f : register(b0)` | DefaultError "warning: register type 'b' used for resource type 'float', which cannot be used as a resource. Disable with --Wno-disallow-legacy-binding-rules" |
 
 
 
@@ -173,7 +162,9 @@ is no resource attribute, which implies the type cannot be intangible. In this c
 if the type is strictly numeric, the only acceptable register type is 'b', which 
 is legacy behavior. In this case, a warning will be emitted that will be treated as 
 an error by default, which states that a numeric type is not usable as a resource. 
-Any other register type will cause an error to be emitted, stating that the given 
+If 'c' or 'i' are given as register types, a warning will be emitted stating that
+such register types are legacy behavior, and the resource won't be used. Any other 
+register type will cause an error to be emitted, stating that the given resource
 type cannot be bound as a resource.
 Legacy behavior can be allowed with the --Wno-disallow-legacy-binding-rules
 flag. When this flag is active, and legacy behavior is present, a warning will 
@@ -190,53 +181,43 @@ contain any type
 with the ResourceAttr
 attribute?}
 B -- Yes -->C{Is T a UDT?}
-B -- No --> N{Is the given 
+B -- No --> J{Is the given 
 register type 'b'?}
 C -- Yes -->D{Does T contain
 at least one 
 valid resource 
 for p?}
-C -- No -->G{"Is T a sampler or an SRV?)"}
+C -- No -->G{Is T a valid resource
+class for the given
+prefix 'p'?}
 D -- Yes -->E[No error]
 D -- No -->F[error: UDT resource '&ltT&gt'
 does not contain an 
 applicable resource 
 type for register 
 type '&ltp&gt']
-G -- Yes -->H{Is T a sampler?}
-G -- No --> K{Is T a valid resource
-class for the given
-prefix 'p'?}
-H -- Yes -->L{Is the prefix 't'?}
-H -- No --> J{Is the prefix 's'?}
-J -- Yes --> O
-J -- No --> K 
-K -- Yes -->Q[No error]
-K -- No --> R[error: Object type '&ltT&gt'
+G -- Yes -->H[No error]
+G -- No --> I[error: Resource type '&ltT&gt'
 with resource class 
 '&ltresource class&gt' expects
 register type 
 '&ltexpected register type&gt', 
 but register type 
 '&ltp&gt' was given.]
-L -- Yes -->O[DefaultError warning: 
-resource type 
-&ltT&gt has unexpected
-register type '&ltp&gt'
-Disable with
---Wno-disallow-legacy-binding-rules]
-L -- No -->K
-N -- Yes -->T[warning: register type
+
+J -- Yes -->K[warning: register type
 'b' used for resource type 
 '&ltT&gt', which cannot 
 be used as a resource.]
-N -- No -->U{Is the given
+J -- No -->L{Is the given
 register type 'c' or 'i'?}
-U -- Yes --> W[DefaultError warning:
+L -- Yes --> M[DefaultError warning:
 Using register type '&ltp&gt' 
 is deprecated, resource 
-won't be used.]
-U -- No -->X[error: &ltT&gt is an invalid 
+won't be used. 
+Disable with
+--Wno-disallow-legacy-binding-rules]
+L -- No -->N[error: &ltT&gt is an invalid 
 resource type for 
 register type '&ltp&gt']
 ```
