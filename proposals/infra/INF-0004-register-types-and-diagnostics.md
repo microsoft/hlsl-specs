@@ -268,11 +268,10 @@ variable of
 type '%0']
 A -- no --> C{Is `resource` set?}
 C -- yes --> E{is `basic` set?}
-
 E -- yes --> G{is `default_globals` set?}
 G -- yes --> H{What is the given register type?}
-H -- 'i' --> I[warning: deprecated <br>legacy int constant <br>register binding 'i' used]
-H -- 'b' --> J[warning: deprecated <br>legacy bool constant register<br> binding 'b' used.<br> 'b' is used for<br> constant buffer<br> resource binding.]
+H -- 'i' --> I[warning: deprecated <br>legacy int constant <br>register binding 'i' . Disable with <br>--Wno-disallow-legacy-binding-rules]
+H -- 'b' --> J[warning: deprecated <br>legacy bool constant register<br> binding 'b' used.<br> 'b' is used for<br> constant buffer<br> resource binding. Disable with <br>--Wno-disallow-legacy-binding-rules]
 H -- 'c' --> K[no error]
 H -- else --> L[error: '%0' is<br> an invalid resource<br> type for register<br> type '%1']
 G -- no --> W{Was the given <br>register type<br> 't' 'u' or 's' ?}
