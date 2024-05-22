@@ -267,43 +267,36 @@ allowed on
 variable of 
 type '%0']
 A -- no --> C{Is `resource` set?}
-C -- yes --> D{Is the given
-register type
-correct for the
-given resource type?}
-D -- yes -->E{is `basic` set?}
-D -- no --> F{error: %select{SRV|UAV|CBV|Sampler}2
-type '%0' requires 
-register type 
-'%select{t|u|b|s}2', 
-but register type 
-'%1' was used.}
+C -- yes --> E{is `basic` set?}
+
 E -- yes --> G{is `default_globals` set?}
 G -- yes --> H{What is the given register type?}
-H -- 'i' --> I[warning: deprecated legacy int constant register binding 'i' used]
-H -- 'b' --> J[warning: deprecated legacy bool constant register binding 'b' used. 'b' is used for constant buffer resource binding.]
+H -- 'i' --> I[warning: deprecated <br>legacy int constant <br>register binding 'i' used]
+H -- 'b' --> J[warning: deprecated <br>legacy bool constant register<br> binding 'b' used.<br> 'b' is used for<br> constant buffer<br> resource binding.]
 H -- 'c' --> K[no error]
-H -- else --> L[error: register binding type '%1' not supported for variable of type '%0']
+H -- else --> L[error: '%0' is<br> an invalid resource<br> type for register<br> type '%1']
+G -- no --> W{Was the given <br>register type<br> 't' 'u' or 's' ?}
+W -- yes --> X["error: unsupported resource<br> register binding <br>'%select{t|u|b|s}1'<br> on variable of type '%0'"]
+W -- no --> L
 E -- no --> M{is `udt` set?}
-C -- yes --> M
 C -- no --> N[assert: other would 
 be set if resource
 isn't set.]
-M -- yes --> O{Is `default_globals` set?}
-O -- yes --> P{What register type was given?}
-P -- 'c' --> Q[no error]
-P -- 't|u|b|s' --> R[error: variable of 
-type '%0' bound to
-register type '%1' 
-does not contain a
-matching 
-'%select{SRV|UAV|CBV|Sampler}2'
-resource]
-P -- else --> S[error: register binding type
+M -- yes --> O{What register type was given?}
+O -- 'c' --> P{Is `default_globals` set?}
+P -- yes --> Q[no error]
+P -- no --> R["error: variable of<br> type '%0' bound to<br> register type '%1'<br> does not contain<br> a matching <br>'%select{SRV|UAV|CBV|Sampler}2'<br> resource"]
+O --'t|u|b|s' --> R
+O -- else --> S[error: register binding type
 '%1' not supported 
 for variable 
 of type '%0']
-
+M -- no --> D{Is the given
+register type
+correct for the
+given resource type?}
+D -- yes --> T[no error]
+D -- no --> F["error: %select{SRV|UAV|CBV|Sampler}2 <br> type '%0' requires register <br> type '%select{t|u|b|s}2', <br> but register type '%1' was used."]
 ```
 
 
