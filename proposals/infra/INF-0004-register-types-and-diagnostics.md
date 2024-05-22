@@ -265,7 +265,7 @@ A[Is `other` set?] -- yes --> B[error: register
 binding not 
 allowed on 
 variable of 
-type '%0'}
+type '%0']
 A -- no --> C{Is `resource` set?}
 C -- yes --> D{Is the given
 register type
