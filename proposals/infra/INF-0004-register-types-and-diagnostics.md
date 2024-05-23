@@ -48,32 +48,36 @@ The design below aims to specify the answer to these questions.
 Firstly, the most common case is when a resource type that is not a 
 user-defined type is bound as a resource. Any resource will have an 
 associated ResourceAttr attribute, from which we can determine the 
-resource class, which is sufficient to determine 
-
-the expected register type, and any other register type will result 
-in an error. The recommended register type will be suggested in the
-diagnostic. The table below specifies what register type will be 
-expected for any resource type that falls under the specified 
-resource class. 
+resource class, which is sufficient to determine the expected register
+type. Any other register type will result in an error. The
+recommended register type will be suggested in the diagnostic. 
+The table below specifies what register type will be expected for 
+any resource type that falls under the specified resource class. 
+The diagnostic that will be emitted for incorrect register types is:
+`"%select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used."`
 
 | Resource Class | Register Type | Diagnostic |
-|-|-|-|
-| Sampler | s | "%select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used." |
-| SRV | t | "%select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used." |
-| UAV | u | "%select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used." |
-| CBuffer | b | "%select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used." |
+|-|-|
+| Sampler | s |
+| SRV | t |
+| UAV | u |
+| CBuffer | b |
 
-If the given candidate resource is a user-defined type (UDT), then further
+If the given candidate variable is a user-defined type (UDT), then further
 analysis is necessary. The first step is to gather all register declarations
 that are being applied to this variable declaration, and collect the register types
 that are being specified. The UDT must contain at least one valid resource
-that can be bound to the provided register type(s). If not, an error must be
-emitted stating that "No resource contained in struct '%0' can be bound
-to register type '%1'". There are no issues if a UDT contains more resources
-than there are register binding statements, the resources will be bound to
-the next available space automatically, and so compilation can succeed.
-Below are some examples of different UDT's and the diagnostics that
-would be emitted when applying resource bindings to the variable:
+that can be bound to the provided register type(s). If not, a warning will be
+emitted stating that "No resource contained in struct '%0' can be bound to register 
+type '%1'". The warning will be treated as an error by default, and can be disabled
+with Disable with --Wno-disallow-legacy-binding-rules. There are no issues if a UDT 
+contains more resources than there are register binding statements, the resources 
+will be bound to the next available space automatically, and so compilation can 
+succeed. It should also be noted that the 'c' register type can be used on UDT 
+variables as well, which would function to specify the constant offset for the 
+numeric portion(s) of the structure. Below are some examples of different UDT's
+and the diagnostics that would be emitted when applying resource bindings to the 
+variable:
 
 ```
 struct Eg1 {
@@ -120,7 +124,7 @@ struct Eg6 {
   float f;
 }; 
 Eg6 e6 : register(t0) 
-// DefaultError warning: "UDT resource 'Eg6' does not contain an applicable resource type for register type 't'"
+// DefaultError warning: "No resource contained in struct 'Eg6' can be bound to register type 't'"
 
 struct Eg7 {
   struct Bar {
@@ -129,11 +133,11 @@ struct Eg7 {
     Bar b;
 };
 Eg7 e7 : register(t0) 
-// DefaultError warning: "UDT resource 'Eg7' does not contain an applicable resource type for register type 't'"
+// DefaultError warning: "No resource contained in struct 'Eg7' can be bound to register type 't'"
 
 ```
 
-Finally, if the candidate type is not a valid resource type or not a UDT, the
+Finally, if the candidate type is not a valid resource type and not a UDT, the
 final case will be entered. Types that are or contain a resource are known as
 "intangible". In this case, we are dealing with types that cannot be intangible.
 Types that can be immediately determined to not be intangible (that is, types that
@@ -144,10 +148,17 @@ can legally be applied to the variable. The only valid register type for such a
 numeric variable type is 'c'. The register keyword in this statement:
 `float f : register(c0)`
 isn't binding a resource, rather it is specifying a constant register binding offset
-within the $Globals cbuffer, which is legacy behavior from DX9. All other register types
-applied to such a type will emit an error diagnostic that "'%0' is an invalid resource
-type for register type '%1'", except for 'b' or 'i'. If the register type is 'b' or 'i',
-a warning will be emitted instead, that will be treated as an error by default.
+within the $Globals cbuffer, which is legacy behavior from DX9. Because this specific 
+register overload is only applicable if the developer wants to make modifications to the
+$Globals buffer, it is not useful when the overload is not used inside the $Globals
+context. That is, if this register overload appears within a `cbuffer {...}` or 
+`tbuffer {...}` scope, the register number will be ignored. In this case, a warning will
+be emitted that is treated as an error:
+`warning: variable of type '%0' bound to register type '%1' does not contain a matching '%select{SRV|UAV|CBV|Sampler}2' resource`
+All other register types applied to such a type will emit an error diagnostic that 
+`"'%0' is an invalid resource type for register type '%1'"`, except for 'b' or 'i'.
+If the register type is 'b' or 'i', a warning will be emitted instead, that will be 
+treated as an error by default. <br>
 Below are some examples:
 
 | Code | Diagnostic |
@@ -157,7 +168,7 @@ Below are some examples:
 | `float f : register(b0)` | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding. Disable with --Wno-disallow-legacy-binding-rules" |
 | `float f : register(i0)` | "warning: deprecated legacy int constant register binding 'i' used. Disable with --Wno-disallow-legacy-binding-rules" |
 | `float f : register(x0)` | "error: register binding type 'x' not supported for variable of type 'float'" |
-
+| `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' should only be used in global contexts. Disable with --Wno-disallow-legacy-binding-rules" |
 
 
 ## Detailed design
@@ -196,18 +207,23 @@ So, we can emit this diagnostic: `error: '%0' is an invalid resource type for re
 If the `resource` flag is set and the `udt` flag is not set, then we have to check the 
 register statement, and the resource class flag, and verify that the register type matches the 
 resource class flag. If not, we emit this diagnostic: 
-`error; %select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used.`
+`error: %select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used.`
 If the `basic` flag is set, then we first check if `default_globals` is set. If so, then 
 we check the register type. If the register type is 'i' or 'b', the deprecated warning
 that is treated as an error as shown in the examples above will be emitted. If 'c' is given,
-no errors will be emitted. After this point, `default_globals` doesn't need to be set.
+no errors will be emitted. If `default_globals` is not set and 'c' is given, a warning will
+be emitted that is treated as an error by default: `warning: register binding 'c' should only be used in global contexts. Disable with --Wno-disallow-legacy-binding-rules` 
+After this point, `default_globals` doesn't need to be set.
 If 't', 'u', or 's' are given, then this diagnostic will be emitted:
 `error: '%0' is an invalid resource type for register type '%1'`. If any other register type
 is seen, this error will be emitted:
 `error: register binding type '%1' not supported for variable of type '%0'`<br><br>
 
 Finally, in the case that `udt` is set, we first check `default_globals`. If it is set,
-then we can permit the 'c' register type. After this point, `default_globals` doesn't
+then we can permit the 'c' register type. Otherwise, cbuffers and tbuffers are not permitted
+within UDT's, and so we don't need to check if 'c' is given within the UDT and emit a warning 
+for legacy behavior that is treated as an error. An error will already be emitted preventing
+the declaration of these buffers within a UDT. After this point, `default_globals` doesn't
 need to be set. For every register type that is used to bind the resources contained in
 the given UDT, we verify that the corresponding resource class flag has been set. If the
 corresponding resource class flag is not set, this error will be emitted:
@@ -222,83 +238,6 @@ be emitted instead of an error.<br><br>
 Below are two flowcharts that describe the process that is used to determine
 what kind of diagnostic to emit in each case. First the analysis step, then
 second the diagnostic emission step.
-
-```mermaid
-flowchart TD
-A[Type T bound to 
-register type p
-in decl D] --> B{What kind of
-decl is D?}
-B -- cbuffer -->C[set `resource` and `cbv`]
-B -- tbuffer -->D[set `resource` and `srv`]
-B -- other --> E{Is T an
-implicit type?}
-E -- yes --> F{Is T a vector, 
-matrix, or 
-numeric type?}
-F -- yes --> G[set `basic`]
-F -- no -->H{Does D have a
-ResourceAttr attribute?}
-G --> H
-H -- yes --> I[set `resource` and
-the corresponding
-resource class flag]
-H -- no --> J[set `other`]
-E -- no --> K{Is T a struct or class type?}
-K -- yes --> L[set `udt`,
-recurse and set
-resource class flags
-based on resource
-class contents]
-K -- no --> M[set `basic`]
-
-
-J --> N{is D in the $Globals scope?}
-I --> N
-L --> N
-M --> N
-N -- yes --> O[set `default_globals`]
-```
-
-```mermaid
-flowchart TD
-A[Is `other` set?] -- yes --> B[error: register
-binding not 
-allowed on 
-variable of 
-type '%0']
-A -- no --> C{Is `resource` set?}
-C -- yes --> E{is `basic` set?}
-E -- yes --> G{is `default_globals` set?}
-G -- yes --> H{What is the given register type?}
-H -- 'i' --> I[warning: deprecated <br>legacy int constant <br>register binding 'i' . Disable with <br>--Wno-disallow-legacy-binding-rules]
-H -- 'b' --> J[warning: deprecated <br>legacy bool constant register<br> binding 'b' used.<br> 'b' is used for<br> constant buffer<br> resource binding. Disable with <br>--Wno-disallow-legacy-binding-rules]
-H -- 'c' --> K[no error]
-H -- else --> L[error: '%0' is<br> an invalid resource<br> type for register<br> type '%1']
-G -- no --> W{Was the given <br>register type<br> 't' 'u' or 's' ?}
-W -- yes --> X["error: unsupported resource<br> register binding <br>'%select{t|u|b|s}1'<br> on variable of type '%0'"]
-W -- no --> L
-E -- no --> M{is `udt` set?}
-C -- no --> N[assert: other would 
-be set if resource
-isn't set.]
-M -- yes --> O{What register type was given?}
-O -- 'c' --> P{Is `default_globals` set?}
-P -- yes --> Q[no error]
-P -- no --> R["error: variable of<br> type '%0' bound to<br> register type '%1'<br> does not contain<br> a matching <br>'%select{SRV|UAV|CBV|Sampler}2'<br> resource"]
-O --'t|u|b|s' --> R
-O -- else --> S[error: register binding type
-'%1' not supported 
-for variable 
-of type '%0']
-M -- no --> D{Is the given
-register type
-correct for the
-given resource type?}
-D -- yes --> T[no error]
-D -- no --> F["error: %select{SRV|UAV|CBV|Sampler}2 <br> type '%0' requires register <br> type '%select{t|u|b|s}2', <br> but register type '%1' was used."]
-```
-
 
 ## Alternatives considered (Optional)
 
