@@ -42,6 +42,34 @@ in the type system and must be described in language
 rules.}\footnote{Array-to-pointer conversion of constant sized arrays is not
 supported.}.
 
+\Sec{Integral promotion}{Conv.ipromote}
+
+\p An integral promotion is a conversion of:
+\begin{itemize}
+  \item a glvalue of integer type other than \texttt{bool} to a cxvalue of
+  integer type of higher conversion rank, or
+  \item a conversion of a prvalue of integer type other than bool to a prvalue
+  of integer type of higher conversion rank, or
+  \item a conversion of a glvalue of type \texttt{bool} to a cxvalue of integer
+  type, or
+  \item a conversion of a prvalue of type \texttt{bool} to a prvalue of integer
+  type.
+\end{itemize}
+
+\p Integer conversion ranks are defined in section \ref{Conv.rank.int}.
+
+\p A conversion is only a promotion if the destination type can represent all of
+the values of the source type.
+
+\Sec{Floating point promotion}{Conv.fppromote}
+
+\p A glvalue of a floating point type can be converted to a cxvalue of a
+floating point type of higher conversion rank, or a prvalue of a floating point
+type can be converted to a prvalue of a floating point type of higher conversion
+rank.
+
+\p Floating point conversion ranks are defined in section \ref{Conf.rank.float}.
+
 \Sec{Integral conversion}{Conv.iconv}
 
 \p A glvalue of an integer type can be converted to a cxvalue of any other
@@ -143,9 +171,9 @@ than "\textit{cv1} \texttt{T}".
 
 \Sec{Conversion Rank}{Conv.rank}
 
-\p Every integer and floating point type have defined conversion ranks.
-A \textit{promotion} is any conversion of a value from a lower conversion rank
-to a higher conversion rank.
+\p Every integer and floating point type have defined conversion ranks. These
+conversion ranks are used to differentiate between \textit{promotions} and other
+conversions (see: \ref{Conv.iprom} and \ref{Conv.fpprom}).
 
 \Sub{Integer Conversion Rank}{Conv.rank.int}
 

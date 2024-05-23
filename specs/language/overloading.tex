@@ -324,13 +324,6 @@ sequences with the same rank are indistinguishable unless one of the following
 rules applies:
 
 \begin{itemize}
-  \item If both conversion sequences have the same source type and that type is
-  an arithmetic type, the better conversion is the one to the greatest ranked
-  destination type (\ref{Conv.rank.int} \& \ref{Conv.rank.float}).
-  \item If both conversions are boolean conversions, boolean conversion to an
-  integral type is be better than boolean conversion to a floating point
-  type.\footnote{Boolean conversions both to integral or both to floating point
-  are ambiguous in DXC and C/C++.}
   \item If class \texttt{B} is derived directly or indirectly from class
   \texttt{A} and class \texttt{C} is derived directly or indirectly from class
   \texttt{B},
