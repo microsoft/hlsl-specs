@@ -48,7 +48,8 @@ The design below aims to specify the answer to these questions.
 Firstly, the most common case is when a resource type that is not a 
 user-defined type is bound as a resource. Any resource will have an 
 associated ResourceAttr attribute, from which we can determine the 
-resource class The resource class data is sufficient to determine 
+resource class, which is sufficient to determine 
+
 the expected register type, and any other register type will result 
 in an error. The recommended register type will be suggested in the
 diagnostic. The table below specifies what register type will be 
