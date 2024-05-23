@@ -73,7 +73,7 @@ to register type '%1'". There are no issues if a UDT contains more resources
 than there are register binding statements, the resources will be bound to
 the next available space automatically, and so compilation can succeed.
 Below are some examples of different UDT's and the diagnostics that
-would be emitted when the resources contained within them are bound:
+would be emitted when applying resource bindings to the variable:
 
 ```
 struct Eg1 {
