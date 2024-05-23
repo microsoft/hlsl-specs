@@ -32,7 +32,7 @@ invalid register types are out of date or invalid. For example, in the case of:
 an error will be emitted recommending the use of the 'b, c, or i' register
 type. However the 'b' and 'i' register types are no longer in support. It
 is worth noting that there is an overloading of the register(...) keyword
-that applies to constant buffer variables using the 'c' register type, as
+using the 'c' register type to indicate an offset into a constant buffer, as
 opposed to resources. 
 Additionally, it is possible the user is unaware that this variable won't 
 actually be used as a resource, but the compiler doesn't communicate that 
