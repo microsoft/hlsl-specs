@@ -32,8 +32,8 @@ invalid register types are out of date or invalid. For example, in the case of:
 an error will be emitted recommending the use of the 'b, c, or i' register
 type. However the 'b' and 'i' register types are no longer in support. It
 is worth noting that there is an overloading of the register(...) keyword
-using the 'c' register type to indicate an offset into a constant buffer, as
-opposed to specifying a resource binding.
+using the 'c' register type to indicate an offset into a constant buffer for
+numeric types only, as opposed to specifying a resource binding.
 Additionally, it is possible the user is unaware that this variable won't 
 actually be used as a resource, but the compiler doesn't communicate that 
 to the user. It would be great for any HLSL developer to immediately have
@@ -74,8 +74,8 @@ with Disable with --Wno-disallow-legacy-binding-rules. There are no issues if a 
 contains more resources than there are register binding statements, the resources 
 will be bound to the next available space automatically, and so compilation can 
 succeed. It should also be noted that the 'c' register type can be used on UDT 
-variables as well, which would function to specify the constant offset for the 
-numeric portion(s) of the structure. Below are some examples of different UDT's
+members as well, which would function to specify the constant offset for the 
+numeric member(s) of the structure. Below are some examples of different UDT's
 and the diagnostics that would be emitted when applying resource bindings to the 
 variable:
 
@@ -169,6 +169,8 @@ Below are some examples:
 | `float f : register(i0)` | "warning: deprecated legacy int constant register binding 'i' used. Disable with --Wno-disallow-legacy-binding-rules" |
 | `float f : register(x0)` | "error: register binding type 'x' not supported for variable of type 'float'" |
 | `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' should only be used in global contexts. Disable with --Wno-disallow-legacy-binding-rules" |
+| `struct Foo { RWBuffer<float> f; }; Foo foo : register(c2);`| "warning: 'c' register type should only be used for basic types. Disable with --Wno-disallow-legacy-binding-rules" |
+| `RWBuffer<float> f : register(c3);`| "error: invalid register specification, expected 'u' binding" |
 
 
 ## Detailed design
@@ -220,12 +222,15 @@ is seen, this error will be emitted:
 `error: register binding type '%1' not supported for variable of type '%0'`<br><br>
 
 Finally, in the case that `udt` is set, we first check `default_globals`. If it is set,
-then we can permit the 'c' register type. Otherwise, cbuffers and tbuffers are not permitted
-within UDT's, and so we don't need to check if 'c' is given within the UDT and emit a warning 
-for legacy behavior that is treated as an error. An error will already be emitted preventing
-the declaration of these buffers within a UDT. After this point, `default_globals` doesn't
-need to be set. For every register type that is used to bind the resources contained in
-the given UDT, we verify that the corresponding resource class flag has been set. If the
+then we can permit the 'c' register type if the UDT has at least one numeric member. If
+there is no numeric member, a warning that is treated by default as an error will be 
+emitted: `"warning: 'c' register type should only be used for basic types. Disable with --Wno-disallow-legacy-binding-rules"`
+Otherwise, cbuffers and tbuffers are not permitted within UDT's, and so we don't need to
+check if 'c' is given within the UDT and emit a warning for legacy behavior that is 
+treated as an error. An error will already be emitted preventing the declaration of 
+these buffers within a UDT. After this point, `default_globals` doesn't need to be set.
+For every register type that is used to bind the resources contained in the given UDT, 
+we verify that the corresponding resource class flag has been set. If the
 corresponding resource class flag is not set, this error will be emitted:
 `error: variable of type '%0' bound to register type '%1' does not contain a matching '%select{SRV|UAV|CBV|Sampler}2' resource`
 Otherwise, if any other register type is given, then we emit this error:
