@@ -226,7 +226,7 @@ then we can permit the 'c' register type if the UDT has at least one numeric mem
 there is no numeric member, a warning that is treated by default as an error will be 
 emitted: `"warning: 'c' register type should only be used for basic types. Disable with --Wno-disallow-legacy-binding-rules"`
 Otherwise, cbuffers and tbuffers are not permitted within UDT's, and so we don't need to
-check if 'c' is given within the UDT and emit a warning for legacy behavior that is 
+check if 'c' is given within the UDT nor emit a warning for legacy behavior that is 
 treated as an error. An error will already be emitted preventing the declaration of 
 these buffers within a UDT. After this point, `default_globals` doesn't need to be set.
 For every register type that is used to bind the resources contained in the given UDT, 
@@ -239,10 +239,6 @@ Otherwise, if any other register type is given, then we emit this error:
 Legacy behavior can be allowed with the --Wno-disallow-legacy-binding-rules
 flag. When this flag is active, and legacy behavior is present, a warning will 
 be emitted instead of an error.<br><br>
-
-Below are two flowcharts that describe the process that is used to determine
-what kind of diagnostic to emit in each case. First the analysis step, then
-second the diagnostic emission step.
 
 ## Alternatives considered (Optional)
 
