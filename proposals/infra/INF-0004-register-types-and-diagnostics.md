@@ -33,7 +33,7 @@ an error will be emitted recommending the use of the 'b, c, or i' register
 type. However the 'b' and 'i' register types are no longer in support. It
 is worth noting that there is an overloading of the register(...) keyword
 using the 'c' register type to indicate an offset into a constant buffer, as
-opposed to resources. 
+opposed to specifying a resource binding.
 Additionally, it is possible the user is unaware that this variable won't 
 actually be used as a resource, but the compiler doesn't communicate that 
 to the user. It would be great for any HLSL developer to immediately have
