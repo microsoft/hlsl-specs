@@ -195,36 +195,39 @@ respectively). Otherwise, the decl is classified according to the underlying can
 type.
 
 If the decl is implicit, then check if the decl is a vector, matrix, or otherwise numeric type,
-and if so, we know that the decl is a `basic` type. If the decl has a resource attribute, 
-we can set the `resource` flag, and can also obtain the resource class and set the resource 
-class flag accordingly. Otherwise, we know the decl is not a resource and not basic, and so
-the `other` flag is set.
+and if so, we know that the decl is a `basic` type. If the decl isn't any of those types, then 
+check if the decl has a resource attribute. If so, we can set the `resource` flag, and can also 
+obtain the resource class and set the resource class flag accordingly. Otherwise, we know the
+decl is not a resource and not basic, and so the `other` flag is set.
 
-If the decl is not implicit, then we check if it is a struct or class type, and if so, the
-decl is a UDT, so the `udt` flag is set. We then recurse through the members of the UDT and
-collect information on what types of resources are contained by the UDT (uav, cbv, srv, or
-sampler). The corresponding resouce class flags are set. If the decl is not a struct or class
-type, then it is a basic type, and so the `basic` flag is set.
+If the decl type is not implicit, then we check if it is a struct or class type.
+If so, the decl is a UDT, so the `udt` flag is set, otherwise, it's a basic type,
+so we set the `basic` flag. For a `udt`, recurse through the members of the UDT and 
+its bases, collecting information on what types of resources are contained by the UDT,
+setting corresponding class flags (`uav`, `cbv`, `srv`, or `sampler`). Also track 
+whether there are any other numeric members and set a `contains_numeric` flag.
 
-The last step is to simply check if the decl is in the `$Globals` scope. If so, then the
-`default_globals` flag will be set.
+The last step is to simply check if the global decl is inside a cbuffer or tbuffer
+block. If not, set the `default_globals` flag.
 
 Now enough information has been gathered to determine the right diagnostics to emit, if any.
 Firstly, if `other` is set, then the variable type is not valid for the given register type.
 So, we can emit this diagnostic: `error: '%0' is an invalid resource type for register type '%1'`
-If the `resource` flag is set and the `udt` flag is not set, then we have to check the 
-register statement, and the resource class flag, and verify that the register type matches the 
-resource class flag. If not, we emit this diagnostic: 
+If the `resource` flag is set, check the register type against the resource class flag.
+If they do not match, emit this diagnostic:
 `error: %select{SRV|UAV|CBV|Sampler}2 type '%0' requires register type '%select{t|u|b|s}2', but register type '%1' was used.`
 If the `basic` flag is set, then we first check if `default_globals` is set. If so, then 
 we check the register type. If the register type is 'i' or 'b', the deprecated warning
-that is treated as an error as shown in the examples above will be emitted. If 'c' is given,
-no errors will be emitted. If `default_globals` is not set and 'c' is given, a warning will
-be emitted that is treated as an error by default: `warning: register binding 'c' should only be used in global contexts. Disable with --Wno-disallow-unused-register-bindings` 
+that is treated as an error as shown in the examples above will be emitted.
+If the register type is 'c', it is allowed, but if `default_globals` is not set,
+a warning that is treated as an error by default will be emitted:
+`warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead`.
+This warning is part of the warning group `disallow-legacy-binding-rules`.
+
 After this point, `default_globals` doesn't need to be set.
 If 't', 'u', or 's' are given, then this diagnostic will be emitted:
-`error: '%0' is an invalid resource type for register type '%1'`. If any other register type
-is seen, this error will be emitted:
+`unsupported resource register binding '%select{t|u|b|s}1' on variable of type '%0'`.
+If any other register type is seen, this error will be emitted:
 `error: register binding type '%1' not supported for variable of type '%0'`
 
 Finally, in the case that `udt` is set, we first check `default_globals`. If it is set,
