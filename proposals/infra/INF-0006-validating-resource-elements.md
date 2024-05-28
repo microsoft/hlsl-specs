@@ -17,17 +17,17 @@ contain fields of these primitive types (where all fields in the struct have the
 are also allowed as resouce element types. Structs that have structs as fields or arrays of
 structs as fields are also allowed, as long as everything can fit in 4 32-bit quantities.
 Arrays of these types are not valid as resource element types. Additionally, resource types 
-are not allowed as resource element types, even if the underlyinh resource type has a valid
-primitive element type. If someone writes `RWBuffer<MyCustomType>` we should reject it 
-and give the user a nice diagnostic. 
+are not allowed as resource element types, even if the underlying resource type has a valid
+primitive element type. If someone writes `RWBuffer<MyCustomType>` and MyCustomType is
+invalid, we should reject it and give the user a nice diagnostic. 
 
 ## Motivation
 
 There currently does not exist any detection for invalid resource element types.
-This includes user-defined types. Ideally, a user should be able to
-determine how any user-defined structure is invalid as a resource element type.
-Some system should be in place to enforce the rules for valid and invalid
-resource element types.
+This includes the case where the resource element type is user-defined.
+Ideally, a user should be able to determine how any user-defined structure is invalid as 
+a resource element type. Some system should be in place to enforce the rules for valid and 
+invalid resource element types.
 
 For example,
 `RWBuffer<bool> b : register(u4);`
