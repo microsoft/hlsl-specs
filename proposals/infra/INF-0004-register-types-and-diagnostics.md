@@ -77,13 +77,19 @@ step right afterwards.
 ### Simple explanations for common cases
 
 The most common case is when a resource type that is not a 
-user-defined type is bound as a resource. Any resource will have an 
-associated ResourceAttr attribute, from which we can determine the 
+user-defined type is bound as a resource. The compiler will represent
+this declaration as a `clang::VarDecl`, and the `VarDecl` will have attributes.
+Any resource declaration will have an associated ResourceAttr attribute,
+on the `VarDecl`, from which we can determine the 
 resource class, which is sufficient to determine the expected register
 type. Any other valid register type (among 't', 'u', 'b', or 's') will 
 result in `err_hlsl_mismatching_register_type_and_resource_type`.
 The recommended register type will be suggested in the diagnostic.
 Any other invalid register type will emit `err_hlsl_unsupported_register_type_and_resource_type`.
+Alternatively, using `cbuffer` or `tbuffer` is represented as an `HLSLBufferDecl`
+object. This object will have a helper function `IsCBuffer()` to help
+determine what type of resource it is, and from this function we can determine
+what the expected register type should be.
 The table below specifies what register type will be expected for 
 any resource type that falls under the specified resource class. 
 
@@ -108,7 +114,7 @@ space automatically, and so compilation can succeed. It should also be noted tha
 the 'c' register type can be used on UDT members as well, which would function to
 specify the constant offset for the numeric member(s) of the structure. Additionally, 
 if the 'c' register type is used over the entire UDT rather than on a specific member,
-then the UDT must contain at least one basic type. If not, `warn_hlsl_UDT_missing_basic_type`
+then the UDT must contain at least one numeric type. If not, `warn_hlsl_UDT_missing_basic_type`
 will be emitted, and is treated as an error by default. Below are
 some examples of different UDT's and the diagnostics that would be emitted when 
 applying resource bindings to the variable:
@@ -179,7 +185,7 @@ struct Eg9{
   RWBuffer<int> a : register(u9);
 };
 
-Eg9 e;
+Eg9 e9;
 // error: location annotations cannot be specified on members
 
 }
@@ -220,10 +226,6 @@ Below are some examples:
 | `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" |
 | `RWBuffer<float> f : register(c3);`| "error: UAV type 'RWBuffer<float>' requires register type 'u', but register type 'c' was used." |
 
-If there are multiple register statements, only one register statement may appear for each resource class, otherwise the register statements are conflicting
-register annotations should never be applied to member declarations inside of a struct, otherwise we should emit "location semantics cannot be specified on members"
-should we really make it a default error warning if a udt doesn't have an appropriate resource for a given register binding
-
 ## Detailed design
 
 In DXC, the analysis and diagnostic emission steps would happen in DiagnoseRegisterType(),
@@ -262,8 +264,9 @@ or `sampler`. For example, if an SRV resource is detected in the decl, then the
 UDTs, the `udt` flag is set, and any resource class flags can be set if the associated
 resource is found contained within the UDT.
 
-The `default_globals` flag indicates whether or not the decl appears inside the 
-$Globals scope. It will not be set if the decl appears inside a cbuffer or tbuffer.
+The `default_globals` flag indicates whether or not the value ends up inside the 
+`$Globals` constant buffer. It will not be set if the decl appears inside a cbuffer 
+or tbuffer. The `$Globals` constant buffer will only be filled with non-HLSL-Objects.
 
 The `is_member` flag is set if the decl is a member declaration of a struct or class.
 This flag will inevitably lead to an error, because register annotations aren't allowed
@@ -289,10 +292,10 @@ struct Foo {
   RWBuffer<int> rwbuf;
 }
 
-RWBuffer<int> r0 : register(u0); // resource (in global scope, so default_globals is set. uav is set)
+RWBuffer<int> r0 : register(u0); // resource (uav is set)
 Foo f0 : register(u0); // udt (Foo doesn't contain a numeric, so contains_numeric isn't set)
 RayQuery<0> r1: register(t0); // other (error)
-float f1 : register (c0); // basic
+float f1 : register (c0); // basic (ends up in $Globals constant buffer, so default_globals is set)
 ```
 
 The first step is to simply check if the decl is inside a cbuffer or tbuffer
@@ -308,7 +311,9 @@ checks isCBuffer(). If true, the Decl is a cbuffer, otherwise it is a tbuffer. I
 we know the decl is a `resource` and can infer the resource class (`cbv` or `srv`
 respectively). Otherwise, if the dynamic cast fails, we cast to `VarDecl`, and check 
 to see if the ResourceAttr attribute is present. If it is, the `resource` flag can be 
-set, and the corresponding resource class flag will be set. 
+set, and the corresponding resource class flag will be set. If the `VarDecl` dynamic cast
+fails, then there is some critical validation error, since any Decl with the register 
+annotation should either be a `HLSLBufferDecl` or a `VarDecl`.
 
 If the decl has no resource attribute, then check if the decl is a vector, matrix, 
 or otherwise numeric type, and if so, we know that the decl is a `basic` type. 
@@ -324,7 +329,7 @@ Below is some pseudocode to describe the flag-setting process:
 ```
 if the Decl is inside a cbuffer or tbuffer:
   do not set default_globals  
-else:
+else if the Decl type isn't an HLSL Object:
   set default_globals
 
 if the Decl is an HLSLBufferDecl
@@ -372,14 +377,14 @@ If 't', 'u', or 's' are given when `basic` is set, then
 If any other register type is seen, `err_hlsl_unsupported_register_type_and_variable_type`
 will be emitted instead.
 
-Finally, in the case that `udt` is set, we first check `default_globals`. If it is set,
-then we can permit the 'c' register type if `contains_numeric` is set. If it is not set,
-`warn_hlsl_UDT_missing_basic_type` will be emitted, and treated as an error by default.
-After this point, `default_globals` doesn't need to be set.
+Finally, in the case that `udt` is set, we fmay have multiple register annotations
+applied to the decl.
 For every register type that is used to bind the resources contained in the given UDT, 
 we verify that the corresponding resource class flag has been set. These are the register types
 `t`, `u`, `b`, and `s`. If the corresponding resource class flag is not set,
 `warn_hlsl_UDT_missing_resource_type_member` will be emitted.
+If `c` is given, then we must check that `contains_numeric` is set, and if not, 
+`warn_hlsl_UDT_missing_basic_type` is emitted.
 Otherwise, if any other register type is given, then we emit `err_hlsl_unsupported_register_type_and_variable_type`.
 
 All the warnings introduced in this spec were not emitted in legacy versions of the compiler. The warnings,
@@ -401,6 +406,10 @@ if other is set:
 if is_member is set:
   emit err_hlsl_register_annotation_on_member
 
+if multiple register annotations exist:
+  if any pair of register annotations share the same register type but different register binding offset:
+    emit err_hlsl_conflicting_register_annotations
+
 if resource is set:
   if register type does not match resource class flag:
     emit err_hlsl_mismatching_register_type_and_resource_type
@@ -418,9 +427,6 @@ if basic is set:
   else emit err_hlsl_unsupported_register_type_and_variable_type
 
 if udt is set:
-  if default_globals is set:
-    if contains_numeric is not set and the register type is 'c':
-      emit warn_hlsl_UDT_missing_basic_type
   for each register annotation r applied to the udt decl:
     if r has register type t:
       if srv is not set:
@@ -434,6 +440,9 @@ if udt is set:
     else if r has register type s:
       if sampler is not set:
         emit warn_hlsl_UDT_missing_resource_type_member
+    else if r has register type c:
+      if contains_numeric is not set:
+        emit warn_hlsl_UDT_missing_basic_type
     else
       emit err_hlsl_unsupported_register_type_and_variable_type  
 ```
