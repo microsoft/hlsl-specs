@@ -29,6 +29,7 @@ There are several cases in DXC in which diagnostics that are related to
 invalid register types are out of date or invalid. For example, in the case of:
 
 `float b : register(u4);`
+
 an error will be emitted recommending the use of the 'b, c, or i' register
 type. However the 'i' register type is no longer in support, and the 'b' 
 register type is only reserved for resource types that are constant buffers.
@@ -57,7 +58,7 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%1' not supported for variable of type '%0'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{SRV\|UAV\|CBV\|Sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register prefix is used to bind a resource, like 'y' being used with RWBuffer<int>.|
-| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register binding offsets are applied to the same declaration. |
+| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register numbers are applied to the same declaration. |
 | err_hlsl_register_annotation_on_member | "error: location annotations cannot be specified on members| Emitted if the register annotation is specified on a member of a UDT. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource attribute, like a float type. |
@@ -70,6 +71,7 @@ The overall approach this diagnostic infrastructure will take
 in emitting the right diagnostic can be broken down into two steps:
 1. Analyze the Decl and set the appropriate flags.
 2. Emit a diagnostic driven solely by which flags are set.
+
 Some common cases will be simply described below, and then
 the analysis step will be specified, with the diagnostic emission
 step right afterwards.
@@ -111,10 +113,10 @@ will be emitted.
 There are no issues if a UDT contains more resources than there
 are register binding statements, the resources will be bound to the next available 
 space automatically, and so compilation can succeed. It should also be noted that
-the 'c' register type can be used on UDT members as well, which would function to
+the 'c' register type can be used on UDTs as well, which would function to
 specify the constant offset for the numeric member(s) of the structure. Additionally, 
-if the 'c' register type is used over the entire UDT rather than on a specific member,
-then the UDT must contain at least one numeric type. If not, `warn_hlsl_UDT_missing_basic_type`
+if the 'c' register type is used on the UDT, then the UDT must contain at least one 
+numeric type. If not, `warn_hlsl_UDT_missing_basic_type`
 will be emitted, and is treated as an error by default. Below are
 some examples of different UDT's and the diagnostics that would be emitted when 
 applying resource bindings to the variable:
@@ -135,7 +137,8 @@ struct Eg2 {
   RWBuffer<float> RWBuf2;
   };
 Eg2 e2 : register(t0) : register(u0); 
-// Valid: f is skipped, Buf is bound to t0, RWBuf is bound to u0. RWBuf2 gets automatically assigned to u1 even though there is no explicit binding for u1.
+// Valid: f is skipped, Buf is bound to t0, RWBuf is bound to u0. 
+// RWBuf2 gets automatically assigned to u1 even though there is no explicit binding for u1.
 
 struct Eg3 {
   float f;
@@ -210,7 +213,7 @@ $Globals buffer, it is not useful when the overload is not used inside the $Glob
 context. That is, if this register overload appears within a `cbuffer {...}` or 
 `tbuffer {...}` scope, the register number will be ignored. In this case, 
 `warn_hlsl_register_type_c_not_in_global_scope` will be emitted, and will be treated as an error by default.
-All other register types applied to such a type will emit `err_hlsl_unsupported_register_type_and_variable_type"`, except for 'b' or 'i'.
+All other register types applied to such a type will emit `err_hlsl_unsupported_register_type_and_variable_type`, except for 'b' or 'i'.
 If the register type is 'b' or 'i', then `warn_hlsl_deprecated_register_type_b` or `warn_hlsl_deprecated_register_type_i` 
 will be emitted respectively, and treated as errors by default. The compiler will function as if `c` was passed.
 
@@ -229,7 +232,7 @@ Below are some examples:
 ## Detailed design
 
 In DXC, the analysis and diagnostic emission steps would happen in DiagnoseRegisterType(),
-under DiagnoseHLSLDecl in SemaHLSL.cpp. However, there is currently no infratstructure
+under DiagnoseHLSLDecl in SemaHLSL.cpp. However, there is currently no infrastructure
 that implements the register keyword as an unusual annotation. The method through which a
 decl retains the information from a `register` annotation has yet to be designed, and is
 out of scope for this spec. However, one approach is that in
@@ -237,7 +240,7 @@ clang\lib\Parse\ParseHLSL.cpp, under ParseHLSLAnnotations, an attribute will be 
 that will be added to any decl which has the `register` keyword applied to it. Note that there 
 are instances where multiple `register` statements can apply to a single decl, and this is 
 only invalid if the register annotations have the same register types but different register
-binding offsets. If this invalid case happens, `err_hlsl_conflicting_register_annotations`
+numbers. If this invalid case happens, `err_hlsl_conflicting_register_annotations`
 will be emitted. 
 
 Then, in SemaHLSL.cpp, there will be a location responsible for diagnosing each Decl in the 
@@ -289,8 +292,8 @@ Flags:
   is_member
 
 struct Foo {
-  RWBuffer<int> rwbuf;
-}
+  RWBuffer<int> rwbuf : register(u3); // is_member is set for this decl
+};
 
 RWBuffer<int> r0 : register(u0); // resource (uav is set)
 Foo f0 : register(u0); // udt (Foo doesn't contain a numeric, so contains_numeric isn't set)
@@ -299,13 +302,13 @@ float f1 : register (c0); // basic (ends up in $Globals constant buffer, so defa
 ```
 
 The first step is to simply check if the decl is inside a cbuffer or tbuffer
-block, or if it is in the global scope. If the decl is in the global scope,
-set the `default_globals` flag. If the decl is in a class or struct, it is a
-member declaration, and register annotations aren't allowed here, so we must 
-set the `is_member` flag.
+block. If it isn't, and it has a numeric type, set the `default_globals` flag,
+because the value is bound to be placed in the `$Globals` buffer. If the decl is
+in a class or struct, it is a member declaration, and register annotations aren't
+allowed here, so we must set the `is_member` flag.
 
 Next, determine if the decl is a `cbuffer` or `tbuffer`. These are special in that they have
-their own decl class type, `HLSLBufferDecl`, so to determine if the Decl is a `HLSLBufferDecl`,
+their own decl class type, `HLSLBufferDecl`. To determine if the Decl is a `HLSLBufferDecl`,
 the compiler dynamically casts the Decl to an `HLSLBufferDecl`, and then if it succeeds,
 checks isCBuffer(). If true, the Decl is a cbuffer, otherwise it is a tbuffer. In either case,
 we know the decl is a `resource` and can infer the resource class (`cbv` or `srv`
@@ -329,25 +332,26 @@ Below is some pseudocode to describe the flag-setting process:
 ```
 if the Decl is inside a cbuffer or tbuffer:
   do not set default_globals  
-else if the Decl type isn't an HLSL Object:
+else if the Decl type is a numeric type:
   set default_globals
 
 if the Decl is an HLSLBufferDecl
-  if cbuffer: decltype <- resource, resource_class <- cbv
-  else:  decltype <- resource, resource_class <- srv
+  if cbuffer: set resource, set cbv
+  else:  set resource, set srv
 else if the Decl is a VarDecl:
   if no resource attribute: 
     if Decl is vector, matrix, or otherwise numeric type:
       set basic flag
     else if Decl is struct or class type (if it is a udt):
+      set udt flag
       recurse through members, set resource class flags that are found
       set contains_numeric if the UDT contains a numeric member
     else:
-      set other
+      set other flag
   else:
     get resource attribute, set resource and corresponding resource class flag
 else:
-  raise (unknown decl type)
+  raise error: (unknown decl type)
 ```
 
 
@@ -377,8 +381,9 @@ If 't', 'u', or 's' are given when `basic` is set, then
 If any other register type is seen, `err_hlsl_unsupported_register_type_and_variable_type`
 will be emitted instead.
 
-Finally, in the case that `udt` is set, we fmay have multiple register annotations
-applied to the decl.
+Finally, in the case that `udt` is set, we may have multiple register annotations
+applied to the decl. Multiple identical register annotations are allowed in the non-udt case,
+but are only really practical in the udt case.
 For every register type that is used to bind the resources contained in the given UDT, 
 we verify that the corresponding resource class flag has been set. These are the register types
 `t`, `u`, `b`, and `s`. If the corresponding resource class flag is not set,
@@ -407,7 +412,7 @@ if is_member is set:
   emit err_hlsl_register_annotation_on_member
 
 if multiple register annotations exist:
-  if any pair of register annotations share the same register type but different register binding offset:
+  if any pair of register annotations share the same register type but different register number:
     emit err_hlsl_conflicting_register_annotations
 
 if resource is set:
@@ -422,9 +427,9 @@ if basic is set:
   if register type is 'c'
     if default_globals is not set:
       emit warn_hlsl_register_type_c_not_in_global_scope
-  else if register type is 't' 'u' or 's'
+  else if register type is 't' 'u' or 's':
     emit err_hlsl_mismatching_register_type_and_variable_type
-  else emit err_hlsl_unsupported_register_type_and_variable_type
+  else: emit err_hlsl_unsupported_register_type_and_variable_type
 
 if udt is set:
   for each register annotation r applied to the udt decl:
