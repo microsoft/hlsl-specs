@@ -57,6 +57,7 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%1' not supported for variable of type '%0'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{SRV\|UAV\|CBV\|Sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register prefix is used to bind a resource, like 'y' being used with RWBuffer<int>.|
+| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register binding offsets are applied to the same declaration. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource attribute, like a float type. |
 | warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource attribute, like a float type. |
@@ -175,9 +176,10 @@ Eg8 e8 : register(c0)
 
 ```
 
-The last common case is if the candidate type is not a valid resource type and 
-not a UDT. Types that are or contain a resource are known as
-"intangible". In this case, we are dealing with types that cannot be intangible.
+The last common case is if the candidate type is not a valid resource type and not
+a UDT. Types that are or contain a resource are known as "intangible". More generally,
+"intangible types" are "types that have no defined object representation or value 
+representation". In this case, we are dealing with types that cannot be intangible.
 Types that can be immediately determined to not be intangible (that is, types that
 cannot be a resource type or cannot contain a resource type) are types like booleans,
 int, float, float4, etc. If the variable type is among any numerics or a type that
@@ -208,40 +210,99 @@ Below are some examples:
 | `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" |
 | `RWBuffer<float> f : register(c3);`| "error: UAV type 'RWBuffer<float>' requires register type 'u', but register type 'c' was used." |
 
+If there are multiple register statements, only one register statement may appear for each resource class, otherwise the register statements are conflicting
+register annotations should never be applied to member declarations inside of a struct, otherwise we should emit "location semantics cannot be specified on members"
+should we really make it a default error warning if a udt doesn't have an appropriate resource for a given register binding
 
 ## Detailed design
+
+In DXC, the analysis and diagnostic emission steps would happen in DiagnoseRegisterType(),
+under DiagnoseHLSLDecl in SemaHLSL.cpp. However, there is currently no infratstructure
+that implements the register keyword as an unusual annotation. The method through which a
+decl retains the information from a `register` annotation has yet to be designed, and is
+out of scope for this spec. However, one approach is that in
+clang\lib\Parse\ParseHLSL.cpp, under ParseHLSLAnnotations, an attribute will be constructed
+that will be added to any decl which has the `register` keyword applied to it. Note that there 
+are instances where multiple `register` statements can apply to a single decl, and this is 
+only invalid if the register annotations have the same register types but different register
+binding offsets. If this invalid case happens, `err_hlsl_conflicting_register_annotations`
+will be emitted. 
+
+Then, in SemaHLSL.cpp, there will be a location responsible for diagnosing each Decl in the 
+translation unit, and for each Decl, if the attribute that is associated with the presence 
+of the `register` annotation is detected, the two steps described below will be run.
 
 ### Analysis 
 
 All the compiler has to work with is a Decl object and the context the decl appears in.
-From this information, the first goal is to set a specific set of flags that can fully 
-inform the compiler of the right diagnostic to emit. The first group of flags are the 
-decl type flags, which are either `basic`, `resource`, `udt`, or `other`. `basic` refers 
-to a numeric variable type. `other` refers to built-in HLSL object types (intangible types) 
-that are not resources, and thus cannot be placed into a cbuffer or bound as a resource.
+From this information, the first goal is to set some flags that can fully inform the 
+compiler of the right diagnostic to emit. The first group of flags are the decl type flags,
+which are either `basic`, `resource`, `udt`, or `other`. 
+`basic` refers to a numeric variable type. `other` refers to built-in HLSL object types
+(intangible types) that are not resources (e.g., `RayQuery`) and thus cannot be placed into
+a cbuffer or bound as a resource. So, if `other` is set, an error will always be emitted.
 
 These flags are all mutually exclusive, and are represented in the code with an enum.
 The `udt` flag has an associated flag, `contains_numeric`, which will be set if the
 UDT contains a numeric type.
 
-The next group of flags are the resource class flags,
-which are `srv`, `uav`, `cbv`, or `sampler`.
+The next group of flags are the resource class flags, which are `srv`, `uav`, `cbv`,
+or `sampler`. For example, if an SRV resource is detected in the decl, then the 
+`resource` flag is set and the associated resource class flag `srv` is set too. For
+UDTs, the `udt` flag is set, and any resource class flags can be set if the associated
+resource is found contained within the UDT.
 
 The final flag is `default_globals`, which indicates whether or not the decl appears
 inside the $Globals scope.
 
-From the Decl object, first determine if the decl is implicit and intangible. If so,
-then we determine if the decl is a cbuffer or tbuffer decl. If so,
-we know the decl is a `resource` and can infer the resource class (`cbv` or `srv`
-respectively). Otherwise, check to see if the ResourceAttr attribute is present. If
-it is, the `resource` flag can be set, and the corresponding resource class flag will
-be set. Otherwise, the `other` flag is set. 
+```
+Flags:
+  resource,
+  udt,
+  other,
+  basic,
 
-If the decl is implicit but not intangible, then check if the decl is a vector, matrix, or otherwise numeric type,
-and if so, we know that the decl is a `basic` type. If the decl isn't any of those types, then 
-check if the decl has a resource attribute. If so, we can set the `resource` flag, 
-and the corresponding resouce class flag will be set. Otherwise, we know the
-decl is not a resource and not basic, and so the `other` flag is set.
+  srv,
+  uav,
+  cbv,
+  sampler
+
+  contains_numeric
+  default_globals
+
+struct Foo {
+  RWBuffer<int> rwbuf;
+}
+
+RWBuffer<int> r0 : register(u0); // resource (in global scope, so default_globals is set. uav is set)
+Foo f0 : register(u0); // udt (Foo doesn't contain a numeric, so contains_numeric isn't set)
+RayQuery<0> r1: register(t0); // other (error)
+float f1 : register (c0); // basic
+```
+
+The first step is to simply check if the decl is inside a cbuffer or tbuffer
+block, or if it is in the global scope. If the decl is in the global scope,
+set the `default_globals` flag.
+
+From the Decl object, determine if the type of the decl is implicit and intangible. 
+"Implicit" refers to types that have a struct / class marked implicit. These are
+the special built-in HLSL types that include any special objects. If so,
+then we determine if the decl is a cbuffer or tbuffer decl. `cbuffer`s and `tbuffer`s
+are special in that they have their own decl class type, `HLSLBufferDecl`, and one
+can determine if a Decl is either a `cbuffer` or `tbuffer` by first dynamically casting
+the Decl to an `HLSLBufferDecl`, and then if it succeeds, run isCBuffer(). If true,
+the Decl is a cbuffer, otherwise it is a tbuffer. In either case,
+we know the decl is a `resource` and can infer the resource class (`cbv` or `srv`
+respectively). Otherwise, if the dynamic cast fails, we cast to `VarDecl`, and check 
+to see if the ResourceAttr attribute is present. If it is, the `resource` flag can be 
+set, and the corresponding resource class flag will be set. Otherwise, the `other` 
+flag is set. 
+
+If the decl is implicit but not intangible, then check if the decl is a vector, matrix, 
+or otherwise numeric type, and if so, we know that the decl is a `basic` type. If the 
+decl isn't any of those types, then check if the decl has a resource attribute. If so,
+we can set the `resource` flag, and the corresponding resource class flag will be set. 
+Otherwise, we know the decl is not a resource and not basic, and so the `other` flag is set.
 
 If the decl type is not implicit, then we check if it is a struct or class type.
 If so, the decl is a UDT, so the `udt` flag is set, otherwise, it's a basic type,
@@ -250,8 +311,32 @@ its bases, collecting information on what types of resources are contained by th
 setting corresponding class flags (`uav`, `cbv`, `srv`, or `sampler`). Also track 
 whether there are any other numeric members and set the `contains_numeric` flag.
 
-The last step is to simply check if the decl is inside a cbuffer or tbuffer
-block. If not, set the `default_globals` flag.
+Below is some pseudocode to describe the flag-setting process:
+
+```
+if the Decl is inside a cbuffer or tbuffer:
+  do not set default_globals
+else:
+  set default_globals
+
+if the Decl is an HLSLBufferDecl
+  if cbuffer: decltype <- resource, resource_class <- cbv
+  else:  decltype <- resource, resource_class <- srv
+else if the Decl is a VarDecl:
+  if no resource attribute: 
+    if Decl is vector, matrix, or otherwise numeric type:
+      set basic flag
+    else if Decl is not an implicit type (if it is a udt):
+      recurse through members, set resource class flags that are found
+      set contains_numeric if the UDT contains a numeric member
+    else:
+      set other
+  else:
+    get resource attribute, set resource and corresponding resource class flag
+else:
+  raise (unknown decl type)
+```
+
 
 ### Diagnostic emisison
 
