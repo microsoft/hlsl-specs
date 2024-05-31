@@ -117,9 +117,8 @@ the 'c' register type can be used on UDTs as well, which would function to
 specify the constant offset for the numeric member(s) of the structure. Additionally, 
 if the 'c' register type is used on the UDT, then the UDT must contain at least one 
 numeric type. If not, `warn_hlsl_UDT_missing_basic_type`
-will be emitted, and is treated as an error by default. Below are
-some examples of different UDT's and the diagnostics that would be emitted when 
-applying resource bindings to the variable:
+will be emitted. Below are some examples of different UDT's and the diagnostics that
+would be emitted when applying resource bindings to the variable:
 
 ```
 struct Eg1 {
@@ -167,7 +166,7 @@ struct Eg6 {
   float f;
 }; 
 Eg6 e6 : register(t0) 
-// DefaultError "warning: variable of type 'Eg6' bound to register type 't' does not contain a matching 'SRV' resource"
+// "warning: variable of type 'Eg6' bound to register type 't' does not contain a matching 'SRV' resource"
 
 struct Eg7 {
   struct Bar {
@@ -176,13 +175,13 @@ struct Eg7 {
     Bar b;
 };
 Eg7 e7 : register(t0) 
-// DefaultError "warning: variable of type 'Eg7' bound to register type 't' does not contain a matching 'SRV' resource"
+// "warning: variable of type 'Eg7' bound to register type 't' does not contain a matching 'SRV' resource"
 
 struct Eg8 {
   RWBuffer<int> a;
 }; 
 Eg8 e8 : register(c0) 
-// DefaultError "warning: register 'c' used on type with no contents to allocate in a constant buffer"
+// "warning: register 'c' used on type with no contents to allocate in a constant buffer"
 
 struct Eg9{
   RWBuffer<int> a : register(u9);
@@ -373,7 +372,8 @@ will be emitted respectively, and treated as errors by default. If the errors ar
 the compiler will function as if `c` was passed, and allocate the variables into the 
 global constant buffer.
 If the register type is 'c', it is allowed, but if `default_globals` is not set,
-`warn_hlsl_register_type_c_not_in_global_scope` will be emitted, and will be treated as an error by default.
+`warn_hlsl_register_type_c_not_in_global_scope` will be emitted, 
+and will be treated as an error by default.
 
 After this point, `default_globals` doesn't need to be set.
 If 't', 'u', or 's' are given when `basic` is set, then
@@ -390,17 +390,22 @@ we verify that the corresponding resource class flag has been set. These are the
 `warn_hlsl_UDT_missing_resource_type_member` will be emitted.
 If `c` is given, then we must check that `contains_numeric` is set, and if not, 
 `warn_hlsl_UDT_missing_basic_type` is emitted.
-Otherwise, if any other register type is given, then we emit `err_hlsl_unsupported_register_type_and_variable_type`.
+Otherwise, if any other register type is given, 
+then we emit `err_hlsl_unsupported_register_type_and_variable_type`.
 
-All the warnings introduced in this spec were not emitted in legacy versions of the compiler. The warnings,
-`warn_hlsl_register_type_c_not_in_global_scope`,
+All the warnings introduced in this spec were not emitted in legacy versions of the compiler.
+The warnings, `warn_hlsl_register_type_c_not_in_global_scope`,
 `warn_hlsl_deprecated_register_type_b`,
 `warn_hlsl_deprecated_register_type_i`,
 `warn_hlsl_UDT_missing_resource_type_member`, and
 `warn_hlsl_UDT_missing_basic_type`, are all within a warning group known as 
-`disallow-legacy-binding-rules`. If legacy behavior is desired, a user can pass the `--Wno-disallow-legacy-binding-rules`
-flag to the compiler to silence the errors. When this flag is active, and legacy behavior is present, a warning will 
-be emitted instead of an error.
+`disallow-legacy-binding-rules`. However, only `warn_hlsl_UDT_missing_resource_type_member`
+and  `warn_hlsl_UDT_missing_basic_type` are not treated as errors by default, 
+the rest of the warnings are errors by default. If legacy behavior is desired, a 
+user can pass the `--Wno-disallow-legacy-binding-rules` flag to the compiler to silence the
+errors, leaving just the warnings. For the two UDT warnings above, the warnings will be 
+silenced so that no diagnostics will be emitted. 
+
 
 Here is some pseudocode summarizing the diagnostic emission process:
 
