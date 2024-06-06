@@ -18,8 +18,7 @@
     \item functions marked with \texttt{export} keyword
     \item global variables that are not marked \texttt{static} or \texttt{groupshared} \footnote{These are not really linked with other translation units but rather their values are loaded indirectly based on cbuffer mapping.}
     \item enumerations
-    \item classes, their member functions, static data members, nested classes and enumerations
-    \item template classes not declared \texttt{static}
+    \item classes or template classes, their member functions, static data members, nested classes and enumerations
 \end{itemize}
 
 \p Linkage of functions (including template functions) that are not entry points or marked with \texttt{export} keyword is implementation dependent. \footnote{In DXC today functions that are not entry points or exported have \textit{internal linkage} by default. This can be overriden by \texttt{-default-linkage} compiler option.}
