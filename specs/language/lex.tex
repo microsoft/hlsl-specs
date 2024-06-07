@@ -154,7 +154,7 @@ except as they separate tokens.
 \Sec{Comments}{Lex.Comments}
 
 \p The characters \texttt{/*} start a comment which terminates with the
-characters \texttt{*\textbackslash}. The characters \texttt{//} start a comment
+characters \texttt{*/}. The characters \texttt{//} start a comment
 which terminates at the next new line.
 
 \Sec{Header Names}{Lex.Headers}
@@ -162,7 +162,7 @@ which terminates at the next new line.
 \begin{grammar}
   \define{header-name}\br
   \texttt{<} h-char-sequence \texttt{>}\br
-  \texttt{"} h-char-sequence \texttt{"}
+  \texttt{"} q-char-sequence \texttt{"}
 
   \define{h-char-sequence}\br
   h-char\br
