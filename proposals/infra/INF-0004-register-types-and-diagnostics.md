@@ -361,7 +361,11 @@ The compiler will run diagnostics by iterating over all Decl objects with a regi
 Firstly, if `other` is set, then the variable type is not valid for the given register type.
 So, we can emit `err_hlsl_unsupported_register_type_and_variable_type`.
 Next, check if `is_member` is set. If so, the register annotation was applied to a member, 
-which is not allowed, so `err_hlsl_register_annotation_on_member` is emitted.
+which is not allowed, so `err_hlsl_register_annotation_on_member` is emitted. 
+Next, some decls may have multiple register annotations applied. Regardless of the decl type,
+there will be validation that any pair of annotation statements may not have the same register
+type but different register number. If this is detected, `err_hlsl_conflicting_register_annotations`
+will be emitted.
 
 If the `resource` flag is set, check the register type against the resource class flag.
 If they do not match, `err_hlsl_mismatching_register_type_and_resource_type` is emitted.
@@ -382,12 +386,10 @@ If any other register type is seen, `err_hlsl_unsupported_register_type_and_vari
 will be emitted instead.
 
 Finally, in the case that `udt` is set, we may have multiple register annotations
-applied to the decl. Multiple identical register annotations are allowed in the non-udt case,
-but are only really practical in the udt case.
-For every register type that is used to bind the resources contained in the given UDT, 
-we verify that the corresponding resource class flag has been set. These are the register types
-`t`, `u`, `b`, and `s`. If the corresponding resource class flag is not set,
-`warn_hlsl_UDT_missing_resource_type_member` will be emitted.
+applied to the decl. For every register type that is used to bind the resources contained 
+in the given UDT, we verify that the corresponding resource class flag has been set. These
+are the register types `t`, `u`, `b`, and `s`. If the corresponding resource class flag is 
+not set, `warn_hlsl_UDT_missing_resource_type_member` will be emitted.
 If `c` is given, then we must check that `contains_numeric` is set, and if not, 
 `warn_hlsl_UDT_missing_basic_type` is emitted.
 Otherwise, if any other register type is given, 
