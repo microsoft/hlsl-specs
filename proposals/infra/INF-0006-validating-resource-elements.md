@@ -1,4 +1,4 @@
-* Proposal: [0022](0022-validating-resource-container-elements.md)
+* Proposal: [0006](0006-validating-resource-container-elements.md)
 * Author(s): [Joshua Batista](https://github.com/bob80905)
 * Sponsor: TBD
 * Status: **Under Consideration**
@@ -10,56 +10,60 @@
 * Issues: [#75676](https://github.com/llvm/llvm-project/issues/75676)
 
 ## Introduction
+Resources are often used in HLSL, with various resource element types (RETs).
+For example:
+```
+RWBuffer<float> rwbuf: register(u0);
+```
+In this code, the RET is `float`, and the resource type is `RWBuffer`.
 
-There's a specific closed set of types that are valid as element types for an HLSL
-resource, which includes int/uint of sizes 16/32/64, half, float, and double. Structs that
+There's a specific closed set of RETs that are valid for an HLSL
+resource, which include int/uint of sizes 16/32/64, half, float, and double. Structs that
 contain fields of these primitive types (where all fields in the struct have the same type)
-are also allowed as resouce element types. Structs that have structs as fields or arrays of
+are also allowed as RETs. Structs that have structs as fields or arrays of
 structs as fields are also allowed, as long as everything can fit in 4 32-bit quantities.
 Arrays of these types are not valid as resource element types. Additionally, resource types 
-are not allowed as resource element types, even if the underlying resource type has a valid
-primitive element type. If someone writes `RWBuffer<MyCustomType>` and MyCustomType is
-invalid, we should reject it and give the user a nice diagnostic. 
+are not allowed within an RET, even if the underlying resource type has a valid
+primitive RET. If someone writes `RWBuffer<MyCustomType>` and MyCustomType is
+not a valid RET, we should reject it and give the user a nice diagnostic. 
 
 ## Motivation
 
-There currently does not exist any detection for invalid resource element types.
-This includes the case where the resource element type is user-defined.
+There currently does not exist any detection for invalid RETs.
+This includes the case where the RET is user-defined.
 Ideally, a user should be able to determine how any user-defined structure is invalid as 
-a resource element type. Some system should be in place to enforce the rules for valid and 
-invalid resource element types.
+an RET. Some system should be in place to enforce the rules for valid and 
+invalid RETs.
 
 For example,
 `RWBuffer<bool> b : register(u4);`
-will not emit any error, despite the fact that `bool` is not a valid resource element type.
+will not emit any error, despite the fact that `bool` is not a valid RET.
 
 ## Proposed solution
 
-The proposed solution is to create a dedicated function to determine whether a given type
-is a valid resource element type. The function will recursively examine the given input
-type, and determine whether all leaf element types are the set of acceptable primitives
-(i.e., int, uint, half, float, or double.) If, for example, the resource element type is
-an array of other resources, an error should be emitted. The function will be run in Sema,
-when the `register` keyword is detected, and applied to the LHS element type. At that point,
-it will be determined whether the element type is valid or not.
+The proposed solution is to use some type_traits defined in the std library, create
+some custom type_traits that aren't defined there, and join them together to define a 
+set of constraints for any RET that is used. These constraints will be applied to
+every resource type that is defined, so that all HLSL resources have the same rules
+about which RETs are valid. Validation will occur upon resource type instantiation.
 
 ## Detailed design
 
-Initially, the function will start with the input resource element type. Due to the nature
-of the problem, the function can be recursively reapplied to any vector or matrix-like structures
-within the input type. Formally, the resource element type is valid if the function returns true
-on the given input type, or if the function returns true on all fields within the given input type.
+In `clang\lib\Sema\HLSLExternalSemaSource.cpp`, `RWBuffer` is defined, along with `RasterizerOrderedBuffer`.
+It is at this point that the type_traits should be incorporated into these resource declarations.
+All of the type_traits will be applied on each and every legal HLSL resource. For every type_trait
+that is not true for the given RET, an associated error message will be emitted.
 
-Firstly, the base case will be checked. The given input type will be compared to the set of acceptable
-primitives that are valid for a resource element. (i.e., float, int, etc).
-If there are no matches, then the resource element may be a struct. In that case,
-the compiler will iterate through all fields of the struct, which may contain primitive members,
-arrays, or other structs. The function will be recursively called on each field of the struct,
-verifying that the leaf types are valid primitive elements.
-If the function never returns false at any point, then the type is valid.
+The list of type_traits that define a valid RET are descsribed below:
+|type_trait | Description|
+|-|-|
+|`__is_complete_type` | An RET should either be a complete type, or a user defined type that has been completely defined. |
+| `__is_intangible_type` | An RET should not contain any handles with unknown sizes. So, it we should assert this type_trait is false. |
+| `__is_homogenous_aggregate` | RETs may be primitive types, but if they are aggregate types, then all underlying primitive types should be the same type. |
+| `__is_contained_in_four_groups_of_thirty_two_bits` | RETs should fit in four 32-bit quantities |
+| `__is_primitive_or_aggregate_of_primitives` | RETs should only contain primitive types. |
 
-When a field is detected to not have a valid primitive leaf type, the location of the offending
-field is saved, and the source location is used in the diagnostic output. 
+
 
 * Examples:
 ```
@@ -74,11 +78,24 @@ struct a {
 
 struct b {
    x bx;
+   int i;
 };
 
-struct c {
+struct c;
+
+struct d {
   a ca;
   float4 cb;
+};
+
+struct e {
+  int a;
+  int b;
+};
+
+struct f {
+  e x[2];
+  e y[2];
 };
 
 struct bad {
@@ -86,19 +103,25 @@ struct bad {
 	bool b;	
 };
 
-RWBuffer<int> // valid
-RWBuffer<float> // valid
-RWBuffer<float4> // valid
-RWBuffer<x> // valid
-RWBuffer<a> // valid - all fields are valid primitive types
-RWBuffer<b> // valid - all fields (the struct) has valid primitive types for all its fields
-RWBuffer<c> // valid - combo of above, valid primitive field, and struct that contains valid primitive fields.
+RWBuffer<int> r1; // valid
+RWBuffer<float> r2; // valid
+RWBuffer<float4> r3; // valid
 
+RWBuffer<x> r4; // valid
+RWBuffer<a> r5; // valid - all fields are valid primitive types
+RWBuffer<b> r6; // valid - all fields (the struct) has valid primitive types for all its fields
 
-// "'bad' is an invalid resource element type because 'b' has type 'bool', which is not a valid primitive 
-// bool b;
-//      ^ (located here)
-RWBuffer<bad> // invalid - bool is not a valid primitive type for resource elements.
+RWBuffer<c> r7;// invalid - the RET isn't complete, the definition is missing. 
+// the type_trait that would catch this is `__is_complete_type`
+
+RWBuffer<d> r8; // invalid - struct `a` has int types, and this is not homogenous with the float4 contained in `c`. 
+// the type_trait that would catch this is `__is_homogenous_aggregate`
+
+RWBuffer<f> r9; // invalid - the struct f cannot be grouped into 4 32-bit quantities.
+// the type_trait that would catch this is `__is_contained_in_four_groups_of_thirty_two_bits`
+
+RWBuffer<bad> r10; // invalid - bool is not a valid primitive type for resource elements.
+// there is currently no type_trait that will catch this, but maybe `__is_primitive_or_aggregate_of_primitives` can be made to catch this
 
 ```
 ## Alternatives considered (Optional)
