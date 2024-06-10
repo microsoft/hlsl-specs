@@ -61,7 +61,6 @@ The list of type_traits that define a valid RET are descsribed below:
 | `__is_intangible_type` | An RET should not contain any handles with unknown sizes. So, it we should assert this type_trait is false. |
 | `__is_homogenous_aggregate` | RETs may be primitive types, but if they are aggregate types, then all underlying primitive types should be the same type. |
 | `__is_contained_in_four_groups_of_thirty_two_bits` | RETs should fit in four 32-bit quantities |
-| `__is_primitive_or_aggregate_of_primitives` | RETs should only contain primitive types. |
 
 
 
@@ -98,10 +97,6 @@ struct f {
   e y[2];
 };
 
-struct bad {
-	x a;
-	bool b;	
-};
 
 RWBuffer<int> r1; // valid
 RWBuffer<float> r2; // valid
@@ -119,9 +114,6 @@ RWBuffer<d> r8; // invalid - struct `a` has int types, and this is not homogenou
 
 RWBuffer<f> r9; // invalid - the struct f cannot be grouped into 4 32-bit quantities.
 // the type_trait that would catch this is `__is_contained_in_four_groups_of_thirty_two_bits`
-
-RWBuffer<bad> r10; // invalid - bool is not a valid primitive type for resource elements.
-// there is currently no type_trait that will catch this, but maybe `__is_primitive_or_aggregate_of_primitives` can be made to catch this
 
 ```
 ## Alternatives considered (Optional)
