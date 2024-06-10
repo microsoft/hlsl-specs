@@ -14,31 +14,33 @@
 
 \p The following entities in HLSL have \textit{external linkage}:
 \begin{itemize}
-    \item entry point functions
-    \item functions marked with \texttt{export} keyword
-    \item global variables that are not marked \texttt{static} or \texttt{groupshared} \footnote{These are not really linked with other translation units but rather their values are loaded indirectly based on cbuffer mapping.}
-    \item enumerations
-    \item classes or template classes, their member functions, static data members, nested classes and enumerations
+  \item entry point functions
+  \item functions marked with \texttt{export} keyword
+  \item global variables that are not marked \texttt{static} or \texttt{groupshared} \footnote{These are not really linked with other translation units but rather their values are loaded indirectly based on cbuffer mapping.}
+  \item static data members of classes or template classes
 \end{itemize}
 
 \p Linkage of functions (including template functions) that are not entry points or marked with \texttt{export} keyword is implementation dependent. \footnote{In DXC today functions that are not entry points or exported have \textit{internal linkage} by default. This can be overriden by \texttt{-default-linkage} compiler option.}
-    
+
 \Sub{Internal Linkage}{Decl.Linkage.Internal}
 
 \p Entities with \textit{internal linkage} can be referred to from all scopes in the current translation unit.
 
 \p The following entities in HLSL have \textit{internal linkage}:
 \begin{itemize}
-    \item global variables marked as \texttt{static} or \texttt{groupshared}
+  \item global variables marked as \texttt{static} or \texttt{groupshared}
+  \item all entities declared in an unnamed namespace or a namespace within an unnamed namespace
+  \item enumerations
+  \item classes or template classes, their member functions, and nested classes and enumerations
 \end{itemize}
 
 \Sub{No Linkage}{Decl.Linkage.NoLinkage}
 
 \p An entity with \textit{no linkage} can be referred to only from the scope it is in.
 
-\p Any of the following entites declared at block scope have no linkage:
+\p Any of the following entites declared at function scope or block scopes derived from function scope have no linkage:
 \begin{itemize}
   \item local variables
   \item local classes and their member functions
-  \item other names declared at block scope such as typedefs, enumerations, and enumerators.
+  \item other entities declared at function scope or block scopes derived from function scope that such as typedefs, enumerations, and enumerators
 \end{itemize}
