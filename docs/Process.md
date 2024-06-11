@@ -127,16 +127,19 @@ please use the _Spec_ template.
 Some features for HLSL expose new hardware capabilities and require years of
 development before they can be made public. For these features we have a
 fast-track process to incorporate platform-specific and vendor-specific
-extensions to HLSL as long as they are _conforming extensions_.
+extensions to HLSL as long as they are _conforming extensions_. Extension
+proposals should use the [Extension
+Template](/proposals/templates/extension-template.md).
 
 ### Conforming Extensions
 
 Conforming extensions are language features which do not add new language
-behavior or syntax. They can add new builtin function declarations, builtin data
-types, and attributes as long as the added features do not change the rules of
-the language. All added declarations must be under a namespace, and cannot be
-under the `hlsl`, `std` or global namespaces which are reserved for core
-language features.
+behavior or syntax. They cannot remove or deprecate functionality, and they
+cannot be breaking changes. They can add new builtin function declarations,
+builtin data types, and attributes as long as the added features do not change
+the rules of the language. All added declarations must be under a namespace, and
+cannot be under the `hlsl`, `std` or global namespaces which are reserved for
+core language features.
 
 #### Extension Attribute Restrictions
 
@@ -166,3 +169,13 @@ directly as **Accepted** features with only a PR review. During that review a
 feature will only be rejected if it does not meet the restrictions of a
 conforming extension, in which case it will need to either be revised to meet
 that definition or go through the full review process.
+
+### Extension Deprecation Process
+
+If a significant number of user bugs arise with an extension and the platform or
+vendor who contributed the feature abandons maintenance and no other party takes
+up the maintenance an extension may be deprecated and removed following a
+deprecation period of no less than 6 months.
+
+Decisions to deprecate an extension will not be taken lightly, however carrying
+broken features in the compiler will cause more harm to users than good.
