@@ -92,6 +92,251 @@ void J(inout int);         // ill-formed: Cannot overload based on out/inout mis
 \end{HLSL}
 \end{itemize}
 
-\Sec{Overload Resolution}{Overload.Resoluiton}
+\Sec{Overload Resolution}{Overload.Res}
 
-\Sec{Operators}{Overload.Operators}
+\p \textit{Overload resolution} is process by which a function call is mapped to
+a the best overloaded function declaration. Overload resolution uses set of
+functions called the \textit{candidate set}, and a list of expressions that
+comprise the argument list for the call.
+
+\p Overload resolution selects the function to call in the following
+contexts\footnote{DXC only supports overload resolution for function calls and
+invocation of operators during expressions. Clang will support all contexts
+listed.}:
+
+\begin{itemize}
+  \item invocation of a function named in a function call expression;
+  \item invocation of a function call operator on a class object named in
+  function call syntax;
+  \item invocation of the operator referenced in an expression;
+  \item invocation of a user-defined conversion for copy-initialization of a
+  class object;
+  \item invocation of a conversion function for initialization of an object of a
+  nonclass type from an expression of class type.
+\end{itemize}
+
+\p In each of these contexts a unique method is used to construct the overload
+candidate set and argument expression list.
+
+\Sub{Candidate Functions and Argument Lists}{Overload.Res.Sets}
+
+\begin{note}
+  \gls{isoCPP} goes into a lot of detail in this section about how candidate
+  functions and argument lists are selected for each context where overload
+  resolution is performed. HLSL matches C++ for the contexts that HLSL inherits.
+  For now, this section will be left as a stub, but HLSL inherits the following
+  sections from C++:
+  \begin{itemize}
+    \item \textbf{[over.call.func]}
+    \item \textbf{[over.call.object]}
+    \item \textbf{[over.match.oper]}
+    \item \textbf{[over.match.copy]}
+    \item \textbf{[over.match.conv]}
+  \end{itemize}
+\end{note}
+
+\Sub{Viable Functions}{Overload.Res.Viable}
+
+\p Given the candidate set and argument expressions as determined by the
+relevant context (\ref{Over.Res.Sets}), a subset of viable functions can be
+selected from the candidate set.
+
+\p A function candidate \(F(P_0 ... P_m)\) is not a viable function for a call
+with argument list \(A_0 ... A_n\) if:
+\begin{itemize}
+  \item The function has fewer parameters than there are
+  arguments in the argument list (\(m < n \)).
+  \item The function has more parameters than there are arguments to the
+  argument list (\(m > n \)), and function parameters \( P_{n+1} ... P_m \) do not
+  all have default arguments.
+  \item There is not an implicit conversion sequence that converts each argument
+  \(A_i\) to the type of the corresponding parameter \(P_i\).
+\end{itemize}
+
+\Sub{Best Viable Function}{Overload.Res.Best}
+
+\p For an overloaded call with arguments \(A_0 ... A_n\), each viable function
+\(F(P_0 ... P_m)\), has a set of implicit conversion sequences \(ICS_0(F) ...
+ICS_m(F)\) defining the conversion sequences for each argument \(A_i\) to the
+type of parameter \(P_i\).
+
+\p A viable function \(F\) is defined to be a better function than another
+viable function \(F`\) if for all arguments \(ICS_i(F)\) is not a worse
+conversion sequence than \(ICS_i(F`)\), and:
+\begin{itemize}
+  \item for some argument \(j\), \(ICS_j(F)\) is a better conversion than
+  \(ICS_j(F`)\) or,
+  \item in the context of an initialization by user-defined conversion, the
+  conversion sequence from the return type of \(F\) to the destination type is a
+  better conversion sequence than the return type of \(F`\) to the destination
+  type or,
+  \item \(F\) is a non-template function and \(F`\) is a function template
+  specialization, or
+  \item \(F\) and \(F`\) are both function template specializations and \(F\) is
+  more specialized than \(F`\) according to function template partial ordering
+  rules (\ref{Template.Func.Order}).
+\end{itemize}
+
+\p If there is one viable function that is a better function than all the other
+viable functions, it is the selected function; otherwise the call is ill-formed.
+
+\p If the resolved overload is a function with multiple declarations, and if at
+least two of these declarations specify a default argument that made the
+function viable, the program is ill-formed.
+
+\begin{HLSL}
+void F(int X = 1);
+void F(float Y = 2.0f);
+
+void Fn() {
+  F(1);     // Okay.
+  F(3.0f);  // Okay.
+  F();      // Ill-formed.
+}
+\end{HLSL}
+
+\Sub{Implicit Conversion Sequences}{Overload.ICS}
+
+\p An \textit{implicit conversion sequence} is a sequence of conversions which
+converts a source value to a prvalue of destination type. In overload resolution
+the source value is the argument expression in a function call, and the
+destination type is the type of the corresponding parameter of the function
+being called.
+
+\p When a parameter is a cxvalue an \textit{inverted implicit conversion
+sequence} is required to convert the parameter type back to the argument type
+for writing back to the argument expression lvalue. An inverted implicit
+conversion sequence must be a well-formed implicit conversion sequence where the
+source value is the implicit cxvalue of the parameter type, and the destination
+type is the argument expression's lvalue type.
+
+\p A well-formed implicit conversion sequence is either a \textit{standard
+conversion sequence}, or a \textit{user-defined conversion sequence}.
+
+\p In the following contexts an implicit conversion sequence can only be a
+standard conversion sequence:
+\begin{itemize}
+  \item Argument conversion for a user-defined conversion function.
+  \item Copying a temporary for class copy-initialization.
+  \item When passing an initializer-list as a single argument.
+  \item Copy-initialization of a class by user-defined conversion.
+\end{itemize}
+
+\p An implicit conversion sequence models a copy-initialization unless it is an
+inverted implicit conversion sequence when it models an assignment. Any
+difference in top-level cv-qualification is handled by the copy-initialization
+or assignment, and does not constitute a conversion\footnote{"Top-level"
+cv-qualification refers to the qualification of the value. This means an
+parameter of type \texttt{T} can be initialized by a argument of type
+\texttt{const T}. This does not mean that a parameter of type \texttt{inout T}
+can be initialized with a argument of type \texttt{const T} because there is no
+valid inverted conversion system to assign back to a value of type \texttt{const
+T}.}.
+
+\p When the source value type and the destination type are the same, the
+implicit conversion sequence is an \textit{identity conversion}, which signifies
+no conversion.
+
+\p Only standard conversion sequences that do not create temporary objects are
+valid for implicit object parameters or left operand to assignment operators.
+
+\p If no sequence of conversions can be found to convert a source value to the
+destination type, an implicit conversion sequence cannot be formed.
+
+\p If several different sequences of conversions exist that convert the source
+value to the destination type, the implicit conversion sequence is defined to be
+the unique conversion sequence designated the \textit{ambiguous conversion
+sequence}. For the purpose of ranking implicit conversion sequences, the
+ambiguous conversion sequence is treated as a user-defined sequence that is
+indistinguishable from any other user-defined conversion sequence. If overload
+resolution selects a function using the ambiguous conversion sequence as the
+best match for a call, the call is ill-formed.
+
+\SubSub{Standard Conversion Sequences}{Overload.ICS.SCS}
+
+\p The conversions that comprise a standard conversion sequence and the
+composition of the sequence are defined in Chapter \ref{Conv}.
+
+\p Each standard conversion is given a category and rank as defined in the table
+below:
+\begin{center}
+  \begin{tabular}{|| c | c | c | c ||}
+    \hline
+    Conversion & Category & Rank & Reference \\
+    \hline
+    No conversion & Identity &  & \\ \cline{1-2}\cline{4-4}
+
+    Lvalue-to-rvalue & & & \ref{Conv.lval} \\ \cline{4-4}
+    Array-to-pointer & Lvalue Transformation & Exact Match
+          & \ref{Conv.array} \\ \cline{1-2}\cline{4-4}
+    Qualification & Qualification Adjustment & & \ref{Conv.qual} \\ \cline{1-4}
+
+    Scalar splat & Scalar Extension & Extension
+          & \ref{Conv.vsplat} \\ \cline{1-4}
+
+    Integral promotion & &
+          & \ref{Conv.iconv} \& \ref{Conv.rank.int} \\ \cline{1-1}\cline{4-4}
+    Floating point promotion & Promotion & Promotion
+          & \ref{Conv.fconv} \& \ref{Conv.rank.float} \\ \cline{1-1}\cline{4-4}
+    Component-wise promotion &  &  & \ref{Conv.cwise} \\ \cline{1-4}
+
+
+    Integral conversion & & & \ref{Conv.iconv} \\ \cline{1-1}\cline{4-4}
+    Floating point conversion &  &  & \ref{Conv.fconv} \\ \cline{1-1}\cline{4-4}
+    Floating-integral conversion & Conversion & Conversion
+          & \ref{Conv.fpint} \\ \cline{1-1}\cline{4-4}
+    Boolean conversion &  &  & \ref{Conv.bool} \\ \cline{1-1}\cline{4-4}
+    Component-wise conversion &  &  & \ref{Conv.cwise} \\ \cline{1-4}
+
+    Vector truncation & Dimensionality Reduction & Truncation
+          & \ref{Conv.vtrunc} \\ \cline{1-4}
+    \hline
+  \end{tabular}
+\end{center}
+
+\p The rank of a conversion sequence is determined by considering the rank of
+each conversion. Conversion sequence ranks are ordered such that \textbf{Exact
+Match} rank is better than \textbf{Extension} rank, which is better than
+\textbf{Promotion} rank, which is better than \textbf{Conversion} rank, which is
+better than \textbf{Truncation} rank. The rank of a conversion sequence is the
+rank of the worst ranked conversion in the sequence.
+
+% TODO: Define user-defined conversion sequences. DXC doesn't actually support
+% these because we don't resolve overloads for user-defined conversion
+% functions, but in Clang we will. This will likely match C++ extremely close so
+% it can be left to fill out later.
+
+\SubSub{Comparing Implicit Conversion Sequences}{Overload.ICS.Comparing}
+
+\p A partial ordering of implicit conversion sequences exists based on defining
+relationships for \textit{better conversion sequence}, and \textit{better
+conversion}. If an implicit conversion sequence \(ICS(f)\) is a better
+conversion sequence than \(ICS(f`)\), then the inverse is also true: \(ICS(f`)\)
+is a \textit{worse conversion sequence} than \(ICS(f)\). If \(ICS(f)\) is
+neither better nor worse than \(ICS(f`)\), the conversion sequences are
+\textit{indistinguishable conversion sequences}.
+
+\p A standard conversion sequence is always better than a user-defined
+conversion sequence.
+
+\p Standard conversion sequences are ordered by their ranks. Two conversion
+sequences with the same rank are indistinguishable unless one of the following
+rules applies:
+
+\begin{itemize}
+  \item If class \texttt{B} is derived directly or indirectly from class
+  \texttt{A} and class \texttt{C} is derived directly or indirectly from class
+  \texttt{B},
+  \begin{itemize}
+    \item binding of a expression of type \texttt{C} to a cxvalue of type
+    \texttt{B} is better than binding an expression of type \texttt{C} to a
+    cxvalue of type \texttt{A},
+    \item conversion of \texttt{C} to \texttt{B} is better than conversion or
+    \texttt{C} to \texttt{A},
+    \item binding of a expression of type \texttt{B} to a cxvalue of type
+    \texttt{A} is better than binding an expression of type \texttt{C} to a
+    cxvalue of type \texttt{A},
+    \item conversion of \texttt{B} to \texttt{A} is better than conversion of
+    \texttt{C} to \texttt{A}.
+  \end{itemize}
+\end{itemize}

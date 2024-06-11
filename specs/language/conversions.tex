@@ -5,13 +5,11 @@ chapter enumerates the full set of conversions. A \textit{standard conversion
 sequence} is a sequence of standard conversions in the following
 order:
 \begin{enumerate}
-  \item Zero or one conversion of either lvalue-to-rvalue, array-to-pointer or
-  function-to-pointer.
+  \item Zero or one conversion of either lvalue-to-rvalue, or array-to-pointer.
   \item Zero or one conversion of either integral conversion, floating point
   conversion, floating point-integral conversion, or boolean conversion,
-  derived-to-base-lvalue, vector splat, vector truncation, or flat
-  conversion\footnote{This differs from C++ with the addition of
-  vector splat and truncation casting and flat conversions.}.
+  derived-to-base-lvalue, vector splat, vector truncation. \footnote{This
+  differs from C++ with the addition of vector splat and truncation casting.}.
   \item Zero or one conversion of either component-wise integral conversion,
   component-wise floating point conversion, component-wise floating
   point-integral conversion, or component-wise boolean
@@ -37,11 +35,40 @@ to a copy of the array, not memory referred to by the glvalue.
 
 \Sec{Array-to-pointer conversion}{Conv.array}
 
-\p An lvalue or rvalue of type \texttt{T[N]} (constant-sized array), can be
-converted to a prvalue of type pointer to \texttt{T}.
-[\textit{Note: \acrshort{hlsl} does not support grammar for specifying pointer or
-reference types, however they are used in the type system and must be described
-in language rules.}]
+\p An lvalue or rvalue of type \texttt{T[]} (unsized array), can be converted to
+a prvalue of type pointer to \texttt{T}\footnote{\acrshort{hlsl} does not
+support grammar for specifying pointer or reference types, however they are used
+in the type system and must be described in language
+rules.}\footnote{Array-to-pointer conversion of constant sized arrays is not
+supported.}.
+
+\Sec{Integral promotion}{Conv.ipromote}
+
+\p An integral promotion is a conversion of:
+\begin{itemize}
+  \item a glvalue of integer type other than \texttt{bool} to a cxvalue of
+  integer type of higher conversion rank, or
+  \item a conversion of a prvalue of integer type other than bool to a prvalue
+  of integer type of higher conversion rank, or
+  \item a conversion of a glvalue of type \texttt{bool} to a cxvalue of integer
+  type, or
+  \item a conversion of a prvalue of type \texttt{bool} to a prvalue of integer
+  type.
+\end{itemize}
+
+\p Integer conversion ranks are defined in section \ref{Conv.rank.int}.
+
+\p A conversion is only a promotion if the destination type can represent all of
+the values of the source type.
+
+\Sec{Floating point promotion}{Conv.fppromote}
+
+\p A glvalue of a floating point type can be converted to a cxvalue of a
+floating point type of higher conversion rank, or a prvalue of a floating point
+type can be converted to a prvalue of a floating point type of higher conversion
+rank.
+
+\p Floating point conversion ranks are defined in section \ref{Conf.rank.float}.
 
 \Sec{Integral conversion}{Conv.iconv}
 
@@ -144,9 +171,9 @@ than "\textit{cv1} \texttt{T}".
 
 \Sec{Conversion Rank}{Conv.rank}
 
-\p Every integer and floating point type have defined conversion ranks.
-A \textit{promotion} is any conversion of a value from a lower conversion rank
-to a higher conversion rank.
+\p Every integer and floating point type have defined conversion ranks. These
+conversion ranks are used to differentiate between \textit{promotions} and other
+conversions (see: \ref{Conv.iprom} and \ref{Conv.fpprom}).
 
 \Sub{Integer Conversion Rank}{Conv.rank.int}
 
