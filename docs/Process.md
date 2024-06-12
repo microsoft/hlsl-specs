@@ -8,7 +8,8 @@ should be noted:
 1. Final decisions about what features are included or excluded from HLSL are
    made by the MSFT HLSL Team. Our goals are to make HLSL the best programming
    language across all supported runtime targets, not just DirectX or Vulkan.
-2. Some HLSL features may instead to through a
+2. Some HLSL features may instead go through a
+
    [Fast-track](#fast-track-for-extensions) process. This process is reserved
    for platform and vendor extensions and is not suitable to all features.
 
