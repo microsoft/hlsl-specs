@@ -159,9 +159,10 @@ examples:
 * Parameter attributes like `[vk::ext_literal]` _can_ be added as an extension
   attribute, because it does not modify the type or behavior of the language it
   just annotates a declaration for additional verification.
-* Entry attributes like `[NodeIsProgramEntry]` _can_ be added as an extension
-  attribute, because it does not modify the code generation of the function it
-  only changes generated metadata.
+* Entry attributes like `[NodeIsProgramEntry]` _can not_ be added as an extension
+  attribute, because it is not namespaced. If instead it were spelled
+  `[dx::NodeIsProgramEntry]` it would comply since it does not modify the code
+  generation of the function it only changes generated metadata.
 
 ### Fast-Track Process
 
