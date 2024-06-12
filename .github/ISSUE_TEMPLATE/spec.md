@@ -2,7 +2,7 @@
 name: Spec
 about: Highlight a problem with a published spec or accepted proposal
 title: ''
-labels: 'spec'
+labels: ['spec', 'needs-triage']
 assignees: ''
 
 ---
