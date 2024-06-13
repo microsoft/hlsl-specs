@@ -6,7 +6,7 @@
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
-* Impacted Project(s): DXC, DXC-Clang
+* Impacted Project(s): DXC, Clang
 
 ## Introduction
 
@@ -41,6 +41,8 @@ As parameters, that mapping can't be resolved.
 All functions that are not entry functions will be inlined at the call site.
 During code generation, all non-entry functions' linkage is set to external
 and the `AlwaysInline` attribute is added for called functions.
+During codege, `stacksave` and `stackrestore` instructions should be ommited
+as they won't be needed once the calls are inlined.
 
 The `always-inline` pass then inlines these functions.
 It is called early in the process to accommodate the dependent passes.
@@ -52,8 +54,7 @@ If lifetime markers are enabled, the inlined function will add them for the
 static allocas,
 scoping them to the inlined function.
 
-After inlining, the HLPreprocess step erases stacksave and stackrestore
-intrinsics along with any users thereof and moves all allocas in non-entry
+After inlining, the HLPreprocess step moves all allocas in non-entry
 functions into the entry function entry block.
 
 This leaves functions that have no runtime interface without any callers.
