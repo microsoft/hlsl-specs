@@ -2,7 +2,7 @@
 name: Proposal Follow-up
 about: Follow-up issue for a proposal
 title: ''
-labels: 'active proposal'
+labels: ['active proposal', 'needs-triage']
 assignees: ''
 
 ---
