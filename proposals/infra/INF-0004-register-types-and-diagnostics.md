@@ -188,7 +188,16 @@ struct Eg9{
 };
 
 Eg9 e9;
-// error: location annotations cannot be specified on members
+// "error: location annotations cannot be specified on members"
+
+template<typename R>
+struct Eg10 {
+    R b;
+};
+
+Eg10<Texture2D> t : register(u0);
+// "warning: variable of type 'Eg10' bound to register type 'u' does not contain a matching 'UAV' resource"
+// invalid because after template expansion, there are no valid resources inside Eg10 to bind as a UAV.
 
 }
 
@@ -231,20 +240,24 @@ Below are some examples:
 ## Detailed design
 
 In DXC, the analysis and diagnostic emission steps would happen in DiagnoseRegisterType(),
-under DiagnoseHLSLDecl in SemaHLSL.cpp. However, there is currently no infrastructure
-that implements the register keyword as an unusual annotation. The method through which a
-decl retains the information from a `register` annotation has yet to be designed, and is
-out of scope for this spec. However, one approach is that in
-clang\lib\Parse\ParseHLSL.cpp, under ParseHLSLAnnotations, an attribute will be constructed
-that will be added to any decl which has the `register` keyword applied to it. Note that there 
-are instances where multiple `register` statements can apply to a single decl, and this is 
-only invalid if the register annotations have the same register types but different register
-numbers. If this invalid case happens, `err_hlsl_conflicting_register_annotations`
-will be emitted. 
+under DiagnoseHLSLDecl in SemaHLSL.cpp. In clang, there is a function called 
+`handleHLSLResourceBindingAttr` in `clang\lib\Sema\SemaDeclAttr.cpp` that is responsible for
+diagnosing and validating the `register` keyword when it is applied to any decl. Any time the
+`register` annotation is applied on a decl, the `AT_HLSLResourceBinding` attribute gets added
+to the decl's attribute list in `clang\lib\Parse\ParseHLSL.cpp`, under `ParseHLSLAnnotations`.
+Note that there are instances where multiple `register` statements can apply to a single 
+decl, and this is only invalid if the register annotations have the same register types but 
+different register numbers. If this invalid case happens, 
+`err_hlsl_conflicting_register_annotations` will be emitted. There is a separate case where
+two decls in separate locations in the translation unit have overlapping register numbers
+and register types, causing a conflict. This type of conflict cannot be detected at this
+stage of compilation, because parsing is not yet complete. Detecting this conflict is out
+of scope for this diagnostic infrastructure, but will be caught later by the register
+allocation algorithm.
 
-Then, in SemaHLSL.cpp, there will be a location responsible for diagnosing each Decl in the 
-translation unit, and for each Decl, if the attribute that is associated with the presence 
-of the `register` annotation is detected, the two steps described below will be run.
+For each decl that contains this `AT_HLSLResourceBinding` attribute, 
+`handleHLSLResourceBindingAttr` will be run, which contains `DiagnoseHLSLResourceRegType`.
+This function is responsible for the emission of the diagnostics described in this spec.
 
 ### Analysis 
 
@@ -322,21 +335,23 @@ or otherwise numeric type, and if so, we know that the decl is a `basic` type.
 If the decl isn't any of those types, then we check if it is a struct or class type.
 If so, the decl is a UDT, so the `udt` flag is set. For a `udt`, recurse through the 
 members of the UDT and its bases, collecting information on what types of resources 
-are contained by the UDT,setting corresponding class flags (`uav`, `cbv`, `srv`, or 
+are contained by the UDT, setting corresponding class flags (`uav`, `cbv`, `srv`, or 
 `sampler`). Also track whether there are any other numeric members and set the 
-`contains_numeric` flag. If the decl is not a UDT, then the `other` flag is set.
+`contains_numeric` flag. Also, apply any template expansions on the UDT, so that all
+types of members in the UDT are defined. 
+If the decl is not a UDT, then the `other` flag is set.
 
 Below is some pseudocode to describe the flag-setting process:
 
 ```
-if the Decl is inside a cbuffer or tbuffer:
-  do not set default_globals  
-else if the Decl type is a numeric type:
-  set default_globals
+if the Decl is not inside a cbuffer or tbuffer:
+  if the Decl type is a numeric type:
+    set default_globals
 
 if the Decl is an HLSLBufferDecl
-  if cbuffer: set resource, set cbv
-  else:  set resource, set srv
+  set resource
+  if cbuffer: set cbv
+  else: set srv
 else if the Decl is a VarDecl:
   if no resource attribute: 
     if Decl is vector, matrix, or otherwise numeric type:
