@@ -271,15 +271,14 @@ below:
           & \ref{Conv.array} \\ \cline{1-2}\cline{4-4}
     Qualification & Qualification Adjustment & & \ref{Conv.qual} \\ \cline{1-4}
 
-    Scalar splat & Scalar Extension & Extension
-          & \ref{Conv.vsplat} \\ \cline{1-4}
-
     Integral promotion & &
           & \ref{Conv.iconv} \& \ref{Conv.rank.int} \\ \cline{1-1}\cline{4-4}
     Floating point promotion & Promotion & Promotion
           & \ref{Conv.fconv} \& \ref{Conv.rank.float} \\ \cline{1-1}\cline{4-4}
     Component-wise promotion &  &  & \ref{Conv.cwise} \\ \cline{1-4}
 
+    Scalar splat & Scalar Extension & Extension
+          & \ref{Conv.vsplat} \\ \cline{1-4}
 
     Integral conversion & & & \ref{Conv.iconv} \\ \cline{1-1}\cline{4-4}
     Floating point conversion &  &  & \ref{Conv.fconv} \\ \cline{1-1}\cline{4-4}
@@ -339,8 +338,8 @@ rules applies:
     \item conversion of \texttt{B} to \texttt{A} is better than conversion of
     \texttt{C} to \texttt{A}.
   \end{itemize}
-  \item If \(ICS(f)\) and \(ICS(f`')\) are both \textbf{Promotion} or
-  \textbf{Conversion} ranked, and \(ICS(f)\) contains an \textbf{Extension}
-  conversion, but \(ICS(f`')\) does not contain an \textbf{Extension},
-  \(ICS(f`')\) is the better conversion than \(ICS(f')\).
+  \item If \(ICS(f)\) and \(ICS(f`')\) are both \textbf{Extension} or
+  \textbf{Truncation} ranked, the next highest ranked conversion in the
+  sequences are compared to disambiguate. If those conversions are of the same
+  rank, the sequences are ambiguous.
 \end{itemize}
