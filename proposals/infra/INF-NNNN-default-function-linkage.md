@@ -1,14 +1,14 @@
 # Default Function Linkage
 
-* Proposal: [0021](0021-function-linkage.md)
+* Proposal: [INF-NNNN](INF-NNNN-function-linkage.md)
 * Author(s): [Helena Kotas](https://github.com/hekota)
 * Sponsor: [Helena Kotas](https://github.com/hekota)
 * Status: **Under Consideration**
-* Proposed Version: 202y (Clang-only)
+* Planned Version: 202y (Clang-only)
 
 ## Introduction
 
-This document maps the current default linkage of functions in DXC and discusses how it implementat it in Clang. 
+This document maps the current default linkage of functions in DXC and discusses how it could be implemented in Clang.
 
 ## Existing Behavior in DXC
 
@@ -92,7 +92,7 @@ Identifying a shader entry point or exported function during parsing is straight
 However, in case of functions that are not entry points or exported, if we want to keep on par with DXC, the final linkage cannot be determined until the whole translation unit is parsed and it is known whether the function is defined (has a body) or if it is just a declaration.
 
 In order to implement DXC behavior there are two options:
-1. Assign _internal linkage_ to non-entry and non-export functions by default while in Clang semantic analysis phase and change it to _external linkage_ durign CodeGen phase in case the function does not have a body.
+1. Assign _internal linkage_ to non-entry and non-export functions by default while in Clang semantic analysis phase and change it to _external linkage_ during CodeGen phase in case the function does not have a body.
 
 2. Assign _internal linkage_ to functions that are guaranteed to stay _internal_ in the final DXIL, such as the functions in unnamed namespace. For all other functions assume _external linkage_ for Clang semantic analysis and change it to _internal linkage_ in CodeGen phase for non-entry and non-export function definitions.
 
