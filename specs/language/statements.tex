@@ -2,15 +2,24 @@
 \Sec{Label Statements}{Stmt.Label}
 \Sec{Attributes}{Stmt.Attr}
 \Sub{Unroll Attribute}{Stmt.Attr.Unroll}
-The Attribute \textbf{[unroll]} and \textbf{[unroll(n)]} attribute qualifiers can be used to specify that a loop (\textbf{for}, \textbf{while} and \textbf{do while} loops) can be unrolled. This attribute qualifier can be used to specify full unrolling or partial unrolling by a specified amount. This is a compiler hint and the compiler may ignore this directive.
+The \texttt{[unroll]} and \texttt{[unroll(n)]} attribute qualifiers can be used
+ to specify that a loop (\texttt{for}, \texttt{while} and \texttt{do while} 
+loops) can be unrolled. This attribute qualifier can be used to specify full 
+unrolling or partial unrolling by a specified amount. This is a compiler hint 
+and the compiler may ignore this directive.
 
-n is the loop unrolling factor and must be a positive integral compile time constant expression. If n is not specified, the compiler determines the unrolling factor for the loop. This attribute is not compatible with the [loop] attribute.
+\texttt{n} is the loop unrolling factor and must be a positive integral compile time 
+constant expression. If n is not specified, the compiler determines the 
+unrolling factor for the loop. This attribute is not compatible with the \texttt{[loop]}
+ attribute.
 
-Note:  The \textbf{[unroll]} attribute  must appear immediately before the loop to be affected.
+Note:  The \texttt{[unroll]} attribute  must appear immediately before the loop
+ to be affected.
 
 \subsubsection{Unroll Examples}{Stmt.Attr.Unroll.Examples}
 \begin{itemize}
-\item  Tell the compiler to unroll the above \textbf{for} loop by a factor of 2.
+\item  Requests the compiler to unroll the above \texttt{for} loop by a factor 
+of 2.
 \begin{HLSL}
 [unroll(2)]
 int sum = 0;
@@ -26,7 +35,8 @@ do {
     i++;
 } while(i < 32);
 \end{HLSL}
-\item Below is an  examples of \textbf{\emph{invalid}} usage of \textbf{[unroll(n)]} because n is not positive
+\item Below is an  examples of \textbf{\emph{invalid}} usage of 
+\texttt{[unroll(n)]} because n is not positive
 \begin{HLSL}
 [unroll(-1)]
 while (...)
@@ -34,7 +44,8 @@ while (...)
     ...
 }
 \end{HLSL}
-\item This example is \textbf{\emph{invalid}} because the \textbf{[unroll]} attribute is used on a non-loop construct
+\item This example is \textbf{\emph{invalid}} because the \texttt{[unroll]} 
+attribute is used on a non-loop construct
 \begin{HLSL}
 [unroll]
 if (...)
@@ -42,7 +53,8 @@ if (...)
     ...
 }
 \end{HLSL}
-\item The below example is \textbf{\emph{invalid}} because the loop unroll factor is not a compile-time constant expression.
+\item The below example is \textbf{\emph{invalid}} because the loop unroll 
+factor is not a compile-time constant expression.
 \begin{HLSL}
     int x;
     [unroll(x)]
@@ -53,7 +65,13 @@ if (...)
 \end{HLSL}
 \end{itemize}
 \Sub{Loop Attribute}{Stmt.Attr.Loop}
-The Attribute \textbf{[loop]} tells the compiler to execute each iteration of the loop. In other words, its a hint to indicate a loop should not be unrolled. Therefore it is not compatible with the [unroll] attribute.
+The Attribute \texttt{[loop]} tells the compiler to execute each iteration of 
+the loop. In other words, its a hint to indicate a loop should not be 
+unrolled. Therefore it is not compatible with the \texttt{[unroll]} attribute.
+
+Note:  The \texttt{[loop]} attribute  must appear immediately before the loop
+ to be affected.
+ 
 \subsubsection{Loop Examples}{Stmt.Attr.Loop.Examples}
 \begin{itemize}
 \item  Tell the compiler to not to unroll the loop.
@@ -63,7 +81,8 @@ for (int i=0; i<32; i++) {
     ...
 }
 \end{HLSL}
-\item This example is \textbf{\emph{invalid}} because the \textbf{[loop]} attribute is used on a non-loop construct
+\item This example is \textbf{\emph{invalid}} because the \texttt{[loop]} 
+attribute is used on a non-loop construct
 \begin{HLSL}
 [loop]
 if (...)
