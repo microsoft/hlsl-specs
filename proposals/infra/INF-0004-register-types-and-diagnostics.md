@@ -59,7 +59,7 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{SRV\|UAV\|CBV\|Sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register prefix is used to bind a resource, like 'y' being used with RWBuffer<int>.|
 | err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register numbers are applied to the same declaration. |
-| err_hlsl_register_annotation_on_member | "error: location annotations cannot be specified on members| Emitted if the register annotation is specified on a member of a UDT. |
+| err_hlsl_register_annotation_on_member | "error: location annotations cannot be specified on members | Emitted if the register annotation is specified on a member of a UDT. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource attribute, like a float type. |
 | warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource attribute, like a float type. |
@@ -253,7 +253,12 @@ two decls in separate locations in the translation unit have overlapping registe
 and register types, causing a conflict. This type of conflict cannot be detected at this
 stage of compilation, because parsing is not yet complete. Detecting this conflict is out
 of scope for this diagnostic infrastructure, but will be caught later by the register
-allocation algorithm.
+allocation algorithm. In `dxc`, `\lib\HLSL\DxilCondenseResources.cpp` has a class called
+`DxilResourceRegisterAllocator` with a member `AllocateRegisters` that is responsible for
+allocating registers and validating that there aren't any conflicts or overlaps. As for 
+`clang-dxc`, there is not yet any register allocation validation, but when resources are
+finalized, allocation validation must be implemented, and will likely use the same algorithm 
+used in DXC.
 
 For each decl that contains this `AT_HLSLResourceBinding` attribute, 
 `handleHLSLResourceBindingAttr` will be run, which contains `DiagnoseHLSLResourceRegType`.
@@ -474,7 +479,21 @@ if udt is set:
       emit err_hlsl_unsupported_register_type_and_variable_type  
 ```
 
-## Alternatives considered (Optional)
+## Behavioral Differences
+
+This infrastructure will introduce some behavioral differences between `clang-dxc` and `dxc`.
+The whole approach of setting flags based on decl characteristics and using them
+to drive diagnostics is an approach that wasn't taken in DXC. Secondly, as mentioned above, 
+the `disallow-legacy-binding-rules` warning group did not exist in `dxc`, and neither
+did any of the warnings that are contained in that group. Those warnings are being 
+introduced to `clang-dxc`. Many of these warnings will be treated as errors, causing some
+HLSL source to fail compilation in `clang-dxc` that would otherwise pass in `dxc`. 
+Another difference is that some of these errors will occur earlier in the compilation
+pipeline compared to `dxc`. For example, in `dxc`, the equivalent of the
+`err_hlsl_register_annotation_on_member` error would be emitted at code gen, but this
+infrastructure will emit this error at Sema, and all of these errors will be emitted
+at the Sema stage.
+
 
 ## Acknowledgments (Optional)
 * Tex Riddell
