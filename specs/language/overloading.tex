@@ -271,7 +271,7 @@ below:
           & \ref{Conv.array} \\ \cline{1-2}\cline{4-4}
     Qualification & Qualification Adjustment & & \ref{Conv.qual} \\ \cline{1-4}
 
-    Scalar splat & Scalar Extension & Extension
+    Scalar splat (without conversion) & Scalar Extension & Extension
           & \ref{Conv.vsplat} \\ \cline{1-4}
 
     Integral promotion & &
@@ -280,6 +280,9 @@ below:
           & \ref{Conv.fconv} \& \ref{Conv.rank.float} \\ \cline{1-1}\cline{4-4}
     Component-wise promotion &  &  & \ref{Conv.cwise} \\ \cline{1-4}
 
+    Scalar splat promotion & Scalar Extension Promotion & Promotion Extension
+          & \ref{Conv.vsplat} \\ \cline{1-4}
+
     Integral conversion & & & \ref{Conv.iconv} \\ \cline{1-1}\cline{4-4}
     Floating point conversion &  &  & \ref{Conv.fconv} \\ \cline{1-1}\cline{4-4}
     Floating-integral conversion & Conversion & Conversion
@@ -287,18 +290,46 @@ below:
     Boolean conversion &  &  & \ref{Conv.bool} \\ \cline{1-1}\cline{4-4}
     Component-wise conversion &  &  & \ref{Conv.cwise} \\ \cline{1-4}
 
-    Vector truncation & Dimensionality Reduction & Truncation
-          & \ref{Conv.vtrunc} \\ \cline{1-4}
+    Scalar splat conversion & Scalar Extension Conversion & Conversion Extension
+          & \ref{Conv.vsplat} \\ \cline{1-4}
+
+    Vector truncation (without conversion) & Dimensionality Reduction
+          & Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
+
+    Vector truncation promotion & Dimensionality Reduction Promotion
+          & Truncation Promotion  & \ref{Conv.vtrunc} \\ \cline{1-4}
+
+    Vector truncation conversion & Dimensionality Reduction Conversion
+          & Truncation Conversion & \ref{Conv.vtrunc} \\ \cline{1-4}
     \hline
   \end{tabular}
 \end{center}
 
-\p The rank of a conversion sequence is determined by considering the rank of
-each conversion. Conversion sequence ranks are ordered such that \textbf{Exact
-Match} rank is better than \textbf{Extension} rank, which is better than
-\textbf{Promotion} rank, which is better than \textbf{Conversion} rank, which is
-better than \textbf{Truncation} rank. The rank of a conversion sequence is the
-rank of the worst ranked conversion in the sequence.
+\p If a scalar splat conversion occurs in a conversion sequence where all other
+conversions are \textbf{Exact Match} rank, the conversion is ranked as
+\textbf{Extension}. If a scalar splat occurs in a conversion
+sequence with a \textbf{Promotion} conversion, the conversion is ranked as
+\textbf{Promotion Extension}. If a scalar splat occurs in a conversion
+sequence with a \textbf{Conversion} conversion, the conversion is ranked as
+\textbf{Conversion Extension}.
+
+\p If a vector truncation conversion occurs in a conversion sequence where all
+other conversions are \textbf{Exact Match} rank, the conversion is ranked as
+\textbf{Truncation}. If a vector truncation occurs in a conversion
+sequence with a \textbf{Promotion} conversion, the conversion is ranked as
+\textbf{Promotion Truncation}. If a vector truncation occurs in a conversion
+sequence with a \textbf{Conversion} conversion, the conversion is ranked as
+\textbf{Conversion Truncation}.
+
+\p Otherwise, the rank of a conversion sequence is determined by considering the
+rank of each conversion.
+
+\p Conversion sequence ranks are ordered such that \textbf{Exact
+Match} rank is better than \textbf{Exact Match Extension} rank, which is better
+than \textbf{Promotion} rank, which is better than \textbf{Extension} rank,
+which is better than \textbf{Conversion} rank, which is better than
+\textbf{Truncation} rank. The rank of a conversion sequence is the rank of the
+worst ranked conversion in the sequence.
 
 % TODO: Define user-defined conversion sequences. DXC doesn't actually support
 % these because we don't resolve overloads for user-defined conversion
