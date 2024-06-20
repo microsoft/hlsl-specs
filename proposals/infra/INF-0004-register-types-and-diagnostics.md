@@ -481,7 +481,7 @@ if udt is set:
 
 ## Behavioral Differences
 
-This infrastructure will introduce some behavioral differences between `clang-dxc` and `dxc`.
+This infrastructure will introduce some behavioral differences between `clang` and `dxc`.
 The whole approach of setting flags based on decl characteristics and using them
 to drive diagnostics is an approach that wasn't taken in DXC. Secondly, as mentioned above, 
 the `disallow-legacy-binding-rules` warning group did not exist in `dxc`, and neither
@@ -500,4 +500,5 @@ at the Sema stage.
 * Chris Bieneman
 * Justin Bogner
 * Damyan Pepper
+* Farzon Lotfi
 <!-- {% endraw %} -->
