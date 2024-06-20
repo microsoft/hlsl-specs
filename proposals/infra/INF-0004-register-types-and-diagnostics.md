@@ -59,7 +59,6 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{SRV\|UAV\|CBV\|Sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register prefix is used to bind a resource, like 'y' being used with RWBuffer<int>.|
 | err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register numbers are applied to the same declaration. |
-| err_hlsl_register_annotation_on_member | "error: location annotations cannot be specified on members | Emitted if the register annotation is specified on a member of a UDT. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource attribute, like a float type. |
 | warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource attribute, like a float type. |
@@ -188,7 +187,7 @@ struct Eg9{
 };
 
 Eg9 e9;
-// "error: location annotations cannot be specified on members"
+// "error: 'register' attribute only applies to cbuffer/tbuffer and external global variables"
 
 template<typename R>
 struct Eg10 {
@@ -288,10 +287,6 @@ The `default_globals` flag indicates whether or not the value ends up inside the
 `$Globals` constant buffer. It will not be set if the decl appears inside a cbuffer 
 or tbuffer. The `$Globals` constant buffer will only be filled with non-HLSL-Objects.
 
-The `is_member` flag is set if the decl is a member declaration of a struct or class.
-This flag will inevitably lead to an error, because register annotations aren't allowed
-on member declarations. `err_hlsl_register_annotation_on_member` will be emitted.
-
 ```
 Flags:
   resource,
@@ -306,11 +301,6 @@ Flags:
 
   contains_numeric
   default_globals
-  is_member
-
-struct Foo {
-  RWBuffer<int> rwbuf : register(u3); // is_member is set for this decl
-};
 
 RWBuffer<int> r0 : register(u0); // resource (uav is set)
 Foo f0 : register(u0); // udt (Foo doesn't contain a numeric, so contains_numeric isn't set)
@@ -321,8 +311,12 @@ float f1 : register (c0); // basic (ends up in $Globals constant buffer, so defa
 The first step is to simply check if the decl is inside a cbuffer or tbuffer
 block. If it isn't, and it has a numeric type, set the `default_globals` flag,
 because the value is bound to be placed in the `$Globals` buffer. If the decl is
-in a class or struct, it is a member declaration, and register annotations aren't
-allowed here, so we must set the `is_member` flag.
+in a FieldDecl of a class or struct, it is a member declaration, and register 
+annotations aren't allowed on member declarations. The compiler will prevent the
+register annotation attribute from ever being added to the FieldDecl, because 
+`AttrParsedAttrImpl.inc` determines that the parsed attribute doesn't appertain 
+to the decl. The attribute only appertains to HLSL buffer objects, or external
+global variables.`err_attribute_wrong_decl_type_str` will be emitted in this case.
 
 Next, determine if the decl is a `cbuffer` or `tbuffer`. These are special in that they have
 their own decl class type, `HLSLBufferDecl`. To determine if the Decl is a `HLSLBufferDecl`,
@@ -380,8 +374,6 @@ Now enough information has been gathered to determine the right diagnostics to e
 The compiler will run diagnostics by iterating over all Decl objects with a register annotation.
 Firstly, if `other` is set, then the variable type is not valid for the given register type.
 So, we can emit `err_hlsl_unsupported_register_type_and_variable_type`.
-Next, check if `is_member` is set. If so, the register annotation was applied to a member, 
-which is not allowed, so `err_hlsl_register_annotation_on_member` is emitted. 
 Next, some decls may have multiple register annotations applied. Regardless of the decl type,
 there will be validation that any pair of annotation statements may not have the same register
 type but different register number. If this is detected, `err_hlsl_conflicting_register_annotations`
@@ -435,9 +427,6 @@ Here is some pseudocode summarizing the diagnostic emission process:
 if other is set:
   emit err_hlsl_unsupported_register_type_and_variable_type
 
-if is_member is set:
-  emit err_hlsl_register_annotation_on_member
-
 if multiple register annotations exist:
   if any pair of register annotations share the same register type but different register number:
     emit err_hlsl_conflicting_register_annotations
@@ -490,7 +479,7 @@ introduced to `clang-dxc`. Many of these warnings will be treated as errors, cau
 HLSL source to fail compilation in `clang-dxc` that would otherwise pass in `dxc`. 
 Another difference is that some of these errors will occur earlier in the compilation
 pipeline compared to `dxc`. For example, in `dxc`, the equivalent of the
-`err_hlsl_register_annotation_on_member` error would be emitted at code gen, but this
+`err_attribute_wrong_decl_type_str` error would be emitted at code gen, but this
 infrastructure will emit this error at Sema, and all of these errors will be emitted
 at the Sema stage.
 
