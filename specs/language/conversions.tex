@@ -8,13 +8,11 @@ order:
   \item Zero or one conversion of either lvalue-to-rvalue, or array-to-pointer.
   \item Zero or one conversion of either integral conversion, floating point
   conversion, floating point-integral conversion, or boolean conversion,
-  derived-to-base-lvalue, vector splat, vector truncation. \footnote{This
-  differs from C++ with the addition of vector splat and truncation casting.}.
-  \item Zero or one conversion of either component-wise integral conversion,
-  component-wise floating point conversion, component-wise floating
-  point-integral conversion, or component-wise boolean
-  conversion\footnote{C++ does not support this conversion in the sequence for
-  component-wise conversion of vector and matrix types.}.
+  derived-to-base-lvalue, or flat conversion\footnote{This differs from C++ with
+  the addition of flat conversion.}.
+  \item Zero or one conversion of scalar-vector splat, or vector/matrix
+  truncation. \footnote{C++ does not support dimension altering conversions for
+  scalar, vector or matrix types.}.
   \item Zero or one qualification conversion.
 \end{enumerate}
 
