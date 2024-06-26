@@ -1,4 +1,30 @@
 \Ch{Declarations}{Decl}
+\Sec{Preamble}{Decl.Pre}
+\Sec{Specifiers}{Decl.Spec}
+\Sub{General}{Decl.Spec.General}
+\p The specifiers that can be used in a declaration are
+\begin{grammar}
+  \define{decl-specifier}\br
+  \texttt{...}\br
+  \textit{function-specifier}\br
+  \texttt{...}
+\end{grammar}
+
+\Sub{Function specifiers}{Decl.Spec.Fct}
+
+\p A \textit{function-specifier} can be used only in a function declaration.
+
+\begin{grammar}
+  \define{function-specifier}\br
+  \texttt{export}\br
+\end{grammar}
+
+\p The \texttt{export} specifier denotes that the function has \textit{external linkage} (\ref{Decl.Linkage.External}).
+
+\p The \texttt{export} specifier cannot be used on functions directly or indirectly within an unnamed namespace.
+
+\Sec{Declarators}{Decl.Decl}
+\Sec{Initializers}{Decl.Init}
 \Sec{Function Definitions}{Decl.Function}
 \Sec{Attributes}{Decl.Attr}
 \Sub{Entry Attributes}{Decl.Attr.Entry}
