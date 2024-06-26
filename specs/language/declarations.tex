@@ -1,13 +1,30 @@
 \Ch{Declarations}{Decl}
 \Sec{Preamble}{Decl.Pre}
+\p Declarations generally specify how names are to be interpreted. Declarations have the form
+\begin{grammar}
+  \define{declaration-seq}\br
+  \textit{declaration}\br
+  \textit{declaration-seq declaration}
+
+  \define{declaration}\br
+  \textit{name-declaration}\br
+  \textit{special-declaration}
+  
+  \define{name-declaration}\br
+  ...
+
+  \define{special-declaration}\br
+  \textit{export-declaration-group}\br
+  ...
+\end{grammar}
+
 \Sec{Specifiers}{Decl.Spec}
 \Sub{General}{Decl.Spec.General}
 \p The specifiers that can be used in a declaration are
 \begin{grammar}
   \define{decl-specifier}\br
-  \texttt{...}\br
   \textit{function-specifier}\br
-  \texttt{...}
+  ...
 \end{grammar}
 
 \Sub{Function specifiers}{Decl.Spec.Fct}
@@ -23,11 +40,30 @@
 
 \p The \texttt{export} specifier cannot be used on functions directly or indirectly within an unnamed namespace.
 
+\p Functions with \textit{external linkage} can also be specified in \textit{export-declaration-group} (\ref{Decl.Export}).
+
 \Sec{Declarators}{Decl.Decl}
 \Sec{Initializers}{Decl.Init}
 \Sec{Function Definitions}{Decl.Function}
 \Sec{Attributes}{Decl.Attr}
 \Sub{Entry Attributes}{Decl.Attr.Entry}
+
+\Sec{Export Declarations}{Decl.Export}
+
+\p One or more functions with \textit{external linkage} can be also specified in the form of
+
+\begin{grammar}
+  \define{export-declaration-group}\br
+  \texttt{export} \terminal{\{} \opt{function-declaration-seq} \terminal{\}}\br
+  
+  \define{function-declaration-seq}\br
+  \textit{function-declaration} \opt{function-declaration-seq}
+\end{grammar}
+
+\p The \texttt{export} specifier denotes that every \textit{function-declaration} included in \textit{function-declaration-seq} has \textit{external linkage} (\ref{Decl.Linkage.External}).
+
+\p The \textit{export-declaration-group} declaration cannot appear directly or indirectly within an unnamed namespace.
+
 \Sec{Linkage}{Decl.Linkage}
 
 \p An entity that denotes an object, reference, function, type, template, namespace, or value, may have a \textit{linkage}. If a name has \textit{linkage}, it refers to the same entity as the same name introduced by a declaration in another scope. If a variable, function, or another entity with the same name is declared in several scopes, but does not have sufficient \textit{linkage}, then several instances of the entity are generated.
