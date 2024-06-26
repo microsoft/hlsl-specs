@@ -42,6 +42,8 @@
 
 \p Functions with \textit{external linkage} can also be specified in \textit{export-declaration-group} (\ref{Decl.Export}).
 
+\p If a function is declared with an \texttt{export} specifier then all redeclarations of the same function must also use the \texttt{export} specifier or be part of \textit{export-declaration-group} (\ref{Decl.Export}).
+
 \Sec{Declarators}{Decl.Decl}
 \Sec{Initializers}{Decl.Init}
 \Sec{Function Definitions}{Decl.Function}
@@ -63,6 +65,10 @@
 \p The \texttt{export} specifier denotes that every \textit{function-declaration} included in \textit{function-declaration-seq} has \textit{external linkage} (\ref{Decl.Linkage.External}).
 
 \p The \textit{export-declaration-group} declaration cannot appear directly or indirectly within an unnamed namespace.
+
+\p Functions with \textit{external linkage} can also be decladed with an \texttt{export} specifier (\ref{Decl.Spec.Fct}).
+
+\p If a function is part of \textit{export-declaration-group} then all redeclarations of the same function must also be part on a \textit{export-declaration-group} or be declared with an \texttt{export} specifier (\ref{Decl.Spec.Fct}).
 
 \Sec{Linkage}{Decl.Linkage}
 
