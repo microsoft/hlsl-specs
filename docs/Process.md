@@ -2,15 +2,16 @@
 
 The primary purpose of this repository is to provide visibility into the feature
 development process for HLSL and solicit feedback from the wider community.
-Despite the openness of this process there are three significant caveats that
+Despite the openness of this process there are two significant caveats that
 should be noted:
 
 1. Final decisions about what features are included or excluded from HLSL are
    made by the MSFT HLSL Team. Our goals are to make HLSL the best programming
    language across all supported runtime targets, not just DirectX or Vulkan.
-2. Some HLSL features may not go through this process, and may be kept secret
-   during development. We will try to restrict this only to features that
-   require NDAs with hardware vendors, but that may not always be the reason.
+2. Some HLSL features may instead go through a
+
+   [Fast-track](#fast-track-for-extensions) process. This process is reserved
+   for platform and vendor extensions and is not suitable to all features.
 
 Feature proposals from outside the HLSL team will be interpreted as requests,
 and may be considered or rejected based on team and release priorities. You
@@ -178,3 +179,62 @@ When filing issues relating to a currently in-progress proposal (i.e. any propos
 
 When filing issues relating to a completed feature or specification document
 please use the _Spec_ template.
+
+## Fast-Track for Extensions
+
+Some features for HLSL expose new hardware capabilities and require years of
+development before they can be made public. For these features we have a
+fast-track process to incorporate platform-specific and vendor-specific
+extensions to HLSL as long as they are _conforming extensions_. Extension
+proposals should use the [Extension
+Template](/proposals/templates/extension-template.md).
+
+### Conforming Extensions
+
+Conforming extensions are language features which do not add new language
+behavior or syntax. They cannot remove or deprecate functionality, and they
+cannot be breaking changes. They can add new builtin function declarations,
+builtin data types, and attributes as long as the added features do not change
+the rules of the language. All added declarations must be under a namespace, and
+cannot be under the `hlsl`, `std` or global namespaces which are reserved for
+core language features.
+
+#### Extension Attribute Restrictions
+
+Additionally there are limitations specifically for attributes. Added attributes
+may not modify canonical types, or otherwise change how HLSL code is
+interpreted. They can compile down to metadata that produces annotations, and
+they can be used for analysis and verification. Adding attributes that change
+language behavior must be done through the full review process. As some concrete
+examples:
+
+* Type attributes like `precise` and `groupshared` _can not_ be added as
+  extension attributes, because they (1) modify underlying canonical types, and
+  (2) are not namespaced.
+* Type attributes like `[vk::ext_reference]` _can not_ be added as extension
+  attributes, because it modifies the underlying canonical type.
+* Parameter attributes like `[vk::ext_literal]` _can_ be added as an extension
+  attribute, because it does not modify the type or behavior of the language it
+  just annotates a declaration for additional verification.
+* Entry attributes like `[NodeIsProgramEntry]` _can not_ be added as an extension
+  attribute, because it is not namespaced. If instead it were spelled
+  `[dx::NodeIsProgramEntry]` it would comply since it does not modify the code
+  generation of the function it only changes generated metadata.
+
+### Fast-Track Process
+
+Features that meet the definition of a conforming extension can be merged
+directly as **Accepted** features with only a PR review. During that review a
+feature will only be rejected if it does not meet the restrictions of a
+conforming extension, in which case it will need to either be revised to meet
+that definition or go through the full review process.
+
+### Extension Deprecation Process
+
+If a significant number of user bugs arise with an extension and the platform or
+vendor who contributed the feature abandons maintenance and no other party takes
+up the maintenance an extension may be deprecated and removed following a
+deprecation period of no less than 6 months.
+
+Decisions to deprecate an extension will not be taken lightly, however carrying
+broken features in the compiler will cause more harm to users than good.
