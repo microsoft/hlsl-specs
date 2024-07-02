@@ -213,7 +213,12 @@ using VmeImageINTEL = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imaget
 Then the user could simply use the types:
 
 ```
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 VmeImageINTEL<Texture2D> image;
+
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 AvcMcePayloadINTEL payload;
 ```
 
@@ -319,7 +324,31 @@ either an input or an output, not both.
 
 Existing inline SPIR-V has attributes to indicate that a capability or extension
 is needed by a particular part of the code. There are examples above. This
-proposal will allows these attribute to be applied to an entry point.
+proposal allows these attribute to be applied to an entry point.
+
+For types, the existing inline SPIR-V allows these attributes to be used on the
+function that was used to define the type. However, that function is no longer
+used when types are defined using `vk::SpirvType` and `vk::SpirvOpaqueType`. To
+be able to add the capabilities and extensions that are required for a type, we
+will allow these attributes to be used on variable and field declarations.
+
+The attributes will be able to be added to fields, so that they can be hidden in
+a header file.
+
+For example,
+
+```c++
+class Wrapper {
+
+  typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
+  [[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+  [[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+  AvcMcePayloadINTEL payload;
+};
+```
+
+In this case, the user of the header file, could use `Wrapper` without worrying
+about the capabilities and extensions.
 
 ## Detailed design
 
