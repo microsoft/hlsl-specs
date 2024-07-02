@@ -158,19 +158,20 @@ test. Some of the difficulties are:
     manage.
 
 This proposal deprecates the old mechanism, and replaces it with two new types
-`vk::SpirvOpaqueType<uint OpCode, typename... Operands>` and
-`vk::SpirvType<uint OpCode, uint size, uint alignment, typename... Operands>`.
-For `SpirvOpaqueType`, the template on the type contains the opcode and all of
-the parameters necessary for that opcode. Each parameter must be one of three
-kinds of values:
+`vk::SpirvOpaqueType<uint OpCode, typename... Operands>` and `vk::SpirvType<uint
+OpCode, uint size, uint alignment, typename... Operands>`. For
+`SpirvOpaqueType`, the template on the type contains the opcode and all of the
+parameters necessary for that opcode. Each parameter must be one of three kinds
+of values:
 
 1.  An instantiation of the `vk::integral_constant<typename T, T v>` type
     template. This can be used to pass in any constant integral value. This
     value will be passed in to the type-declaration instruction as the id of an
     `OpConstant*` instruction.
 
-    For example, `123` can be passed in by using
-    `vk::integral_constant<uint, 123>`.
+    For example, `123` can be passed in by using `vk::integral_constant<uint,
+    123>`.
+
 1.  An instantiation of the `vk::Literal<typename T>` type template. `T` should
     be an instantiation of `integral_constant`. The value of this constant will
     be passed in to the type-declaration instruction as an immediate literal
@@ -178,20 +179,22 @@ kinds of values:
 
     For example, `123` can be passed in as an immediate literal by using
     `vk::Literal<vk::integral_constant<uint, 123> >`.
+
 1.  Any type. The id of the lowered type will be passed in to the
     type-declaration instruction.
 
-For example, [`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/
-SPIRV.html#OpTypeArray) takes an id for the element type and an id for the
-element length, so an array of 16 integers could be declared as
+For example,
+[`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/ SPIRV.html#OpTypeArray)
+takes an id for the element type and an id for the element length, so an array
+of 16 integers could be declared as
 
 ```
 vk::SpirvOpaqueType</* OpTypeArray */ 28, int, vk::integral_constant<uint, 16> >
 ```
 
-[`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#
-OpTypeVector) takes an id for the component type and a literal for the component
-count, so a 4-integer vector could be declared as
+[`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html# OpTypeVector)
+takes an id for the component type and a literal for the component count, so a
+4-integer vector could be declared as
 
 ```
 vk::SpirvOpaqueType</* OpTypeVector */ 23, int, vk::Literal<vk::integral_constant<uint, 4> > >
@@ -203,22 +206,24 @@ name. For example, if you wanted to declare the types from the
 you could have
 
 ```
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
 
 // Requires HLSL2021
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 template<typename ImageType>
-using VmeImageINTEL = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
+using VmeImageINTEL
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+    = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
 ```
 
 Then the user could simply use the types:
 
 ```
-[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
-[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 VmeImageINTEL<Texture2D> image;
-
-[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
-[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 AvcMcePayloadINTEL payload;
 ```
 
@@ -330,25 +335,34 @@ For types, the existing inline SPIR-V allows these attributes to be used on the
 function that was used to define the type. However, that function is no longer
 used when types are defined using `vk::SpirvType` and `vk::SpirvOpaqueType`. To
 be able to add the capabilities and extensions that are required for a type, we
-will allow these attributes to be used on variable and field declarations.
+will allow these attributes to be used on variable declarations, field
+declarations, and type aliases. Examples of these attributes with a typedef and
+using statement are in the Types section.
 
-The attributes will be able to be added to fields, so that they can be hidden in
-a header file.
+The attributes can be added to fields and variable declarations for cases when a
+type alias is not used.
 
 For example,
 
 ```c++
-class Wrapper {
+class Payload {
 
-  typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
   [[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
   [[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
-  AvcMcePayloadINTEL payload;
+  vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> payload;
 };
+
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> globalPayload;
 ```
 
-In this case, the user of the header file, could use `Wrapper` without worrying
-about the capabilities and extensions.
+In this case, the user of the header file, could use `Paylaod::payload` and
+`globalPayload`. without worrying about the capabilities and extensions.
+
+When a compiler encounters either attribute, it is expected to add the
+capability and extension to the module. However, the compiler is allowed, but
+not required, to remove capabilities and extensions that are not required.
 
 ## Detailed design
 
