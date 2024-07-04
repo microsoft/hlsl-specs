@@ -178,6 +178,7 @@ kinds of values:
 
     For example, `123` can be passed in as an immediate literal by using
     `vk::Literal<vk::integral_constant<uint, 123> >`.
+
 1.  Any type. The id of the lowered type will be passed in to the
     type-declaration instruction.
 
@@ -203,11 +204,16 @@ name. For example, if you wanted to declare the types from the
 you could have
 
 ```
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
 
 // Requires HLSL2021
 template<typename ImageType>
-using VmeImageINTEL = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
+using VmeImageINTEL
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+    = vk::SpirvOpaqueType</* OpTypeVmeImageINTEL */ 5700, Imagetype>;
 ```
 
 Then the user could simply use the types:
@@ -319,7 +325,40 @@ either an input or an output, not both.
 
 Existing inline SPIR-V has attributes to indicate that a capability or extension
 is needed by a particular part of the code. There are examples above. This
-proposal will allows these attribute to be applied to an entry point.
+proposal allows these attribute to be applied to an entry point.
+
+For types, the existing inline SPIR-V allows these attributes to be used on the
+function that was used to define the type. However, that function is no longer
+used when types are defined using `vk::SpirvType` and `vk::SpirvOpaqueType`. To
+be able to add the capabilities and extensions that are required for a type, we
+will allow these attributes to be used on variable declarations, field
+declarations, and type aliases. Examples of these attributes with a typedef and
+using statement are in the Types section.
+
+The attributes can be added to fields and variable declarations for cases when a
+type alias is not used.
+
+For example,
+
+```c++
+class Payload {
+
+  [[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+  [[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+  vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> payload;
+};
+
+[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
+[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
+vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> globalPayload;
+```
+
+In this case, the user of the header file, could use `Paylaod::payload` and
+`globalPayload`. without worrying about the capabilities and extensions.
+
+When a compiler encounters either attribute, it is expected to add the
+capability and extension to the module. However, the compiler is allowed, but
+not required, to remove capabilities and extensions that are not required.
 
 ## Detailed design
 
