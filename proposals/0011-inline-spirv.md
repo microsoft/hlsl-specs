@@ -158,20 +158,19 @@ test. Some of the difficulties are:
     manage.
 
 This proposal deprecates the old mechanism, and replaces it with two new types
-`vk::SpirvOpaqueType<uint OpCode, typename... Operands>` and `vk::SpirvType<uint
-OpCode, uint size, uint alignment, typename... Operands>`. For
-`SpirvOpaqueType`, the template on the type contains the opcode and all of the
-parameters necessary for that opcode. Each parameter must be one of three kinds
-of values:
+`vk::SpirvOpaqueType<uint OpCode, typename... Operands>` and
+`vk::SpirvType<uint OpCode, uint size, uint alignment, typename... Operands>`.
+For `SpirvOpaqueType`, the template on the type contains the opcode and all of
+the parameters necessary for that opcode. Each parameter must be one of three
+kinds of values:
 
 1.  An instantiation of the `vk::integral_constant<typename T, T v>` type
     template. This can be used to pass in any constant integral value. This
     value will be passed in to the type-declaration instruction as the id of an
     `OpConstant*` instruction.
 
-    For example, `123` can be passed in by using `vk::integral_constant<uint,
-    123>`.
-
+    For example, `123` can be passed in by using
+    `vk::integral_constant<uint, 123>`.
 1.  An instantiation of the `vk::Literal<typename T>` type template. `T` should
     be an instantiation of `integral_constant`. The value of this constant will
     be passed in to the type-declaration instruction as an immediate literal
@@ -183,18 +182,17 @@ of values:
 1.  Any type. The id of the lowered type will be passed in to the
     type-declaration instruction.
 
-For example,
-[`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/ SPIRV.html#OpTypeArray)
-takes an id for the element type and an id for the element length, so an array
-of 16 integers could be declared as
+For example, [`OpTypeArray`](https://registry.khronos.org/SPIR-V/specs/unified1/
+SPIRV.html#OpTypeArray) takes an id for the element type and an id for the
+element length, so an array of 16 integers could be declared as
 
 ```
 vk::SpirvOpaqueType</* OpTypeArray */ 28, int, vk::integral_constant<uint, 16> >
 ```
 
-[`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html# OpTypeVector)
-takes an id for the component type and a literal for the component count, so a
-4-integer vector could be declared as
+[`OpTypeVector`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#
+OpTypeVector) takes an id for the component type and a literal for the component
+count, so a 4-integer vector could be declared as
 
 ```
 vk::SpirvOpaqueType</* OpTypeVector */ 23, int, vk::Literal<vk::integral_constant<uint, 4> > >
@@ -211,8 +209,6 @@ you could have
 typedef vk::SpirvOpaqueType</* OpTypeAvcMcePayloadINTEL */ 5704> AvcMcePayloadINTEL;
 
 // Requires HLSL2021
-[[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
-[[vk::ext_extension("SPV_INTEL_device_side_avc_motion_estimation")]]
 template<typename ImageType>
 using VmeImageINTEL
 [[vk::ext_capability(/* SubgroupAvcMotionEstimationINTEL */ 5696)]]
