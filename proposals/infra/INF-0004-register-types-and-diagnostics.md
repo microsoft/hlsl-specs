@@ -56,9 +56,9 @@ names and diagnostic messages that are relevant in this spec:
 |-|-|-|
 | err_hlsl_mismatching_register_type_and_variable_type | "error: unsupported resource register binding '%select{t\|u\|b\|s}1' on variable of type '%0'"| Emitted if a variable type that isn't accompanied with a resource attribute is bound with a standard register type (`t`, `u`, `b`, or `s`). |
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%1' not supported for variable of type '%0'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
-| err_hlsl_mismatching_register_type_and_resource_type | "error: %select{SRV\|UAV\|CBV\|Sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
+| err_hlsl_mismatching_register_type_and_resource_type | "error: %select{srv\|uav\|cbv\|sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register prefix is used to bind a resource, like 'y' being used with RWBuffer<int>.|
-| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations| Emitted if two register annotations with the same register type but different register numbers are applied to the same declaration. |
+| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations" | Emitted if two register annotations with the same register type but different register numbers are applied to the same declaration. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource attribute, like a float type. |
 | warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource attribute, like a float type. |
@@ -83,8 +83,9 @@ this declaration as a `clang::VarDecl`, and the `VarDecl` will have attributes.
 Any resource declaration will have an associated ResourceAttr attribute,
 on the `VarDecl`, from which we can determine the 
 resource class, which is sufficient to determine the expected register
-type. Any other valid register type (among 't', 'u', 'b', or 's') will 
-result in `err_hlsl_mismatching_register_type_and_resource_type`.
+type. Any other potentially valid but mismatching register type 
+(among 't', 'u', 'b', 's', 'c', or 'i') will result in 
+`err_hlsl_mismatching_register_type_and_resource_type`.
 The recommended register type will be suggested in the diagnostic.
 Any other invalid register type will emit `err_hlsl_unsupported_register_type_and_resource_type`.
 Alternatively, using `cbuffer` or `tbuffer` is represented as an `HLSLBufferDecl`
@@ -220,7 +221,7 @@ $Globals buffer, it is not useful when the overload is not used inside the $Glob
 context. That is, if this register overload appears within a `cbuffer {...}` or 
 `tbuffer {...}` scope, the register number will be ignored. In this case, 
 `warn_hlsl_register_type_c_not_in_global_scope` will be emitted, and will be treated as an error by default.
-All other register types applied to such a type will emit `err_hlsl_unsupported_register_type_and_variable_type`, except for 'b' or 'i'.
+All other register types applied to such a type will emit `err_hlsl_mismatching_register_type_and_variable_type`, except for 'b' or 'i'.
 If the register type is 'b' or 'i', then `warn_hlsl_deprecated_register_type_b` or `warn_hlsl_deprecated_register_type_i` 
 will be emitted respectively, and treated as errors by default. The compiler will function as if `c` was passed.
 
@@ -412,10 +413,13 @@ The warnings, `warn_hlsl_register_type_c_not_in_global_scope`,
 `warn_hlsl_deprecated_register_type_b`,
 `warn_hlsl_deprecated_register_type_i`,
 `warn_hlsl_UDT_missing_resource_type_member`, and
-`warn_hlsl_UDT_missing_basic_type`, are all within a warning group known as 
-`disallow-legacy-binding-rules`. However, only `warn_hlsl_UDT_missing_resource_type_member`
-and  `warn_hlsl_UDT_missing_basic_type` are not treated as errors by default, 
-the rest of the warnings are errors by default. If legacy behavior is desired, a 
+`warn_hlsl_UDT_missing_basic_type`, are all new warnings. However, only 
+`warn_hlsl_deprecated_register_type_b`, `warn_hlsl_deprecated_register_type_i`, and
+`warn_hlsl_register_type_c_not_in_global_scope` are within a warning group known as 
+`disallow-legacy-binding-rules`, that are treated as errors by default.
+The remaining warnings, `warn_hlsl_UDT_missing_resource_type_member`
+and `warn_hlsl_UDT_missing_basic_type`, are not treated as errors by default. 
+If legacy behavior is desired, a 
 user can pass the `--Wno-disallow-legacy-binding-rules` flag to the compiler to silence the
 errors, leaving just the warnings. For the two UDT warnings above, the warnings will be 
 silenced so that no diagnostics will be emitted. 
@@ -448,7 +452,7 @@ if basic is set:
   else: emit err_hlsl_unsupported_register_type_and_variable_type
 
 if udt is set:
-  for each register annotation r applied to the udt decl:
+  let r be the register annotation that is currently being diagnosed:
     if r has register type t:
       if srv is not set:
         emit warn_hlsl_UDT_missing_resource_type_member
