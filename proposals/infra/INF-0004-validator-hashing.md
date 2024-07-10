@@ -21,7 +21,7 @@ D3D runtime that change when the validator is run and when the hash is verified.
 
 ## Motivation
 
-Validation fulfils a critical role in the HLSL compiler. The HLSL compiler is
+Validation fulfills a critical role in the HLSL compiler. The HLSL compiler is
 able to generate bytecode sequences that are not valid, and we rely on the
 validator to catch and surface those errors. This is a foundational design
 consideration in DXC. This proposal does not seek to diminish the importance of
