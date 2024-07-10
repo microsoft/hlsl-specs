@@ -10,7 +10,8 @@
     declaration-statement
 \end{grammar}
 \Sec{Label Statements}{Stmt.Label}
-\p The optional \textit{attribute-specifier-sequence} applies to the statement that immediately follows it.
+\p The optional \textit{attribute-specifier-sequence} applies to the statement 
+that immediately follows it.
 \Sec{Attributes}{Stmt.Attr}
 \Sub{Unroll Attribute}{Stmt.Attr.Unroll}
 \p The \textit{unroll}  attribute is only valid when applied to 
@@ -26,14 +27,7 @@ greater than zero. If n is not  specified, the compiler determines the
 unrolling factor for the loop. The \textit{unroll} attribute can not be applied
  to the same \textit{iteration-statement} as the \textit{loop} attribute.
 
- \p Note: The \texttt{[unroll]} attribute  must appear immediately before the \textit{iteration-statements}
- to be affected.
-
 \Sub{Loop Attribute}{Stmt.Attr.Loop}
-\p The Attribute \texttt{[loop]} tells the compiler to execute each iteration of 
-the loop. In other words, its a hint to indicate a loop should not be 
+\p The Attribute \texttt{[loop]} tells the compiler to execute each iteration 
+of the loop. In other words, its a hint to indicate a loop should not be 
 unrolled. Therefore it is not compatible with the \texttt{[unroll]} attribute.
-
-\p Note: The \texttt{[loop]} attribute  must appear immediately before the loop
- to be affected.
- 
