@@ -28,7 +28,7 @@ consideration in DXC. This proposal does not seek to diminish the importance of
 validation.
 
 The HLSL team wants developers to run the DXIL validator. The HLSL team believes
-that developers also want the assurances that the validator provides. Cases
+that developers want the assurances that the validator provides. However, cases
 exist today where developers circumvent the validator because it obstructs their
 ability to get things done. Other cases exist where running the validator poses
 too great of a performance penalty.
