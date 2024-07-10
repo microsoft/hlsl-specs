@@ -1,93 +1,39 @@
 \Ch{Statements}{Stmt}
+\Sec{Statements Grammar}{Stmt.Grammar}
+\begin{grammar}
+    \define{statement}\br
+    labeled-statement\br
+    \opt{attribute-specifier-sequence} expression-statement\br
+    \opt{attribute-specifier-sequence} compound-statement\br
+    \opt{attribute-specifier-sequence} iteration-statement\br
+    \opt{attribute-specifier-sequence} selection-statement\br
+    declaration-statement
+\end{grammar}
 \Sec{Label Statements}{Stmt.Label}
+\p The optional \textit{attribute-specifier-sequence} applies to the statement that immediately follows it.
 \Sec{Attributes}{Stmt.Attr}
 \Sub{Unroll Attribute}{Stmt.Attr.Unroll}
-The \texttt{[unroll]} and \texttt{[unroll(n)]} attribute qualifiers can be used
- to specify that a loop (\texttt{for}, \texttt{while} and \texttt{do while} 
-loops) can be unrolled. This attribute qualifier can be used to specify full 
-unrolling or partial unrolling by a specified amount. This is a compiler hint 
-and the compiler may ignore this directive.
+\p The \textit{unroll}  attribute is only valid when applied to 
+\textit{iteration-statements}. It is used to indicate that 
+\textit{iteration-statements} like \texttt{for}, \texttt{while} and 
+\texttt{do while} can be unrolled. This attribute qualifier can be used to 
+specify full unrolling or partial unrolling by a specified amount. This is a 
+compiler hint  and the compiler may ignore this directive.
 
-\texttt{n} is the loop unrolling factor and must be a positive integral compile time 
-constant expression. If n is not specified, the compiler determines the 
-unrolling factor for the loop. This attribute is not compatible with the \texttt{[loop]}
- attribute.
+\p The unroll attribute may optionally have an unroll factor represented as a 
+single argument \texttt{n}  that is an integer constant expression value 
+greater than zero. If n is not  specified, the compiler determines the 
+unrolling factor for the loop. The \textit{unroll} attribute can not be applied
+ to the same \textit{iteration-statement} as the \textit{loop} attribute.
 
-Note:  The \texttt{[unroll]} attribute  must appear immediately before the loop
+ \p Note: The \texttt{[unroll]} attribute  must appear immediately before the \textit{iteration-statements}
  to be affected.
 
-\subsubsection{Unroll Examples}{Stmt.Attr.Unroll.Examples}
-\begin{itemize}
-\item  Requests the compiler to unroll the above \texttt{for} loop by a factor 
-of 2.
-\begin{HLSL}
-[unroll(2)]
-int sum = 0;
-for (int i=0; i<32; i++)
-    sum += i;
-\end{HLSL}
-\item In this example, the compiler will determine how much to unroll the loop.
-\begin{HLSL}
-int i = 0;
-[unroll]
-do {
-    ...
-    i++;
-} while(i < 32);
-\end{HLSL}
-\item Below is an  examples of \textbf{\emph{invalid}} usage of 
-\texttt{[unroll(n)]} because n is not positive
-\begin{HLSL}
-[unroll(-1)]
-while (...)
-{
-    ...
-}
-\end{HLSL}
-\item This example is \textbf{\emph{invalid}} because the \texttt{[unroll]} 
-attribute is used on a non-loop construct
-\begin{HLSL}
-[unroll]
-if (...)
-{
-    ...
-}
-\end{HLSL}
-\item The below example is \textbf{\emph{invalid}} because the loop unroll 
-factor is not a compile-time constant expression.
-\begin{HLSL}
-    int x;
-    [unroll(x)]
-    for (int i=0; i<x; i++)
-    {
-        ...
-    }
-\end{HLSL}
-\end{itemize}
 \Sub{Loop Attribute}{Stmt.Attr.Loop}
-The Attribute \texttt{[loop]} tells the compiler to execute each iteration of 
+\p The Attribute \texttt{[loop]} tells the compiler to execute each iteration of 
 the loop. In other words, its a hint to indicate a loop should not be 
 unrolled. Therefore it is not compatible with the \texttt{[unroll]} attribute.
 
-Note:  The \texttt{[loop]} attribute  must appear immediately before the loop
+\p Note: The \texttt{[loop]} attribute  must appear immediately before the loop
  to be affected.
  
-\subsubsection{Loop Examples}{Stmt.Attr.Loop.Examples}
-\begin{itemize}
-\item  Tell the compiler to not to unroll the loop.
-\begin{HLSL}
-[loop]
-for (int i=0; i<32; i++) {
-    ...
-}
-\end{HLSL}
-\item This example is \textbf{\emph{invalid}} because the \texttt{[loop]} 
-attribute is used on a non-loop construct
-\begin{HLSL}
-[loop]
-if (...)
-{
-    ...
-}
-\end{HLSL}
-\end{itemize}
