@@ -1,5 +1,4 @@
 \Ch{Statements}{Stmt}
-\Sec{Statements Grammar}{Stmt.Grammar}
 \begin{grammar}
     \define{statement}\br
     labeled-statement\br
@@ -14,7 +13,7 @@
 that immediately follows it.
 \Sec{Attributes}{Stmt.Attr}
 \Sub{Unroll Attribute}{Stmt.Attr.Unroll}
-\p The \textit{unroll}  attribute is only valid when applied to 
+\p The \textit{[unroll]}  attribute is only valid when applied to 
 \textit{iteration-statements}. It is used to indicate that 
 \textit{iteration-statements} like \texttt{for}, \texttt{while} and 
 \texttt{do while} can be unrolled. This attribute qualifier can be used to 
@@ -24,8 +23,9 @@ compiler hint  and the compiler may ignore this directive.
 \p The unroll attribute may optionally have an unroll factor represented as a 
 single argument \texttt{n}  that is an integer constant expression value 
 greater than zero. If n is not  specified, the compiler determines the 
-unrolling factor for the loop. The \textit{unroll} attribute can not be applied
- to the same \textit{iteration-statement} as the \textit{loop} attribute.
+unrolling factor for the loop. The \textit{[unroll]}  attribute can not be 
+applied to the same \textit{iteration-statement} as the \texttt{[loop]} 
+attribute.
 
 \Sub{Loop Attribute}{Stmt.Attr.Loop}
 \p The Attribute \texttt{[loop]} tells the compiler to execute each iteration 
