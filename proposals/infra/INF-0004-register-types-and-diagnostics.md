@@ -50,7 +50,6 @@ The design below aims to specify the answer to these questions.
 The following table lists all the proposed diagnostic
 names and diagnostic messages that are relevant in this spec:
 
-
 | Diagnostic Name | Diagnostic message | Description |
 |-|-|-|
 | err_hlsl_mismatching_register_type_and_variable_type | "error: unsupported resource register binding '%select{t\|u\|b\|s}0' on variable of type '%1'"| Emitted if a variable type that isn't accompanied with a resource class attribute is bound with a standard register type (`t`, `u`, `b`, or `s`). |
@@ -82,11 +81,10 @@ this declaration as a `clang::VarDecl`, and the `VarDecl` will have attributes.
 Any resource declaration will have an associated `HLSLResourceClassAttr` attribute
 on the `VarDecl`, from which we can determine the 
 resource class, which is sufficient to determine the expected register
-type. Any other potentially valid but mismatching register type 
+type. Any other mismatching register type 
 (among 't', 'u', 'b', 's', 'c', or 'i') will result in 
 `err_hlsl_mismatching_register_type_and_resource_type`.
 The recommended register type will be suggested in the diagnostic.
-Any other invalid register type will emit `err_hlsl_unsupported_register_type_and_resource_type`.
 Alternatively, using `cbuffer` or `tbuffer` is represented as an `HLSLBufferDecl`
 object. This object will have a helper function `IsCBuffer()` to help
 determine what type of resource it is, and from this function we can determine
@@ -227,7 +225,8 @@ context. That is, if this register overload appears within a `cbuffer {...}` or
 All other legal register types applied to such a type will emit `err_hlsl_mismatching_register_type_and_variable_type`, 
 except for 'b' or 'i'. If the register type is 'b' or 'i', then `warn_hlsl_deprecated_register_type_b` or 
 `warn_hlsl_deprecated_register_type_i` will be emitted respectively, and treated as errors by default. 
-The compiler will function as if `c` was passed.
+The compiler will function as if `c` was passed. 
+Invalid register types will cause `err_hlsl_unsupported_register_type_and_variable_type` to be emitted.
 
 Below are some examples:
 
@@ -391,7 +390,12 @@ else:
 Now enough information has been gathered to determine the right diagnostics to emit, if any.
 The compiler will run diagnostics by iterating over all Decl objects with a register annotation.
 Firstly, if `Other` is set, then the variable type is not valid for the given register type.
-So, we can emit `err_hlsl_unsupported_register_type_and_variable_type`. Next, some decls
+So, we can emit `err_hlsl_unsupported_register_type_and_variable_type`. Next, we validate the
+register type. If the register type is not among the expected register types (t, u, b, s, c, or i)
+then an error will be emitted depending on the resource type. If the `Resource` flag is set, 
+`err_hlsl_mismatching_register_type_and_resource_type` will be emitted. If the `UDT` flag is set, 
+`err_hlsl_unsupported_register_type_and_resource_type` will be emitted. If the `Basic` flag is set,
+`err_hlsl_unsupported_register_type_and_variable_type` will be emitted. Next, some decls
 may have multiple register annotations applied. Regardless of the decl type, there will be 
 validation that any pair of register annotation statements may not have the same register type.
 If this is detected, `err_hlsl_conflicting_register_annotations` will be emitted.
@@ -441,6 +445,14 @@ Here is some pseudocode summarizing the diagnostic emission process:
 ```
 if Other is set:
   emit err_hlsl_unsupported_register_type_and_variable_type
+
+if the register type is invalid:
+  if Resource is set:
+    emit err_hlsl_mismatching_register_type_and_resource_type
+  if UDT is set:
+    emit err_hlsl_unsupported_register_type_and_resource_type
+  if Basic is set:
+    err_hlsl_unsupported_register_type_and_variable_type
 
 if multiple register annotations exist:
   if any pair of register annotations share the same register type:
