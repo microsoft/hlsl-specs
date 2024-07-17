@@ -47,10 +47,9 @@ is given a register type that isn't in the set of valid register types?
 The design below aims to specify the answer to these questions.
 
 ## Proposed solution
-Firstly, for future reference, the set of relevant diagnostics that would be emitted
-depending on how the variable type and register type interact should
-be named and defined. Below is a table that lists out all the proposed diagnostic
+The following table lists all the proposed diagnostic
 names and diagnostic messages that are relevant in this spec:
+
 
 | Diagnostic Name | Diagnostic message | Description |
 |-|-|-|
