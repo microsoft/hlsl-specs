@@ -38,13 +38,8 @@ using the 'c' register type to indicate an offset into a constant buffer for
 numeric types only, as opposed to specifying a resource binding.
 Additionally, it is possible the user is unaware that this variable won't 
 actually be used as a resource, but the compiler doesn't communicate that 
-to the user. It would be great for any HLSL developer to immediately have
-answers to the following questions:
-For any valid variable type that needs to be bound as a resource,
-what is the set of valid register types for that variable,
-and what are all the possible diagnostics that can be emitted if the variable
-is given a register type that isn't in the set of valid register types?
-The design below aims to specify the answer to these questions.
+to the user. We should add diagnostics that inform the HLSL developer what
+register types are valid for that variable.
 
 ## Proposed solution
 The following table lists all the proposed diagnostic
@@ -55,13 +50,13 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_mismatching_register_type_and_variable_type | "error: unsupported resource register binding '%select{t\|u\|b\|s}0' on variable of type '%1'"| Emitted if a variable type that isn't accompanied with a resource class attribute is bound with a standard register type (`t`, `u`, `b`, or `s`). |
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%0' not supported for variable of type '%1'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{srv\|uav\|cbv\|sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
-| err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register type is used to bind a UDT.|
+| err_hlsl_unsupported_register_type_and_user_defined_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register type is used to bind a UDT.|
 | err_hlsl_conflicting_register_annotations | "error: conflicting register annotations: multiple register annotations detected for register type '%0'" | Emitted if two register annotations with the same register type are applied to the same declaration. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource class attribute, like a float type. |
 | warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource class attribute, like a float type. |
-| warn_hlsl_UDT_missing_resource_type_member | "warning: variable of type '%0' bound to register type '%1' does not contain a matching '%select{srv\|uav\|cbv\|sampler}2' resource" | Emitted if a UDT is lacking any eligible member to bind using a specific register type, like if a UDT `Foo` was bound with `s` but had no sampler members.|
-| warn_hlsl_UDT_missing_basic_type | "warning: register 'c' used on type with no contents to allocate in a constant buffer" | Emitted if a UDT has no numerical members, and is being bound using the `c` register type.|
+| warn_hlsl_user_defined_type_missing_resource_type_member | "warning: variable of type '%0' bound to register type '%1' does not contain a matching '%select{srv\|uav\|cbv\|sampler}2' resource" | Emitted if a UDT is lacking any eligible member to bind using a specific register type, like if a UDT `Foo` was bound with `s` but had no sampler members.|
+| warn_hlsl_user_defined_type_missing_basic_type | "warning: register 'c' used on type with no contents to allocate in a constant buffer" | Emitted if a UDT has no numerical members, and is being bound using the `c` register type.|
 
 
 The overall approach this diagnostic infrastructure will take
@@ -105,7 +100,7 @@ analysis is necessary. The analysis step will traverse the UDT and gather all di
 resource class types contained within the UDT. Next, gather all register declarations
 that are being applied to this variable declaration, and collect the register types
 that are being specified. The UDT must contain at least one valid resource that can be
-bound to the provided register type(s). If not, `warn_hlsl_UDT_missing_resource_type_member`
+bound to the provided register type(s). If not, `warn_hlsl_user_defined_type_missing_resource_type_member`
 will be emitted. 
 There are no issues if a UDT contains more resources than there
 are register binding statements, the resources will be bound to the next available 
@@ -113,7 +108,7 @@ space automatically, and so compilation can succeed. It should also be noted tha
 the 'c' register type can be used on UDTs as well, which would function to
 specify the constant offset for the numeric member(s) of the structure. Additionally, 
 if the 'c' register type is used on the UDT, then the UDT must contain at least one 
-numeric type. If not, `warn_hlsl_UDT_missing_basic_type`
+numeric type. If not, `warn_hlsl_user_defined_type_missing_basic_type`
 will be emitted. Below are some examples of different UDT's and the diagnostics that
 would be emitted when applying resource bindings to the variable:
 
@@ -394,7 +389,7 @@ So, we can emit `err_hlsl_unsupported_register_type_and_variable_type`. Next, we
 register type. If the register type is not among the expected register types (t, u, b, s, c, or i)
 then an error will be emitted depending on the resource type. If the `Resource` flag is set, 
 `err_hlsl_mismatching_register_type_and_resource_type` will be emitted. If the `UDT` flag is set, 
-`err_hlsl_unsupported_register_type_and_resource_type` will be emitted. If the `Basic` flag is set,
+`err_hlsl_unsupported_register_type_and_user_defined_type` will be emitted. If the `Basic` flag is set,
 `err_hlsl_unsupported_register_type_and_variable_type` will be emitted. Next, some decls
 may have multiple register annotations applied. Regardless of the decl type, there will be 
 validation that any pair of register annotation statements may not have the same register type.
@@ -422,19 +417,19 @@ Finally, in the case that `UDT` is set, we may have multiple register annotation
 applied to the decl. For every unique register type that is used to bind the resources contained 
 in the given UDT, we verify that the corresponding resource class flag has been set. These
 are the register types `t`, `u`, `b`, and `s`. If the corresponding resource class flag is 
-not set, `warn_hlsl_UDT_missing_resource_type_member` will be emitted.
+not set, `warn_hlsl_user_defined_type_missing_resource_type_member` will be emitted.
 If `c` is given, then we must check that `ContainsNumeric` is set, and if not, 
-`warn_hlsl_UDT_missing_basic_type` is emitted. Otherwise, if any other register type is given, 
+`warn_hlsl_user_defined_type_missing_basic_type` is emitted. Otherwise, if any other register type is given, 
 then we emit `err_hlsl_unsupported_register_type_and_variable_type`.
 
 All the warnings introduced in this spec were not emitted in legacy versions of the compiler.
 The warnings, `warn_hlsl_register_type_c_not_in_global_scope`,
 `warn_hlsl_deprecated_register_type_b`,
 `warn_hlsl_deprecated_register_type_i`,
-`warn_hlsl_UDT_missing_resource_type_member`, and
-`warn_hlsl_UDT_missing_basic_type`, are all within a warning group known as
-`disallow-legacy-binding-rules`. However, only `warn_hlsl_UDT_missing_resource_type_member`
-and  `warn_hlsl_UDT_missing_basic_type` are not treated as errors by default,
+`warn_hlsl_user_defined_type_missing_resource_type_member`, and
+`warn_hlsl_user_defined_type_missing_basic_type`, are all within a warning group known as
+`disallow-legacy-binding-rules`. However, only `warn_hlsl_user_defined_type_missing_resource_type_member`
+and  `warn_hlsl_user_defined_type_missing_basic_type` are not treated as errors by default,
 the rest of the warnings are errors by default. If legacy behavior is desired, a 
 user can pass the `-Wno-disallow-legacy-binding-rules` flag to the compiler to silence the
 errors and warnings.
@@ -450,7 +445,7 @@ if the register type is invalid:
   if Resource is set:
     emit err_hlsl_mismatching_register_type_and_resource_type
   if UDT is set:
-    emit err_hlsl_unsupported_register_type_and_resource_type
+    emit err_hlsl_unsupported_register_type_and_user_defined_type
   if Basic is set:
     err_hlsl_unsupported_register_type_and_variable_type
 
@@ -478,19 +473,19 @@ if UDT is set:
   let r be the register annotation that is currently being diagnosed:
   if r has register type t:
     if SRV is not set:
-      emit warn_hlsl_UDT_missing_resource_type_member
+      emit warn_hlsl_user_defined_type_missing_resource_type_member
   else if r has register type u:
     if UAV is not set:
-      emit warn_hlsl_UDT_missing_resource_type_member
+      emit warn_hlsl_user_defined_type_missing_resource_type_member
   else if r has register type b:
     if CBV is not set:
-      emit warn_hlsl_UDT_missing_resource_type_member
+      emit warn_hlsl_user_defined_type_missing_resource_type_member
   else if r has register type s:
     if Sampler is not set:
-      emit warn_hlsl_UDT_missing_resource_type_member
+      emit warn_hlsl_user_defined_type_missing_resource_type_member
   else if r has register type c:
     if ContainsNumeric is not set:
-      emit warn_hlsl_UDT_missing_basic_type
+      emit warn_hlsl_user_defined_type_missing_basic_type
   else
     emit err_hlsl_unsupported_register_type_and_variable_type  
 ```
