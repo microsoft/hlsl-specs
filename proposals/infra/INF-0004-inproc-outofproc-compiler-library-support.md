@@ -65,7 +65,7 @@ isolated process.
 for the clang compiler.  The clang compiler holds some state at compile time
 and some of that state could leak to other compilation sessions if it is not
 protected. This issue was also called out when an experiment called
-[llv-buildozer](https://reviews.llvm.org/D86351) was created.  The author was
+[llvm-buildozer](https://reviews.llvm.org/D86351) was created.  The author was
 interested in multiple threads re-entering the main compiler entry point in an
 effort to reduce compilation times. The effort showed that the unsafe bits
 could be fixed up and made thread safe allowing the experiment to be built.
