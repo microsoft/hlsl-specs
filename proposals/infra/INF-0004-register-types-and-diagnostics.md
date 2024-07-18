@@ -55,7 +55,7 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_mismatching_register_type_and_variable_type | "error: unsupported resource register binding '%select{t\|u\|b\|s}0' on variable of type '%1'"| Emitted if a variable type that isn't accompanied with a resource class attribute is bound with a standard register type (`t`, `u`, `b`, or `s`). |
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%0' not supported for variable of type '%1'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{srv\|uav\|cbv\|sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
-| err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register type is used to bind a resource, like 'y' being used with RWBuffer<int>.|
+| err_hlsl_unsupported_register_type_and_resource_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register type is used to bind a UDT.|
 | err_hlsl_conflicting_register_annotations | "error: conflicting register annotations: multiple register annotations detected for register type '%0'" | Emitted if two register annotations with the same register type are applied to the same declaration. |
 | warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
 | warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource class attribute, like a float type. |
@@ -236,7 +236,7 @@ Below are some examples:
 | `float f : register(c0)` | Valid, no errors
 | `float f : register(b0)` | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." |
 | `float f : register(i0)` | "warning: deprecated legacy int constant register binding 'i' used." |
-| `float f : register(x0)` | "error: invalid register type 'x' used; expected 't', 'u', 'b', or 's'" |
+| `float f : register(x0)` | "error: register binding type 'x' not supported for variable of type 'float'" |
 | `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" |
 | `RWBuffer<float> f : register(c3);`| "error: UAV type 'RWBuffer<float>' requires register type 'u', but register type 'c' was used." |
 
