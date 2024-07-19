@@ -139,7 +139,7 @@ struct Eg3 {
     Bar b;
 };
 Eg3 e3 : register(u0);
-// Valid: Bar, the struct within Eg3, has a valid resource that can be bound to t0. 
+// Valid: Bar, the struct within Eg3, has a valid resource that can be bound to u0.
 
 struct Eg4 {
   SamplerState s[3];
