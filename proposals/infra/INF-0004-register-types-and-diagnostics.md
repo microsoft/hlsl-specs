@@ -51,10 +51,10 @@ names and diagnostic messages that are relevant in this spec:
 | err_hlsl_unsupported_register_type_and_variable_type | "error: register binding type '%0' not supported for variable of type '%1'" | Emitted if a variable type is bound using an unsupported register type, like binding a float with the 'x' register type. |
 | err_hlsl_mismatching_register_type_and_resource_type | "error: %select{srv\|uav\|cbv\|sampler}2 type '%0' requires register type '%select{t\|u\|b\|s}2', but register type '%1' was used." | Emitted if a known resource type is bound using a standard but mismatching register type, e.g., RWBuffer<int> getting bound with 's'.|
 | err_hlsl_unsupported_register_type_and_user_defined_type | "error: invalid register type '%0' used; expected 't', 'u', 'b', or 's'"| Emitted if an unsupported register type is used to bind a UDT.|
-| err_hlsl_conflicting_register_annotations | "error: conflicting register annotations: multiple register annotations detected for register type '%0'" | Emitted if two register annotations with the same register type are applied to the same declaration. |
-| warn_hlsl_register_type_c_not_in_global_scope | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
-| warn_hlsl_deprecated_register_type_b | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." | Emitted if the register prefix `b` is used on a variable type without the resource class attribute, like a float type. |
-| warn_hlsl_deprecated_register_type_i | "warning: deprecated legacy int constant register binding 'i' used." | Emitted if the register prefix `i` is used on a variable type without the resource class attribute, like a float type. |
+| err_hlsl_duplicate_register_annotation | "error: binding type '%select{t\|u\|b\|s\|c\|i}' cannot be applied more than once" | Emitted if two register annotations with the same register type are applied to the same declaration. |
+| warn_hlsl_register_type_c_packoffset | "warning: binding type 'c' ignored in buffer declaration. Did you mean 'pack_offset'?" | Emitted if a basic type is bound with `c` within a `cbuffer` or `tbuffer` scope |
+| warn_hlsl_deprecated_register_type_b | "warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type has been removed." | Emitted if the register prefix `b` is used on a variable type without the resource class attribute, like a float type. |
+| warn_hlsl_deprecated_register_type_i | "warning: binding type 'i' ignored. The "integer constant" binding type has been removed." | Emitted if the register prefix `i` is used on a variable type without the resource class attribute, like a float type. |
 | warn_hlsl_user_defined_type_missing_resource_type_member | "warning: variable of type '%0' bound to register type '%1' does not contain a matching '%select{srv\|uav\|cbv\|sampler}2' resource" | Emitted if a UDT is lacking any eligible member to bind using a specific register type, like if a UDT `Foo` was bound with `s` but had no sampler members.|
 | warn_hlsl_user_defined_type_missing_basic_type | "warning: register 'c' used on type with no contents to allocate in a constant buffer" | Emitted if a UDT has no numerical members, and is being bound using the `c` register type.|
 
@@ -192,9 +192,9 @@ struct Eg10{
   RWBuffer<int> b;
 };
 
-// expected-error@+1{{conflicting register annotations: multiple register annotations detected for register type 'u'}}
+// expected-error@+1{{binding type 'u' cannot be applied more than once}}
 Eg10 e10 : register(u9) : register(u10);
-// expected-error@+1{{conflicting register annotations: multiple register annotations detected for register type 'u'}}
+// expected-error@+1{{binding type 'u' cannot be applied more than once}}
 Eg10 e10a : register(u9, space0) : register(u9, space1);
 
 ```
@@ -216,7 +216,7 @@ register overload is only applicable if the developer wants to make modification
 $Globals buffer, it is not useful when the overload is not used inside the $Globals
 context. That is, if this register overload appears within a `cbuffer {...}` or 
 `tbuffer {...}` scope, the register number will be ignored. In this case, 
-`warn_hlsl_register_type_c_not_in_global_scope` will be emitted, and will be treated as an error by default.
+`warn_hlsl_register_type_c_packoffset` will be emitted, and will be treated as an error by default.
 All other legal register types applied to such a type will emit `err_hlsl_mismatching_register_type_and_variable_type`, 
 except for 'b' or 'i'. If the register type is 'b' or 'i', then `warn_hlsl_deprecated_register_type_b` or 
 `warn_hlsl_deprecated_register_type_i` will be emitted respectively, and treated as errors by default. 
@@ -229,10 +229,10 @@ Below are some examples:
 |-|-|
 | `float f : register(t0)` | "error: unsupported resource register binding 't' on variable of type 'float'" |
 | `float f : register(c0)` | Valid, no errors
-| `float f : register(b0)` | "warning: deprecated legacy bool constant register binding 'b' used. 'b' is only used for constant buffer resource binding." |
-| `float f : register(i0)` | "warning: deprecated legacy int constant register binding 'i' used." |
+| `float f : register(b0)` | "warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type has been removed." |
+| `float f : register(i0)` | "warning: binding type 'i' ignored. The "integer constant" binding type has been removed." |
 | `float f : register(x0)` | "error: register binding type 'x' not supported for variable of type 'float'" |
-| `cbuffer g_cbuffer { float f : register(c2); }` | "warning: register binding 'c' ignored inside cbuffer/tbuffer declarations; use pack_offset instead" |
+| `cbuffer g_cbuffer { float f : register(c2); }` | "warning: binding type 'c' ignored in buffer declaration. Did you mean 'pack_offset'?" |
 | `RWBuffer<float> f : register(c3);`| "error: UAV type 'RWBuffer<float>' requires register type 'u', but register type 'c' was used." |
 
 ## Detailed design
@@ -245,7 +245,7 @@ diagnosing and validating the `register` keyword when it is applied to any decl.
 to the decl's attribute list in `clang\lib\Parse\ParseHLSL.cpp`, under `ParseHLSLAnnotations`.
 Note that there are instances where multiple `register` statements can apply to a single 
 decl, and this is only invalid if any of the register annotations have the same register types.
-If this invalid case happens, `err_hlsl_conflicting_register_annotations` will be emitted. 
+If this invalid case happens, `err_hlsl_duplicate_register_annotations` will be emitted. 
 There is a separate case where two decls in separate locations in the translation unit have 
 overlapping register numbers and register types, causing a conflict. This type of conflict 
 cannot be detected at this stage of compilation, because parsing is not yet complete. 
@@ -393,7 +393,7 @@ then an error will be emitted depending on the resource type. If the `Resource` 
 `err_hlsl_unsupported_register_type_and_variable_type` will be emitted. Next, some decls
 may have multiple register annotations applied. Regardless of the decl type, there will be 
 validation that any pair of register annotation statements may not have the same register type.
-If this is detected, `err_hlsl_conflicting_register_annotations` will be emitted.
+If this is detected, `err_hlsl_duplicate_register_annotation` will be emitted.
 
 If the `Resource` flag is set, check the register type against the resource class flag.
 If they do not match, `err_hlsl_mismatching_register_type_and_resource_type` is emitted.
@@ -404,7 +404,7 @@ will be emitted respectively, and treated as errors by default. If the errors ar
 the compiler will function as if `c` was passed, and allocate the variables into the 
 global constant buffer.
 If the register type is 'c', it is allowed, but if `DefaultGlobals` is not set,
-`warn_hlsl_register_type_c_not_in_global_scope` will be emitted, 
+`warn_hlsl_register_type_c_packoffset` will be emitted, 
 and will be treated as an error by default.
 
 After this point, `DefaultGlobals` doesn't need to be set.
@@ -423,7 +423,7 @@ If `c` is given, then we must check that `ContainsNumeric` is set, and if not,
 then we emit `err_hlsl_unsupported_register_type_and_variable_type`.
 
 All the warnings introduced in this spec were not emitted in legacy versions of the compiler.
-The warnings, `warn_hlsl_register_type_c_not_in_global_scope`,
+The warnings, `warn_hlsl_register_type_c_packoffset`,
 `warn_hlsl_deprecated_register_type_b`,
 `warn_hlsl_deprecated_register_type_i`,
 `warn_hlsl_user_defined_type_missing_resource_type_member`, and
@@ -451,7 +451,7 @@ if the register type is invalid:
 
 if multiple register annotations exist:
   if any pair of register annotations share the same register type:
-    emit err_hlsl_conflicting_register_annotations
+    emit err_hlsl_duplicate_register_annotation
 
 if Resource is set:
   if register type does not match resource class flag:
@@ -464,7 +464,7 @@ if Basic is set:
 
   if register type is 'c'
     if DefaultGlobals is not set:
-      emit warn_hlsl_register_type_c_not_in_global_scope
+      emit warn_hlsl_register_type_c_packoffset
   else if register type is 't' 'u' or 's':
     emit err_hlsl_mismatching_register_type_and_variable_type
   else: emit err_hlsl_unsupported_register_type_and_variable_type
