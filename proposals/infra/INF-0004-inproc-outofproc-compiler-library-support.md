@@ -25,6 +25,11 @@ bring in support for shader compilation as a static library
 (full implementation) or a dynamic library. Compilation is performed within the
 calling application's process.
 
+The DirectX Shader library does not currently support being linked as a
+static library.  It is a COM interface library that brings in compilation
+support dynamically. Both static and dynamic in-proc solutions will be 
+supported in the HLSL clang based library.
+
 * **Out of Process** - An application links against the shader compiler library and
 uses the apis to compile which create one or more processes on the
 application's behalf to compile one or more shaders. Compilation is performed
@@ -34,22 +39,20 @@ process.
 In-Process must be supported because it is already a method that applications
 use today to consume the DirectX Shader Compiler library.
 
-The DirectX Shader library does not currently support being linked as a
-static library.  It is a COM interface library that brings in compilation
-support dynamically. This proposal does not take away the static library
-support we already intend to build in clang HLSL compiler library.
+Out of process is considered an optional feature as the library could ship
+without it in the first release.
 
-This document is a discussion about an process design and to evaluate if
-we need to build it immediately.
+This document is a discussion about an out of process design and to evaluate if
+we need to build the system immediately.
 
 ## Motivation
 
-Help to scope down work for the new shader compiler library to the immediate
-needs. Scoping down the required pieces of a large effort like bringing up full
-hlsl support in clang is key to achieving success.
+In-process support will be built for sure but do we also need to build the out
+of process design now for the initial release of the library or can this be
+deferred to a later release?
 
-In-process support will be built but do we also need to build the out of
-process design now or can this be deferred to a later milestone?
+It is also assumed that the out-of-process support will be built on top of
+the in-process support.
 
 ## Why Out of process support is even considered an option?
 
@@ -96,13 +99,14 @@ Communication between the compiler library and the process pool will be done
 using an IPC mechanism. This would most likely be named pipes with the pipe
 name being unique to the process that it communicates with.
 
-The application would call compiler apis that are really a stubbed 
-interface of the in-process version which delegate the compilation work over
-to the pool of processes.
+The application calls compiler apis that are a stubbed interface matching the
+in-process api design.  The api calls are delegated a process in the process
+pool which will call the in-proc version of the api implementation.  Results
+are communicated back over the IPC mechanism.
 
-Switching from in-proc use to out-of-proc use would not require api call 
-changes giving the application the most flexibility to choose the 
-environment they would like to compile their shaders.
+Switching from in-proc use to out-of-proc use will not require any api call 
+changes which gives the application the most flexibility to choose the 
+environment they wo uld like to compile their shaders.
 
 ### Error handling
 
@@ -114,9 +118,8 @@ the application will choose how to handle it.
 ### Open Questions
 
 * Should the out of process architecture be built as a general purpose
-system for others to be able to use?
-   * I believe that is the correct approach for this design. There may be
-     uses outside of shader compilation for this system.
+system for others to be able to use? There are benefits to having it be
+general so it could be adopted by others.
 
 ## Detailed design
 
