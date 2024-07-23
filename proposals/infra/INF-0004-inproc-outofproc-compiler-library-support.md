@@ -1,8 +1,8 @@
 <!-- {% raw %} -->
 
-# In-process only or In-process and Out-of-process support for the compiler library
+# Support for in-process, Out-of-process, or both for the c style compiler api
 
-* Proposal: [0004](INF-0004-inproc-outofproc-compiler-library-support.md)
+* Proposal: [NNNN](INF-NNNN-inproc-outofproc-compiler-api-support.md)
 * Author(s): [Cooper Partin](https://github.com/coopp)
 * Sponsor: [Cooper Partin](https://github.com/coopp)
 * Status: **Under Consideration**
@@ -13,54 +13,37 @@
 ## Introduction
 
 An effort is underway to bring compilation support into clang for HLSL based
-shaders.  A C style library will be built to enable applications to compile
+shaders.  A C style api will be built to enable applications to compile
 a shader from their own processes in addition to being able to launching the
 clang process.
 
-There are two proposed ways one could consume the shader compiler library and
-compile a shader today.
+This document is to propose building only the out-of-process support which
+gives the caller a more performant and secure solution.
 
-* **In Process** - An application links against the shader compiler library to
-bring in support for shader compilation as a static library
-(full implementation) or a dynamic library. Compilation is performed within the
-calling application's process.
+Visual Studio uses an out of process architecture for compilation which helps
+better utilize the power of the machine performing the compilation as well as
+isolating the code editor from any crashes that may occur during compilation.
 
-The DirectX Shader library does not currently support being linked as a
-static library.  It is a COM interface library that brings in compilation
-support dynamically. Both static and dynamic in-proc solutions will be 
-supported in the HLSL clang based library.
+### Overview of api hosting differences
+Here are two common ways a library can be loaded and used.
 
-* **Out of Process** - An application links against the shader compiler library and
-uses the apis to compile which create one or more processes on the
-application's behalf to compile one or more shaders. Compilation is performed
-outside the calling application's process and isolated away to a worker
+* **In Process** - An application calls an api that loads compilation support
+into the application's process. All work is performed within the application's
 process.
 
-In-Process must be supported because it is already a method that applications
-use today to consume the DirectX Shader Compiler library.
-
-Out of process is considered an optional feature as the library could ship
-without it in the first release.
-
-This document is a discussion about an out of process design and to evaluate if
-we need to build the system immediately.
+* **Out of Process** - An application calls an api that launches one or more
+processes to perform the compilation. All work is performed outside the
+calling application's process.
 
 ## Motivation
 
-In-process support will be built for sure but do we also need to build the out
-of process design now for the initial release of the library or can this be
-deferred to a later release?
-
-It is also assumed that the out-of-process support will be built on top of
-the in-process support.
-
-## Why Out of process support is even considered an option?
+### Why prefer an out of process solution?
 
 * Process creation on Windows based systems is expensive.  Launching clang.exe
 over and over again to compile shaders becomes a lengthy operation on 
 Windows platforms.
 
-* Security concerns about compiling a shader in a process space that is
+* Security is a concern when compiling a shader in a process space that is
 considered protected.  An out of process design would move that concern to an
 isolated process.
 
@@ -75,51 +58,43 @@ could be fixed up and made thread safe allowing the experiment to be built.
 I have not checked to see the thread safe fixed bits are in the current llvm
 source.
 
-   * In-process support with multiple threads is an option we need to
-support as there are customers today that use the HLSL compiler library in 
-that way. A separate instance of the library is created for each thread.
-Multiple threads entering the same compiler library instance is not supported.
-
 ## Proposed solution
 
 ### What could an out-of-process design look like?
 
-The architecture for an out of process design would behave in a similar way to
-the MSBuild design. The system would function as a Process Pool.  This would
-allow the HLSL compiler library to take advantage of systems that have
-multiple processors, or multiple-core processors. A separate compiler process
+The architecture for an out of process design will behave in a similar way to
+the MSBuild design. The system functions as a Process Pool.  This allows the
+the compilation work to take advantage of systems that have multiple
+processors, or multiple-core processors. A separate compiler process
 is created for each available processor. For example, if the system has four
 processors, then four compiler processes are created.
 
-The process pool would be associated to an instance of the compiler library
-and would live as long as that instance is alive.  Compilation requests will
-be queued and the pool of processes would work through compilation requests.
+The process pool will be associated to an instance of the compiler library
+and will live as long as that instance is alive.  Compilation requests will
+be queued and the pool of processes that work through compilation requests.
 
-Communication between the compiler library and the process pool will be done
-using an IPC mechanism. This would most likely be named pipes with the pipe
-name being unique to the process that it communicates with.
-
-The application calls compiler apis that are a stubbed interface matching the
-in-process api design.  The api calls are delegated a process in the process
-pool which will call the in-proc version of the api implementation.  Results
-are communicated back over the IPC mechanism.
-
-Switching from in-proc use to out-of-proc use will not require any api call 
-changes which gives the application the most flexibility to choose the 
-environment they wo uld like to compile their shaders.
+Communication between with the process pool will be done using a named pipe
+IPC mechanism. Pipe names will be unique to the process that is being
+communicated with. Results are communicated back over the IPC mechanism.
 
 ### Error handling
 
 If the HLSL compiler encounters an error during compilation or the compiler
 process crashes, the rest of the compiler processes will continue on.
-Error information will be communicated back to the caller about the issue and
-the application will choose how to handle it.
+Error information is communicated back over the IPC mechanism to the caller
+and the application will choose how to handle it.
+
+### What if in-process becomes a requirement at a later time?
+
+If an in process solution becomes a requirement, it can easily be built
+because the support code that performs compilation will have already been
+refactored out to be called by the out of process design.
 
 ### Open Questions
 
-* Should the out of process architecture be built as a general purpose
-system for others to be able to use? There are benefits to having it be
-general so it could be adopted by others.
+* Should the portions of the out of process architecture be built as a general
+purpose system for others in the llvm project to be able to use in their own
+systems?
 
 ## Detailed design
 
