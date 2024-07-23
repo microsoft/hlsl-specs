@@ -53,37 +53,67 @@ that has the `: register(...)` annotation. In Sema, this attribute has a functio
 validate its correctness, called `handleResourceBindingAttr`, within 
 `clang\lib\Sema\SemaHLSL.cpp`. The diagnostic infrastructure will be implemented 
 within this validation function to analyze the declaration that the annotation
-is applied to, and validate that the register type used within the annotation is 
-compatible with the Decl type. There are other details that need validation, such
-as whether there are any duplicate register annotations with the same register 
-type that have been applied to the Decl. Even the context in which the Decl
-appears (inside or outside a cbuffer or tbuffer) influences the legality of 
-certain register types. All of this analysis and validation will be executed
-inside a new function, `DiagnoseHLSLResourceRegType`.
+is applied to, and validate that the register type used within the annotation is semantically
+compatible with the Decl. All of this analysis and validation will be executed
+inside a new function, `DiagnoseHLSLRegisterAttribute`. This function will be
+responsible for validating the semantic meaning behind the application of the
+attribute, while the rest of `handleResourceBindingAttr` is responsible for 
+validating the syntax of the attribute.
 
-There are 4 register types that are expected to be used to bind common resources:
+There are 4 register types that are expected to be used to bind common resources,
+and all resources fall under 4 distinct resource classes:
 
-| Resource Class | Register Type |
+| Resource Class | Expected Register Type |
 |-|-|
 | SRV | t |
 | UAV | u |
 | CBuffer | b |
 | Sampler | s |
 
-`DiagnoseHLSLResourceRegType` will validate that resources are bound using the 
-expected register type. There are other register types that may legally appear in 
-the register annotation, `c` and `i`. `DiagnoseHLSLResourceRegType` will be 
+`DiagnoseHLSLRegisterAttribute` will validate that resources are bound using the 
+expected register type. There are other register types that may appear in 
+the register annotation, `c` and `i`. `DiagnoseHLSLRegisterAttribute` will be 
 responsible for determining if these register types are used correctly in certain
-legacy contexts, or whether such uses are invalid. `DiagnoseHLSLResourceRegType` 
-will also be responsible for emitting a diagnostic if any other invalid register
-type is detected. This infrastructure will prioritize emitting diagnostics that
-explain why the variable type isn't suitable for the register type, rather than 
-why the register type isn't suitable for the variable type.
+legacy contexts, or whether such uses are invalid. Specifically, the `c` register
+type may only be used in global contexts. In those contexts, a resource isn't being bound,
+rather a variable is being placed in the $Globals buffer with a specified offset.
+Using `c` within a cbuffer or tbuffer is legacy behavior that should no longer be 
+supported, so `DiagnoseHLSLRegisterAttribute` will emit a warning in this case 
+that will be treated as an error by default. When this attribute appears in a non-global
+context, `packoffset` will be recommended as an alternative.
+The `i` register type is also a legacy DirectX 9 register type that 
+will no longer be supported, and so a warning will be emitted that is treated
+as an error by default when this register type is used.
+The `b` register type, when used on a variable that isn't a resource, and doesn't
+have a `CBuffer` resource class, is also legacy behavior that will no longer be
+supported. In such cases, a warning will be emitted that is treated as an error by
+default, and a suggestion will be made that the register type is only used for resources with
+the `CBuffer` resource class.
+These warnings are all part of a distinct warning group, `DisallowLegacyBindingRules` 
+which can be silenced if a developer would prefer to enable compilation of legacy shaders.
 
-If `DiagnoseHLSLResourceRegType` finds any critical errors, the attribute,
-`handleResourceBindingAttr`, won't be added to the Decl, and compilation will
-fail. However, `handleResourceBindingAttr` may emit some warnings and allow
-the attribute to be attached.
+Another common case for this annotation to appear in HLSL is for user-defined-types (UDTs).
+UDTs may have multiple register annotations applied onto the variable declaration. 
+`DiagnoseHLSLRegisterAttribute` will be responsible for ensuring that none of the
+register annotations conflict (none may have the same register type). `DiagnoseHLSLRegisterAttribute`
+will also ensure that any register annotations with a specific register type applied to
+the UDT will have a corresponding member in the UDT that can be bound by that register
+type (or can be placed into the $Globals constant buffer in the case of `c`). If there
+is no corresponding member, a warning will be emitted that is treated as an error by default,
+because this behavior was permissible in legacy versions of the compiler. These warnings
+are also part of the same warning group, `DisallowLegacyBindingRules`.
+
+
+`DiagnoseHLSLRegisterAttribute` will also be responsible for emitting a diagnostic 
+if any other invalid register type is detected. If `DiagnoseHLSLRegisterAttribute` 
+finds any critical errors, the attribute, `HLSLResourceBindingAttr`, won't be added 
+to the Decl, and compilation will fail. However, `DiagnoseHLSLRegisterAttribute` may
+emit some warnings and allow the attribute to be attached. In summary, 
+`DiagnoseHLSLRegisterAttribute` will be responsible for analyzing the context of the 
+decl to which the register annotation is being applied, and using the data in the
+annotation to determine what diagnostics, if any, to emit. 
+`DiagnoseHLSLRegisterAttribute` will be fully responsible for halting compilation 
+if there is any semantic fault in the application of the register annotation.
 
 
 ## Detailed design
