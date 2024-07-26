@@ -1,9 +1,9 @@
-* Proposal: [0004](INF-0004-register-types-and-diagnostics.md)
+* Proposal: [0005](INF-0005-register-types-and-diagnostics.md)
 * Author(s): [Joshua Batista](https://github.com/bob80905)
 * Sponsor: TBD
 * Status: **Under Consideration**
 * Impacted Project(s): (LLVM)
-* PRs: [#87578](https://github.com/llvm/llvm-project/pull/87578)
+* PRs: [#87578](https://github.com/llvm/llvm-project/pull/97103)
 * Issues: [#57886](https://github.com/llvm/llvm-project/issues/57886)
 
 ## Introduction
@@ -147,8 +147,8 @@ Firstly, below is some sample code that would cause the proposed diagnostics to 
 //
 // - warn_hlsl_user_defined_type_missing_member
 // warning: binding type '%select{t|u|b|s|c}0' only applies to types containing '%select{srv resources|uav resources|constant buffer resources|sampler state|constant buffer data}0'
-struct Eg1 { float f; };
-Eg1 e1 : register(t0);
+struct Foo { float f; };
+Foo x : register(t0);
 // warning: binding type 't' only applies to types containing 'srv' resources.
 //
 
@@ -174,11 +174,11 @@ float f : register(x0);
 //
 // - err_hlsl_duplicate_register_annotation
 // error: binding type '%select{t|u|b|s|c|i}' cannot be applied more than once
-struct Eg10{
+struct Bar{
   RWBuffer<int> a;
   RWBuffer<int> b;
 };
-Eg10 e10 : register(u9) : register(u10);
+Bar x : register(t9) : register(t10);
 // error: binding type 'u' cannot be applied more than once
 //
 
@@ -258,6 +258,8 @@ The `DefaultGlobals` flag indicates whether or not the decl's value ends up insi
 `$Globals` constant buffer. It will not be set if the decl appears inside a cbuffer 
 or tbuffer. The `$Globals` constant buffer will only be filled with non-HLSL-Objects.
 
+Below is the complete list of flags, along with some examples, and which flags are set
+in each case.
 ```
 Flags:
   Resource,
