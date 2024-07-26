@@ -60,20 +60,46 @@ responsible for validating the semantic meaning behind the application of the
 attribute, while the rest of `handleResourceBindingAttr` is responsible for 
 validating the syntax of the attribute.
 
-There are 4 register types that are expected to be used to bind common resources,
-and all resources fall under 4 distinct resource classes:
+### Recognized Register Types
 
-| Resource Class | Expected Register Type |
-|-|-|
-| SRV | t |
-| UAV | u |
-| CBuffer | b |
-| Sampler | s |
+There are two types of register bindings, resource bindings and constant register bindings.
 
-`DiagnoseHLSLRegisterAttribute` will validate that resources are bound using the 
-expected register type. There are other register types that may appear in 
-the register annotation, `c` and `i`. `DiagnoseHLSLRegisterAttribute` will be 
-responsible for determining if these register types are used correctly in certain
+Resource register bindings bind a resource like a texture or sampler to a location that is 
+mapped using the root signature in DX12.
+
+Constant register bindings were originally used to bind values to one of three specialized 
+constant register banks in DX9.  In DX10 and above, the `c` register binding for the `float` 
+register bank maps to an offset into the `$Globals` constant buffer and the other two bindings 
+are unused.
+
+This table lists the recognized register types, the associated resource class if applicable, 
+along with some brief notes.
+
+| Register | Resource | Notes                                                                                 |
+| -------- | -------- | ------------------------------------------------------------------------------------- |
+| `t`      | SRV      | read-only texture, buffer, or `tbuffer`/`TextureBuffer`                               |
+| `u`      | UAV      | read/write texture or buffer                                                          |
+| `s`      | Sampler  | `SamplerState` or `SamplerComparisonState`                                            |
+| `b`      | CBV      | `cbuffer`/`ConstantBuffer` resource; also unsupported legacy `bool` constant register |
+| `c`      | N/A      | legacy `float` constant register - offset into `$Globals`                             |
+| `i`      | N/A      | unsupported legacy `int` constant register   
+
+### Register binding contexts
+
+Register bindings may be applied to declarations in several contexts.  This table lists contexts and potentially applicable bindings.
+
+| Decl                                                       | Registers          | Context                                    | Notes                                                                                                                                                                                     |
+| ---------------------------------------------------------- | ------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cbuffer` or `tbuffer` decl                                | `b`, `t`           | any global                                 | `b` for `cbuffer`, `t` for `tbuffer`                                                                                                                                                      |
+| (array of) resource                                        | `t`, `u`, `b`, `s` | any global                                 | depends on resource class                                                                                                                                                                 |
+| struct/class instance (UDT)                                | `c`, `t`, `s`      | global outside `cbuffer` or `tbuffer` decl | `c` specifies starting location for data members of struct in `$Globals` constant buffer; `t` and `s` specify starting registers for binding any contained SRV and Samplers, respectively |
+| struct/class instance (UDT)                                | `t`, `s`           | global inside `cbuffer` or `tbuffer` decl  | `c` register binding may not be used inside `cbuffer` or `tbuffer` context; must use `packoffset` instead                                                                                 |
+| (array of) scalar, vector, or matrix numeric or bool types | `c`                | global outside `cbuffer` or `tbuffer` decl | `c` specifies starting location for numeric/bool values in `$Globals` constant buffer                                                                                                     |
+
+
+`DiagnoseHLSLRegisterAttribute` will validate that the variable type is bound using the 
+expected register type. `DiagnoseHLSLRegisterAttribute` will be 
+responsible for determining if register types are used correctly in certain
 legacy contexts, or whether such uses are invalid. Specifically, the `c` register
 type may only be used in global contexts. In those contexts, a resource isn't being bound,
 rather a variable is being placed in the $Globals buffer with a specified offset.
@@ -89,7 +115,7 @@ have a `CBuffer` resource class, is also legacy behavior that will no longer be
 supported. In such cases, a warning will be emitted that is treated as an error by
 default, and a suggestion will be made that the register type is only used for resources with
 the `CBuffer` resource class.
-These warnings are all part of a distinct warning group, `DisallowLegacyBindingRules` 
+These warnings are all part of a distinct warning group, `LegacyConstantRegisterBinding` 
 which can be silenced if a developer would prefer to enable compilation of legacy shaders.
 
 Another common case for this annotation to appear in HLSL is for user-defined-types (UDTs).
@@ -101,8 +127,7 @@ the UDT will have a corresponding member in the UDT that can be bound by that re
 type (or can be placed into the $Globals constant buffer in the case of `c`). If there
 is no corresponding member, a warning will be emitted that is treated as an error by default,
 because this behavior was permissible in legacy versions of the compiler. These warnings
-are also part of the same warning group, `DisallowLegacyBindingRules`.
-
+are also part of the same warning group, `LegacyConstantRegisterBinding`.
 
 `DiagnoseHLSLRegisterAttribute` will also be responsible for emitting a diagnostic 
 if any other invalid register type is detected. If `DiagnoseHLSLRegisterAttribute` 
