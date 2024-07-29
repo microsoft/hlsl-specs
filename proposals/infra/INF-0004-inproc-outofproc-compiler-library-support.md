@@ -20,12 +20,22 @@ clang process.
 This document is to propose building only the out-of-process support which
 gives the caller a more performant and secure solution.
 
-Visual Studio uses an out of process architecture for compilation which helps
-better utilize the power of the machine performing the compilation as well as
-isolating the code editor from any crashes that may occur during compilation.
+### Why have an api at all?  Why not just run clang.exe yourself?
+
+Before diving into any details we should discuss why we even need an
+api at all.  Why can't clients just execute the clang.exe with options
+and compile their shaders that way?  They can and they will. Launching clang
+to compile a shader will be supported.
+
+A design requirement that cannot be satisfied with just executing clang with a 
+command-line is _include handlers_. An include handler is a way for clients to
+hook into the compilation process and dynamically load dependencies when
+needed. We have already been asked by a game studio to support this feature.
+This can only be achieved if there is an api to support adding these handlers.
 
 ### Overview of api hosting differences
-Here are two common ways a library can be loaded and used.
+
+Here are two common ways an api can be loaded and used.
 
 * **In Process** - An application calls an api that loads compilation support
 into the application's process. All work is performed within the application's
@@ -58,6 +68,15 @@ could be fixed up and made thread safe allowing the experiment to be built.
 I have not checked to see the thread safe fixed bits are in the current llvm
 source.
 
+* Cleanup between compiler invocations. Destroying a process and bringing it
+back up ensures that any state leaked or leftover from a previous compilation
+will be cleaned up.
+
+* Handling of catastrophic errors avoids taking down the calling process. The
+clang compiler is known to abort in certain conditions which would take down
+a process if they hosted the compiler in-process. The worker process will be
+taken down not the application with an out-of-process design.
+
 ## Proposed solution
 
 ### What could an out-of-process design look like?
@@ -84,18 +103,6 @@ process crashes, the rest of the compiler processes will continue on.
 Error information is communicated back over the IPC mechanism to the caller
 and the application will choose how to handle it.
 
-### What if in-process becomes a requirement at a later time?
-
-If an in process solution becomes a requirement, it can easily be built
-because the support code that performs compilation will have already been
-refactored out to be called by the out of process design.
-
-### Open Questions
-
-* Should the portions of the out of process architecture be built as a general
-purpose system for others in the llvm project to be able to use in their own
-systems?
-
 ## Detailed design
 
 A detailed design of the out-of-process system has not been created.
@@ -104,7 +111,17 @@ called 'Compiler Services'. This was presented as an option to support editors
 and work with compiler databases. The proposal was called
 [Clang C++ Services](https://github.com/chandlerc/llvm-designs/blob/master/ClangService.rst)
 
-## Resources
+## Alternatives considered
+
+In-proc only was not considered here because of the issue involving
+catastrophic error conditions which can takes down the calling process.
+This is also why there is no in-proc + out-of-proc proposal.
+
+### What if in-process becomes a requirement at a later time?
+
+An in-process solution can easily be built because the support code that
+performs compilation will have already been refactored out to be called
+during the out of process development effort.
 
 ## Acknowledgments
 
