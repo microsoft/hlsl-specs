@@ -128,6 +128,28 @@ apply the hash. Instead it should apply the `PREVIEW` sentinel value from the
 table above. This allows us to differentiate between shaders validated by a
 "final" validator.
 
+### IDxcValidator API Update
+
+A new `IDxcValidator` API flag is needed to avoid container hashing and
+unnecessary overhead when used by runtime validation.
+
+Proposed change to flags in `dxcapi.h`:
+
+```cpp
+ static const UINT32 DxcValidatorFlags_Default = 0;
+ static const UINT32 DxcValidatorFlags_InPlaceEdit =
+    1; // Validator is allowed to update shader blob in-place.
+ static const UINT32 DxcValidatorFlags_RootSignatureOnly = 2;
+ static const UINT32 DxcValidatorFlags_ModuleOnly = 4;
++static const UINT32 DxcValidatorFlags_SkipHash =
++    8; // Skip hash update; no modification or copy of input blob.
+ static const UINT32 DxcValidatorFlags_ValidMask = 0xF;
+```
+
+The runtime attempts to use the `DxcValidatorFlags_ValidMask` flag,
+and if it sees `E_INVALIDARG` from running on an old validator falls
+back to not specifying the flag, at the cost of extra overhead.
+
 ### D3D Runtime Behavior
 
 Starting with AgilitySDK version TBD, the runtime adopts new behavior for how 
