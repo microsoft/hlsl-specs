@@ -4,7 +4,7 @@
 * Sponsor: TBD
 * Status: **Under Consideration**
 * Impacted Project(s): (LLVM)
-* PRs: [#87578](https://github.com/llvm/llvm-project/pull/87578)
+* PRs: [#87578](https://github.com/llvm/llvm-project/pull/97103)
 * Issues: [#57886](https://github.com/llvm/llvm-project/issues/57886)
 
 ## Introduction
@@ -130,21 +130,122 @@ is no corresponding member, a warning will be emitted that is treated as an erro
 because this behavior was permissible in legacy versions of the compiler. These warnings
 are also part of the same warning group, `LegacyConstantRegisterBinding`.
 
-`DiagnoseHLSLRegisterAttribute` will also be responsible for emitting a diagnostic
-if any other invalid register type is detected. If `DiagnoseHLSLRegisterAttribute`
-finds any critical errors, the attribute, `HLSLResourceBindingAttr`, won't be added
+`DiagnoseHLSLRegisterAttribute` will also be responsible for emitting a diagnostic 
+if any other invalid register type is detected. If `DiagnoseHLSLRegisterAttribute` 
+finds any critical errors, the attribute, `HLSLResourceBindingAttr`, won't be added 
 to the Decl, and compilation will fail. However, `DiagnoseHLSLRegisterAttribute` may
-emit some warnings and allow the attribute to be attached. In summary,
-`DiagnoseHLSLRegisterAttribute` will be responsible for analyzing the context of the
+emit some warnings and allow the attribute to be attached. In summary, 
+`DiagnoseHLSLRegisterAttribute` will be responsible for analyzing the context of the 
 decl to which the register annotation is being applied, and using the data in the
-annotation to determine what diagnostics, if any, to emit.
-`DiagnoseHLSLRegisterAttribute` will be fully responsible for halting compilation
+annotation to determine what diagnostics, if any, to emit. 
+`DiagnoseHLSLRegisterAttribute` will be fully responsible for halting compilation 
 if there is any semantic fault in the application of the register annotation.
 
-
 ## Detailed design
+Firstly, below is some sample code that would cause the proposed diagnostics to be emitted:
+```
+// UDTs with register bindings for resources that don't exist:
+//
+// - warn_hlsl_user_defined_type_missing_member
+// warning: binding type '%select{t|u|b|s|c}0' only applies to types containing '%select{srv resources|uav resources|constant buffer resources|sampler state|numeric types}0'
+struct Foo { float f; };
+Foo x : register(t0);
+// warning: binding type 't' only applies to types containing 'srv' resources.
+//
 
-TODO: Fill out and agree on detailed design
+// Mismatched register bindings:
+//
+// - err_hlsl_binding_type_mismatch
+// error: binding type '%select{t|u|b|s|c}0' only applies to '%select{srv resources|uav resources|constant buffer resources|sampler state|numeric variables in the global scope}0'
+float f : register(t0);
+// error: binding type 't' only applies to 'srv' resources
+RWBuffer<float> f : register(c3);
+// error: binding type 'c' only applies to numeric variables in the global scope
+//
+
+// Invalid binding types:
+//
+// err_hlsl_binding_type_invalid
+// error: binding type '%0' is invalid
+float f : register(x0);
+// error: binding type 'x' is invalid
+//
+
+// Multiple bindings with the same register type:
+//
+// - err_hlsl_duplicate_register_annotation
+// error: binding type '%select{t|u|b|s|c|i}' cannot be applied more than once
+struct Bar{
+  RWBuffer<int> a;
+  RWBuffer<int> b;
+};
+Bar x : register(u9) : register(u10);
+// error: binding type 'u' cannot be applied more than once
+//
+
+// Binding 'c' when it should be packoffset in non-global scope:
+//
+// - warn_hlsl_register_type_c_packoffset
+// warning: binding type 'c' ignored in buffer declaration. Did you mean 'packoffset'?
+cbuffer g_cbuffer { float f : register(c2); }
+// warning: binding type 'c' ignored in buffer declaration. Did you mean 'packoffset'?
+//
+
+// Binding 'b' ignored / being used in the legacy way:
+//
+// - warn_hlsl_deprecated_register_type_b
+// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type is no longer supported
+float f : register(b0);
+// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type is no longer supported
+//
+
+// Binding 'i' ignored (also wording):
+//
+// warn_hlsl_deprecated_register_type_i
+// warning: binding type 'i' ignored. The "integer constant" binding type is no longer supported
+float f : register(i0);
+// warning: binding type 'i' ignored. The "integer constant" binding type is no longer supported
+//
+```
+
+In DXC, the analysis and diagnostic emission steps would happen in DiagnoseRegisterType(),
+under DiagnoseHLSLDecl in SemaHLSL.cpp. In clang, there is a function called in
+`clang\lib\Sema\SemaDeclAttr.cpp` named `handleResourceBindingAttr` that is responsible for
+diagnosing and validating the `register` keyword when it is applied to any decl. Any time the
+`register` annotation is applied on a decl, the `AT_HLSLResourceBinding` attribute gets added
+to the decl's attribute list in `clang\lib\Parse\ParseHLSL.cpp`, under `ParseHLSLAnnotations`.
+When two decls in separate locations in the translation unit have 
+overlapping register numbers and the same register type, a conflict arises. This type of conflict 
+cannot be detected at this stage of compilation, because parsing is not yet complete. 
+Detecting this conflict is out of scope for this diagnostic infrastructure, but will be 
+caught later by the register allocation algorithm. 
+In `dxc`, `\lib\HLSL\DxilCondenseResources.cpp` has a class called
+`DxilResourceRegisterAllocator` with a member `AllocateRegisters` that is responsible for
+allocating registers and validating that there aren't any conflicts or overlaps. As for 
+`clang-dxc`, there is not yet any register allocation validation, but when resources are
+finalized, allocation validation must be implemented, and will likely use the same algorithm 
+used in DXC.
+
+For each decl that contains this `AT_HLSLResourceBinding` attribute, 
+`handleResourceBindingAttr` will be run, which contains a call to `DiagnoseHLSLRegisterAttribute`.
+`DiagnoseHLSLRegisterAttribute` is responsible for the analysis of the decl and the emission
+of the diagnostics described in this spec.
+
+
+## Behavioral Differences
+
+This infrastructure will introduce some behavioral differences between `clang` and `dxc`.
+The `disallow-legacy-binding-rules` warning group did not exist in `dxc`, and neither
+did any of the warnings that are contained in that group. Those warnings are being 
+introduced to `clang`. Many of these warnings will be treated as errors, causing some
+HLSL source to fail compilation in `clang` that would otherwise pass in `dxc`. 
+Another difference is that some of these errors will occur earlier in the compilation
+pipeline compared to `dxc`. For example, in `dxc`, the equivalent of the
+`err_attribute_wrong_decl_type_str` error would be emitted at code gen (this error is emitted
+when the register annotation is applied to a struct member, which is illegal), but this
+infrastructure will emit this error at Sema, and all of these errors will be emitted
+at the Sema stage.
+
 
 ## Acknowledgments (Optional)
 * Tex Riddell
