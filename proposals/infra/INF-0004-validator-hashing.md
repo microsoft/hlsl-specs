@@ -127,38 +127,107 @@ apply the hash. Instead it should apply the `PREVIEW` sentinel value from the
 table above. This allows us to differentiate between shaders validated by a
 "final" validator.
 
-### Changes for D3D
+### D3D Runtime Behavior
 
-A future AgilitySDK will adopt runtime changes to how and when the shader hash
-is validated and add support for DXIL validation in the debug layer and runtime.
+Starting with AgilitySDK version TBD, the runtime adopts new behavior for how 
+and when the shader hash is validated, including support for bytecode validation 
+in the debug layer and runtime.
 
 For shaders with the `PREVIEW` hash, the shader is allowed to execute only if
 developer mode and the experimental feature D3D12ExperimentalShaderModels is
 enabled, otherwise the runtime will produce an error.
 
-For shaders with the `BYPASS` hash, the new behavior will allow shaders to run
-without validating the hash regardless of whether the machine is in developer
-mode as long as the shader targets a supported non-experimental shader model.
+For shaders with the `BYPASS` hash, shaders can run without validating the hash 
+regardless of whether the machine is in developer mode as long as the shader 
+targets a supported non-experimental shader model.
 
-All other values of the hash will be assumed to be real hash values.
+All other values of the hash are assumed to be real hash values.
 
 For shaders that contain a real hash value, the behavior is unchanged. The hash
-will be verified and the shader will execute as it does with existing versions
-of the runtime.
+is verified and the shader executes as it does with existing versions of the 
+runtime.
 
 > Note: an important behavior change here is that shaders with zero'd hash data
 > will always be treated as invalid by the runtime and rejected.
+> 
+> An exception is for a period of time already existing preview shaders that used 
+> zero'd hash data will be treated as equivalent to having the `PREVIEW` hash 
+> until those preview shaders are no longer supported in new preview runtimes.
 
-There will be support for DXIL validation in the debug layer when dxil.dll is
-present, printing any errors found, but letting the shader through. This
-validation likely will default to being enabled for shaders that use the
-`BYPASS` hash. Shaders with the `PREVIEW` hash will default to validation off,
-since the DXIL validator will be assumed to not be final. The defaults will be
-able to be overridden by the app.
+#### D3D Runtime Validation Control
 
-Similarly the runtime could also support performing DXIL validation that fails
-shader creation if an error is found. It would support similar app controls as
-the debug layer, except defaulting to validation off.
+Apps can configure how the runtime validates bytecode passed to it. 
+
+The validation referred to here is implementation exposed by `dxcompiler.dll` 
+or `dxil.dll`.  This is the same validation used when the compiler
+endorses bytecode at compile time by applying a hash.  So it would typically be 
+redundant to validate again  But it can be useful to validate shaders that have 
+the `BYPASS` hash, or have the option to force validation for whatever reason. 
+
+If there is bytecode to validate, the runtime and/or debug layer attempt to 
+load one of these dlls, `dxcompiler.dll` first. If either is available, 
+bytecode validation is possible. 
+
+The following flags in `d3d12.h` show the validation control options.  
+`ID3D12Device` exposes `ID3D12BytecodeOptions` to set the flags, shown 
+further below.
+
+
+```C++
+typedef enum D3D12_BYTECODE_FLAGS
+{
+    D3D12_BYTECODE_FLAG_VALIDATION_DISABLED = 0x1,
+    D3D12_BYTECODE_FLAG_VALIDATE_BYTECODE_WITH_BYPASS_HASH = 0x2,
+    D3D12_BYTECODE_FLAG_VALIDATE_ALL_RELEASE_BYTECODE = 0x4,
+    D3D12_BYTECODE_FLAG_VALIDATE_ONLY_IF_DEBUG_LAYER_ENABLED_NO_FAILING = 0x8,
+    D3D12_BYTECODE_FLAG_SKIP_VALIDATION_IF_VALIDATOR_NOT_AVAILABLE = 0x10,
+    D3D12_BYTECODE_FLAGS_DEFAULT = 
+        D3D12_BYTECODE_FLAG_VALIDATE_BYTECODE_WITH_BYPASS_HASH | 
+        D3D12_BYTECODE_FLAG_VALIDATE_ONLY_IF_DEBUG_LAYER_ENABLED_NO_FAILING |
+        D3D12_BYTECODE_FLAG_SKIP_VALIDATION_IF_VALIDATOR_NOT_AVAILABLE
+} D3D12_BYTECODE_FLAGS;
+DEFINE_ENUM_FLAG_OPERATORS( D3D12_BYTECODE_VALIDATION_FLAGS )
+```
+
+Flag | Definition
+---|---
+`D3D12_BYTECODE_FLAG_VALIDATION_DISABLED` | Never invoke bytecode validation.
+`D3D12_BYTECODE_FLAG_VALIDATE_BYTECODE_WITH_BYPASS_HASH` | Only validate bytecode that has the `BYPASS` hash.
+`D3D12_BYTECODE_FLAG_VALIDATE_ALL_RELEASE_BYTECODE` | Validate all bytecode, hashed or `BYPASS`, except `PREVIEW`.  `PREVIEW` is excluded since that bytecode doesn't support validation at all.  Forcing validation for all release bytecode (hashed or `BYPASS`) could be useful to root out shaders that are hashed (implying validation ran on them), but there is an updated valdiator that catches issues that might have been missed.  Or the app might want validation on shaders that might have been hashed manually without the compiler's validator.
+`D3D12_BYTECODE_FLAG_VALIDATE_ONLY_IF_DEBUG_LAYER_ENABLED_NO_FAILING` | Only the debug layer performs bytecode validation.  If errors are found, it reports debug messages without failing the shader.  Accordingly if the debug layer isn't enabled no validation is done. Without this flag, the runtime validates bytecode and errors produce failure (e.g. shader creation failure), and if the debug layer is enabled it will also print a corresponding message.
+`D3D12_BYTECODE_FLAG_SKIP_VALIDATION_IF_VALIDATOR_NOT_AVAILABLE` | Regardless of how the other flags request validation, if the runtime or debug layer can't load `dxcompiler.dll` or `dxil.dll` and find a validation implementation they skip validation without failing.  If this flag is not set, the runtime will fail if it needs to validate bytecode and can't find a validator implementation.
+`D3D12_BYTECODE_FLAGS_DEFAULT` | By default validation is only done on bytecode with the `BYPASS` hash, only from the debug layer, and only if a validator implementation can be found.  Equivalent to the three flags: `D3D12_BYTECODE_FLAG_VALIDATE_BYTECODE_WITH_BYPASS_HASH`, `D3D12_BYTECODE_FLAG_VALIDATE_ONLY_IF_DEBUG_LAYER_ENABLED_NO_FAILING` and `D3D12_BYTECODE_FLAG_SKIP_VALIDATION_IF_VALIDATOR_NOT_AVAILABLE` |
+
+The first three flags above are mutually exclusive and one must be chosen.
+
+Flags are set via `ID3D12BytecodeOptions`:
+
+```C++
+[uuid(9291ad45-9a10-43a5-9c06-f5aa558e89a7), object, local, pointer_default(unique)]
+interface ID3D12BytecodeOptions
+    : IUnknown
+{
+    HRESULT SetBytecodeFlags(
+        [annotation("_In_")] D3D12_BYTECODE_FLAGS flags
+    );
+    D3D12_BYTECODE_FLAGS GetBytecodeFlags();
+};
+```
+The above methods are not thread safe or synchronized with other device methods 
+such as creating shaders where the options would apply.  Apps must do their 
+own synchronization around changing bytecode options and making calls to any 
+other device methods if necessary.
+
+Usage example:
+
+```C++
+CComPtr<ID3D12BytecodeOptions> pBytecodeOptions;
+pDevice->QueryInterface(&pBytecodeOptions);
+pBytecodeOptions->SetBytecodeValidationFlags(D3D12_BYTECODE_FLAG_VALIDATE_ALL_RELEASE_BYTECODE);
+
+// All subsequent bytecode passed to he runtime and debug layer for creating state objects / PSOs etc. 
+// will be validated.  If a validator implementation can't be located, the state creation will fail.
+```
 
 ### Compatibility
 
