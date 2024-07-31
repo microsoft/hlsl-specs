@@ -159,14 +159,14 @@ runtime.
 
 Apps can configure how the runtime validates bytecode passed to it. 
 
-The validation referred to here is implementation exposed by `dxcompiler.dll` 
-or `dxil.dll`.  This is the same validation used when the compiler
+The validation referred to here is implementation exposed by `dxil.dll` 
+or `dxcompiler.dll`.  This is the same validation used when the compiler
 endorses bytecode at compile time by applying a hash.  So it would typically be 
 redundant to validate again, but it can be useful to validate shaders that have 
 the `BYPASS` hash, or have the option to force validation. 
 
 If there is bytecode to validate, the runtime and/or debug layer attempt to 
-load one of these dlls, `dxcompiler.dll` first. If either is available, 
+load one of these dlls, `dxil.dll` first. If either is available, 
 bytecode validation is possible. 
 
 The following flags in `d3d12.h` show the validation control options.  
