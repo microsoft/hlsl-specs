@@ -3,7 +3,8 @@
 # Validator Hashing
 
 * Proposal: [INF-0004](INF-0004-validator-hashing.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz),
+*            [Amar Patel](https://github.com/amarpMSFT)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Accepted**
 
