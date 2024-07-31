@@ -207,6 +207,7 @@ Flags are set via `ID3D12BytecodeOptions`:
 interface ID3D12BytecodeOptions
     : IUnknown
 {
+    // Returns S_OK if flags are valid, E_INVALIDARG otherwise
     HRESULT SetBytecodeFlags(
         [annotation("_In_")] D3D12_BYTECODE_FLAGS flags
     );
