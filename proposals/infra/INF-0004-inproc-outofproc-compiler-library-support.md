@@ -49,24 +49,20 @@ calling application's process.
 
 ### Why prefer an out of process solution?
 
-* Process creation on Windows based systems is expensive.  Launching clang.exe
-over and over again to compile shaders becomes a lengthy operation on 
-Windows platforms.
-
 * Security is a concern when compiling a shader in a process space that is
 considered protected.  An out of process design would move that concern to an
 isolated process.
 
-* In-process support using multiple threads have known thread-safety concerns
-for the clang compiler.  The clang compiler holds some state at compile time
-and some of that state could leak to other compilation sessions if it is not
-protected. This issue was also called out when an experiment called
-[llvm-buildozer](https://reviews.llvm.org/D86351) was created.  The author was
-interested in multiple threads re-entering the main compiler entry point in an
-effort to reduce compilation times. The effort showed that the unsafe bits
-could be fixed up and made thread safe allowing the experiment to be built.
-I have not checked to see the thread safe fixed bits are in the current llvm
-source.
+* Running multiple instances of clang In-process across multiple threads has
+known thread-safety concerns for the clang compiler. The clang compiler holds
+some state at compile time and some of that state could leak to other
+compilation sessions if it is not protected. This issue was also called out
+when an experiment called [llvm-buildozer](https://reviews.llvm.org/D86351)
+was created.  The author was interested in multiple threads re-entering the
+main compiler entry point in an effort to reduce compilation times. The effort
+showed that the unsafe bits could be fixed up and made thread safe allowing
+the experiment to be built. I have not checked to see the thread safe fixed
+bits are in the current llvm source.
 
 * Cleanup between compiler invocations. Destroying a process and bringing it
 back up ensures that any state leaked or leftover from a previous compilation
