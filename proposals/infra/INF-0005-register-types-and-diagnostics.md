@@ -147,7 +147,7 @@ Firstly, below is some sample code that would cause the proposed diagnostics to 
 // UDTs with register bindings for resources that don't exist:
 //
 // - warn_hlsl_user_defined_type_missing_member
-// warning: binding type '%select{t|u|b|s|c}0' only applies to types containing '%select{srv resources|uav resources|constant buffer resources|sampler state|constant buffer data}0'
+// warning: binding type '%select{t|u|b|s|c}0' only applies to types containing '%select{srv resources|uav resources|constant buffer resources|sampler state|numeric types}0'
 struct Foo { float f; };
 Foo x : register(t0);
 // warning: binding type 't' only applies to types containing 'srv' resources.
@@ -156,19 +156,19 @@ Foo x : register(t0);
 // Mismatched register bindings:
 //
 // - err_hlsl_binding_type_mismatch
-// error: binding type '%select{t|u|b|s|c}0' only applies to '%select{srv resources|uav resources|constant buffer resources|sampler state|constant buffer data}0'
+// error: binding type '%select{t|u|b|s|c}0' only applies to '%select{srv resources|uav resources|constant buffer resources|sampler state|numeric variables in the global scope}0'
 float f : register(t0);
-// error: binding type 't' only applies to 'srv' resources.
+// error: binding type 't' only applies to 'srv' resources
 RWBuffer<float> f : register(c3);
-// error: binding type 'c' only applies to constant buffer data.
+// error: binding type 'c' only applies to numeric variables in the global scope
 //
 
 // Invalid binding types:
 //
 // err_hlsl_binding_type_invalid
-// error: binding type '%0' is invalid.
+// error: binding type '%0' is invalid
 float f : register(x0);
-// error: binding type 'x' is invalid.
+// error: binding type 'x' is invalid
 //
 
 // Multiple bindings with the same register type:
