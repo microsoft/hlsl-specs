@@ -178,32 +178,32 @@ struct Bar{
   RWBuffer<int> a;
   RWBuffer<int> b;
 };
-Bar x : register(t9) : register(t10);
+Bar x : register(u9) : register(u10);
 // error: binding type 'u' cannot be applied more than once
 //
 
 // Binding 'c' when it should be packoffset in non-global scope:
 //
 // - warn_hlsl_register_type_c_packoffset
-// warning: binding type 'c' ignored in buffer declaration. Did you mean 'pack_offset'?
+// warning: binding type 'c' ignored in buffer declaration. Did you mean 'packoffset'?
 cbuffer g_cbuffer { float f : register(c2); }
-// warning: binding type 'c' ignored in buffer declaration. Did you mean 'pack_offset'?
+// warning: binding type 'c' ignored in buffer declaration. Did you mean 'packoffset'?
 //
 
 // Binding 'b' ignored / being used in the legacy way:
 //
 // - warn_hlsl_deprecated_register_type_b
-// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type has been removed.
+// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type is no longer supported
 float f : register(b0);
-// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type has been removed.
+// warning: binding type 'b' only applies to constant buffers. The "bool constant" binding type is no longer supported
 //
 
 // Binding 'i' ignored (also wording):
 //
 // warn_hlsl_deprecated_register_type_i
-// warning: binding type 'i' ignored. The "integer constant" binding type has been removed
+// warning: binding type 'i' ignored. The "integer constant" binding type is no longer supported
 float f : register(i0);
-// warning: binding type 'i' ignored. The "integer constant" binding type has been removed
+// warning: binding type 'i' ignored. The "integer constant" binding type is no longer supported
 //
 ```
 
@@ -230,167 +230,14 @@ For each decl that contains this `AT_HLSLResourceBinding` attribute,
 `DiagnoseHLSLRegisterAttribute` is responsible for the analysis of the decl and the emission
 of the diagnostics described in this spec.
 
-### Analysis 
-
-All the compiler has to work with is a Decl object and the context the decl appears in.
-From this information, the first goal is to set some flags that can fully inform the 
-compiler of the right diagnostic to emit. The first group of flags are the variable type flags,
-which are either `Basic`, `Resource`, `UDT`, or `Other`. 
-`Basic` refers to a numeric or arithmetic variable type. `Other` refers to built-in HLSL object types
-(intangible types) that are not resources (e.g., `RayQuery`) and thus cannot be placed into
-a cbuffer or bound as a resource. It also refers to variables that are groupshared, and
-cannot be bound to any register. So, if `Other` is set, an error will always be emitted.
-The `Resource` flag is set when the variable type is a simple HLSL resource object, 
-with the `HLSLResourceClassAttr` attribute attached to the VarDecl.
-The `UDT` flag is set when the variable type is a UDT, and it has an associated flag,
-`ContainsNumeric`, which will be set if the UDT contains a numeric type.
-
-These variable type flags are all mutually exclusive, and are represented in the implementation
-as a set of boolean flags that are part of a struct, `RegisterBindingFlags`.
-
-The next group of flags are the resource class flags, which are `SRV`, `UAV`, `CBV`,
-or `Sampler`. For example, if the decl has the `HLSLResourceClassAttr` and the attribute
-indicates that the decl type is an SRV resource, then the `Resource` flag is set and the
-associated resource class flag `SRV` is set too. For UDTs, the `UDT` flag is set, and any
-resource class flags can be set if the associated resource is found contained within the UDT.
-
-The `DefaultGlobals` flag indicates whether or not the decl's value ends up inside the 
-`$Globals` constant buffer. It will not be set if the decl appears inside a cbuffer 
-or tbuffer. The `$Globals` constant buffer will only be filled with non-HLSL-Objects.
-
-Below is the complete list of flags, along with some examples, and which flags are set
-in each case.
-```
-Flags:
-  Resource,
-  UDT,
-  Other,
-  Basic,
-
-  SRV,
-  UAV,
-  CBV,
-  Sampler
-
-  ContainsNumeric
-  DefaultGlobals
-
-struct Foo {
-  RWBuffer<int> f;
-};
-
-// examples
-RWBuffer<int> r0 : register(u0); // resource (uav is set)
-Foo f0 : register(u1); // udt (Foo doesn't contain a numeric, so ContainsNumeric isn't set. UAV is set.)
-RayQuery<0> r1: register(t0); // other (error)
-float f1 : register (c0); // basic (ends up in $Globals constant buffer, so DefaultGlobals is set)
-```
-Below is some pseudocode to describe the flag-setting process:
-
-```
-if the decl is groupshared:
-  set other flag
-
-if the Decl is not inside a cbuffer or tbuffer:
-  if the Decl type is a numeric type:
-    set DefaultGlobals
-
-if the Decl is an HLSLBufferDecl:
-  set resource
-  if cbuffer: set cbv
-  else: set srv
-else if the Decl is a VarDecl:
-  if resource attribute: 
-    get resource attribute, set resource and corresponding resource class flag
-  else:
-    if Decl is vector, matrix, or otherwise numeric type:
-      set basic flag
-    else if Decl is struct or class type (if it is a udt):
-      set udt flag
-      recurse through members, set resource class flags that are found
-      set ContainsNumeric if the UDT contains a numeric member
-    else:
-      set other flag
-else:
-  raise error: (unknown decl type)
-```
-
-
-### Diagnostic emisison
-
-Now enough information has been gathered to determine the right diagnostics to emit, if any.
-The compiler will emit diagnostics by iterating over all Decl objects with a `register` annotation,
-and for each annotation, running `DiagnoseHLSLRegisterAttribute` once.
-
-All the warnings introduced in this spec were not emitted in legacy versions of the compiler.
-The warnings, `warn_hlsl_register_type_c_packoffset`,
-`warn_hlsl_deprecated_register_type_b`,
-`warn_hlsl_deprecated_register_type_i`, and
-`warn_hlsl_user_defined_type_missing_member`, are all within a warning group known as
-`DisallowLegacyBindingRules`. However, only `warn_hlsl_user_defined_type_missing_member` is not 
-treated as errors by default, the rest of the warnings are errors by default. If legacy behavior 
-is desired, a user can pass the `-Wno-disallow-legacy-binding-rules` flag to the compiler to silence 
-the errors and warnings.
-
-
-Here is some pseudocode summarizing the diagnostic emission process:
-
-```
-if the register type is invalid:
-  emit err_hlsl_binding_type_invalid
-
-if Other is set:
-  emit err_hlsl_binding_type_mismatch
-
-if multiple register annotations exist:
-  if any pair of register annotations share the same register type:
-    emit err_hlsl_duplicate_register_annotation
-
-if Resource is set:
-  if register type does not match resource class flag:
-    emit err_hlsl_binding_type_mismatch
-
-if Basic is set:
-  if DefaultGlobals is set:
-    if register type is 'b' or 'i':
-      emit warn_hlsl_deprecated_register_type_b or warn_hlsl_deprecated_register_type_i respectively
-
-  if register type is 'c'
-    if DefaultGlobals is not set:
-      emit warn_hlsl_register_type_c_packoffset
-  else if register type is 't' 'u' or 's':
-    emit err_hlsl_binding_type_mismatch
-  else: emit err_hlsl_binding_type_invalid
-
-if UDT is set:
-  if register type is t:
-    if SRV is not set:
-      emit warn_hlsl_user_defined_type_missing_member
-  else if register type is u:
-    if UAV is not set:
-      emit warn_hlsl_user_defined_type_missing_member
-  else if register type is b:
-    if CBV is not set:
-      emit warn_hlsl_user_defined_type_missing_member
-  else if register type is s:
-    if Sampler is not set:
-      emit warn_hlsl_user_defined_type_missing_member
-  else if register type is c:
-    if ContainsNumeric is not set:
-      emit warn_hlsl_user_defined_type_missing_member
-  else
-    emit err_hlsl_binding_type_invalid  
-```
 
 ## Behavioral Differences
 
 This infrastructure will introduce some behavioral differences between `clang` and `dxc`.
-The whole approach of setting flags based on decl characteristics and using them
-to drive diagnostics is an approach that wasn't taken in DXC. Secondly, as mentioned above, 
-the `disallow-legacy-binding-rules` warning group did not exist in `dxc`, and neither
+The `disallow-legacy-binding-rules` warning group did not exist in `dxc`, and neither
 did any of the warnings that are contained in that group. Those warnings are being 
-introduced to `clang-dxc`. Many of these warnings will be treated as errors, causing some
-HLSL source to fail compilation in `clang-dxc` that would otherwise pass in `dxc`. 
+introduced to `clang`. Many of these warnings will be treated as errors, causing some
+HLSL source to fail compilation in `clang` that would otherwise pass in `dxc`. 
 Another difference is that some of these errors will occur earlier in the compilation
 pipeline compared to `dxc`. For example, in `dxc`, the equivalent of the
 `err_attribute_wrong_decl_type_str` error would be emitted at code gen (this error is emitted
