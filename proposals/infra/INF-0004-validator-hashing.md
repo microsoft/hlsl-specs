@@ -227,7 +227,7 @@ CComPtr<ID3D12BytecodeOptions> pBytecodeOptions;
 pDevice->QueryInterface(&pBytecodeOptions);
 pBytecodeOptions->SetBytecodeValidationFlags(D3D12_BYTECODE_FLAG_VALIDATE_ALL_RELEASE_BYTECODE);
 
-// All subsequent bytecode passed to he runtime and debug layer for creating state objects / PSOs etc. 
+// All subsequent bytecode passed to the runtime and debug layer for creating state objects / PSOs etc. 
 // will be validated.  If a validator implementation can't be located, the state creation will fail.
 ```
 
