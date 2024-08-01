@@ -26,8 +26,8 @@ The solution to this problem is to add a new class,
 `vk::khr::CooperativeMatrix`, which will be defined in a header file
 "vk/khr/cooperative_matrix.h". This class will create an object with SPIR-V type
 `OpTypeCooperativeMatrixKHR`. Functions are added that will expose the SPIR-V
-the operations that take cooperative matrices as operands. All functions are
-defined to match the corresponding operations in the
+operations that take cooperative matrices as operands. All functions are defined
+to match the corresponding operations in the
 (SPV_KHR_cooperative_matrix)[https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_cooperative_matrix.html]
 extension.
 
@@ -44,9 +44,9 @@ the SPIR-V specification. The required enums will be defined in "vk/spirv.h".
 
 ### `vk::khr::CooperativeMatrix`
 
-The `CooperativeMatrix` class will defined in a header file as a wrapper around
-a `vk::SpirvType` that will expand to the appropriate SPIR-V type. This class
-will have the following interface.
+The `CooperativeMatrix` class will be defined in a header file as a wrapper
+around a `vk::SpirvType` that will expand to the appropriate SPIR-V type. This
+class will have the following interface.
 
 ```c++
 
@@ -146,7 +146,7 @@ class CooperativeMatrix {
        MemoryAccessMask memoryAccessMask = MemoryAccessMaskNone);
 
   // Constructs a cooperative matrix with all values initialized to v. Note that
-  // all active threads must have the same value for v.
+  // all threads in scope must have the same value for v.
   static CooperativeMatrix Splat(ComponentType v);
 
   // Returns the result of OpCooperativeMatrixLengthKHR on the current type.￼
@@ -224,7 +224,7 @@ The header file will check that the targeted Vulkan version is at least Vulkan
 
 Interactions with other HLSL features are implicitly compiler errors. The
 interface enforces all SPIR-V validation rules, and the compiler will issue
-errors if these rules are voilated.
+errors if these rules are violated.
 
 This will be tested by adding SPIR-V codegen tests that will verify that the
 correct code is generated when the header file is used.
