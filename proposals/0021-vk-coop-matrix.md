@@ -24,20 +24,21 @@ matrices. This is a useful feature that users would like to use.
 
 The solution to this problem is to add a new class,
 `vk::khr::CooperativeMatrix`, which will be defined in a header file
-"vk/khr/cooperative_matrix.h". This class will create an object with Spir-V type
-`OpTypeCooperativeMatrixKHR`. Functions are added that will expose the Spir-V
+"vk/khr/cooperative_matrix.h". This class will create an object with SPIR-V type
+`OpTypeCooperativeMatrixKHR`. Functions are added that will expose the SPIR-V
 the operations that take cooperative matrices as operands. All functions are
 defined to match the corresponding operations in the
 (SPV_KHR_cooperative_matrix)[https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_cooperative_matrix.html]
 extension.
 
-To help implement `vk::khr::CooperativeMatrix`, we will also introduce a utility
-class `vk::util::ArithmeticSelector`. This class will be defined in a header
-file "vk/util/arithmetic_selector.h". It can be used to generate inline Spir-V
-arithmetic instructions with the correct opcode for the type.
+To help implement `vk::khr::CooperativeMatrix`, we will also introduce utility
+classes `vk::util::ArithmeticSelector` and `vk::util::ConversionSelector`. This
+class will be defined in a header file "vk/opcode_selector.h". They can be used
+to generate inline SPIR-V arithmetic and conversion instructions with the
+correct opcode for the types.
 
 The interface for `vk::khr::CooperativeMatrix` uses enums that are defined in
-the Spir-V specification. The required enums will be defined in "vk/spirv.h".
+the SPIR-V specification. The required enums will be defined in "vk/spirv.h".
 
 ## Detailed design
 
@@ -80,65 +81,73 @@ class CooperativeMatrix {
   // Apply OpMatrixTimesScalar in a element by element manner.
   CooperativeMatrix operator*(ComponentType scalar);
 
-  // Note: The SPIR-V specification allows the load and store function to access
-  // workgroup data (groupshared in HLSL). This call does not accept group
-  // shared data because HLSL cannot pass the groupshared array by reference. It
-  // is impossible to implement a function that will load and store from group
-  // sharded data. This can be revisited when references are added to HLSL.
+  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to
+  // data using the given memory layout, stride, and memory access mask.
+  //
+  // This function uses a SPIR-V pointer because HLSL does not allow grouphsared
+  // memory object to be passed by reference. The pointer is a hack to get
+  // around that.
+  template <MemoryAccessMask memoryAccessMask, class Type>
+  void Store(WorkgroupSpirvPointer<Type> data, CooperativeMatrixLayout layout,
+             uint32_t stride);
 
-  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to data[i]
-  // using memory layout RowMajorKHR.￼
+  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
   template <class Type>
-  void StoreRowMajor(RWStructuredBuffer<Type> data, uint32_t index);
+  void Store(WorkgroupSpirvPointer<Type> data, CooperativeMatrixLayout layout,
+             uint32_t stride);
 
-  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to data[i]
-  // using memory layout ColumnMajorKHR.￼
-  template <class Type>
-  void StoreColumnMajor(RWStructuredBuffer<Type> data, uint32_t index);
+  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to
+  // data[index] using the given memory layout, stride, and memory access mask.
+  template <MemoryAccessMask memoryAccessMask, class Type>
+  void Store(RWStructuredBuffer<Type> data, uint32_t index,
+             CooperativeMatrixLayout layout, uint32_t stride);
 
-  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to data[i]
-  // using memory layout RowMajorKHR and the given stride and memory access
-  // mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
   template <class Type>
-  void StoreRowMajor(RWStructuredBuffer<Type> data, uint32_t index,
-                     uint32_t stride, MemoryAccessMask memoryAccessMask);
+  void Store(RWStructuredBuffer<Type> data, uint32_t index,
+             CooperativeMatrixLayout layout, uint32_t stride)
 
-  // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to data[i]
-  // using memory layout ColumnMajorKHR and the given stride and memory access
-  // mask.
+  // Loads a cooperative matrix using OpCooperativeMatrixStoreKHR from
+  // data using the given memory layout, stride, and memory access mask.
+  //
+  // This function uses a SPIR-V pointer because HLSL does not allow grouphsared
+  // memory object to be passed by reference. The pointer is a hack to get
+  // around that.
+  template <MemoryAccessMask memoryAccessMask, class Type>
+  static CooperativeMatrix Load(WorkgroupSpirvPointer<Type> data,
+                                CooperativeMatrixLayout layout,
+                                uint32_t stride);
+
+  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
   template <class Type>
-  void StoreColumnMajor(RWStructuredBuffer<Type> data, uint32_t index,
-                        uint32_t stride, MemoryAccessMask memoryAccessMask);
+  static CooperativeMatrix Load(WorkgroupSpirvPointer<Type> data,
+                                CooperativeMatrixLayout layout,
+                                uint32_t stride);
+
+  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
+  // data[index] using the given memory layout, stride, and memory access mask.
+  template <MemoryAccessMask memoryAccessMask, class Type>
+  static CooperativeMatrix Load(RWStructuredBuffer<Type> data, uint32_t index,
+                                CooperativeMatrixLayout layout,
+                                uint32_t stride);
+
+  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  template <class Type>
+  static CooperativeMatrix Load(RWStructuredBuffer<Type> data, uint32_t index,
+                                CooperativeMatrixLayout layout,
+                                uint32_t stride);
+
+  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
+  // data[index] using the given memory layout, stride, and memory access mask.
+  template <class Type>
+  static CooperativeMatrix
+  Load(StructuredBuffer<Type> data, uint32_t index,
+       CooperativeMatrixLayout layout, uint32_t stride,
+       MemoryAccessMask memoryAccessMask = MemoryAccessMaskNone);
 
   // Constructs a cooperative matrix with all values initialized to v. Note that
   // all active threads must have the same value for v.
-  static CooperativeMatrix splat(ComponentType v);
-
-  // Load the cooperative matrix using OpCooperativeMatrixLoadKHR from data[i]
-  // using memory layout RowMajorKHR.
-  template <class BufferType>
-  static CooperativeMatrix LoadRowMajor(BufferType buffer, uint32_t index);
-
-  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from data[i]
-  // using memory layout ColumnMajorKHR.￼
-  template <class BufferType>
-  static CooperativeMatrix LoadColumnMajor(BufferType buffer, uint32_t index);
-
-  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from data[i]
-  // using memory layout RowMajorKHR, and the given stride and memory access
-  // mask.
-  template <class BufferType>
-  static CooperativeMatrix
-  LoadRowMajor(BufferType buffer, uint32_t index, uint32_t stride,
-               MemoryAccessMask memoryAccessMask = MemoryAccessMaskNone);
-
-  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from data[i]
-  // using memory layout ColumnMajorKHR, and the given stride and memory access
-  // mask.
-  template <class BufferType>
-  static CooperativeMatrix
-  LoadColumnMajor(BufferType buffer, uint32_t index, uint32_t stride,
-                  MemoryAccessMask memoryAccessMask = MemoryAccessMaskNone);
+  static CooperativeMatrix Splat(ComponentType v);
 
   // Returns the result of OpCooperativeMatrixLengthKHR on the current type.￼
   static uint32_t GetLength();
@@ -217,8 +226,45 @@ Interactions with other HLSL features are implicitly compiler errors. The
 interface enforces all SPIR-V validation rules, and the compiler will issue
 errors if these rules are voilated.
 
-This will be tested by adding Spir-V codegen tests that will verify that the
+This will be tested by adding SPIR-V codegen tests that will verify that the
 correct code is generated when the header file is used.
+
+#### Design decisions
+
+1.  HLSL does not allow constructors. When constructors are added, it will be
+    useful to add constructors for conversions and splat.
+2.  HLSL does not allow certain arithmetic operators to be overloaded, so we
+    could not use those. We have implemented all that we are able to implement.
+3.  The memory operations are limited to groupshared, RWStructuredBuffer, and
+    StructuredBuffers.
+4.  Loads from groupshared require getting the address using
+    `vk::GetGroupSharedAddress` because HLSL does not allow arrays to be passed
+    by reference. This is worked around by defining an opaque pointer type that
+    does not have to be explicitly laid out.
+5.  We do not have loads from cbuffer because they cannot be passed by
+    reference. Also, the compiler will not be able to apply the correct layout
+    to the opaque pointer, so the workaround used for groupshared variables will
+    not work in general.
+6.  The `GetLength()` cannot be implemented using a `vk::ext_instruction`
+    function because the opcode expects an id of a type, and that cannot be
+    defined in inline SPIR-V.
+7.  The `Get` and `Set` functions are used instead of `operator[]` because
+    `operator[]` returns a reference, which is not available in HLSL.
+8.  We chose to default the memory operand on the load and store function to
+    None. This choice was arbitrary. DXC does not support the Vulkan memory
+    model, so we do not add MakePointerAvailableKHR and NonPrivatePointerKHR by
+    default.
+9.  For the multiply-add function, we preferred to avoid flag parameters, and we
+    added multiple versions of the function. We feel this provides better
+    readability. If we were to pass the operand as a parameter, it would have to
+    be a template parameter. The call to the builtin requires a literal, and
+    compilation fails if it is passed as a function parameter.
+10. The memory access mask on loads and stores is passed in using a template for
+    the same reason. We did not want to add multiple versions of the function
+    because there are too many combinations. This limits the memory operands to
+    a single operand, so values like `Aligned` that require an extra operand
+    following the mask cannot be represented. This is a limitation because we
+    cannot have variable arguments to `vk::ext_instruction` functions.
 
 ### `vk::utils::ArithmeticSelector`
 
@@ -285,7 +331,37 @@ There will be template specializations for all pairs of the following types:
 *   `int64_t`
 *   `uint64_t`
 
-### Spir-V enums
+### SPIR-V pointers
+
+To be able to pass a GroupShared array by reference, we introduce a new type and
+function to `vk/spirv.h`.
+
+~~~
+template <typename T>
+vk::WorkgroupSpirvPointer
+````
+
+This is a type with no members. An instance of this type can be created by calling
+
+~~~
+
+template <typename T> WorkgroupSpirvPointer<T>
+GetGroupSharedAddress([[vk::ext_reference]] T v); ```
+
+where `v` must be a object in GroupShared memory.
+
+For example,
+
+```
+groupshared float shared_data[64];
+...
+WorkgroupSpirvPointer<float> scalar_ptr = vk::GetGroupSharedAddress(shared_data[0]);
+WorkgroupSpirvPointer<float[64]> array_ptr = vk::GetGroupSharedAddress(shared_data);
+```
+
+Then the resulting pointers can be used in the Load and Store functions.
+
+### SPIR-V enums
 
 In the header file "vk/spirv.h", the following enums are defined in the `vk`
 namespace:
@@ -340,6 +416,10 @@ enum Scope {
   ScopeQueueFamilyKHR = 5,
   ScopeShaderCallKHR = 6,
   ScopeMax = 0x7fffffff,
+};
+
+enum StorageClass {
+  StorageClassWorkgroup = 4,
 };
 ```
 
