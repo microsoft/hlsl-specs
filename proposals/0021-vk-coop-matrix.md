@@ -6,7 +6,7 @@
 *   Author(s): [Steven Perron](https://github.com/s-perron)
 *   Sponsor: TBD
 *   Status: **Accepted**
-*   Required Version: Vulkan 1.1
+*   Required Version: Vulkan 1.3
 *   PRs: [#6720](https://github.com/microsoft/DirectXShaderCompiler/pull/6720)
 
 ## Introduction
