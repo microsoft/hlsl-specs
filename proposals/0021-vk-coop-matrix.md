@@ -251,9 +251,7 @@ correct code is generated when the header file is used.
 7.  The `Get` and `Set` functions are used instead of `operator[]` because
     `operator[]` returns a reference, which is not available in HLSL.
 8.  We chose to default the memory operand on the load and store function to
-    None. This choice was arbitrary. DXC does not support the Vulkan memory
-    model, so we do not add MakePointerAvailableKHR and NonPrivatePointerKHR by
-    default.
+    None. This choice was arbitrary. 
 9.  For the multiply-add function, we preferred to avoid flag parameters, and we
     added multiple versions of the function. We feel this provides better
     readability. If we were to pass the operand as a parameter, it would have to
