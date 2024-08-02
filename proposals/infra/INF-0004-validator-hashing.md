@@ -3,7 +3,8 @@
 # Validator Hashing
 
 * Proposal: [INF-0004](INF-0004-validator-hashing.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz),
+*            [Amar Patel](https://github.com/amarpMSFT)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Accepted**
 
@@ -111,10 +112,10 @@ for the DDI for any shader that contains a sentinel value for its hash.
 
 The table below describes the initial proposed sentinel values:
 
-| Name       | Hash                             |
-|------------|----------------------------------|
-| BYPASS     | 01010101010101010101010101010101 |
-| PREVIEW    | 02020202020202020202020202020202 |
+| Name              | Hash                             |
+|-------------------|----------------------------------|
+| BYPASS            | 01010101010101010101010101010101 |
+| PREVIEW_BYPASS    | 02020202020202020202020202020202 |
 
 ### Hashing for Pre-release Shader Models
 
@@ -123,42 +124,9 @@ should be that all shaders are validated and hashed using what is today the
 internal validator.
 
 For pre-release shader models DXC should run the validator, but it should not
-apply the hash. Instead it should apply the `PREVIEW` sentinel value from the
-table above. This allows us to differentiate between shaders validated by a
-"final" validator.
-
-### Changes for D3D
-
-A future AgilitySDK will adopt runtime changes to how and when the shader hash
-is validated and add support for DXIL validation in the debug layer and runtime.
-
-For shaders with the `PREVIEW` hash, the shader is allowed to execute only if
-developer mode and the experimental feature D3D12ExperimentalShaderModels is
-enabled, otherwise the runtime will produce an error.
-
-For shaders with the `BYPASS` hash, the new behavior will allow shaders to run
-without validating the hash regardless of whether the machine is in developer
-mode as long as the shader targets a supported non-experimental shader model.
-
-All other values of the hash will be assumed to be real hash values.
-
-For shaders that contain a real hash value, the behavior is unchanged. The hash
-will be verified and the shader will execute as it does with existing versions
-of the runtime.
-
-> Note: an important behavior change here is that shaders with zero'd hash data
-> will always be treated as invalid by the runtime and rejected.
-
-There will be support for DXIL validation in the debug layer when dxil.dll is
-present, printing any errors found, but letting the shader through. This
-validation likely will default to being enabled for shaders that use the
-`BYPASS` hash. Shaders with the `PREVIEW` hash will default to validation off,
-since the DXIL validator will be assumed to not be final. The defaults will be
-able to be overridden by the app.
-
-Similarly the runtime could also support performing DXIL validation that fails
-shader creation if an error is found. It would support similar app controls as
-the debug layer, except defaulting to validation off.
+apply the hash. Instead it should apply the `PREVIEW_BYPASS` sentinel value 
+from the table above. This allows us to differentiate between shaders validated 
+by a "final" validator.
 
 ### Compatibility
 
@@ -194,6 +162,92 @@ takes years. It is extremely unlikely that a product would use a
 multiple-year-old preview compiler for generating final compiled shaders for a
 title. The high rate of bugs in preview compilers contributes to making this
 even less likely.
+
+## Detailed Design
+
+### D3D Runtime Behavior
+
+Starting with AgilitySDK version TBD, the runtime adopts new behavior for how 
+and when the shader hash is validated, including support for bytecode validation 
+in the debug layer.
+
+For shaders with the `PREVIEW_BYPASS` hash, the shader is allowed to execute 
+only if developer mode and the experimental feature 
+`D3D12ExperimentalShaderModels` is enabled, otherwise the runtime will produce
+an error.
+
+For shaders with the `BYPASS` hash, shaders can run without validating the hash 
+regardless of whether the machine is in developer mode as long as the shader 
+targets a supported non-experimental shader model.
+
+All other values of the hash are assumed to be real hash values.
+
+For shaders that contain a real hash value, the behavior is unchanged. The hash
+is verified and the shader executes as it does with existing versions of the 
+runtime.
+
+> Note: an important behavior change here is that shaders with zero'd hash data
+> will always be treated as invalid by the runtime and rejected.
+> 
+> We have an exception to allow for legacy zero'd hash shaders. These were built
+> using earlier previews and so they're treated as if they had the `PREVIEW_BYPASS` hash set,
+> except that the validator will not be invoked on them since this wasn't expected at the time
+> they were generated. This exception will be removed once runtimes that support these preview 
+> shaders are no longer supported.
+
+#### D3D Debug Layer Validation Control
+
+Apps can configure how the debug layer runtime validates bytecode passed to it. 
+
+The validation is the same code the compiler uses when it endorses bytecode at 
+compile time by applying a hash.  A copy of this validation code is in 
+the debug layer for it to use.  So it would typically be 
+redundant to validate again, but it can be useful to validate shaders that have 
+the `BYPASS` or `PREVIEW_BYPASS` hash, or have the option to force validation. 
+
+If the debug layer finds errors when running the bytecode validator it only 
+reports messages, but doesn't fail shader creation.
+
+The validation mode can be configured via ID3D12DebugDevice1::SetDebugParameter()`:
+
+```C++
+typedef enum D3D12_DEBUG_DEVICE_PARAMETER_TYPE
+{
+    ...
+    D3D12_DEBUG_DEVICE_PARAMETER_BYTECODE_VALIDATION_MODE   
+} D3D12_DEBUG_DEVICE_PARAMETER_TYPE;
+
+typedef enum D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE
+{
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_DISABLED,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE_DEFAULT = 
+        D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED
+} D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE;
+```
+
+Flag | Definition
+---|---
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_DISABLED` | Never invoke bytecode validation.
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED` | Only validate bytecode that has the `BYPASS` or `PREVIEW_BYPASS` hash.  This is the default.
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE` | Validate all bytecode regardless of hash.  Forcing validation this way could be useful if shaders that might have been hashed manually without the compiler's validator.
+
+Usage example:
+
+```C++
+CComPtr<ID3D12DebugDevice1> pDebugDevice;
+pDevice->QueryInterface(&pDebugDevice); // available when debug layer enabled
+pDebugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_BYTECODE_VALIDATION_MODE, D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE);
+
+// All subsequent bytecode passed to the debug layer for creating state objects / PSOs etc. 
+// will be validated.
+```
+
+This control is not thread safe or synchronized with other device methods 
+such as creating shaders where the options would apply.  Apps must do their 
+own synchronization around changing the validation mode and making calls to any 
+other device methods if necessary.
 
 ## Appendix 1: DXIL Hashing Algorithm
 
