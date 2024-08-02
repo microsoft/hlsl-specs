@@ -189,12 +189,11 @@ runtime.
 > Note: an important behavior change here is that shaders with zero'd hash data
 > will always be treated as invalid by the runtime and rejected.
 > 
-> An exception is for a period of time already existing preview shaders that used 
-> zero'd hash data will be treated like having the `PREVIEW_BYPASS` hash in that
-> preview runtimes will allow them to be used, at least until those preview shaders
-> and runtimes are no longer supported.  In contrast to `PREVIEW_BYPASS` shaders,
-> these legacy zero'd has shaders will not run have the validator invoked on them
-> by the runtime/debug layer since that wasn't expected of them.
+> We have an exception to allow for legacy zero'd hash shaders. These were built
+> using earlier previews and so they're treated as if they had the `PREVIEW_BYPASS` hash set,
+> except that the validator will not be invoked on them since this wasn't expected at the time
+> they were generated. This exception will be removed once runtimes that support these preview 
+> shaders are no longer supported.
 
 #### D3D Debug Layer Validation Control
 
