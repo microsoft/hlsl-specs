@@ -133,18 +133,10 @@ by a "final" validator.
 A new `IDxcValidator` API flag is needed to avoid container hashing and
 unnecessary overhead when used by runtime validation.
 
-Proposed change to flags in `dxcapi.h`:
-
-```cpp
- static const UINT32 DxcValidatorFlags_Default = 0;
- static const UINT32 DxcValidatorFlags_InPlaceEdit =
-    1; // Validator is allowed to update shader blob in-place.
- static const UINT32 DxcValidatorFlags_RootSignatureOnly = 2;
- static const UINT32 DxcValidatorFlags_ModuleOnly = 4;
-+static const UINT32 DxcValidatorFlags_SkipHash =
-+    8; // Skip hash update; no modification or copy of input blob.
- static const UINT32 DxcValidatorFlags_ValidMask = 0xF;
-```
+Propose adding `DxcValidatorFlags_SkipHash = 8` flag to `dxcapi.h`.  This will
+indicate to the validator that container hashing is not requested, avoiding an
+extra copy of the shader and the hashing operation, which is not needed for
+runtime or sdklayers use cases.
 
 The runtime attempts to use the `DxcValidatorFlags_ValidMask` flag,
 and if it sees `E_INVALIDARG` from running on an old validator falls
