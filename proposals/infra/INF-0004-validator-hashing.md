@@ -142,6 +142,43 @@ The runtime attempts to use the `DxcValidatorFlags_SkipHash` flag,
 and if it sees `E_INVALIDARG` from running on an old validator falls
 back to not specifying the flag, at the cost of extra overhead.
 
+### Compatibility
+
+This proposal is fully backwards compatible to older shader models since the
+existing runtime hash validation applies except when experimental shader models
+are enabled.
+
+When this change is introduced to DXC all shaders compiled by DXC will either
+contain a valid hash, contain the `PREVIEW` hash, or fail validation and not
+produce an output.
+
+The only exception will be the case where validation is intentionally disabled
+(as with the `-Vd`) flag. In that case the hash data in the container will be
+zero'd.
+
+### Concerns About Invalid DXIL
+
+As this proposal has been discussed concerns have been raised about allowing
+invalid DXIL into the runtime. Due to existing use cases that bypass validation
+and the ready availability of the DXIL hash, non-validated DXIL is already going
+into the runtime and drivers.
+
+The primary concern expressed from external partners was that driver developers
+would needlessly spend time chasing bugs that prove to be caused by invalid
+DXIL. The concerned parties agreed that the D3D runtime running DXIL validation
+in the debug layer would provide sufficient tooling to mitigate that concern.
+
+A separate concern was raised about the possibility that pre-release shader
+model features could infiltrate production shaders. While the changes in this
+proposal may seem to make that more likely, this is unlikely to be a significant
+concern. Adoption of new shader model features in production software generally
+takes years. It is extremely unlikely that a product would use a
+multiple-year-old preview compiler for generating final compiled shaders for a
+title. The high rate of bugs in preview compilers contributes to making this
+even less likely.
+
+## Detailed Design
+
 ### D3D Runtime Behavior
 
 Starting with AgilitySDK version TBD, the runtime adopts new behavior for how 
@@ -250,41 +287,6 @@ pBytecodeOptions->SetBytecodeValidationFlags(D3D12_BYTECODE_FLAG_VALIDATE_ALL_RE
 // All subsequent bytecode passed to the runtime and debug layer for creating state objects / PSOs etc. 
 // will be validated.  If a validator implementation can't be located, the state creation will fail.
 ```
-
-### Compatibility
-
-This proposal is fully backwards compatible to older shader models since the
-existing runtime hash validation applies except when experimental shader models
-are enabled.
-
-When this change is introduced to DXC all shaders compiled by DXC will either
-contain a valid hash, contain the `PREVIEW` hash, or fail validation and not
-produce an output.
-
-The only exception will be the case where validation is intentionally disabled
-(as with the `-Vd`) flag. In that case the hash data in the container will be
-zero'd.
-
-### Concerns About Invalid DXIL
-
-As this proposal has been discussed concerns have been raised about allowing
-invalid DXIL into the runtime. Due to existing use cases that bypass validation
-and the ready availability of the DXIL hash, non-validated DXIL is already going
-into the runtime and drivers.
-
-The primary concern expressed from external partners was that driver developers
-would needlessly spend time chasing bugs that prove to be caused by invalid
-DXIL. The concerned parties agreed that the D3D runtime running DXIL validation
-in the debug layer would provide sufficient tooling to mitigate that concern.
-
-A separate concern was raised about the possibility that pre-release shader
-model features could infiltrate production shaders. While the changes in this
-proposal may seem to make that more likely, this is unlikely to be a significant
-concern. Adoption of new shader model features in production software generally
-takes years. It is extremely unlikely that a product would use a
-multiple-year-old preview compiler for generating final compiled shaders for a
-title. The high rate of bugs in preview compilers contributes to making this
-even less likely.
 
 ## Appendix 1: DXIL Hashing Algorithm
 
