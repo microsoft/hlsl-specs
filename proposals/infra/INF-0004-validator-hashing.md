@@ -217,28 +217,28 @@ typedef enum D3D12_DEBUG_DEVICE_PARAMETER_TYPE
     D3D12_DEBUG_DEVICE_PARAMETER_BYTECODE_VALIDATION_MODE   
 } D3D12_DEBUG_DEVICE_PARAMETER_TYPE;
 
-typedef enum D3D12_BYTECODE_VALIDATE_MODE
+typedef enum D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE
 {
-    D3D12_BYTECODE_VALIDATE_DISABLED,
-    D3D12_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED,
-    D3D12_BYTECODE_VALIDATE_ALL_BYTECODE,
-    D3D12_BYTECODE_VALIDATE_MODE_DEFAULT = 
-        D3D12_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED
-} D3D12_BYTECODE_VALIDATE_MODE;
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_DISABLED,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE,
+    D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE_DEFAULT = 
+        D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED
+} D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_MODE;
 ```
 
 Flag | Definition
 ---|---
-`D3D12_BYTECODE_VALIDATE_DISABLED` | Never invoke bytecode validation.
-`D3D12_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED` | Only validate bytecode that has the `BYPASS` or `PREVIEW_BYPASS` hash.  This is the default.
-`D3D12_BYTECODE_VALIDATE_ALL_BYTECODE` | Validate all bytecode regardless of hash.  Forcing validation this way could be useful if shaders that might have been hashed manually without the compiler's validator.
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_DISABLED` | Never invoke bytecode validation.
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_WHEN_HASH_BYPASSED` | Only validate bytecode that has the `BYPASS` or `PREVIEW_BYPASS` hash.  This is the default.
+`D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE` | Validate all bytecode regardless of hash.  Forcing validation this way could be useful if shaders that might have been hashed manually without the compiler's validator.
 
 Usage example:
 
 ```C++
 CComPtr<ID3D12DebugDevice1> pDebugDevice;
 pDevice->QueryInterface(&pDebugDevice); // available when debug layer enabled
-pDebugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_BYTECODE_VALIIDATION_MODE, D3D12_BYTECODE_VALIDATE_ALL_BYTECODE);
+pDebugDevice->SetDebugParameter(D3D12_DEBUG_DEVICE_PARAMETER_BYTECODE_VALIDATION_MODE, D3D12_DEBUG_DEVICE_BYTECODE_VALIDATE_ALL_BYTECODE);
 
 // All subsequent bytecode passed to the debug layer for creating state objects / PSOs etc. 
 // will be validated.
