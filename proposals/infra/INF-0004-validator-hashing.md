@@ -138,7 +138,7 @@ indicate to the validator that container hashing is not requested, avoiding an
 extra copy of the shader and the hashing operation, which is not needed for
 runtime or sdklayers use cases.
 
-The runtime attempts to use the `DxcValidatorFlags_ValidMask` flag,
+The runtime attempts to use the `DxcValidatorFlags_SkipHash` flag,
 and if it sees `E_INVALIDARG` from running on an old validator falls
 back to not specifying the flag, at the cost of extra overhead.
 
