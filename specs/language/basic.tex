@@ -289,6 +289,37 @@ completed. The \texttt{void} type is used to signify the return type of a
 function that returns no value. Any expression can be explicitly converted to
 \texttt{void}.
 
+\Sub{Scalarized Type Compatability}{Basic.types.scalarized}
+
+\p All types \texttt{T} have a \textit{scalarized representation}, \(SR(T)\),
+which is a list of one or more types representing each scalar element of
+\texttt{T}.
+
+\p Scalarized representations are determined as follows:
+\begin{itemize}
+\item The scalarized representation of an array \texttt{T[n]} is \(SR(T_0), ..
+SR(T_n)\).
+
+\item The scalarized representation of a vector \texttt{vector<T,n>} is \(SR(T_0),
+.. SR(T_n)\).
+
+\item The scalarized representation of a class type \texttt{T}, \(SR(T)\) is
+computed recursively as \(SR(T::base), SR(T::_0), .. SR(T::_n)\) where
+\texttt(T::base) is \texttt{T}'s base class if it has one, and \(T::_n\)
+represents the \textit{n} non-static members of \texttt{T}.
+
+\item The scalarized representation for an enumeration type is the underlying
+arithmetic type.
+
+\item The scalarized representation for arithmetic, intangible types, and any other
+type \texttt{T} is \(T\).
+\end{itemize}
+
+\p Two types \textit{cv1} \texttt{T1} and \textit{cv2} \texttt{T2} are
+\textit{scalar-layout-compatible types} if \texttt{T1} and \texttt{T2} are the same
+type or if the sequence of types defined by the scalar representation \(SR(T1)\)
+and scalar representation \(SR(T2)\) are identical.
+
 \Sec{Lvalues and rvalues}{Basic.lval}
 
 \p Expressions are classified by the type(s) of values they produce. The valid
