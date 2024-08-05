@@ -228,6 +228,10 @@ be defined to have an \textit{incomplete} type.
 template are \textit{vector types}. Vector lengths must be between 1 and 4 (i.e.
 \( 1 \leq N \leq 4 \) ).
 
+\p Matrices of scalar types declared with the built-in \texttt{matrix<T,N,M>}
+template are \textit{matrix types}. Matrix dimensions, \texttt{N} and
+\texttt{M}, must be between 1 and 4 (i.e. \( 1 \leq N \leq 4 \) ).
+
 \Sub{Arithmetic Types}{Basic.types.arithmetic}
 
 \p There are three \textit{standard signed integer types}: \texttt{int16\_t},
@@ -300,8 +304,11 @@ which is a list of one or more types representing each scalar element of
 \item The scalarized representation of an array \texttt{T[n]} is \(SR(T_0), ..
 SR(T_n)\).
 
-\item The scalarized representation of a vector \texttt{vector<T,n>} is \(SR(T_0),
-.. SR(T_n)\).
+\item The scalarized representation of a vector \texttt{vector<T,n>} is \(T_0,
+.. T_n\).
+
+\item The scalarized representation of a matrix \texttt{matrix<T,n, m>} is
+\(T_0, .. T_{n \times m}\).
 
 \item The scalarized representation of a class type \texttt{T}, \(SR(T)\) is
 computed recursively as \(SR(T::base), SR(T::_0), .. SR(T::_n)\) where
