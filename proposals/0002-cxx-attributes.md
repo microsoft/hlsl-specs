@@ -124,4 +124,65 @@ Below are a few more examples of C++ attributes that we could support:
     }
   }
 ```
+## Detailed design
+
+The simplest explanation of this feature is supporting C++11 attribute syntax on
+all shared grammar elements between HLSL and C++. This spec attempts to detail
+some of the grammar and parsing implications and will specify the process by
+which existing attributes will convert to C++ attributes.
+### Attribute Parsing
+
+This proposal introduces new grammar formulations for parsing attributes
+matching some formulations from C++ `dcl.attr.grammar`. Specifically:
+
+```ebnf
+attribute-specifier-seq:    [ attribute-specifier-seq ], attribute-specifier
+attribute-specifier:        "[" , "[" , attribute-list , "]" , "]"
+attribute-list:             [ attribute ] ||
+                            attribute-list , "," , [attribute] ||
+                            { attribute } ||
+                            attribute-list ,  "," , { attribute }
+attribute:                  attribute-token , [attribute-argument-clause]
+attribute-token:            identifier ||
+                            attribute-scoped-token
+attribute-scoped-token:     attribute-namespace , "::" , identifier
+attribute-namespace:        identifier
+attribute-argument-clause:  "(" , balanced-token-seq , ")"
+balanced-token-seq:         [ balanced-token ] ||
+                            balanced-token-seq , balanced-token
+balanced-token:             "(" , balanced-token-seq , ")"
+                            "[" , balanced-token-seq , "]"
+                            "{" , balanced-token-seq , "}"
+```
+
+In contrast to existing HLSL annotations and Microsoft-style attributes, these
+attribute identifiers are case-sensitive `identifier` tokens.
+
+
+#### Statements
+
+```ebnf
+statement: [ attribute-specifier-seq ] , expression-statement ||
+           [ attribute-specifier-seq ] , compound-statement ||
+           [ attribute-specifier-seq ] , selection-statement ||
+           [ attribute-specifier-seq ] , iteration-statement ||
+           [ attribute-specifier-seq ] , jump-statement ||
+           declaration-statement
+           labeled-statement
+labeled-statement: [ attribute-specifier-seq ] , "case" , constant-expression , ":" , statement
+                   [ attribute-specifier-seq ] , "default" , ":" , statement
+```
+
+#### Declarations
+
+The `attribute-specifier-seq` element supports annotating type declarations. The
+following grammar formulations are valid:
+
+```ebnf
+class-key: "class" || "struct"
+class-declaration: class-key , attribute-specifier-seq , identifier
+
+alias-declaration: "using" , identifier , [ attribute-specifier-seq ] , "=" , type-id , ";"
+```
+
 <!-- {% endraw %} -->
