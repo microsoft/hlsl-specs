@@ -167,7 +167,9 @@ class CooperativeMatrix {
       vk::integral_constant<uint, columns>, vk::integral_constant<uint, use> >;
 
   [[vk::ext_extension("SPV_KHR_cooperative_matrix")]]
+  [[vk::ext_extension("SPV_KHR_vulkan_memory_model")]]
   [[vk::ext_capability(/* CooperativeMatrixKHRCapability */ 6022)]]
+  [[vk::ext_capability(/* VulkanMemoryModel */ 5345)]]
   SpirvMatrixType _matrix;
   // clang-format on
 };
@@ -222,6 +224,12 @@ instruction.
 The header file will check that the targeted Vulkan version is at least Vulkan
 1.1, and issue an error if it is not.
 
+The SPIR-V specification requires that the Vulkan memory model is used when
+cooperative matrices are used. The Vulkan memory model extension and capability
+are added to the header file to indicate this. The compiler will have to target
+the Vulkan memory model when the cooperative matrix header file is included. It
+is the responsibility of the compiler to determine how to enforce this.
+
 Interactions with other HLSL features are implicitly compiler errors. The
 interface enforces all SPIR-V validation rules, and the compiler will issue
 errors if these rules are violated.
@@ -251,7 +259,7 @@ correct code is generated when the header file is used.
 7.  The `Get` and `Set` functions are used instead of `operator[]` because
     `operator[]` returns a reference, which is not available in HLSL.
 8.  We chose to default the memory operand on the load and store function to
-    None. This choice was arbitrary. 
+    None. This choice was arbitrary.
 9.  For the multiply-add function, we preferred to avoid flag parameters, and we
     added multiple versions of the function. We feel this provides better
     readability. If we were to pass the operand as a parameter, it would have to
@@ -334,17 +342,22 @@ There will be template specializations for all pairs of the following types:
 To be able to pass a GroupShared array by reference, we introduce a new type and
 function to `vk/spirv.h`.
 
-~~~
+```
 template <typename T>
-vk::WorkgroupSpirvPointer
-````
+using WorkgroupSpirvPointer = const vk::SpirvOpaqueType<
+    /* OpTypePointer */ 32,
+    vk::Literal<vk::integral_constant<uint, StorageClassWorkgroup> >,
+    PointeeType>;
+```
 
-This is a type with no members. An instance of this type can be created by calling
+This is a type with no members. It will be const so that it can be initialized,
+but it cannot be modified afterwards. An instance of this type can be created by
+calling
 
-~~~
-
+```
 template <typename T> WorkgroupSpirvPointer<T>
-GetGroupSharedAddress([[vk::ext_reference]] T v); ```
+GetGroupSharedAddress([[vk::ext_reference]] T v);
+```
 
 where `v` must be a object in GroupShared memory.
 
@@ -358,6 +371,9 @@ WorkgroupSpirvPointer<float[64]> array_ptr = vk::GetGroupSharedAddress(shared_da
 ```
 
 Then the resulting pointers can be used in the Load and Store functions.
+
+`WorkgroupSpirvPointer`s must be be used only as function scope automatics,
+static global variables, and function parameters.
 
 ### SPIR-V enums
 
