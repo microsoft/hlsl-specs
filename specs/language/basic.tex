@@ -178,6 +178,28 @@ derived from function scope have no linkage:
   function scope that such as typedefs, enumerations, and enumerators
 \end{itemize}
 
+\Sec{Start}{Basic.Start}
+
+\p A fully linked program shall contain one or more global functions, which are
+the designated starting points for the program. These global functions are
+called \textit{entry points}, because they denote the location where execution
+inside the program begins.
+
+\p Entry point functions have different requirements based on the target runtime
+and execution mode (\ref{Basic.Start.Mode}).
+
+\p Parameters to entry functions and entry function return types must be of
+scalar, vector, or non-intangible class type (\ref{Basic.types}). Scalar and
+vector parameters and return types must be annotated with semantic annotations
+(\ref{Decl.Attr.Semantic}). Class type input and output parameters must have all
+fields annotated with semantic annotations.
+
+\Sub{Execution Mode}{Basic.Start.Mode}
+
+\p A runtime may define a set of execution modes in an implementation defined
+way. Each execution mode will have a set of implementation defined rules which
+restrict available language functionality as appropriate for the execution mode.
+
 \Sec{Types}{Basic.types}
 
 \p The \textit{object representation} of an object of type \texttt{T} is the
