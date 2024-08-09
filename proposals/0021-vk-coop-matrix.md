@@ -86,9 +86,11 @@ class CooperativeMatrix {
   // `NonPrivatePointer` and `MakePointerVisible` with the workgroup scope
   // will be added to the memory access mask to make the memory coherent.
   //
-  // This function uses a SPIR-V pointer because HLSL does not allow grouphsared
+  // This function uses a SPIR-V pointer because HLSL does not allow groupshared
   // memory object to be passed by reference. The pointer is a hack to get
   // around that.
+  //
+  // The layout and stride will be passed to the SPIR-V instruction as is. The precise meaning can be found in the specification for SPV_KHR_cooperative_matrix.
   template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
             class Type>
   void Store(WorkgroupSpirvPointer<Type> data, uint32_t stride);
@@ -102,6 +104,7 @@ class CooperativeMatrix {
   // `NonPrivatePointer` and `MakePointerVisible` with the QueueFamily scope
   // will be added to the memory access mask to make the memory coherent.
   //
+  // The layout and stride will be passed to the SPIR-V instruction as is. The precise meaning can be found in the specification for SPV_KHR_cooperative_matrix.
   template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
             class Type>
   void Store(globallycoherent RWStructuredBuffer<Type> data, uint32_t index,
@@ -117,9 +120,11 @@ class CooperativeMatrix {
   // `NonPrivatePointer` and `MakePointerAvailable` with the workgroup scope
   // will be added to the memory access mask to make the memory coherent.
   //
-  // This function uses a SPIR-V pointer because HLSL does not allow grouphsared
+  // This function uses a SPIR-V pointer because HLSL does not allow groupshared
   // memory object to be passed by reference. The pointer is a hack to get
   // around that.
+  //
+  // The layout and stride will be passed to the SPIR-V instruction as is. The precise meaning can be found in the specification for SPV_KHR_cooperative_matrix.
   template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(WorkgroupSpirvPointer<Type> data,
@@ -135,6 +140,8 @@ class CooperativeMatrix {
   // `NonPrivatePointer` and `MakePointerAvailable` with the QueueFamily scope
   // will be added to the memory access mask to make the memory coherent.
   //
+  //
+  // The layout and stride will be passed to the SPIR-V instruction as is. The precise meaning can be found in the specification for SPV_KHR_cooperative_matrix.
   template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(globallycoherent RWStructuredBuffer<Type> data,
@@ -151,6 +158,8 @@ class CooperativeMatrix {
   // data[index] using the given memory layout, stride, and memory access mask.
   // No memory access bits are added to the mask. Since the memory is readonly,
   // there should be no need.
+  //
+  // The layout and stride will be passed to the SPIR-V instruction as is. The precise meaning can be found in the specification for SPV_KHR_cooperative_matrix.
   template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(StructuredBuffer<Type> data, uint32_t index,
@@ -293,7 +302,7 @@ correct code is generated when the header file is used.
 
 The `vk::utils::ArithmeticSelector` class is a template class that takes a base
 type and has a series of static function that are implemented using inline
-SPIR-V. The functions can generate arithemtic operations for the base type or a
+SPIR-V. The functions can generate arithmetic operations for the base type or a
 vector of the base type.
 
 ```c++
