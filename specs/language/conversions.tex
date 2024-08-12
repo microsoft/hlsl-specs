@@ -132,18 +132,36 @@ value replicated into each element of the destination.
 
 \Sec{Vector and matrix truncation conversion}{Conv.vtrunc}
 
-\p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
-\texttt{vector<T,y>}, or a prvalue of type \texttt{vector<T,x>} can be converted
-to a prvalue of type \texttt{vector<T,y>} only if \( y < x \). The resulting
-value is comprised of elements \( [0..y) \), dropping elements [y+1..x).
+\p Matrix and vector types can be converted to matrix or vector types with
+smaller dimensions or to scalar values by dropping trailing elements.
 
-\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of type
-\texttt{matrix<T,z,w>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
-converted to a prvalue of type \texttt{matrix<T,z,w>} only if \( x \leq z \)
-and \(y \leq w \). Matrix truncation is performed on each row and column
-dimension separately. The resulting value is comprised of vectors \( [0..z) \)
-which are each separately comprised of elements \( [0..w) \). Trailing vectors
-and elements are dropped.
+\p A prvalue of type \texttt{vector<T,x>} can be converted to a prvalue of type:
+\begin{itemize}
+\item \texttt{vector<T,y>} only if \( y < x \), or
+\item type \texttt{T}
+\end{itemize}
+
+\p The resulting value of vector truncation is comprised of elements \( [0..y)
+\), dropping elements \( [y+1..x) \).
+
+\p A prvalue of type \texttt{matrix<T,x,y>} can be converted to a prvalue of
+type:
+\begin{itemize}
+  \item \texttt{matrix<T,z,w>} only if \( x \leq z \) and \(y \leq w \),
+  \item \texttt{vector<T,z>} only if \( x \leq z \), or
+  \item \texttt{T}.
+\end{itemize}
+
+\p Matrix truncation is performed on each row and column dimension separately.
+The resulting value is comprised of vectors \( [0..z) \) which are each
+separately comprised of elements \( [0..w) \). Trailing vectors and elements are
+dropped.
+
+\p Reducing the dimension of a vector to one (\texttt{vector<T,1>}), can produce
+either a single element vector or a scalar of type \texttt{T}. Reducing the
+rows of a matrix to one (\texttt{matrix<T,x,1>}), can produce either a single
+row matrix, a vector of type \texttt{vector<T,x>}, or a scalar of type
+\texttt{T}.
 
 \Sec{Component-wise conversions}{Conv.cwise}
 
