@@ -115,17 +115,74 @@ tbuffer TB {                 // does not declare TB
 }
 \end{HLSL}
 
-\Sec{Linkage}{Basic.Linkage}
+\Sec{One-Definition Rule}{Basic.ODR}
 
-\p An entity that denotes an object, reference, function, type, template,
-namespace, or value, may have a \textit{linkage}. If a name has
-\textit{linkage}, it refers to the same entity as the same name introduced by a
-declaration in another scope. If a variable, function, or another entity with
-the same name is declared in several scopes, but does not have sufficient
-\textit{linkage}, then several instances of the entity are generated.
+\p The \gls{isoCPP} \textit{One-definition rule} is adopted as defined in
+\gls{isoCPP} \textbf{[basic.def.odr]}.
 
-\p There are three linkages recognized: \textit{external linkage},
-\textit{internal linkage} and \textit{no linkage}.
+\Sec{Scope}{Basic.Scope}
+
+\Sec{Name Lookup}{Basic.Lookup}
+
+\Sec{Program and linkage}{Basic.Linkage}
+
+\p A translation unit (\ref{Lex.Translation}) is comprised of a sequence of
+declarations:
+
+\begin{grammar}
+  \define{translation-unit}\br
+  \opt{declaration-sequence}
+\end{grammar}
+
+\p A \textit{program} is one or more translation units \textit{linked} together.
+A program built from a single translation unit, bypassing a linking step is
+called \textit{freestanding}.
+
+\p A program is said to be \textit{fully linked}, when it contains no
+\textit{unresolved external} declarations, and all \textit{exported}
+declarations are entry point declarations (\ref{Basic.Start}). A program is said
+to be \textit{partially linked}, when it contains at least one unresolved
+external declaration or at least one exported declaration that is not an entry
+point.
+
+\p An implementation may generate programs as fully linked or partially linked
+as requested by the user, and a runtime may allow fully linked or partially
+linked programs as the implementation allows.
+
+\p A name has \textit{linkage} if it can refer to the same entity as a name
+introduced by a declaration in another scope. If a variable, function, or
+another entity with the same name is declared in several scopes, but does not
+have sufficient \textit{linkage}, then several instances of the entity are
+generated.
+
+\begin{itemize}
+\item A name with \textit{no linkage} may not be referred to by names from
+any other scope.
+\item A name with \textit{internal linkage} may be referred to by names
+from other scopes within the same translation unit.
+\item A name with \textit{external linkage} may be referred to by names from
+other scopes within the same translation unit, and by names from scopes of other
+translation units.
+\item A name with \textit{program linkage} may be referred to by names from
+other scopes within the same translation unit, by names from scopes of other
+translation units, by names from scopes of other programs, and by a runtime
+implementation.
+\end{itemize}
+
+\p When merging translation units through linking or generating a freestanding
+program only names with program linkage must be retained in the final program.
+
+\Sub{Program Linkage}{Basic.Linkage.Program}
+
+\p Entities with \textit{program linkage} can be referred to from other
+partially linked programs or a runtime implementation.
+
+\p The following entities have program linkage:
+\begin{itemize}
+  \item entry point functions (\ref{Basic.Start})
+  \item functions marked with \texttt{export} keyword (\ref{Decl.Export})
+  \item declarations contained within an \textit{export-declaration-group} (\ref{Decl.Export})
+\end{itemize}
 
 \Sub{External Linkage}{Basic.Linkage.External}
 
@@ -134,8 +191,6 @@ the other translation units and enable linking between them.
 
 \p The following entities in HLSL have \textit{external linkage}:
 \begin{itemize}
-  \item entry point functions
-  \item functions marked with \texttt{export} keyword
   \item global variables that are not marked \texttt{static} or
   \texttt{groupshared} \footnote{These are not really linked with other
   translation units but rather their values are loaded indirectly based on
