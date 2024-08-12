@@ -115,7 +115,7 @@ tbuffer TB {                 // does not declare TB
 }
 \end{HLSL}
 
-\Sec(One-Definition Rule){Basic.ODR}
+\Sec{One-Definition Rule}{Basic.ODR}
 
 \p The \gls{isoCPP} \textit{One-definition rule} is adopted as defined in
 \gls{isoCPP} \textbf{[basic.def.odr]}.
@@ -126,7 +126,7 @@ tbuffer TB {                 // does not declare TB
 
 \Sec{Program and linkage}{Basic.Linkage}
 
-\p A translation unit (\ref{{Lex.Translation}}) is comprised of a sequence of
+\p A translation unit (\ref{Lex.Translation}) is comprised of a sequence of
 declarations:
 
 \begin{grammar}
@@ -156,14 +156,14 @@ have sufficient \textit{linkage}, then several instances of the entity are
 generated.
 
 \begin{itemize}
-\item If a name has \textit{no linkage}, it may not be referred to by names from
+\item A name with \textit{no linkage} may not be referred to by names from
 any other scope.
-\item If a name has \textit{internal linkage}, it may be referred to by names
+\item A name with \textit{internal linkage} may be referred to by names
 from other scopes within the same translation unit.
-\item If a name has \textit{external linkage}, may be referred to by names from
+\item A name with \textit{external linkage} may be referred to by names from
 other scopes within the same translation unit, and by names from scopes of other
 translation units.
-\item A name with \textit{program linkage}, may be referred to by names from
+\item A name with \textit{program linkage} may be referred to by names from
 other scopes within the same translation unit, by names from scopes of other
 translation units, by names from scopes of other programs, and by a runtime
 implementation.
