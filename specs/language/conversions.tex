@@ -147,8 +147,8 @@ smaller dimensions or to scalar values by dropping trailing elements.
 \p A prvalue of type \texttt{matrix<T,x,y>} can be converted to a prvalue of
 type:
 \begin{itemize}
-  \item \texttt{matrix<T,z,w>} only if \( x \leq z \) and \(y \leq w \),
-  \item \texttt{vector<T,z>} only if \( x \leq z \), or
+  \item \texttt{matrix<T,z,w>} only if \( x \geq z \) and \(y \geq w \),
+  \item \texttt{vector<T,z>} only if \( x \geq z \), or
   \item \texttt{T}.
 \end{itemize}
 
