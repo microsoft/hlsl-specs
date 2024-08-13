@@ -132,13 +132,10 @@ value replicated into each element of the destination.
 
 \Sec{Vector and matrix truncation conversion}{Conv.vtrunc}
 
-\p Matrix and vector types can be converted to matrix or vector types with
-smaller dimensions or to scalar values by dropping trailing elements.
-
 \p A prvalue of type \texttt{vector<T,x>} can be converted to a prvalue of type:
 \begin{itemize}
 \item \texttt{vector<T,y>} only if \( y < x \), or
-\item type \texttt{T}
+\item \texttt{T}
 \end{itemize}
 
 \p The resulting value of vector truncation is comprised of elements \( [0..y)
