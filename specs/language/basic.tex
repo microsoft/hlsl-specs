@@ -115,17 +115,74 @@ tbuffer TB {                 // does not declare TB
 }
 \end{HLSL}
 
-\Sec{Linkage}{Basic.Linkage}
+\Sec{One-Definition Rule}{Basic.ODR}
 
-\p An entity that denotes an object, reference, function, type, template,
-namespace, or value, may have a \textit{linkage}. If a name has
-\textit{linkage}, it refers to the same entity as the same name introduced by a
-declaration in another scope. If a variable, function, or another entity with
-the same name is declared in several scopes, but does not have sufficient
-\textit{linkage}, then several instances of the entity are generated.
+\p The \gls{isoCPP} \textit{One-definition rule} is adopted as defined in
+\gls{isoCPP} \textbf{[basic.def.odr]}.
 
-\p There are three linkages recognized: \textit{external linkage},
-\textit{internal linkage} and \textit{no linkage}.
+\Sec{Scope}{Basic.Scope}
+
+\Sec{Name Lookup}{Basic.Lookup}
+
+\Sec{Program and linkage}{Basic.Linkage}
+
+\p A translation unit (\ref{Lex.Translation}) is comprised of a sequence of
+declarations:
+
+\begin{grammar}
+  \define{translation-unit}\br
+  \opt{declaration-sequence}
+\end{grammar}
+
+\p A \textit{program} is one or more translation units \textit{linked} together.
+A program built from a single translation unit, bypassing a linking step is
+called \textit{freestanding}.
+
+\p A program is said to be \textit{fully linked}, when it contains no
+\textit{unresolved external} declarations, and all \textit{exported}
+declarations are entry point declarations (\ref{Basic.Start}). A program is said
+to be \textit{partially linked}, when it contains at least one unresolved
+external declaration or at least one exported declaration that is not an entry
+point.
+
+\p An implementation may generate programs as fully linked or partially linked
+as requested by the user, and a runtime may allow fully linked or partially
+linked programs as the implementation allows.
+
+\p A name has \textit{linkage} if it can refer to the same entity as a name
+introduced by a declaration in another scope. If a variable, function, or
+another entity with the same name is declared in several scopes, but does not
+have sufficient \textit{linkage}, then several instances of the entity are
+generated.
+
+\begin{itemize}
+\item A name with \textit{no linkage} may not be referred to by names from
+any other scope.
+\item A name with \textit{internal linkage} may be referred to by names
+from other scopes within the same translation unit.
+\item A name with \textit{external linkage} may be referred to by names from
+other scopes within the same translation unit, and by names from scopes of other
+translation units.
+\item A name with \textit{program linkage} may be referred to by names from
+other scopes within the same translation unit, by names from scopes of other
+translation units, by names from scopes of other programs, and by a runtime
+implementation.
+\end{itemize}
+
+\p When merging translation units through linking or generating a freestanding
+program only names with program linkage must be retained in the final program.
+
+\Sub{Program Linkage}{Basic.Linkage.Program}
+
+\p Entities with \textit{program linkage} can be referred to from other
+partially linked programs or a runtime implementation.
+
+\p The following entities have program linkage:
+\begin{itemize}
+  \item entry point functions (\ref{Basic.Start})
+  \item functions marked with \texttt{export} keyword (\ref{Decl.Export})
+  \item declarations contained within an \textit{export-declaration-group} (\ref{Decl.Export})
+\end{itemize}
 
 \Sub{External Linkage}{Basic.Linkage.External}
 
@@ -134,8 +191,6 @@ the other translation units and enable linking between them.
 
 \p The following entities in HLSL have \textit{external linkage}:
 \begin{itemize}
-  \item entry point functions
-  \item functions marked with \texttt{export} keyword
   \item global variables that are not marked \texttt{static} or
   \texttt{groupshared} \footnote{These are not really linked with other
   translation units but rather their values are loaded indirectly based on
@@ -177,6 +232,28 @@ derived from function scope have no linkage:
   \item other entities declared at function scope or block scopes derived from
   function scope that such as typedefs, enumerations, and enumerators
 \end{itemize}
+
+\Sec{Start}{Basic.Start}
+
+\p A fully linked program shall contain one or more global functions, which are
+the designated starting points for the program. These global functions are
+called \textit{entry points}, because they denote the location where execution
+inside the program begins.
+
+\p Entry point functions have different requirements based on the target runtime
+and execution mode (\ref{Basic.Start.Mode}).
+
+\p Parameters to entry functions and entry function return types must be of
+scalar, vector, or non-intangible class type (\ref{Basic.types}). Scalar and
+vector parameters and return types must be annotated with semantic annotations
+(\ref{Decl.Attr.Semantic}). Class type input and output parameters must have all
+fields annotated with semantic annotations.
+
+\Sub{Execution Mode}{Basic.Start.Mode}
+
+\p A runtime may define a set of execution modes in an implementation defined
+way. Each execution mode will have a set of implementation defined rules which
+restrict available language functionality as appropriate for the execution mode.
 
 \Sec{Types}{Basic.types}
 
@@ -227,6 +304,10 @@ be defined to have an \textit{incomplete} type.
 \p Vectors of scalar types declared with the built-in \texttt{vector<T,N>}
 template are \textit{vector types}. Vector lengths must be between 1 and 4 (i.e.
 \( 1 \leq N \leq 4 \) ).
+
+\p Matrices of scalar types declared with the built-in \texttt{matrix<T,N,M>}
+template are \textit{matrix types}. Matrix dimensions, \texttt{N} and
+\texttt{M}, must be between 1 and 4 (i.e. \( 1 \leq N \leq 4 \) ).
 
 \Sub{Arithmetic Types}{Basic.types.arithmetic}
 
@@ -288,6 +369,40 @@ having an empty set of values and being an incomplete type that can never be
 completed. The \texttt{void} type is used to signify the return type of a
 function that returns no value. Any expression can be explicitly converted to
 \texttt{void}.
+
+\Sub{Scalarized Type Compatability}{Basic.types.scalarized}
+
+\p All types \texttt{T} have a \textit{scalarized representation}, \(SR(T)\),
+which is a list of one or more types representing each scalar element of
+\texttt{T}.
+
+\p Scalarized representations are determined as follows:
+\begin{itemize}
+\item The scalarized representation of an array \texttt{T[n]} is \(SR(T_0), ..
+SR(T_n)\).
+
+\item The scalarized representation of a vector \texttt{vector<T,n>} is \(T_0,
+.. T_n\).
+
+\item The scalarized representation of a matrix \texttt{matrix<T,n, m>} is
+\(T_0, .. T_{n \times m}\).
+
+\item The scalarized representation of a class type \texttt{T}, \(SR(T)\) is
+computed recursively as \(SR(T::base), SR(T::_0), .. SR(T::_n)\) where
+\texttt(T::base) is \texttt{T}'s base class if it has one, and \(T::_n\)
+represents the \textit{n} non-static members of \texttt{T}.
+
+\item The scalarized representation for an enumeration type is the underlying
+arithmetic type.
+
+\item The scalarized representation for arithmetic, intangible types, and any other
+type \texttt{T} is \(T\).
+\end{itemize}
+
+\p Two types \textit{cv1} \texttt{T1} and \textit{cv2} \texttt{T2} are
+\textit{scalar-layout-compatible types} if \texttt{T1} and \texttt{T2} are the same
+type or if the sequence of types defined by the scalar representation \(SR(T1)\)
+and scalar representation \(SR(T2)\) are identical.
 
 \Sec{Lvalues and rvalues}{Basic.lval}
 
