@@ -253,7 +253,7 @@ other device methods if necessary.
 
 #### Checking for runtime support
 
-If an app uses a an AgilitySDK with support for the bypass hash, there
+If an app uses an AgilitySDK with support for the bypass hash, there
 is obviously nothing to check.
 
 If the app instead uses the OS D3D12 runtime, and the OS might be older 
