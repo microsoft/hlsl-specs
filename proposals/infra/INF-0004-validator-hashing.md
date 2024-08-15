@@ -207,7 +207,7 @@ the `BYPASS` or `PREVIEW_BYPASS` hash, or have the option to force validation.
 
 If the debug layer finds errors when running the bytecode validator it only 
 reports validator error strings, but doesn't fail shader creation.  Developers can 
-choose to to break on `D3D12_MESSAGE_ID_BYTECODE_VALIDATION_ERROR` to catch these specific 
+choose to break on `D3D12_MESSAGE_ID_BYTECODE_VALIDATION_ERROR` to catch these specific 
 errors while debugging, the via d3dconfig or `ID3D12InfoQueue`.
 
 The validation mode can be configured via `ID3D12DebugDevice1::SetDebugParameter()`:
