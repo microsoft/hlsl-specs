@@ -262,26 +262,18 @@ queried:
 
 ```C++
     D3D12_FEATURE_DATA_BYTECODE_BYPASS_HASH_SUPPORTED bypassHashSupport = {};
-    if(FAILED(pDevice->CheckFeatureSupport(
+    if(SUCCEEDED(pDevice->CheckFeatureSupport(
         D3D12_FEATURE_BYTECODE_BYPASS_HASH_SUPPORTED, 
         &bypassHashSupport, 
         sizeof(bypassHashSupport))))
     {
-        // Bypass hash not supported.
-
-        // Must be running on an old runtime, which won't recognize 
-        // D3D12_FEATURE_BYTECODE_BYPASS_HASH_SUPPORTED
-        // and fails the call.
+        if(bypassHashSupport.Supported)
+        {
+            // Bypass hash supported.
+        }
     }
-    else
-    {
-        // Bypass hash supported.
-
-        // Don't need to bother looking at the member 
-        // bypassHashSupport.Supported, since it is always true if
-        // the runtime succeeded the CheckFeatureSupport() call at all
-        assert(bypassHashSupport.Supported);
-    }
+    // Note that on an older runtime the CheckFeatureSupport call
+    // fail not recognizing the feature at all, implying no support.
 ```
 
 ## Appendix 1: DXIL Hashing Algorithm
