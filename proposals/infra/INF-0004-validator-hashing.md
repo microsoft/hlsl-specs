@@ -206,9 +206,11 @@ redundant to validate again, but it can be useful to validate shaders that have
 the `BYPASS` or `PREVIEW_BYPASS` hash, or have the option to force validation. 
 
 If the debug layer finds errors when running the bytecode validator it only 
-reports messages, but doesn't fail shader creation.
+reports validator error strings, but doesn't fail shader creation.  Developers can 
+choose to break on `D3D12_MESSAGE_ID_BYTECODE_VALIDATION_ERROR` to catch these specific 
+errors while debugging, the via d3dconfig or `ID3D12InfoQueue`.
 
-The validation mode can be configured via ID3D12DebugDevice1::SetDebugParameter()`:
+The validation mode can be configured via `ID3D12DebugDevice1::SetDebugParameter()`:
 
 ```C++
 typedef enum D3D12_DEBUG_DEVICE_PARAMETER_TYPE
@@ -248,6 +250,31 @@ This control is not thread safe or synchronized with other device methods
 such as creating shaders where the options would apply.  Apps must do their 
 own synchronization around changing the validation mode and making calls to any 
 other device methods if necessary.
+
+#### Checking for runtime support
+
+If an app uses an AgilitySDK with support for the bypass hash, then
+the app can be confident it is supported and so no runtime check is needed.
+
+If the app instead uses the OS D3D12 runtime, and the OS might be older 
+than when bypass hash was introduced, support for hash bypass can be 
+queried:
+
+```C++
+    D3D12_FEATURE_DATA_BYTECODE_BYPASS_HASH_SUPPORTED bypassHashSupport = {};
+    if(SUCCEEDED(pDevice->CheckFeatureSupport(
+        D3D12_FEATURE_BYTECODE_BYPASS_HASH_SUPPORTED, 
+        &bypassHashSupport, 
+        sizeof(bypassHashSupport))))
+    {
+        if(bypassHashSupport.Supported)
+        {
+            // Bypass hash supported.
+        }
+    }
+    // Note that on an older runtime the CheckFeatureSupport call
+    // fail not recognizing the feature at all, implying no support.
+```
 
 ## Appendix 1: DXIL Hashing Algorithm
 
