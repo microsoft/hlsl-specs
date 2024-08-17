@@ -86,10 +86,10 @@ To add full comparison sampling support, HLSL will introduce an optional feature
  that adds these new comparison sampling builtin methods to all texture objects
  that currently support the non-comparison methods:
 
-* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float compareValue, float Bias)`
   performs a comparison sample using the implicitly-determined LOD with the
   explicitly-provided `Bias` value added to that result.
-* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float DDX, float DDY)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float compareValue, float DDX, float DDY)`
    samples using the LOD calculated using the explicitly-provided
    `DDX` and `DDY` gradients.
 
@@ -101,14 +101,14 @@ Though not included above, all relevant overloads of `SampleBias` and
 The parameters not explicitly described here will function exactly as they do
  when used by the non-comparison builtin methods:
 
-* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias)`
-* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset)`
-* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset, float Clamp)`
-* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float Bias, int<dims> Offset, float Clamp, uint Status)`
-%* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY)`
-* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset)`
-* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp)`
-* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp, uint Status)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float compareValue, float Bias)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float compareValue, float Bias, int<dims> Offset)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float compareValue, float Bias, int<dims> Offset, float Clamp)`
+* `SampleCmpBias(SamplerComparisonState S, vector<float, CoordsCt> Location, float compareValue, float Bias, int<dims> Offset, float Clamp, uint Status)`
+%* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float compareValue, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float compareValue, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float compareValue, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp)`
+* `SampleCmpGrad(SamplerState S, vector<float, CoordsCt> Location, float compareValue, vector<float, DimsCt> DDX, vector<float, DimsCt> DDY, int<dims> Offset, float Clamp, uint Status)`
 
 To add LOD calculation for comparison samplers, HLSL will introduce and require
  these new comparison sampler method overloads to all texture objects that
@@ -132,9 +132,9 @@ template<typename ElementType, int CoordsCt, int DimsCt>
 vector<ElementType, DimsCt> TextureBase::SampleCmpGrad(
     SamplerComparisonState S,
     vector<float, CoordsCt> Location,
+    float CompareValue,
     vector<float, DimsCt> DDX,
     vector<float, DimsCt> DDY,
-    float CompareValue,
     vector<int, DimsCt> Offset = 0,
     float Clamp = 0.0f);
 
@@ -142,9 +142,9 @@ template<typename ElementType, int CoordsCt, int DimsCt>
 vector<ElementType, DimsCt> TextureCube::SampleCmpGrad(
     SamplerComparisonState S,
     vector<float, CoordsCt> Location,
+    float CompareValue,
     vector<float, DimsCt> DDX,
     vector<float, DimsCt> DDY,
-    float CompareValue,
     float Clamp = 0.0f);
 ```
 
@@ -162,8 +162,8 @@ template<typename ElementType, int CoordsCt, int DimsCt>
 vector<ElementType, DimsCt> TextureBase::SampleCmpBias(
       SamplerComparisonState S,
       vector<float, CoordsCt> Location,
-      float Bias,
       float CompareValue,
+      float Bias,
       vector<int, DimsCt> Offset = 0,
       float Clamp = 0.0f,
 );
@@ -171,8 +171,8 @@ template<typename ElementType, int CoordsCt, int DimsCt>
 vector<ElementType, DimsCt> TextureCube[Array]::SampleCmpBias(
       SamplerComparisonState S,
       vector<float, CoordsCt> Location,
-      float Bias,
       float CompareValue,
+      float Bias,
       float Clamp = 0.0f
 );
 ```
