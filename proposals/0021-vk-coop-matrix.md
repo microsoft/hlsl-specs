@@ -82,9 +82,9 @@ class CooperativeMatrix {
   CooperativeMatrix operator*(ComponentType scalar);
 
   // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to
-  // data using the given memory layout, stride, and memory access mask.
-  // `NonPrivatePointer` and `MakePointerVisible` with the workgroup scope
-  // will be added to the memory access mask to make the memory coherent.
+  // data using the given memory layout, stride, and memory access operands.
+  // `NonPrivatePointer` and `MakePointerAvailable` with the workgroup scope
+  // will be added to the memory access operands to make the memory coherent.
   //
   // This function uses a SPIR-V pointer because HLSL does not allow groupshared
   // memory object to be passed by reference. The pointer is a hack to get
@@ -93,42 +93,45 @@ class CooperativeMatrix {
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   void Store(WorkgroupSpirvPointer<Type> data, uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access
+  // operands.
   template <CooperativeMatrixLayout layout, class Type>
   void Store(WorkgroupSpirvPointer<Type> data, uint32_t stride);
 
   // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to
-  // data[index] using the given memory layout, stride, and memory access mask.
-  // The layout and stride will be passed to the SPIR-V instruction as is. The
-  // precise meaning can be found in the specification for
+  // data[index] using the given memory layout, stride, and memory access
+  // operands. The layout and stride will be passed to the SPIR-V instruction as
+  // is. The precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   void Store(RWStructuredBuffer<Type> data, uint32_t index, uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access
+  // operands.
   template <CooperativeMatrixLayout layout, class Type>
   void Store(RWStructuredBuffer<Type> data, uint32_t index, uint32_t stride);
 
 
   // Store the cooperative matrix using OpCooperativeMatrixStoreKHR to
-  // data[index] using the given memory layout, stride, and memory access mask.
-  // `NonPrivatePointer` and `MakePointerAvailable` with the QueueFamily scope
-  // will be added to the memory access mask to make the memory coherent.
+  // data[index] using the given memory layout, stride, and memory access
+  // operands. `NonPrivatePointer` and `MakePointerAvailable` with the
+  // QueueFamily scope will be added to the memory access operands to make the
+  // memory coherent.
   //
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   void CoherentStore(globallycoherent RWStructuredBuffer<Type> data,
                      uint32_t index, uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask
+  // Same as above, but uses MemoryAccessMaskNone for the memory access operands
   // template argument.
   template <CooperativeMatrixLayout layout, class Type>
   void CoherentStore(globallycoherent RWStructuredBuffer<Type> data,
@@ -136,10 +139,10 @@ class CooperativeMatrix {
     CoherentStore<MemoryAccessMaskNone, layout>(data, index, stride);
   }
 
-  // Loads a cooperative matrix using OpCooperativeMatrixStoreKHR from
-  // data using the given memory layout, stride, and memory access mask.
-  // `NonPrivatePointer` and `MakePointerAvailable` with the workgroup scope
-  // will be added to the memory access mask to make the memory coherent.
+  // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
+  // data using the given memory layout, stride, and memory access operands.
+  // `NonPrivatePointer` and `MakePointerVisible` with the workgroup scope
+  // will be added to the memory access operands to make the memory coherent.
   //
   // This function uses a SPIR-V pointer because HLSL does not allow groupshared
   // memory object to be passed by reference. The pointer is a hack to get
@@ -148,48 +151,52 @@ class CooperativeMatrix {
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(WorkgroupSpirvPointer<Type> data,
                                 uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access
+  // operands.
   template <CooperativeMatrixLayout layout, class Type>
   static CooperativeMatrix Load(WorkgroupSpirvPointer<Type> data,
                                 uint32_t stride);
 
   // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
-  // data[index] using the given memory layout, stride, and memory access mask.
+  // data[index] using the given memory layout, stride, and memory access
+  // operands.
   //
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(RWStructuredBuffer<Type> data, uint32_t index,
                                 uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access
+  // operands.
   template <CooperativeMatrixLayout layout, class Type>
   static CooperativeMatrix Load(RWStructuredBuffer<Type> data, uint32_t index,
                                 uint32_t stride);
 
   // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
-  // data[index] using the given memory layout, stride, and memory access mask.
-  // `NonPrivatePointer` and `MakePointerAvailable` with the QueueFamily scope
-  // will be added to the memory access mask to make the memory coherent.
+  // data[index] using the given memory layout, stride, and memory access
+  // operands. `NonPrivatePointer` and `MakePointerVisible` with the QueueFamily
+  // scope will be added to the memory access operands to make the memory
+  // coherent.
   //
   //
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix
   CoherentLoad(globallycoherent RWStructuredBuffer<Type> data, uint32_t index,
                uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask
+  // Same as above, but uses MemoryAccessMaskNone for the memory access operands
   // template argument.
   template <CooperativeMatrixLayout layout, class Type>
   static CooperativeMatrix
@@ -197,19 +204,20 @@ class CooperativeMatrix {
                uint32_t stride);
 
   // Loads a cooperative matrix using OpCooperativeMatrixLoadKHR from
-  // data[index] using the given memory layout, stride, and memory access mask.
-  // No memory access bits are added to the mask. Since the memory is readonly,
-  // there should be no need.
+  // data[index] using the given memory layout, stride, and memory access
+  // operands. No memory access bits are added to the operands. Since the memory
+  // is readonly, there should be no need.
   //
   // The layout and stride will be passed to the SPIR-V instruction as is. The
   // precise meaning can be found in the specification for
   // SPV_KHR_cooperative_matrix.
-  template <MemoryAccessMask memoryAccessMask, CooperativeMatrixLayout layout,
+  template <uint32_t memoryAccessOperands, CooperativeMatrixLayout layout,
             class Type>
   static CooperativeMatrix Load(StructuredBuffer<Type> data, uint32_t index,
                                 uint32_t stride);
 
-  // Same as above, but uses MemoryAccessMaskNone for the memory access mask.
+  // Same as above, but uses MemoryAccessMaskNone for the memory access
+  // operands.
   template <CooperativeMatrixLayout layout, class Type>
   static CooperativeMatrix Load(StructuredBuffer<Type> data, uint32_t index,
                                 uint32_t stride);
@@ -242,21 +250,21 @@ class CooperativeMatrix {
   // clang-format on
 };
 
-// Cooperative matrix that can be used in the "a" position of a multiple add
+// Cooperative matrix that can be used in the "a" position of a multiply add
 // instruction (r = (a * b) + c).
 template <typename ComponentType, Scope scope, uint rows, uint columns>
 using CooperativeMatrixA =
     CooperativeMatrix<ComponentType, scope, rows, columns,
                       CooperativeMatrixUseMatrixAKHR>;
 
-// Cooperative matrix that can be used in the "b" position of a multiple add
+// Cooperative matrix that can be used in the "b" position of a multiply add
 // instruction (r = (a * b) + c).
 template <typename ComponentType, Scope scope, uint rows, uint columns>
 using CooperativeMatrixB =
     CooperativeMatrix<ComponentType, scope, rows, columns,
                       CooperativeMatrixUseMatrixBKHR>;
 
-// Cooperative matrix that can be used in the "r" and "c" position of a multiple
+// Cooperative matrix that can be used in the "r" and "c" position of a multiply
 // add instruction (r = (a * b) + c).
 template <typename ComponentType, Scope scope, uint rows, uint columns>
 using CooperativeMatrixAccumulator =
@@ -326,16 +334,12 @@ correct code is generated when the header file is used.
     defined in inline SPIR-V.
 7.  The `Get` and `Set` functions are used instead of `operator[]` because
     `operator[]` returns a reference, which is not available in HLSL.
-8.  We chose to default the memory operand on the load and store function to
-    make workgroup and RWStructuredBuffers coherent. This is in line with the
-    test in the GLSLang test suite. We expect this to be the most common usage.
-    More Load and Store function can be added later if this is not true.
-9.  For the multiply-add function, we preferred to avoid flag parameters, and we
+8.  For the multiply-add function, we preferred to avoid flag parameters, and we
     added multiple versions of the function. We feel this provides better
     readability. If we were to pass the operand as a parameter, it would have to
     be a template parameter. The call to the builtin requires a literal, and
     compilation fails if it is passed as a function parameter.
-10. The memory access mask on loads and stores is passed in using a template for
+9.  The memory access mask on loads and stores is passed in using a template for
     the same reason. We did not want to add multiple versions of the function
     because there are too many combinations. This limits the memory operands to
     a single operand, so values like `Aligned` that require an extra operand
