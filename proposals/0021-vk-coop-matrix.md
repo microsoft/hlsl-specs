@@ -417,7 +417,7 @@ To be able to pass a GroupShared array by reference, we introduce a new type and
 function to `vk/spirv.h`.
 
 ```
-template <typename T>
+template <typename PointeeType>
 using WorkgroupSpirvPointer = const vk::SpirvOpaqueType<
     /* OpTypePointer */ 32,
     vk::Literal<vk::integral_constant<uint, StorageClassWorkgroup> >,
