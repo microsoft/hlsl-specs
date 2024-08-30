@@ -1,9 +1,9 @@
 # HLSL Loop Unroll Factor
 
-* Proposal: [NNNN](NNNN-hlsl-loop-unroll-factor.md)
+* Proposal: [0022](0022-hlsl-loop-unroll-factor.md)
 * Author(s): [Farzon Lotfi](https://github.com/farzonl)
 * Sponsor: [Farzon Lotfi](https://github.com/farzonl)
-* Status: **Under Consideration**
+* Status: **Accepted**
 * Impacted Projects: DXC & Clang
 
 ## Introduction
@@ -25,7 +25,7 @@ implementations that exist in LLVM.
 
 ## Motivation
 The HLSL compilers transition to clang has resulted in a compat break between 
-the [HLSLS loop unroll implementation in clang](https://github.com/llvm/llvm-project/pull/93879)
+the [HLSL loop unroll implementation in clang](https://github.com/llvm/llvm-project/pull/93879)
 and the one in DXC. While there is an expectation that the new compiler will 
 not be fully compatible with the previous compilers, These compat breaks should
  be minimized when possible.
@@ -36,3 +36,5 @@ unroll factor should no longer alter the  number of iteration executions.
 Ideally the loop unroll factor will also become a compiler hint for partial 
 loop unroll. If this can not be done because of concerns of invalid DXIL 
 generation then the loop unroll factor as a feature should be removed from DXC.
+Removal in this case means ignoring the unroll factor and issuing a warning to 
+inform the user.
