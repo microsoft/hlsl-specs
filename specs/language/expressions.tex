@@ -205,11 +205,11 @@ parameter} is only initialized explicitly inside the called function. It is
 undefined behavior to not explicitly initialize an \textit{output parameter}
 before returning from the function in which it is defined. The cxvalue created
 from an argument to an \textit{input/output parameter} is initialized through
-copy-initialization from the lvalue argument expression, overload resolution may
-occur on argument initialization as if the expression \texttt{T Param = Arg}
-were evaluated. In both cases, the cxvalue shall have the type of the parameter
-and the argument can be converted to that type through implicit or explicit
-conversion.
+copy-initialization from the lvalue argument expression. Overload resolution
+shall occur on argument initialization as if the expression \texttt{T Param =
+Arg} were evaluated. In both cases, the cxvalue shall have the type of the
+parameter and the argument can be converted to that type through implicit or
+explicit conversion.
 
 \p If an argument to an \textit{output} or \textit{input/output parameter} is a
 constant sized array, the array is copied to a temporary cxvalue following the
