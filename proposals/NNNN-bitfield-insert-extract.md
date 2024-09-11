@@ -68,49 +68,52 @@ which would map to their corresponding DXIL instructions. For HLSL->SPIR-V compi
 we would directly map these intrinsics to the corresponding SPIR-V operations
 (namely, `OpBitfieldSExtract`, `OpBitfieldUExtract`, and `OpBitfieldInsert`).
 
-In the case of bitfield extraction, the logical expression:
+In the case of bitfield extraction, a developer writing the logical expression:
 ```
 int value = ..., offset = ..., bits = ...;
 int extracted = (((value>>offset)&((1u<<bits)-1))<<(32-bits)>>(32-bits));
 ```
-Would then simplify to
+could replace this code with the more efficient intrinsic:
 ```
 int value = ..., offset = ..., bits = ...;
 int extracted = bitfieldExtract(value, offset, bits);
 ```
-Where the resulting instruction would involve `Lbfe`.
+where the resulting instruction would involve `Lbfe`.
 
-If value is unsigned, then the logical expression:
+If value is unsigned, then a developer could replace the logical expression:
 ```
 uint value = ..., offset = ..., bits = ...;
 uint extracted = ((value>>offset)&((1u<<bits)-1));
 ```
-Would then simplify to
+with
 ```
 uint value = ..., offset = ..., bits = ...;
 int extracted = bitfieldExtract(value, offset, bits);
 ```
-Where the resulting instruction would involve `Ubfe`.
+where the resulting instruction would involve `Ubfe`.
 
-Finally, in the case of bitfield insertion, the logical expression:
+Finally, in the case of bitfield insertion, a user could express:
 ```
 uint clearMask = ~(((1u << bits) - 1u) << offset);
 uint clearedBase = base & clearMask;
 uint maskedInsert = (insert & ((1u << bits) - 1u)) << offset;
 uint result = clearedBase | maskedInsert; 
 ```
-Would then simplify to
+more efficiently with
 ```
 uint base = ..., insert = ..., offset = ..., bits = ...;
 int extracted = bitfieldInsert(base, insert, value, bits);
 ```
-Where the resulting instruction would involve `Bfi`.
+where the resulting instruction would be a `Bfi`.
 
-The `bitfieldExtract` intrinsic would support a component-wise value, for 
-example `uint4`, and the `bitfieldInsert` intrinsic would support 
-component-wise `base` and `insert` values. 
+The `bitfieldExtract` intrinsic would support component-wise vector values 
+(as this is what most IHVs support), and the `bitfieldInsert` intrinsic would 
+support component-wise vector `base` and `insert` values. 
 
 For hardware compatibility reasons, we would assume that `value`, `base`, and 
-`insert` be 32-bit integers (either signed or unsigned).
+`insert` be 32-bit integers (either signed or unsigned). To keep the scope 
+of the proposed intrinsics focused, we would leave the extended use of these
+intrinsics to tensors / matrices of integers to the user to implement on a 
+row by row or column by column basis.
 
 <!-- {% endraw %} -->
