@@ -2,22 +2,6 @@
 
 # Bitfield Insert and Extract Intrinsics
 
-## Instructions
-
-> This template wraps at 80-columns. You don't need to match that wrapping, but
-> having some consistent column wrapping makes it easier to view diffs on
-> GitHub's review UI. Please wrap your lines to make it easier to review.
-
-> When filling out the template below for a new feature proposal, please do the
-> following first:
-
-> 1. exclude the "Planned Version", "PRs" and "Issues" from the header.
-> 2. Do not spend time writing the "Detailed design" until the feature has been
->    merged in the "Under Consideration" phase.
-> 3. Delete this Instructions section including the line below.
-
----
-
 * Proposal: [NNNN](NNNN-bitfield-insert-extract.md)
 * Author(s): [Nate Morrical](https://github.com/natevm)
 * Sponsor: [Nate Morrical](https://github.com/natevm)
