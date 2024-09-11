@@ -4,7 +4,7 @@
 
 * Proposal: [NNNN](NNNN-bitfield-insert-extract.md)
 * Author(s): [Nate Morrical](https://github.com/natevm)
-* Sponsor: [Nate Morrical](https://github.com/natevm)
+* Sponsor: [Damyan Pepper](https://github.com/damyanp)
 * Status: **Under Consideration**
 
 ## Introduction
