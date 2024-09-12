@@ -4,7 +4,7 @@
 
 * Proposal: [0023](0023-scalar-constant-buffer-layout.md)
 * Author(s): [Tobias Hector](https://github.com/tobski)
-* Sponsor: TBD
+* Sponsor: Chris Bieneman
 * Status: **Under Consideration**
 
 
