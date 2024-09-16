@@ -191,7 +191,8 @@ declared as a member of.
 
 \p Parameters are either \textit{input parameters}, \textit{output parameters},
 or \textit{input/output parameters} as denoted in the called function's
-declaration (\ref{Decl.Function}).
+declaration (\ref{Decl.Function}). For all types of parameters the argument
+expressions are evaluated before the function call occurs.
 
 \p \textit{Input parameters} are passed by-value into a function. If an argument
 to an \textit{input parameter} is of constant-sized array type, the array is
@@ -207,9 +208,11 @@ parameter} is only initialized explicitly inside the called function. It is
 undefined behavior to not explicitly initialize an \textit{output parameter}
 before returning from the function in which it is defined. The cxvalue created
 from an argument to an \textit{input/output parameter} is initialized through
-copy-initialization from the lvalue argument expression. In both cases, the
-cxvalue shall have the type of the parameter and the argument can be converted
-to that type through implicit or explicit conversion.
+copy-initialization from the lvalue argument expression. Overload resolution
+shall occur on argument initialization as if the expression \texttt{T Param =
+Arg} were evaluated. In both cases, the cxvalue shall have the type of the
+parameter and the argument can be converted to that type through implicit or
+explicit conversion.
 
 \p If an argument to an \textit{output} or \textit{input/output parameter} is a
 constant sized array, the array is copied to a temporary cxvalue following the
@@ -222,11 +225,14 @@ of type \texttt{T[]} through array to pointer decay. An unsized array of type
 \texttt{T[N]}.
 
 \p On expiration of the cxvalue, the value is assigned back to the argument
-lvalue expression following an inverted conversion if applicable. The argument
-expression must be of a type or able to convert to a type that has defined
-copy-initialization to and from the parameter type. The lifetime of the cxvalue
-begins at argument expression evaluation, and ends after the function returns. A
-cxvalue argument is passed by-address to the caller.
+lvalue expression using a resolved assignment expression as if the expression
+\texttt{Arg = Param} were written\footnote{The argument expression is not
+re-evaluated after the call, so any side effects of the call occur only before
+the call.}. The argument expression must be of a type or able to convert to a
+type that has defined copy-initialization to and assignment from the parameter
+type. The lifetime of the cxvalue begins at argument expression evaluation, and
+ends after the function returns. A cxvalue argument is passed by-address to the
+caller.
 
 \p If the lvalue passed to an \textit{output} or \textit{input/output parameter}
 does not alias any other parameter passed to that function, an implementation
