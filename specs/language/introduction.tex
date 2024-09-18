@@ -273,21 +273,52 @@ operations if the optimization alters the behavior of the program.
 
 \Sec{\acrshort{hlsl} Memory Models}{Intro.Memory}
 
-\p Memory accesses for \gls{sm} 5.0 and earlier operate on 128-bit slots aligned
-on 128-bit boundaries. This optimized for the common case in early shaders where
-data being processed on the GPU was usually 4-element vectors of 32-bit data
-types.
+\p The fundamental storage unit in HLSL is a \textit{byte}, which is comprised
+of 8 \textit{bits}. Each \textit{bit} stores a single value 0 or 1. Each byte
+has a unique \textit{memory location}, alternatively called an \textit{address}.
 
-\p On modern hardware memory access restrictions are loosened, and reads of
-32-bit multiples are supported starting with \gls{sm} 5.1 and reads of 16-bit
-multiples are supported with \gls{sm} 6.0. \gls{sm} features are fully
-documented in the \gls{dx} Specifications, and this document will not attempt to
-elaborate further.
+\p An object that is not of an intangible type will have an associated set of
+memory locations containing one or more location. For a bit-field the location
+will represent a maximal sequence of adjacent bit-fields all having nonzero
+width.
+
+\p Each read or write to a memory location is called a \textit{memory access}.
+Operations that perform memory accesses are called \textit{memory operation}. A
+memory operation may operate on one or more memory locations. A memory operation
+must not alter memory at a location not contained in the memory location set it
+is operating on\footnote{Two subtle notes here: (1) A bit-field's memory location
+includes adjacent bit-fields, so reads and writes to bit-fields are expected to
+read and write adjacent memory if they're within the same set of locations, (2)
+padding bits inside a structure are included in the memory location of the
+structure. Reads and writes of uninitialized memory may be undefined, but a
+write is allowed to stomp over padding.}.
+
+\p Two sets of memory locations, \texttt{A} and \texttt{B}, are said to
+\textit{overlap} each other if some memory location in \texttt{A} is also in
+\texttt{B} (\(A \cap B \neq \emptyset\)). Two objects are said to
+\textit{alias}, if their memory locations overlap.
 
 \Sub{Memory Spaces}{Intro.Memory.Spaces}
 
 \p \acrshort{hlsl} programs manipulate data stored in four distinct memory
-spaces: thread, threadgroup, device and constant.
+spaces: thread, threadgroup, device and constant. Memory spaces are logical
+abstractions over physical memory. Each memory space has a defined \textit{line
+width}, which specifies the minimum readable and writable size, and a
+\textit{minimum alignment}, which defines the smallest addressable increment of
+the memory space. The two values need not be the same, although they may be.
+
+\begin{note}
+  \p Memory accesses for many resource types in \gls{dx} operate on 128-bit
+  slots aligned on 128-bit boundaries. In the terms of this specification it
+  would be said that those memory spaces have a 128-byte \textit{line width},
+  and a 128-byte \textit{minimum alignment}.
+\end{note}
+
+\p A memory location in any space may overlap with another memory location in
+the same space. A memory location in thread or threadgroup memory may not
+overlap with memory locations in any other memory spaces. It is implementation
+defined if memory locations in other memory spaces alias with memory locations
+in different spaces.
 
 \SubSub{Thread Memory}{Intro.Memory.Spaces.Thread}
 
@@ -319,3 +350,9 @@ the host may have additional synchronization concerns for host visibility.
 \gls{lane}s executing on the device. Constant memory is read-only, and an
 implementation can assume that constant memory is immutable and cannot change
 during execution.
+
+\SubSub{Constant Memory}{Intro.Memory.Spaces.Overlap}
+
+\p The \textbf{Thread} and \textbf{Thread Group} memory spacees may not overlap
+with any other memory space. All addresses in either memory space are implied to
+not alias any address in any other memory space.
