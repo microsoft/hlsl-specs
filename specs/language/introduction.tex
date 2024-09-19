@@ -285,8 +285,8 @@ is operating on\footnote{Two subtle notes here: (1) A bit-field's memory locatio
 includes adjacent bit-fields, so reads and writes to bit-fields are expected to
 read and write adjacent memory if they're within the same set of locations, (2)
 padding bits inside a structure are included in the memory location of the
-structure. Reads and writes of uninitialized memory may be undefined, but a
-write is allowed to stomp over padding.}.
+structure. Reads and writes of uninitialized memory is undefined, but a write is
+allowed to stomp over padding.}.
 
 \p Two sets of memory locations, \texttt{A} and \texttt{B}, are said to
 \textit{overlap} each other if some memory location in \texttt{A} is also in
