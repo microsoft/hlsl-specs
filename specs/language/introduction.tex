@@ -277,11 +277,6 @@ operations if the optimization alters the behavior of the program.
 of 8 \textit{bits}. Each \textit{bit} stores a single value 0 or 1. Each byte
 has a unique \textit{memory location}, alternatively called an \textit{address}.
 
-\p An object that is not of an intangible type will have an associated set of
-memory locations containing one or more location. For a bit-field the location
-will represent a maximal sequence of adjacent bit-fields all having nonzero
-width.
-
 \p Each read or write to a memory location is called a \textit{memory access}.
 Operations that perform memory accesses are called \textit{memory operations}. A
 memory operation may operate on one or more memory locations. A memory operation
@@ -295,8 +290,7 @@ write is allowed to stomp over padding.}.
 
 \p Two sets of memory locations, \texttt{A} and \texttt{B}, are said to
 \textit{overlap} each other if some memory location in \texttt{A} is also in
-\texttt{B} (\(A \cap B \neq \emptyset\)). Two objects are said to
-\textit{alias}, if their memory locations overlap.
+\texttt{B} (\(A \cap B \neq \emptyset\)).
 
 \Sub{Memory Spaces}{Intro.Memory.Spaces}
 
