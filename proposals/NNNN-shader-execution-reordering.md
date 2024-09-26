@@ -95,7 +95,7 @@ shading is then invoked in a more coherent context.
 
 Note that this is a very basic example. Among other things, it is possible to
 query information about the hit to influence `ReorderThread` with additional
-hints. See [Separation of ReorderThread and HitObject::Invoke](#separation-of-reorderthread-and-hitobjectinvoke) 
+hints. See [Separation of ReorderThread and HitObject::Invoke](#separation-of-reorderthread-and-hitobjectinvoke)
 for more elaborate examples.
 
 ### HitObject HLSL Additions
@@ -134,20 +134,20 @@ may call `TraceRay`).
 Executes traversal (including anyhit and intersection shaders) and returns the
 resulting hit or miss information as a `HitObject`. Unlike `TraceRay`, this
 does not execute closesthit or miss shaders. The resulting payload is not part
-of the `HitObject`. See 
+of the `HitObject`. See
 [Interaction with Payload Access Qualifiers](#interaction-with-payload-access-qualifiers)
 for details.
 
 ```C++
-template<payload_t> 
-static HitObject HitObject::TraceRay( 
-    RaytracingAccelerationStructure AccelerationStructure, 
-    uint RayFlags, 
-    uint InstanceInclusionMask, 
-    uint RayContributionToHitGroupIndex, 
-    uint MultiplierForGeometryContributionToHitGroupIndex, 
-    uint MissShaderIndex, 
-    RayDesc Ray, 
+template<payload_t>
+static HitObject HitObject::TraceRay(
+    RaytracingAccelerationStructure AccelerationStructure,
+    uint RayFlags,
+    uint InstanceInclusionMask,
+    uint RayContributionToHitGroupIndex,
+    uint MultiplierForGeometryContributionToHitGroupIndex,
+    uint MissShaderIndex,
+    RayDesc Ray,
     inout payload_t Payload);
 ```
 
@@ -173,7 +173,7 @@ separately, which in turn allows invoking a shader. In case of a procedural
 primitive, attributes are to be specified with an overload.
 
 ```C++
-static HitObject HitObject::FromRayQuery( 
+static HitObject HitObject::FromRayQuery(
     RayQuery Query);
 ```
 
@@ -193,8 +193,8 @@ for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit the
 specified attributes are ignored.
 
 ```C++
-template<attr_t> 
-static HitObject HitObject::FromRayQuery( 
+template<attr_t>
+static HitObject HitObject::FromRayQuery(
     RayQuery Query,
     attr_t CommittedCustomAttribs);
 ```
@@ -266,9 +266,9 @@ This function introduces [Reorder Points](#reorder-points), also in cases
 where no shader is invoked.
 
 ```C++
-template<payload_t> 
-static void HitObject::Invoke( 
-    HitObject Hit, 
+template<payload_t>
+static void HitObject::Invoke(
+    HitObject Hit,
     inout payload_t Payload);
 ```
 
@@ -584,13 +584,12 @@ Sets the index used for shader table lookups.
 
 Parameter                           | Definition
 ---------                           | ----------
-`uint RecordIndex` | The index into the hit or miss shader table. If the
-`HitObject` is a NOP-HitObject, the value is ignored.
+`uint RecordIndex` | The index into the hit or miss shader table. If the `HitObject` is a NOP-HitObject, the value is ignored.
 
 > If the `HitObject` encodes a hit, the index relates to the hit group table and only the bottom 28 bits are used:
 
 ```C++
-HitGroupRecordAddress = 
+HitGroupRecordAddress =
     D3D12_DISPATCH_RAYS_DESC.HitGroupTable.StartAddress + // from: DispatchRays()
     D3D12_DISPATCH_RAYS_DESC.HitGroupTable.StrideInBytes * // from: DispatchRays()
     HitGroupRecordIndex; // from shader: HitObject::SetShaderTableIndex(RecordIndex)
@@ -683,7 +682,7 @@ The following example shows a common pattern of combining `HitObject` and
 ```C++
 // Trace a ray without invoking closesthit/miss shading.
 HitObject hit = HitObject::TraceRay( ... );
- 
+
 // Reorder by hit point to increase coherence of subsequent shading.
 ReorderThread( hit );
 
@@ -718,8 +717,7 @@ void ReorderThread( HitObject Hit );
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject Hit` | `HitObject` that encapsulates the hit or miss according to
-which reordering should be performed.
+`HitObject Hit` | `HitObject` that encapsulates the hit or miss according to which reordering should be performed.
 
 ---
 
@@ -739,14 +737,8 @@ void ReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
 
 Parameter                           | Definition
 ---------                           | ----------
-`uint CoherenceHint` | User-defined value that determines the desired
-ordering of a thread relative to others.
-`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least
-significant bits in `CoherenceHint` the implementation should try to take
-into account. Applications should set this to the lowest value required to
-represent all possible values of `CoherenceHint` (at the given
-`ReorderThread` call site). All threads should provide the same value at a
-given call site to achieve best performance.
+`uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
 ---
 
@@ -776,22 +768,15 @@ described in
 
 ```C++
 void ReorderThread( HitObject Hit,
-                    uint CoherenceHint, 
+                    uint CoherenceHint,
                     uint NumCoherenceHintBitsFromLSB );
 ```
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject Hit` | `HitObject` that encapsulates the hit or miss according to
-which reordering should be performed.
-`uint CoherenceHint` | User-defined value that determines the desired
-ordering of a thread relative to others.
-`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least
-significant bits in `CoherenceHint` the implementation should try to take
-into account. Applications should set this to the lowest value required to
-represent all possible values of `CoherenceHint` (at the given
-`ReorderThread` call site). All threads should provide the same value at a
-given call site to achieve best performance.
+`HitObject Hit` | `HitObject` that encapsulates the hit or miss according to which reordering should be performed.
+`uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
 ---
 
@@ -814,12 +799,12 @@ for( int bounceCount=0; ; bounceCount++ )
     // that estimate into a coherence hint for reordering. Note that whether
     // this estimate is correct or not only affects performance, not
     // correctness.
-    bool probablyFinished = russianRoulette(albedo) 
+    bool probablyFinished = russianRoulette(albedo)
                             || bounceCount >= maxBounces;
     uint coherenceHints = probablyFinished ? 1 : 0;
 
     // Reorder based on the hit, while taking into account how likely we are to
-    // exit the loop this round. 
+    // exit the loop this round.
     ReorderThread( hit, coherenceHints, 1 );
 
     // Invoke shading for the current hit. Due to the reordering performed
@@ -840,7 +825,7 @@ for( int bounceCount=0; ; bounceCount++ )
 The following pseudocode shows another example of reordering used in the
 context of path tracing with a slightly different loop structure. In this
 case, NOP-HitObject are used in reordering to ensure coherent execution not
-only of shaders, but also of the code after the loop. 
+only of shaders, but also of the code after the loop.
 
 
 ```C++
@@ -851,7 +836,7 @@ for( int bounceCount=0; ; bounceCount++ )
     // Have threads conditionally participate in the next bounce depending on
     // loop iteration count and path throughput. Instead of having
     // non-participating threads break out of the loop here, we let them
-    // participate in the reordering with a NOP-hitobject first. 
+    // participate in the reordering with a NOP-hitobject first.
     // This will cause them to be grouped together and execute the work after
     // the loop with higher coherence. Note that the values of 'bounceCount'
     // might differ between threads in a wave, because reordering may group
@@ -950,19 +935,19 @@ code snippet:
 
 ```C++
 int MyFunc(int coherenceCoord)
-{ 
-    int A = WaveActiveBallot(true); 
-    if (WaveIsFirstLane()) 
-        ReorderThread(coherenceCoord, 32); 
-    int B = WaveActiveBallot(true); 
-    return A - B; 
+{
+    int A = WaveActiveBallot(true);
+    if (WaveIsFirstLane())
+        ReorderThread(coherenceCoord, 32);
+    int B = WaveActiveBallot(true);
+    return A - B;
 }
 ```
 
 In this example, a number of different things could happen:
 - If the implementation does not honor `ReorderThread` at all, the function
 will most likely return zero, as the set of threads before and after the
-conditional reorder would be the same. 
+conditional reorder would be the same.
 - If the implementation reorders threads invoking `ReorderThread` but does not
 replace them, B will likely be less than A for threads not invoking
 `ReorderThread`, while the reordered threads will likely resume execution with
@@ -994,7 +979,7 @@ calling `ReorderThread`. These are valid use cases as reordering can be
 beneficial even when shading happens inline in the raygeneration shader, and
 reordering before a known to be coherent or cheap shader can be
 counterproductive. For cases in which both is desired, keeping `ReorderThread`
-and `HitObject::Invoke` separated is still beneficial as detailed below. 
+and `HitObject::Invoke` separated is still beneficial as detailed below.
 
 Common hit processing can happen in the raygeneration shader with the
 additional efficiency gains of hit coherence. Benefits include:
@@ -1131,11 +1116,11 @@ HitObject::Invoke( hit, payload );
 ```C++
 hit = HitObject::TraceRay( ... );
 
-uint compressedNormal = CompressNormal( payload.normal ); 
+uint compressedNormal = CompressNormal( payload.normal );
 ReorderThread( hit );
 payload.normal = UncompressNormal( compressedNormal );
 
-HitObject::Invoke( hit, payload ); 
+HitObject::Invoke( hit, payload );
 ```
 
 ## DXIL specification
