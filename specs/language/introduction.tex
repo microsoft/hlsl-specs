@@ -275,18 +275,48 @@ operations if the optimization alters the behavior of the program.
 
 \p The fundamental storage unit in HLSL is a \textit{byte}, which is comprised
 of 8 \textit{bits}. Each \textit{bit} stores a single value 0 or 1. Each byte
-has a unique \textit{memory location}, alternatively called an \textit{address}.
+has a unique \textit{address}.
+
+\p A \textit{memory location} is a range of bytes which can be identified by an
+address and a length. A memory location represents either a scalar object, or a
+sequence of adjacent bit-fields of non-zero size.
 
 \p Each read or write to a memory location is called a \textit{memory access}.
 Operations that perform memory accesses are called \textit{memory operations}. A
 memory operation may operate on one or more memory locations. A memory operation
-must not alter memory at a location not contained in the set of memory locations it
-is operating on\footnote{Two subtle notes here: (1) A bit-field's memory location
-includes adjacent bit-fields, so reads and writes to bit-fields are expected to
-read and write adjacent memory if they're within the same set of locations, (2)
-padding bits inside a structure are included in the memory location of the
-structure. Reads and writes of uninitialized memory is undefined, but a write is
-allowed to stomp over padding.}.
+must not alter memory at a location not contained in the set of memory locations
+it is operating on.
+
+\begin{note}
+  The memory location of a bit-field may include adjacent bit-fields. For
+  example given the following declaration:
+
+  \begin{HLSL}
+    struct ContainingBitfields {
+      uint A : 4;
+      uint B : 4;
+      uint : 0;
+      uint D : 4;
+    }
+  \end{HLSL}
+
+  Members \texttt{A}, and \texttt{B} have the same memory locations comprised of
+  4 bytes beginning at the start of the structure. The zero-sized anonymous
+  bit-field member causes a break in bit-field packing, so member \texttt{D}
+  occupies the next set of memory locations beginning at the 5th byte of the
+  structure and continuing for 4 bytes. For more description of bit-fields see
+  \ref{Classes.BitFields}.
+\end{note}
+
+\p Padding bytes inside a structure are included in the memory location of the
+structure, but are not included in the memory locations of the members inside
+the structure. This means that element-wise operations like default copy
+operations do not copy padding bytes. Because structure padding is
+implementation defined, and reading or writing padding bytes is undefined
+behavior, an implementation may generate writes that overwrite padding bytes.
+
+\p Reading from uninitialized memory is undefined. Writing uninitialized values
+to memory is undefined.
 
 \p Two sets of memory locations, \texttt{A} and \texttt{B}, are said to
 \textit{overlap} each other if some memory location in \texttt{A} is also in
@@ -308,11 +338,17 @@ the memory space. The two values need not be the same, although they may be.
   and a 128-bit \textit{minimum alignment}.
 \end{note}
 
-\p A memory location in any space may overlap with another memory location in
-the same space. A memory location in thread or threadgroup memory may not
-overlap with memory locations in any other memory spaces. It is implementation
-defined if memory locations in other memory spaces alias with memory locations
-in different spaces.
+\p Each address has an associated memory space. Two addresses with the same
+value but different memory spaces are considered different unique addresses.
+
+\p A memory location in any memory space may overlap with another memory
+location in the same space. A memory location in thread or threadgroup memory
+may not overlap with memory locations in any other memory spaces\footnote{The
+physical memory regions for thread and threadgroup memory are required to be
+distinct and non-overlapping with any other memory space.}. It is implementation
+defined if memory locations in other memory spaces overlap with memory locations
+in different spaces\footnote{An implementation may define device, constant or
+additional extended memory spaces to share logical address ranges.}.
 
 \SubSub{Thread Memory}{Intro.Memory.Spaces.Thread}
 
@@ -344,9 +380,3 @@ the host may have additional synchronization concerns for host visibility.
 \gls{lane}s executing on the device. Constant memory is read-only, and an
 implementation can assume that constant memory is immutable and cannot change
 during execution.
-
-\SubSub{Constant Memory}{Intro.Memory.Spaces.Overlap}
-
-\p The \textbf{Thread} and \textbf{Thread Group} memory spaces may not overlap
-with any other memory space. All addresses in either memory space are implied to
-not alias any address in any other memory space.
