@@ -197,7 +197,7 @@ struct TestPushConstant_t
 
 float4 MainPs(void) : SV_Target0
 {
-      block_p g_p(g_PushConstants.root);
+      block_p g_p = block_p(g_PushConstants.root);
       g_p = g_p.Get().next;
       if ((uint64_t)g_pi == 0) // Null pointer test
           return float4(0.0,0.0,0.0,0.0);
