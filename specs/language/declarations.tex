@@ -46,6 +46,65 @@
 
 \Sec{Declarators}{Decl.Decl}
 \Sec{Initializers}{Decl.Init}
+
+\p The process of initialization described in this section applies to all
+initializers regardless of the context.
+
+\begin{grammar}
+  \define{initializer}\br
+  brace-or-equal-initializer\br
+  \terminal{(} expression-list \terminal{)}\br
+
+  \define{brace-or-equal-initializer}\br
+  \terminal{=} initializer-clause\br
+  braced-init-list\br
+
+  \define{initializer-clause}\br
+  assignment-expression\br
+  braced-init-list\br
+
+  \define{braced-init-list}\br
+  \terminal{\{} initializer-list \opt{\terminal{,}} \terminal{\}}\br
+  \terminal{\{} \terminal{\}}\br
+
+  \define{initializer-list}\br
+  initializer-clause\br
+  initializer-list \terminal{,} initializer-clause\br
+\end{grammar}
+
+\Sub{Aggregate Initialization}{Decl.Init.Agg}
+
+\p An \textit{aggregate} is a vector, matrix, array, or class.
+
+\p The subobjects of an aggregate have a defined order. For vectors and arrays
+the order is increasing subscript order. For matrices it is increasing subscript
+order with the with the subscript nesting such that in the notation
+\texttt{Mat[M][N]}, the ordering is \(Mat[0][0]...Mat[0][N]...
+Mat[M][0]...Mat[M][N]\). For classes the order is base class, followed by member
+subobjects in declaration order.
+
+\p A \textit{flattened ordering} of subobjects can be produced by performing a
+depth-first traversal of the subobjects of an object following the defined
+subobject ordering.
+
+\p Each \textit{initializer-list} is comprised of zero or more
+\textit{initializer-clause} expressions, which in turn may be another
+initializer-list or an \textit{assignment-expression}. Each
+assignment-expression is an object, which may be a scalar or aggregate type. A
+\textit{flattened initializer sequence} is constructed by a depth-first
+traversal over each assignment-expression in an initializer-list and performing
+a depth-first traversal accessing each subobject of the assignment-expression.
+
+\p An initializer-list is a valid initializer if for each element \(E_n\) in the
+target object's flattened ordering there is a corresponding initializer \(I_n\)
+in the flattened initializer sequence which can be implicitly converted to the
+element's type.
+
+\p An initializer-list is invalid if the flattened initializer sequence contains
+less elements than the target object's flattened ordering, or if any initializer
+\(I_n\) cannot be implicitly converted to the corresponding element \(E_n\)'s
+type.
+
 \Sec{Function Definitions}{Decl.Function}
 \Sec{Attributes}{Decl.Attr}
 \Sub{Semantic Annotations}{Decl.Attr.Semantic}
