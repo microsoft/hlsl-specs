@@ -65,9 +65,13 @@ will be a variable arguments function.
 
 ## Detailed design
 
-1. The printf dxil op will be non-semantic, it does not affect final hlsl code/algorithm.
-Non-semantic dxil op code can be counted down from 0xffff, or 0xffffffff, it will give a hint to the client api
-to remove the non semantic dxil safely
+1. The printf dxil op will be purely for debug purpose, it does not affect final hlsl 
+code/algorithm in any way.
+To separate this kind of debug-purpose dxil ops to the normal non-debug dxil il ops, 
+the debug printf dxil op code can be counted down from 0xffff, or 0xffffffff,
+e.g. op code is 0xfffe.
+So it will give a hint to the d3d debug layer to pick up debug printf dxil easily, 
+or a underlying d3d driver to remove these dxil op codes safely.
 2. Add a option to enable printf dxil op generation to dxc, try to separate hlsl code for debugging
 and for production, if printf option is disabled, the printf in hlsl will be report a error
 3. We should not support dynamic string variable, a string variable content.
@@ -79,4 +83,4 @@ expression, we need to retrieve global variable from the constant expression.
 of printf variable arguments, there is no definite function type can be validated.
 6. dxc does not valiate format specifier to the c/c++ format speicifer standard, or the matching relation between
 format specifier and argument. If the number and type don't match, they will produce undefined result from 
-client api, e.g. driver.
+a underlying d3d driver or a debug driver
