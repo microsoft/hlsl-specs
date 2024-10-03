@@ -18,7 +18,7 @@ debugging capabilities of hlsl coding in game, application and driver developmen
 
 The dxil counterpart spirv has a similar feature, 
 [NonSemantic.DebugPrintf extention](https://github.com/KhronosGroup/SPIRV-Registry/blob/main/nonsemantic/NonSemantic.DebugPrintf.asciidoc)
-to generate DebugPrintf spirvOp souced from hlsl/glsl. Based on the spirvOp
+to generate DebugPrintf spirvOp sourced from hlsl/glsl. Based on the spirvOp
 extention, some vendor drivers and Valve lunarG has 
 [debug printf layer](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md)
 to dump printf expression, "hlsl/glsl variables" into stdio or file.
@@ -65,22 +65,16 @@ will be a variable arguments function.
 
 ## Detailed design
 
-1. The printf dxil op will be purely for debug purpose, it does not affect final hlsl 
-code/algorithm in any way.
-To separate this kind of debug-purpose dxil ops to the normal non-debug dxil il ops, 
-the debug printf dxil op code can be counted down from 0xffff, or 0xffffffff,
-e.g. op code is 0xfffe.
-So it will give a hint to the d3d debug layer to pick up debug printf dxil easily, 
-or a underlying d3d driver to remove these dxil op codes safely.
-2. Add a option to enable printf dxil op generation to dxc, try to separate hlsl code for debugging
-and for production, if printf option is disabled, the printf in hlsl will be report a error
-3. We should not support dynamic string variable, a string variable content.
-retrieved from buffer. The string variable should be explicited defined and can 
+1. Add a option to enable printf dxil op generation to dxc, try to separate hlsl code
+for debugging purpose and for production purpose. The printf option is disabled by default, 
+and the printf instructions in hlsl will be report a error without a printf option.
+2. We should not support dynamic string variable, a string variable content.
+retrieved from buffer. The string variable should be explicitly defined and can 
 be retrieved directly/indirectly from global constant variable.
-4. The format string input to the dx.hl.op..void, could be llvm constant 
+3. The format string input to the dx.hl.op..void, could be llvm constant 
 expression, we need to retrieve global variable from the constant expression.
-5. The validation for the dxil overloading checking should be ignored. Because 
+4. The validation for the dxil overloading checking should be ignored. Because 
 of printf variable arguments, there is no definite function type can be validated.
-6. dxc does not valiate format specifier to the c/c++ format speicifer standard, or the matching relation between
-format specifier and argument. If the number and type don't match, they will produce undefined result from 
-a underlying d3d driver or a debug driver
+5. dxc will validate matching relation between format specifiers and arguments. 
+If the number of arguments and number of format specifiers mismatch, dxc will 
+produce error messages, If their types mismatch, dxc will report a warning messages.
