@@ -28,12 +28,9 @@ to dump printf expression, "hlsl/glsl variables" into stdio or file.
 The printf expression in hlsl mostly like this example.
 ```c++ hlsl:
 
-const string str0= "str0";
-string str1 = "str1";
 
 void main() {
-    printf(str0);
-    printf(str1);
+    printf("hello");
     printf("Variables are: %d %d %.2f", 1u, 2u, 1.5f);
 }
 
