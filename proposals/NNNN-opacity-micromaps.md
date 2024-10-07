@@ -129,6 +129,14 @@ enum class RayFlag : uint32_t {
 };
 ```
 
+#### SPIR-V
+
+This change is comaptible with the
+[SPV_EXT_opactity_micromap](https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/EXT/SPV_EXT_opacity_micromap.asciidoc)
+extension, where the new flag is `ForceOpacityMicromap2StateEXT`. It also,
+coincidentally, has the same number value as `ForceOMM2State`.
+
+
 ### Diagnostic Changes
 
 A warning diagnostic (default: warning) will be introduced and emitted when
