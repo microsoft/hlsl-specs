@@ -10,7 +10,7 @@ Michael Haidl, Simon Moll, Martin Stich
 
 ## Introduction
 
-This proposal introduces `ReorderThread` for raygeneration shaders to
+This proposal introduces `ReorderThread`, a builtin function for raygeneration shaders to
 explicitly specify where and how shader execution coherence can be improved.
 Separately, `HitObject` is introduced to decouple traversal, intersection
 testing and anyhit shading from closesthit and miss shading. This separation
@@ -23,13 +23,13 @@ Many raytracing workloads suffer from divergent shader execution and divergent
 data access because of their stochastic nature. Improving coherence with
 high-level application-side logic has many drawbacks, both in terms of
 achievable performance (compared to a hardware-assisted implementation) and
-developer effort. The existing DXR API allows implementations to dynamically
+developer effort. The DXR API already allows implementations to dynamically
 schedule shading work triggered by `TraceRay` and `CallShader`, but does not
-offer a way for the application to control scheduling in any way.
+offer a way for the application to control that scheduling in any way.
 
 Furthermore, the current fused nature of `TraceRay` with its combined
 execution of traversal, intersection testing, anyhit shading and closesthit or
-miss shading imposes various restrictions on the programming model that again
+miss shading imposes various restrictions on the programming model that, again,
 can increase the amount of developer effort and decrease performance. One
 aspect is that common code, e.g., vertex fetch and interpolation, must be
 duplicated in all closesthit shaders. This can cause more code to be generated
@@ -40,7 +40,7 @@ which must be transferred back to the caller through the payload.
 
 ## Proposed Solution
 
-Shader Execution Reordering (SER) introduces a new HLSL primitive,
+Shader Execution Reordering (SER) introduces a new HLSL built-in intrinsic,
 `ReorderThread`,
 that enables application-controlled reordering of work across the GPU for
 improved execution and data coherence.
@@ -67,7 +67,7 @@ information about the hit, such as the distance to the closest hit. Finally,
 
 The proposed extension to HLSL should be relatively straightforward to adopt by
 current DXR implementations: `HitObject` merely decouples existing `TraceRay`
-functionality into two distinct stages; the traversal stage and the shading
+functionality into two distinct stages: the traversal stage and the shading
 stage.
 For SER's `ReorderThread`, the minimal allowed implementation is simply a
 no-op, while implementations that already employ more sophisticated scheduling
@@ -189,7 +189,7 @@ Parameter                           | Definition
 Behaves like the overload of `HitObject::FromRayQuery` that takes only a
 `RayQuery` as argument, with custom attributes associated with
 COMMITTED_PROCEDURAL_PRIMITIVE_HIT. It is ok to always use this overload, even
-for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit the
+for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit, the
 specified attributes are ignored.
 
 ```C++
@@ -209,7 +209,7 @@ Parameter                           | Definition
 
 #### HitObject::MakeMiss
 
-Construct a `HitObject` representing a miss, without tracing a ray. It is
+Construct a `HitObject` representing a miss without tracing a ray. It is
 legal to construct a `HitObject` that differs from the result that would be
 obtained by passing the same parameters to `HitObject::TraceRay`, e.g.,
 constructing a miss for a ray that would have hit some geometry if it were
@@ -226,7 +226,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `uint RayFlags` | Valid combination of Ray flags as specified by `TraceRay`. Only defined ray flags are propagated by the system.
-`uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the bottom 16 bits of this value are used.
+`uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
 
 ---
 
@@ -595,7 +595,7 @@ HitGroupRecordAddress =
     HitGroupRecordIndex; // from shader: HitObject::SetShaderTableIndex(RecordIndex)
 ```
 
-> If the `HitObject` encodes a miss, the index relates to the miss table and only the bottom 16 bits are used:
+> If the `HitObject` encodes a miss, the index relates to the miss table and only the least significant 16 bits are used:
 
 ```C++
 MissRecordAddress =
