@@ -297,10 +297,10 @@ below:
           & Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
 
     Vector truncation promotion & Dimensionality Reduction Promotion
-          & Truncation Promotion  & \ref{Conv.vtrunc} \\ \cline{1-4}
+          & Promotion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
 
     Vector truncation conversion & Dimensionality Reduction Conversion
-          & Truncation Conversion & \ref{Conv.vtrunc} \\ \cline{1-4}
+          & Conversion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
     \hline
   \end{tabular}
 \end{center}
@@ -324,12 +324,18 @@ sequence with a \textbf{Conversion} conversion, the conversion is ranked as
 \p Otherwise, the rank of a conversion sequence is determined by considering the
 rank of each conversion.
 
-\p Conversion sequence ranks are ordered such that \textbf{Exact
-Match} rank is better than \textbf{Exact Match Extension} rank, which is better
-than \textbf{Promotion} rank, which is better than \textbf{Extension} rank,
-which is better than \textbf{Conversion} rank, which is better than
-\textbf{Truncation} rank. The rank of a conversion sequence is the rank of the
-worst ranked conversion in the sequence.
+\p Conversion sequence ranks are ordered from better to worse as:
+\begin{enumerate}
+  \item \textbf{Exact Match}
+  \item \textbf{Extension}
+  \item \textbf{Promotion}
+  \item \textbf{Promotion Extension}
+  \item \textbf{Conversion}
+  \item \textbf{Conversion Extension}
+  \item \textbf{Truncation}
+  \item \textbf{Promotion Truncation}
+  \item \textbf{Conversion Truncation}
+\end{enumerate}
 
 % TODO: Define user-defined conversion sequences. DXC doesn't actually support
 % these because we don't resolve overloads for user-defined conversion
