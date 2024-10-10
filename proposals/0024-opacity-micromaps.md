@@ -4,7 +4,7 @@
 
 ## Instructions
 
-* Proposal: [NNNN](NNNN-opacity-micromaps.md)
+* Proposal: [0024](0024-opacity-micromaps.md)
 * Author(s): [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Review**
