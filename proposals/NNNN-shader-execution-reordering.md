@@ -927,9 +927,10 @@ reorder point. Threads that do not arrive at a reorder point are guaranteed to
 not migrate, even if neighboring threads in the same wave do migrate.
 
 From the physical wave's point of view, an implementation may remove, replace,
-or do nothing with threads that arrive at a reorder point. It is also legal
-for an implementation to replace terminated threads in a wave if any of its
-threads arrive at a reorder point. This may indirectly affect threads that
+or do nothing with threads that arrive at a reorder point. It is also legal for
+an implementation to replace threads that were inactive at the start of the
+wave or those that exited the shader during execution, as long as any remaining
+thread reach a reorder point. This may indirectly affect threads that
 conditionally did not invoke a reorder point, as illustrated in the following
 code snippet:
 
