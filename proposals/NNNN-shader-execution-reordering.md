@@ -918,6 +918,26 @@ effort_ to extract as much coherence as possible, while keeping the overhead
 of reordering low enough to be practical for use in typical raytracing
 scenarios.
 
+While it is understood that reordering at `TraceRay` and `CallShader` is done
+at the discretion of the driver, `HitObject::TraceRay` and `HitObject::Invoke`
+are intended to be used in combination with `ReorderThread`.
+The desired behavior, as communicated from a shader to the driver, is inferred
+from the presence of `ReorderThread`.
+If no `ReorderThread` call is made, it implies that the driver should minimize
+its efforts to reorder for hit coherence.
+Conversely, the existence of a `ReorderThread` call implies that more sophisticated
+reordering will be beneficial, and that reordering conceptually occurs at the
+`ReorderThread` call.
+This describes the intended behavior communicated from an application, though
+the actual behavior remains at the driver's discretion.
+For example, an implementation may choose to defer the reordering operation
+implied by `ReorderThread` to the next reorder point.
+
+For performance reasons, it is crucial that the DXIL-generating compiler does
+not move non-uniform resource access across reorder points in general, and across
+`ReorderThread` in particular. It should be assumed that the shader will perform
+the access where coherence is maximized.
+
 ---
 
 ### Divergence behavior
