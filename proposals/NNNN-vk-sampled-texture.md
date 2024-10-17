@@ -36,7 +36,7 @@ sampler state argument.
 
 Consider this example pixel shader which uses a texture:
 
-```
+```hlsl
 Texture2D tex0 : register(t0);
 SamplerState s : register(s0);
 
@@ -48,7 +48,7 @@ float4 main(float2 uv: TEXCOORD) : SV_Target {
 Using the proposed types, this could be rewritten to use a combined image
 sampler:
 
-```
+```hlsl
 vk::SampledTexture2D tex0 : register(t0);
 
 float4 main(float2 uv: TEXCOORD) : SV_Target {
@@ -59,7 +59,7 @@ float4 main(float2 uv: TEXCOORD) : SV_Target {
 This is simpler and a more accurate representation of the underlying interface
 than using the existing annotation, which looks like:
 
-```
+```hlsl
 [[vk::combinedImageSampler]]
 Texture2D tex0 : register(t0);
 [[vk::combinedImageSampler]]
@@ -69,6 +69,12 @@ float4 main(float2 uv: TEXCOORD) : SV_Target {
   return tex0.Sample(s, uv);
 }
 ```
+
+A benefit of the `[[vk::combinedImageSampler]]` annotation is the ability to
+use the same code to represent a combined image sampler in Vulkan and a
+separate texture and sampler in DirectX. The new types will only be usable with
+Vulkan, but a similar effect can be produced by checking for the existence of
+the `__spirv__` macro.
 
 ## Detailed design
 
