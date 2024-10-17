@@ -24,8 +24,9 @@ The [existing annotation](https://github.com/microsoft/DirectXShaderCompiler/wik
 for combined image samplers (`[[vk::combinedImageSampler]]`) was designed with
 the explicit goal of avoiding defining new HLSL types and functions. This was
 intended to minimize the number of changes to the frontend needed to implement
-the feature. However, it is verbose and confusing for users, and we do not
-intend to implement it in upstream Clang.
+the feature. However, it is verbose, confusing for users, and requires a
+backend pass to pair up textures and samplers which is prone to subtle errors.
+We do not intend to implement it in upstream Clang.
 
 ## High-level description
 
@@ -73,7 +74,7 @@ float4 main(float2 uv: TEXCOORD) : SV_Target {
 
 ### HLSL Additions
 
-The following resource types will be added:
+The following resource types will be added to the `vk` namespace:
 
 | HLSL Object               | Type Parameters                   |
 |---------------------------|-----------------------------------|
@@ -129,6 +130,9 @@ these images in one of two formats: either an `OpTypeImage`, for instructions
 which do not require a sampler, or an `OpTypeSampledImage`, for instructions
 which do. For instructions which require an `OpTypeImage`, we can obtain such
 a value by passing the `OpTypeSampledImage` value to the `OpImage` instruction.
+
+We will likely represent these types in LLVM IR for upstream Clang by the
+addition of a new "sampled" attribute for the resource type.
 
 ### Diagnostic Changes
 
