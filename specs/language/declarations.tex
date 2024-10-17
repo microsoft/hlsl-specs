@@ -87,7 +87,7 @@ subobjects in declaration order.
 depth-first traversal of the subobjects of an object following the defined
 subobject ordering.
 
-\p Each \textit{initializer-list} is comprised of zero or more
+\p Each \textit{braced initializer list} is comprised of zero or more
 \textit{initializer-clause} expressions, which in turn may be another
 initializer-list or an \textit{assignment-expression}. Each
 assignment-expression is an object, which may be a scalar or aggregate type. A
@@ -101,9 +101,9 @@ in the flattened initializer sequence which can be implicitly converted to the
 element's type.
 
 \p An initializer-list is invalid if the flattened initializer sequence contains
-less elements than the target object's flattened ordering, or if any initializer
-\(I_n\) cannot be implicitly converted to the corresponding element \(E_n\)'s
-type.
+more or fewer elements than the target object's flattened ordering, or if any
+initializer \(I_n\) cannot be implicitly converted to the corresponding element
+\(E_n\)'s type.
 
 \Sec{Function Definitions}{Decl.Function}
 \Sec{Attributes}{Decl.Attr}
