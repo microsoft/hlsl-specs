@@ -42,9 +42,10 @@ Add a new node output attribute:
 | `[MaxRecordsPerNode(count)]` | Y | For `NodeArrayOutput`, specifies the maximum number of records that can be output to a node within the array.  Exceeding this results in undefined behavior.  This attribute can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph.  This attribute has no impact on existing node output limits. |
 
 This attribute will be required starting with a future Shader Model version.
-Since this may cause compilation failures with existing Work Graphs, a new compiler command line option will be
-introduced to replace the compiler error with a warning and implicitly set the value of `MaxRecordsPerNode`
-equal to `MaxRecords`. (TODO: Specify the command line option)
+Since this may cause compilation failures with existing Work Graphs, this will
+be a `DefaultError` warning assigned to a warning group named
+`hlsl-require-max-records-per-node` to allow a command-line override.
+The value of `MaxRecordsPerNode` will be set equal to `MaxRecords`.
 
 The compiler will also generate an error if the `MaxRecordsPerNode` value is greater than the `MaxRecords` in a HLSL shader. Note that `pMaxRecordsPerNode` may override this value and the runtime will validate the correctness in that case. See the feature [spec]() for more details.
 
