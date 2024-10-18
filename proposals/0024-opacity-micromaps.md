@@ -72,6 +72,26 @@ no OMMs present, since it may incur a small penalty on traversal performance
 overall.  See the D3D12 flag definition for more details:
 [`D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`][dxr-flags].
 
+`RayQuery` objects, used with [RayQuery::TraceRayInline()][rq-trace], 
+also need to be aware that OMMs may be in use.  The above `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` 
+doesn't apply for inline raytracing however. `RayQuery` objects are 
+independent of raytracing pipelines. For `RayQuery` the template for 
+instantiating the object a new optional `RAYQUERY_FLAGS` parameter:
+
+`RayQuery<RAY_FLAGS, RAYQUERY_FLAGS>`
+
+```hlsl
+enum RAYQUERY_FLAG : uint
+{
+    RAYQUERY_FLAG_NONE = 0x00, // default
+    RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS = 0x01,
+};
+```
+
+The reason for separate `RAYQUERY_FLAGS` is existing `RAY_FLAGS` are
+shared with non-inline raytracing ([TraceRay()][trace-ray]), where this new 
+flag doesn't apply, and ray flag space is a precious resource.
+
 Add a built-in `RAY_FLAG_FORCE_OMM_2_STATE` flag to the `RAY_FLAG` flags.
 `RAY_FLAG` flags are only meaningful when used in the `RayFlags` parameter of
 the [TraceRay()][trace-ray] or [RayQuery::TraceRayInline()][rq-trace]
