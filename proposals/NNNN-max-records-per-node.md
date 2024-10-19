@@ -98,12 +98,12 @@ Modify the definition for `MaxRecords` node output attribute:
 
 | attribute | required | description |
 |:---       |:--------:|:------------|
-| `[MaxRecords(count)]` or `[MaxRecords(count, maxRecordsPerNode)]` | Y (this or below attribute) | Given uint `count` declaration, the thread group can output `0...count` records to this output.  The variant with `maxRecordsPerNode` is required for `NodeArrayOutput`, where `count` applies across all the output nodes in the array and `maxRecordsPerNode` specifies the maximum number of records that can be written to a single output node within the array.  Exceeding these limits results in undefined behavior.  The value of `maxRecordsPerNode` must be less-than or equal to the value of `count`.  These attributes can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node]().  See [Node output limits](). |
+| `[MaxRecords(count, maxRecordsPerNode)]` | Y (this or below attribute) | Given uint `count` declaration, the thread group can output `0...count` records to this output.  The variant with `maxRecordsPerNode` is required for `NodeArrayOutput`, where `count` applies across all the output nodes in the array and `maxRecordsPerNode` specifies the maximum number of records that can be written to a single output node within the array.  Exceeding these limits results in undefined behavior.  The value of `maxRecordsPerNode` must be less-than or equal to the value of `count`.  These attributes can be overridden via the `NumOutputOverrides / pOutputOverrides` option when constructing a work graph as part of the [definition of a node]().  See [Node output limits](). |
 
 Note: if the specification is `MaxRecords(count, maxRecordsPerNode)`, then multiple outputs that share budget using
 `MaxRecordsSharedWith` **must** also share the same value for `maxRecordsPerNode`.  While in many cases this might be
 correct, this locks this requirement into the spec and restricts an implementation's ability to distinguish cases where
-they are different.
+they are different. We therefore prefer the option of specifying `MaxRecordsPerNode(count)` as a separate attribute.
 
 ### Optional Attribute
 
