@@ -108,8 +108,9 @@ they are different. We therefore prefer the option of specifying `MaxRecordsPerN
 ### Optional Attribute
 
 This attribute could be made optional, for maximum backward compatibility; i.e. existing SM6.8 Work Graphs compile with
-the newer Shader Model.  When `MaxRecordsPerNode` is _not_ specified, the implicit value of `MaxRecordsPerNode` is equal
-to `MaxRecords`.  This also avoids redundant attribute specifications for those usage models where the values of
-`MaxRecords` and `MaxRecordsPerNode` are identical.
+the newer Shader Model.  When `MaxRecordsPerNode` is _not_ specified, the implicit value of `MaxRecordsPerNode` is
+equal to `MaxRecords`.  This also avoids redundant attribute specifications for those usage models where the values of
+`MaxRecords` and `MaxRecordsPerNode` are identical. However, for performance reasons, this was made a required
+attribute with a compiler fall back for backward compatibilty.
 
 <!-- {% endraw %} -->
