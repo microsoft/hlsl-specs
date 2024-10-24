@@ -118,8 +118,12 @@ intersection attributes and information about the shader to invoke. The size
 of a `HitObject` is unspecified. As a consequence, `HitObject` cannot be
 stored in structured buffers. Ray payload structs must not have members of
 `HitObject` type. `HitObject` supports assignment (by-value copy) and can be
-passed as arguments to and returned from local functions. It is
-default-initialized to encode a NOP hit object (see `HitObject::MakeNop`).
+passed as arguments to and returned from local functions.
+
+A `HitObject` is default-initialized to encode a NOP-HitObject (see `HitObject::MakeNop`).
+A NOP-HitObject can be used with `HitObject::Invoke` and `ReorderThread` but
+does not call shaders or provide additional information for reordering.
+Most accessors will return zero-initialized values for a NOP-HitObject.
 
 ### Valid Shader Stages
 
