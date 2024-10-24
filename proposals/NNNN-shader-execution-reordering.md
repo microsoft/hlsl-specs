@@ -1298,6 +1298,44 @@ declare void @dx.op.reorderThread(
     nounwind
 ```
 
+#### HitObject_SetShaderTableIndex
+
+Returns a HitObject with updated shader table index.
+
+```DXIL
+declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
+    i32,                           ; opcode
+    %dx.types.HitObject,           ; hit object
+    i32)                           ; record index
+    nounwind readnone
+```
+
+#### HitObject_LoadLocalRootTableConstant
+
+Returns the root table constant for this HitObject and offset.
+
+```DXIL
+declare i32 @dx.op.hitObject_LoadLocalRootTableConstant(
+    i32,                           ; opcode
+    %dx.types.HitObject,           ; hit object
+    i32)                           ; offset
+    nounwind readonly
+```
+
+#### HitObject_Attributes
+
+Copies the attributes set for this HitObject to the provided buffer.
+
+```DXIL
+declare void @dx.op.hitObject_Attributes.AttrT(
+    i32,                           ; opcode
+    %dx.types.HitObject,           ; hit object
+    AttrT*)                        ; attributes
+    nounwind argmemonly
+```
+
+`AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
+
 #### Generic State Value getters
 
 State value getters return scalar, vector or matrix values dependent on the provided opcode.
@@ -1352,41 +1390,3 @@ declare float @dx.op.hitObject_StateMatrix.f32(
     i32)                      ; column
     nounwind readnone
 ```
-
-#### HitObject_SetShaderTableIndex
-
-Returns a HitObject with updated shader table index.
-
-```DXIL
-declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
-    i32,                           ; opcode
-    %dx.types.HitObject,           ; hit object
-    i32)                           ; record index
-    nounwind readnone
-```
-
-#### HitObject_LoadLocalRootTableConstant
-
-Returns the root table constant for this HitObject and offset.
-
-```DXIL
-declare i32 @dx.op.hitObject_LoadLocalRootTableConstant(
-    i32,                           ; opcode
-    %dx.types.HitObject,           ; hit object
-    i32)                           ; offset
-    nounwind readonly
-```
-
-#### HitObject_Attributes
-
-Copies the attributes set for this HitObject to the provided buffer.
-
-```DXIL
-declare void @dx.op.hitObject_Attributes.AttrT(
-    i32,                           ; opcode
-    %dx.types.HitObject,           ; hit object
-    AttrT*)                        ; attributes
-    nounwind argmemonly
-```
-
-`AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
