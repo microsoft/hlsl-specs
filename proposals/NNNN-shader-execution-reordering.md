@@ -250,7 +250,7 @@ static HitObject HitObject::MakeNop();
 
 Parameter                           | Definition
 ---------                           | ----------
-`Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
+`Return: HitObject` | The `HitObject` initialized to a NOP-HitObject.
 
 ---
 
