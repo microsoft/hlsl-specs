@@ -10,12 +10,12 @@ Michael Haidl, Simon Moll, Martin Stich
 
 ## Introduction
 
-This proposal introduces `ReorderThread`, a builtin function for raygeneration shaders to
+This proposal introduces `ReorderThread`, a built-in function for raygeneration shaders to
 explicitly specify where and how shader execution coherence can be improved.
-Separately, `HitObject` is introduced to decouple traversal, intersection
-testing and anyhit shading from closesthit and miss shading. This separation
-gives an increase in flexibility and enables `ReorderThread` to improve
-coherence for closesthit and miss shading, as well as subsequent operations.
+Additionally, `HitObject` is introduced to decouple traversal, intersection
+testing and anyhit shading from closesthit and miss shading. Decoupling these
+shader stages gives an increase in flexibility and enables `ReorderThread` to
+improve coherence for closesthit and miss shading, as well as subsequent operations.
 
 ## Motivation
 
