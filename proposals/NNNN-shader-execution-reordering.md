@@ -644,13 +644,17 @@ caller -> anyhit -> (closesthit|miss) -> caller
 
 With `HitObject`, control is returned to the caller after
 `HitObject::TraceRay` completed and hence caller is inserted between anyhit
-and (closesthit|miss):
+and (closesthit|miss).
+
+The flow for `HitObject::TraceRay` is:
 
 ```C++
 caller -> anyhit -> caller
            ^  |
            |__|
 ```
+
+The flow for `HitObject::Invoke` is:
 
 ```C++
 caller -> (closesthit|miss) -> caller
