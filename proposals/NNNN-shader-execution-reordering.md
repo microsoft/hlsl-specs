@@ -32,11 +32,11 @@ execution of traversal, intersection testing, anyhit shading and closesthit or
 miss shading imposes various restrictions on the programming model that, again,
 can increase the amount of developer effort and decrease performance. One
 aspect is that common code, e.g., vertex fetch and interpolation, must be
-duplicated in all closesthit shaders. This can cause more code to be generated
-in a divergent execution environment. Furthermore, `TraceRay`'s nature
-requires that simple visibility rays unnecessarily execute hit shaders in
-order to access basic information about the hit
-which must be transferred back to the caller through the payload.
+duplicated in all closesthit shaders. This can cause more code to be generated,
+which is particularly problematic in a divergent execution environment.
+Furthermore, `TraceRay`'s nature requires that simple visibility rays
+unnecessarily execute hit shaders in order to access basic information about
+the hit which must be transferred back to the caller through the payload.
 
 ## Proposed Solution
 
