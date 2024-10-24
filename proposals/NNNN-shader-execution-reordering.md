@@ -209,6 +209,8 @@ Parameter                           | Definition
 `RayQuery Query` | RayQuery from which the hit is created.
 `attr_t CommittedCustomAttribs` | See the `Attributes` parameter of `ReportHit` for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader.
 
+The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
+
 ---
 
 #### HitObject::MakeMiss
