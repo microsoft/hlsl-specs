@@ -1169,8 +1169,8 @@ Central to `dx.types.HitObject` is its value semantics;
 an assignment is a copy.
 As the size of `dx.types.HitObject` is unknown at the DXIL level, the driver
 compiler will employ type replacement early in the lowering process. This is
-analogous to how `dx.types.Handle` is lowered. DXC will guarantee that the
-type is
+analogous to how `dx.types.Handle` is lowered.
+The DXIL-generating compiler will guarantee that the type is
 trivially replaceable, e.g., prevent SROA from splitting up the type.
 
 All intrinsics take `dx.types.HitObject` by value. Any intrinsic that produces
