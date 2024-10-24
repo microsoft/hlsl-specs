@@ -541,7 +541,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 uint HitObject::GetHitKind();
 ```
 
-Returns the hit kind of a hit.
+Returns the hit kind of a hit. See `HitKind` for definition of possible values.
 
 Returns 0 if the `HitObject` does not encode a hit.
 
