@@ -170,33 +170,21 @@ This function introduces [Reorder Points](#reorder-points).
 #### HitObject::FromRayQuery
 
 Construct a `HitObject` representing the committed hit in a `RayQuery`. It is
-not bound to a shader table record and behaves as NOP if invoked. It can be used for
-reordering based on hit information. If no hit is committed in the RayQuery,
-the HitObject returned is the NOP object. A shader table record can be assigned
-separately, which in turn allows invoking a shader. In case of a procedural
-primitive, attributes are to be specified with an overload.
+not bound to a shader table record and behaves as a NOP-HitObject if invoked.
+It can be used for reordering based on hit information.
+If no hit is committed in the RayQuery,
+the HitObject returned is a NOP-HitObject. A shader table record can be assigned
+separately, which in turn allows invoking a shader.
 
-```C++
-static HitObject HitObject::FromRayQuery(
-    RayQuery Query);
-```
-
-Parameter                           | Definition
----------                           | ----------
-`Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
-`RayQuery Query` | RayQuery from which the hit is created.
-
----
-
-#### HitObject::FromRayQuery with custom attributes
-
-Behaves like the overload of `HitObject::FromRayQuery` that takes only a
-`RayQuery` as argument, with custom attributes associated with
-COMMITTED_PROCEDURAL_PRIMITIVE_HIT. It is ok to always use this overload, even
+An overload takes custom attributes associated with
+COMMITTED_PROCEDURAL_PRIMITIVE_HIT. It is ok to always use the overload, even
 for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit, the
 specified attributes are ignored.
 
 ```C++
+static HitObject HitObject::FromRayQuery(
+    RayQuery Query);
+
 template<attr_t>
 static HitObject HitObject::FromRayQuery(
     RayQuery Query,
