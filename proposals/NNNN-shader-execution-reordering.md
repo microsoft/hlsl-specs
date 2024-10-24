@@ -44,12 +44,12 @@ Shader Execution Reordering (SER) introduces a new HLSL built-in intrinsic,
 `ReorderThread`,
 that enables application-controlled reordering of work across the GPU for
 improved execution and data coherence.
-
 Additionally, the introduction of `HitObject` allows separation of traversal,
-anyhit shading and intersection testing from closesthit and miss shading. This
-separation enables the otherwise orthogonal `ReorderThread` to improve
-coherence for closesthit or miss shading and any other shader code following
-`ReorderThread`. Applications can control coherence based on hit properties,
+anyhit shading and intersection testing from closesthit and miss shading.
+
+`HitObject` and `ReorderThread` can be combined to improve coherence for
+closesthit and miss shader execution in a controlled manner.
+Applications can control coherence based on hit properties,
 ray generation state, ray payload, or any combination thereof. Applications can
 maximize performance by considering coherence for both hit and miss shading as
 well as subsequent control flow and data access patterns inside the
