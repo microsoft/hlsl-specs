@@ -207,7 +207,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `RayQuery Query` | RayQuery from which the hit is created.
-`attr_t CommittedCustomAttribs` | See `ReportHit` for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader. The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
+`attr_t CommittedCustomAttribs` | See the `Attributes` parameter of `ReportHit` for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader.
 
 ---
 
@@ -257,8 +257,8 @@ Parameter                           | Definition
 Execute closesthit or miss shading for the hit or miss encapsulated in a
 `HitObject`. The `HitObject` fully determines the system values accessible
 from the closesthit or miss shader.
-A NOP-HitObject, or a `HitObject` constructed from a `RayQuery` without
-setting a shader table index, will not invoke a shader and is effectively
+A NOP-HitObject or a `HitObject` constructed from a `RayQuery` without
+setting a shader table index will not invoke a shader and is effectively
 ignored.
 
 The `HitObject::Invoke` call counts towards the trace recursion depth. It must
@@ -278,7 +278,7 @@ static void HitObject::Invoke(
 
 Parameter                           | Definition
 ---------                           | ----------
-`HitObject Hit` | `HitObject` that encapsulates information about the closesthit or miss shader to be executed. If the `HitObject` is a NOP-HitObject, or a `HitObject` constructed from a `RayQuery` without setting a shader table index, then neither a closeshit nor a miss shader will be executed.
+`HitObject Hit` | `HitObject` that encapsulates information about the closesthit or miss shader to be executed. If the `HitObject` is a NOP-HitObject or a `HitObject` constructed from a `RayQuery` without setting a shader table index, then neither a closeshit nor a miss shader will be executed.
 `payload_t Payload` | The ray payload. `payload_t` must match the type expected by the shader being invoked. See [Interaction With Payload Access Qualifiers](#interaction-with-payload-access-qualifiers) for details.
 
 > It is legal to call `HitObject::TraceRay` with a different payload type than
@@ -624,7 +624,7 @@ that information to augment reordering decisions before invoking a hit shader.
 
 `RootConstantOffsetInBytes` must be a multiple of 4.
 
-If the `HitObject` is a NOP-HitObject, or a `HitObject` constructed from a
+If the `HitObject` is a NOP-HitObject or a `HitObject` constructed from a
 `RayQuery` without setting a shader table index, the return value is zero.
 
 ---
