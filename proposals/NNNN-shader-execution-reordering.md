@@ -1353,6 +1353,18 @@ declare float @dx.op.hitObject_StateMatrix.f32(
     nounwind readnone
 ```
 
+#### HitObject_SetShaderTableIndex
+
+Returns a HitObject with updated shader table index.
+
+```DXIL
+declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
+    i32,                           ; opcode
+    %dx.types.HitObject,           ; hit object
+    i32)                           ; record index
+    nounwind readnone
+```
+
 #### HitObject_LoadLocalRootTableConstant
 
 Returns the root table constant for this HitObject and offset.
@@ -1378,15 +1390,3 @@ declare void @dx.op.hitObject_Attributes.AttrT(
 ```
 
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
-
-#### HitObject_SetShaderTableIndex
-
-Returns a HitObject with updated shader table index.
-
-```DXIL
-declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
-    i32,                           ; opcode
-    %dx.types.HitObject,           ; hit object
-    i32)                           ; record index
-    nounwind readnone
-```
