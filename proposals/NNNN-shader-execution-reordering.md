@@ -1223,28 +1223,51 @@ declare %dx.types.HitObject @dx.op.hitObject_TraceRay.PayloadT(
     nounwind
 ```
 
+Validation errors:
+- Validate that `opcode` equals `HitObject_TraceRay`.
+- Validate the resource for `acceleration structure handle`.
+- Validate the compatibility of type `PayloadT`.
+- Validate that `payload` is a valid pointer.
+
+Validation warnings:
+- If `ray flags` is constant, validate the combination.
+- If `instance inclusion mask` is constant, validate that no more than the 8 least significant bits are set.
+- If `ray contribution to hit group index` is constant, validate that no more than the 4 least significant bits are set.
+- If `multiplier for geometry contribution to hit group index` is constant, validate that no more than the 4 least significant bits are set.
+- If `miss shader index` is constant, validate that no more than the 16 least significant bits are set.
+
 #### HitObject_FromRayQuery
 
 ```DXIL
 declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery(
     i32,                           ; opcode
-    %dx.types.RayQueryHandle)      ; ray query
+    i32)                           ; ray query
     nounwind argmemonly
 
 ```
 This is used for the HLSL overload of `HitObject::FromRayQuery` that only takes `RayQuery`.
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_FromRayQuery`.
+- Validate that `ray query` is a valid ray query handle.
 
 #### HitObject_FromRayQueryWithAttrs
 
 ```DXIL
 declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery.AttrT(
     i32,                           ; opcode
-    %dx.types.RayQueryHandle,      ; ray query
+    i32,                           ; ray query
     AttrT*)                        ; attributes
     nounwind argmemonly
 ```
 This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQuery` and the user-defined `Attribute` struct.
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_FromRayQueryWithAttrs`.
+- Validate that `ray query` is a valid ray query handle.
+- Validate the compatibility of type `AttrT`.
+- Validate that `attributes` is a valid pointer.
 
 #### HitObject_MakeMiss
 
@@ -1264,6 +1287,13 @@ declare %dx.types.HitObject @dx.op.hitObject_MakeMiss(
     nounwind readnone
 ```
 
+Validation errors:
+- Validate that `opcode` equals `HitObject_MakeMiss`.
+
+Validation warnings:
+- If `ray flags` is constant, validate the combination.
+- If `miss shader index` is constant, validate that no more than the 16 least significant bits are set.
+
 #### HitObject_MakeNop
 
 ```DXIL
@@ -1271,6 +1301,9 @@ declare %dx.types.HitObject @dx.op.hitObject_MakeNop(
     i32)                           ; opcode
     nounwind readnone
 ```
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_MakeNop`.
 
 #### HitObject_Invoke
 
@@ -1281,6 +1314,12 @@ declare void @dx.op.hitObject_Invoke.PayloadT(
     PayloadT*)                     ; payload
     nounwind
 ```
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_Invoke`.
+- Validate that `hit object` is not undef.
+- Validate the compatibility of type `PayloadT`.
+- Validate that `payload` is a valid pointer.
 
 #### ReorderThread
 
@@ -1298,6 +1337,14 @@ declare void @dx.op.reorderThread(
     nounwind
 ```
 
+Validation errors:
+- Validate that `opcode` equals `ReorderThread`.
+- Validate that `coherence hint` is not undef.
+- Validate that `num coherence hint bits from LSB` is not undef.
+
+Validation warnings:
+- If `num coherence hint bits from LSB` is constant, validate that it is less than or equal to 32.
+
 #### HitObject_SetShaderTableIndex
 
 Returns a HitObject with updated shader table index.
@@ -1310,6 +1357,11 @@ declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
     nounwind readnone
 ```
 
+Validation errors:
+- Validate that `opcode` equals `HitObject_SetShaderTableIndex`.
+- Validate that `hit object` is not undef.
+- Validate that `record index` is not undef.
+
 #### HitObject_LoadLocalRootTableConstant
 
 Returns the root table constant for this HitObject and offset.
@@ -1321,6 +1373,11 @@ declare i32 @dx.op.hitObject_LoadLocalRootTableConstant(
     i32)                           ; offset
     nounwind readonly
 ```
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_LoadLocalRootTableConstant`.
+- Validate that `hit object` is not undef.
+- Validate that `offset` is not undef.
 
 #### HitObject_Attributes
 
@@ -1335,6 +1392,12 @@ declare void @dx.op.hitObject_Attributes.AttrT(
 ```
 
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
+
+Validation errors:
+- Validate that `opcode` equals `HitObject_Attributes`.
+- Validate that `hit object` is not undef.
+- Validate the compatibility of type `AttrT`.
+- Validate that `attributes` is a valid pointer.
 
 #### Generic State Value getters
 
@@ -1390,3 +1453,8 @@ declare float @dx.op.hitObject_StateMatrix.f32(
     i32)                      ; column
     nounwind readnone
 ```
+
+Validation errors:
+- Validate that `opcode` is one of the supported opcodes in the table above.
+- Validate that `hit object` is not undef.
+- Validate that `index`, `row`, and `col` are constant and in a valid range.
