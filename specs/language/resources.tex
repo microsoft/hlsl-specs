@@ -4,19 +4,17 @@ Resources are built-in intangible types representing memory with an external int
 
 These take the form of Typed Buffers, Raw Buffers, Textures, and Samplers.
 Buffer and Texture types can be read-only or writable.
-Read-only buffers and textures types constitute Shader Resource Views (SRVs) of the external memory.
-Writable buffers and textures types constitute Unordered Access Views (UAVs) of the external memory.
 
 \Sec{Typed Buffers}{Resources.tybuf}
 
-The typed buffer class template represents a resource whose format can be converted upon load.
+The typed buffer class template represents a one-dimensional resource containing an array of a single given type.
+Its contents are indexed by typed access to each element
+Types may have their formats converted upon load.
 
 Template types can be any type that totals or can be padded to 16 bytes.
 
 All typed buffers can be read through subscript operators or Load methods.
 Writable typed buffers can be written through subscript operators.
-
-Typed Buffers are declared with the built-in templates:
 
 Where \texttt{T} can be any arithmetic type \ref{Basic.types.arithmetic}
 or a vector with a maximum of four elements containing such an arithmetic type.
@@ -74,7 +72,7 @@ The size of a Buffer can be retrieved using the \texttt{GetDimensions} method.
 void GetDimensions(out uint size);
 \end{HLSL}
 
-This returns the full size of the buffer in bytes through the \texttt{width} out parameter.
+This returns the full size of the buffer in bytes through the \texttt{size} out parameter.
 
 \Sub{Element Access}{Resources.rotybufs.access}
 
@@ -95,7 +93,7 @@ but also takes a second \texttt{status} parameter that returns information about
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -167,7 +165,7 @@ but also takes a second \texttt{status} parameter that returns information about
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -179,15 +177,15 @@ It behaves as if it returns a reference to that element.
 
 \Sec{Raw Buffer Types}{Resources.rawbufs}
 
-Raw buffers are either ByteAddressBuffers or StructuredBuffers.
+Raw buffers are one-dimensional resources of arbitrary memory layout.
+They are either ByteAddressBuffers or StructuredBuffers.
 ByteAddressBuffers enable per-byte access to the raw data while
 StructuredBuffers have an associated structure type that determines how they are
 indexed. This type can be a scalar, vector, matrix, or user-defined struct.
 
-but partial writes aren't allowed.
+Partial writes aren't allowed.
 Though structured buffers can contain vectors,
 assignment to individual vector elements will result in an error.
-I HAVE BEEN UNABLE TO VERIFY THIS, THOUGH I WAS SURE IT WAS TRUE!
 
 \Sec{Read-only Byte Access Buffers}{Resources.robabufs}
 
@@ -218,7 +216,7 @@ I HAVE BEEN UNABLE TO VERIFY THIS, THOUGH I WAS SURE IT WAS TRUE!
 
 \Sub{Constructors}{Resources.robabufs.ctrs}
 
-Since their contents are viewed as raw bytes, ByteAddressBuffers are defined as a simple variable definition.
+Since their contents are viewed as raw bytes, ByteAddressBuffers are defined without any type parameters.
 \begin{HLSL}
   ByteAddressBuffer buf;
 \end{HLSL}
@@ -232,7 +230,7 @@ but must be resolvable to a unique global buffer.
 
 \begin{HLSL}
   ByteAddressBuffer gbuf;
-  void doit(bool b) {
+  void doit() {
     ByteAddressBuffer lbuf = gbuf;
   }
 \end{HLSL}
@@ -284,7 +282,7 @@ but also take a second \texttt{status} parameter that returns information about 
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -401,7 +399,7 @@ but must be resolvable to a unique global buffer.
 
 \begin{HLSL}
   RWByteAddressBuffer gbuf;
-  void doit(bool b) {
+  void doit() {
     RWByteAddressBuffer lbuf = gbuf;
   }
 \end{HLSL}
@@ -453,7 +451,7 @@ but also take a second \texttt{status} parameter that returns information about 
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -665,7 +663,7 @@ but also takes a second \texttt{status} parameter that returns information about
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -745,7 +743,7 @@ but also takes a second \texttt{status} parameter that returns information about
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource on tile-based platforms. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
@@ -901,7 +899,7 @@ or implicitly by leaving them off.
   bind-number digit\br
 \end{grammar}
 
-The register type indicates whether the binding is for a read-only SRV (\texttt{t}), a writable UAV (\texttt{u}),
+The register type indicates whether the binding is for a read-only (\texttt{t}), a writable (\texttt{u}),
 a constant buffer (\texttt{b}), or a sampler (\texttt{s}).
 The register bind number indicates the register number at which the resource variable begins.
 The optional second parameter indicates the virtual register space that the register belongs to.
@@ -915,7 +913,7 @@ Sample syntax of virtual register binding attributes:
 \end{HLSL}
 
 Each resource must have a unique register. Different resources cannot occupy the same register,
-but SRVs and UAVs have separate namespaces and different logical register spaces have independent
+but read-only and writable buffers have separate namespaces and different logical register spaces have independent
 sets of register numbers. Meaning the following is all allowed:
 \begin{HLSL}
   Buffer<float> mybuf : register(t0, space0);
@@ -924,12 +922,23 @@ sets of register numbers. Meaning the following is all allowed:
   RWBuffer<float> herbuf : register(u0, space1);
 \end{HLSL}
 
-Resource arrays occupy the first register they specify as well as however many additional registers
-the array requires to assign a register to each of its elements.
+Resource aggregates structs containing multiple resources types or arrays of resource types or structs containing one or more resource types.
+When aggregate types have register annotations, they occupy the first register they specify as well as however many additional sequential registers
+the aggregate requires to assign a register to each of its elements that correspond to the given register type.
+Multiple register annotations can be placed on aggregates involving structs where each corresponds to a distinct
+register type that will apply to all the registers of that type in the aggregate.
+
+\begin{note}
+Resource types contained in structs are only allocated registers when they are explicitly used.
+This includes elements of arrays of resources as such array elements must be indexed with literals.
+\end{note}
 
 \begin{HLSL}
-  Buffer<float> fbuf[3] : register(t0, space0); // occupies t0, t1, and t2
-  Buffer<int4> ibuf[4][3] : register(t3, space0); // occupies registers t3 - t15
+  Buffer<float> fbuf[3] : register(t0, space0); // Occupies t0, t1, and t2.
+  Buffer<int4> ibuf[4][3] : register(t3, space0); // Occupies registers t3 - t14.
+  struct {RWBuffer<int> rwbuf; Buffer buf;} sbufs : register(t15) : register(u0); // Occupies registers t15 and u0.
+  struct {Buffer bufs[5]; Buffer buf;} robufs : register(t16); // Occupies registers t16 - t21.
+  struct {Buffer r; RWBuffer<int> w;} bibufs[2] : register(t22) : register(u1); // Occupies registers t22-24 and u1-u2
 \end{HLSL}
 
 If the register binding or register space is not specified, implicit values are used.
