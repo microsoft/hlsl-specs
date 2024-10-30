@@ -1,6 +1,6 @@
 <!-- {% raw %} -->
 
-* Proposal: [0025](0025-filename.md)
+* Proposal: [0025](0025-max-records-per-node.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Mike Apodaca](https://github.com/mapodaca-nv)
 * Sponsor: Damyan Pepper
 * Status: **Under Consideration**
