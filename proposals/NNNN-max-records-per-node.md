@@ -1,8 +1,8 @@
 <!-- {% raw %} -->
 
-* Proposal: [MaxRecordsPerNode Attribute for NodeArrayOutput](NNNN-filename.md)
+* Proposal: [0025](0025-filename.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Mike Apodaca](https://github.com/mapodaca-nv)
-* Sponsor: TBD
+* Sponsor: Damyan Pepper
 * Status: **Under Consideration**
 
 # [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
