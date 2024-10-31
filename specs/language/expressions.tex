@@ -162,12 +162,10 @@ as the same non-parenthesized expression.
 \p A \textit{postfix-expression} followed by an expression in square brackets
 (\texttt{[ ]}) is a subscript expression. In an array subscript expression of
 the form \texttt{E1[E2]}, \texttt{E1} must either be a variable of array,
-vector, matrix, typed buffer (\ref{Resources.tybuf}), or structured buffer
-(\ref{Resources.stbufs}), with elements of type \texttt{T[]} or an
-object of type \texttt{T} where \texttt{T} provides an
-overloaded implementation of \texttt{operator[]} (\ref{Overload}).\footnote{HLSL
-does not support the base address of a subscript operator being the expression
-inside the braces, which is valid in C and C++.}
+vector, or matrix of \texttt{T[]}, or an object of type \texttt{T} where
+\texttt{T} provides an overloaded implementation of \texttt{operator[]}
+(\ref{Overload}).\footnote{HLSL does not support the base address of a subscript
+operator being the expression inside the braces, which is valid in C and C++.}
 
 \Sec{Function Calls}{Expr.Post.Call}
 

@@ -23,26 +23,41 @@ The total size of a single contained element must be less than 16 bytes.
 Typed buffers perform format conversions on load such that the underlying data
 gets converted to the destination type.
 
-\Sec{Read-only Typed Buffers}{Resources.rotybufs}
+\Sec{Typed Buffers}{Resources.tybufs}
 
 \begin{HLSL}
 template <typename T = float4>
  class Buffer {
+ public:
    Buffer();
+   Buffer(Buffer buf);
    Buffer operator=(Buffer buf);
 
-   void GetDimensions(out uint width);
+   void GetDimensions(out uint width) const;
+
+   // Element access.
+   T operator[](uint pos) const;
+   T Load(in int pos) const;
+   T Load(in int pos, out uint status) const;
+};
+
+
+template <typename T>
+ class RWBuffer : public Buffer {
+ public:
+   RWBuffer();
+   RWBuffer(RWBuffer buf);
+   RWBuffer operator=(RWBuffer buf);
 
    // element access
-   T operator[](uint pos);
-   T Load(in int pos);
-   T Load(in int pos, out uint status);
+   T &operator[](uint n);
 };
+}
 \end{HLSL}
 
-\Sub{Constructors}{Resources.rotybufs.ctrs}
+\Sub{Constructors}{Resources.tybufs.ctrs}
 
-Buffers can be defined with explicit or implicit template parameter types.
+Read-only Buffers can be defined with explicit or implicit template parameter types.
 \begin{HLSL}
   Buffer buf1;
   Buffer<> buf2;
@@ -50,110 +65,45 @@ Buffers can be defined with explicit or implicit template parameter types.
 \end{HLSL}
 Since \texttt{float4} is the default type, all of these definitions are equivalent.
 
-When defined at global scope, Buffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
-
-When defined at local scope, Buffers represent local references
-that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
-
-\begin{HLSL}
-  Buffer<int> gbuf;
-  void doit() {
-    Buffer lbuf<int> = gbuf;
-  }
-\end{HLSL}
-Buffer operands to the assignment operator must have the same element type.
-
-\Sub{Dimensions}{Resources.rotybufs.dims}
-
-The size of a Buffer can be retrieved using the \texttt{GetDimensions} method.
-\begin{HLSL}
-void GetDimensions(out uint size);
-\end{HLSL}
-
-This returns the full size of the buffer in bytes through the \texttt{size} out parameter.
-
-\Sub{Element Access}{Resources.rotybufs.access}
-
-The contents of Buffers can be retrieved using the \texttt{Load} methods
-or the subscript operator.
-
-\begin{HLSL}
- T Load(in int pos);
- T operator[](uint pos);
-\end{HLSL}
-
-These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
-
-An additional \texttt{Load} method returns the indicated element just as the other,
-but also takes a second \texttt{status} parameter that returns information about the accessed resource.
-\begin{HLSL}
- T Load(in int pos, out uint status);
-\end{HLSL}
-
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
-
-\Sec{Writable Typed Buffers}{Resources.rwtybufs}
-
-\begin{HLSL}
-template <typename T>
- class RWBuffer {
-
-   RWBuffer();
-   RWBuffer operator=(RWBuffer buf);
-
-   void GetDimensions(out uint size);
-
-   // element access
-   T operator[](uint n);
-   T Load(in int pos);
-   T Load(in int pos, out uint status);
-};
-\end{HLSL}
-
-\Sub{Constructors}{Resources.rwtybufs.ctrs}
-
 RWBuffers must be defined with explicit template parameter types.
 \begin{HLSL}
   RWBuffer<float4> buf;
 \end{HLSL}
 
-When defined at global scope, RWBuffers are bound to externally-defined backing stores
+When defined at global scope, typed buffers are bound to externally-defined backing stores
 using the explicit binding location if provided or the implicit binding if not.
 
-When defined at local scope, RWBuffers represent local references
+When defined at local scope, typed buffers represent local references
 that can be associated with global buffers when assigned,
 but must be resolvable to a unique global buffer.
 
 \begin{HLSL}
-  RWBuffer<int> gbuf;
-  void doit() {
-    RWBuffer lbuf<int> = gbuf;
+  Buffer<int> grobuf;
+  RWBuffer<int> grwbuf;
+  void main() {
+    Buffer lrobuf<int> = grobuf;
+    RWBuffer lrwbuf<int> = grwbuf;
   }
 \end{HLSL}
-RWBuffer operands to the assignment operator must have the same element type.
+Buffer operands to the assignment operator must have the same element type.
 
-\Sub{Dimensions}{Resources.rwtybufs.dims}
+\Sub{Dimensions}{Resources.tybufs.dims}
 
-The size of a RWBuffer can be retrieved using the \texttt{GetDimensions} method.
+The size of a typed buffer can be retrieved using the \texttt{GetDimensions} method.
 \begin{HLSL}
-void GetDimensions(out uint size);
+void GetDimensions(out uint width) const;
 \end{HLSL}
 
-This returns the full size of the buffer in bytes through the \texttt{width} out parameter.
+This returns the full legnth, in elements of the buffer through the \texttt{width} out parameter.
 
-\Sub{Element Access}{Resources.rwtybufs.access}
+\Sub{Element Access}{Resources.tybufs.access}
 
-The contents of RWBuffers can be retrieved using the \texttt{Load} methods
+The contents of typed buffers can be retrieved using the \texttt{Load} methods
 or the subscript operator.
 
 \begin{HLSL}
- T Load(in int pos);
- T operator[](uint pos);
+ T Load(in int pos) const;
+ T operator[](uint pos) const;
 \end{HLSL}
 
 These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
@@ -161,7 +111,7 @@ These each return the element at the given position \texttt{pos} of the type spe
 An additional \texttt{Load} method returns the indicated element just as the other,
 but also takes a second \texttt{status} parameter that returns information about the accessed resource.
 \begin{HLSL}
- T Load(in int pos, out uint status);
+ T Load(in int pos, out uint status) const;
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
@@ -175,6 +125,9 @@ It behaves as if it returns a reference to that element.
  T &operator[](uint pos);
 \end{HLSL}
 
+Partial writes aren't allowed.
+Assignment to individual vector elements will result in an error.
+
 \Sec{Raw Buffer Types}{Resources.rawbufs}
 
 Raw buffers are one-dimensional resources of arbitrary memory layout.
@@ -183,161 +136,66 @@ ByteAddressBuffers enable per-byte access to the raw data while
 StructuredBuffers have an associated structure type that determines how they are
 indexed. This type can be a scalar, vector, matrix, or user-defined struct.
 
-Partial writes aren't allowed.
-Though structured buffers can contain vectors,
-assignment to individual vector elements will result in an error.
-
-\Sec{Read-only Byte Access Buffers}{Resources.robabufs}
+\Sec{Byte Access Buffers}{Resources.babufs}
 
 \begin{HLSL}
  class ByteAddressBuffer {
-
+ public:
    ByteAddressBuffer();
+   ByteAddressBuffer(ByteAddressBuffer buf);
    ByteAddressBuffer operator=(ByteAddressBuffer buf);
 
-   void GetDimensions(out uint size);
+   void GetDimensions(out uint size) const;
 
-   // element access
-   uint Load(in uint byteOffset)
-   uint2 Load2(in uint byteOffset)
-   uint3 Load3(in uint byteOffset)
-   uint4 Load4(in uint byteOffset)
+   // Element access.
+   uint Load(in uint byteOffset) const;
+   uint2 Load2(in uint byteOffset) const;
+   uint3 Load3(in uint byteOffset) const;
+   uint4 Load4(in uint byteOffset) const;
    template<typename T>
-   T Load(in uint byteOffset);
+   T Load(in uint byteOffset) const;
 
-   uint Load(in uint byteOffset, out uint status)
-   uint2 Load2(in uint byteOffset, out uint status)
-   uint3 Load3(in uint byteOffset, out uint status)
-   uint4 Load4(in uint byteOffset, out uint status)
+   uint Load(in uint byteOffset, out uint status) const;
+   uint2 Load2(in uint byteOffset, out uint status) const;
+   uint3 Load3(in uint byteOffset, out uint status) const;
+   uint4 Load4(in uint byteOffset, out uint status) const;
    template<typename T>
-   T Load(in uint byteOffset, out uint status);
+   T Load(in uint byteOffset, out uint status) const;
 };
-\end{HLSL}
 
-\Sub{Constructors}{Resources.robabufs.ctrs}
-
-Since their contents are viewed as raw bytes, ByteAddressBuffers are defined without any type parameters.
-\begin{HLSL}
-  ByteAddressBuffer buf;
-\end{HLSL}
-
-When defined at global scope, ByteAccessBuffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
-
-When defined at local scope, ByteAccessBuffers represent local references
-that can be associated with global ByteAccessBuffers when assigned,
-but must be resolvable to a unique global buffer.
-
-\begin{HLSL}
-  ByteAddressBuffer gbuf;
-  void doit() {
-    ByteAddressBuffer lbuf = gbuf;
-  }
-\end{HLSL}
-
-\Sub{Dimensions}{Resources.robabufs.dims}
-
-The size of a ByteAddressBuffer can be retrieved using the \texttt{GetDimensions} method.
-\begin{HLSL}
-void GetDimensions(out uint size);
-\end{HLSL}
-
-This returns the full size of the buffer in bytes through the \texttt{width} out parameter.
-
-\Sub{Element Access}{Resources.robabufs.access}
-
-The contents of ByteAddressBuffers can be retrieved using the \texttt{Load} methods.
-
-\begin{HLSL}
- uint Load(in uint byteOffset)
- uint2 Load2(in uint byteOffset)
- uint3 Load3(in uint byteOffset)
- uint4 Load4(in uint byteOffset)
-\end{HLSL}
-
-These each return the bytes at the given position \texttt{byteOffset} in the form of one or more unsigned integers.
-The \texttt{byteOffset} address is in bytes and must be a multiple of 4.
-Each of the variants returns a number of bytes corresponding to the size of the uint vector returned.
-
-An additional templated load method allows returning the bytes at the given byte offset in the form
-of the type given in the template parameter. This can be a scalar, vector, matrix, or user-defined struct.
-
-\begin{HLSL}
-  template<typename T>
-  T Load(in uint byteOffset);
-\end{HLSL}
-
-The alignment requirements of \texttt{byteOffset} for this operation is the size in bytes of the largest
-scalar type contained in the given tyep \texttt{T}.
-
-Additional \texttt{Load} methods return the same values as the others,
-but also take a second \texttt{status} parameter that returns information about the accessed resource.
-\begin{HLSL}
-  uint Load(in uint byteOffset, out uint status)
-  uint2 Load2(in uint byteOffset, out uint status)
-  uint3 Load3(in uint byteOffset, out uint status)
-  uint4 Load4(in uint byteOffset, out uint status)
-  template<typename T>
-  T Load(in uint byteOffset, out uint status);
-\end{HLSL}
-
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
-
-\Sec{Writable Byte Access Buffers}{Resources.rwbabufs}
-
-\begin{HLSL}
- class RWByteAddressBuffer {
-
+ class RWByteAddressBuffer : public ByteAddressBuffer {
+ public:
    RWByteAddressBuffer();
+   RWByteAddressBuffer(RWByteAddressBuffer buf);
    RWByteAddressBuffer operator=(RWByteAddressBuffer buf);
 
-   void GetDimensions(out uint size);
-
-   // element access
-   uint Load(in uint byteOffset)
-   uint2 Load2(in uint byteOffset)
-   uint3 Load3(in uint byteOffset)
-   uint4 Load4(in uint byteOffset)
+   // Element assignment.
+   void Store(in uint byteOffset, in uint value);
+   void Store2(in uint byteOffset, in uint2 value);
+   void Store3(in uint byteOffset, in uint3 value);
+   void Store4(in uint byteOffset, in uint4 value);
    template<typename T>
-   T Load(in uint byteOffset);
+   void Store(in uint byteOffset, in T value);
 
-   uint Load(in uint byteOffset, out uint status)
-   uint2 Load2(in uint byteOffset, out uint status)
-   uint3 Load3(in uint byteOffset, out uint status)
-   uint4 Load4(in uint byteOffset, out uint status)
-   template<typename T>
-   T Load(in uint byteOffset, out uint status);
-
-   void Store(in uint byteOffset, in uint value)
-   void Store2(in uint byteOffset, in uint2 value)
-   void Store3(in uint byteOffset, in uint3 value)
-   void Store4(in uint byteOffset, in uint4 value)
-
-   template<typename T>
-   void Store(in uint byteOffset, in T value)
-
-   // 32-bit integer atomic arithmetic/bitwise operations
+   // 32-bit integer atomic arithmetic/bitwise operations.
    void InterlockedAdd(in uint pos, in uint value);
-   void InterlockedAdd(in uint pos, in uint value, out uint original)
+   void InterlockedAdd(in uint pos, in uint value, out uint original);
    void InterlockedAnd(in uint pos, in uint value);
-   void InterlockedAnd(in uint pos, in uint value, out uint original)
+   void InterlockedAnd(in uint pos, in uint value, out uint original);
    void InterlockedOr(in uint pos, in uint value);
-   void InterlockedOr(in uint pos, in uint value, out uint original)
+   void InterlockedOr(in uint pos, in uint value, out uint original);
    void InterlockedXor(in uint pos, in uint value);
-   void InterlockedXor(in uint pos, in uint value, out uint original)
+   void InterlockedXor(in uint pos, in uint value, out uint original);
 
    // 32-bit integer atomic comparison operations
-   void InterlockedMin(in uint pos, in int value)
-   void InterlockedMin(in uint pos, in uint value)
-   void InterlockedMin(in uint pos, in int value, out int original)
-   void InterlockedMin(in uint pos, in uint value, out uint original)
-   void InterlockedMax(in uint pos, in int value)
-   void InterlockedMax(in uint pos, in uint value)
-   void InterlockedMax(in uint pos, in int value, out int original)
-   void InterlockedMax(in uint pos, in uint value, out uint original)
+   void InterlockedMin(in uint pos, in int value);
+   void InterlockedMin(in uint pos, in uint value);
+   void InterlockedMin(in uint pos, in int value, out int original);
+   void InterlockedMin(in uint pos, in uint value, out uint original);
+   void InterlockedMax(in uint pos, in int value);
+   void InterlockedMax(in uint pos, in uint value);
+   void InterlockedMax(in uint pos, in int value, out int original);
+   void InterlockedMax(in uint pos, in uint value, out uint original);
 
    // 32-bit integer atomic compare/exchange operations
    void InterlockedCompareStore(in uint pos, in uint compare, in uint value);
@@ -347,23 +205,23 @@ tile resource and false otherwise. If tiled resourced are not enabled, it will r
 
    // 64-bit integer atomic arithmatic/bitwise operations
    void InterlockedAdd64(in uint pos, in uint64_t value);
-   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedAnd64(in uint pos, in uint64_t value);
-   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedOr64(in uint pos, in uint64_t value);
-   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedXor64(in uint pos, in uint64_t value);
-   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original);
 
    // 64-bit integer atomic comparison operations
-   void InterlockedMin64(in uint pos, in int64_t value)
-   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original)
-   void InterlockedMin64(in uint pos, in uint64_t value)
-   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original)
-   void InterlockedMax64(in uint pos, in int64_t value)
-   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original)
-   void InterlockedMax64(in uint pos, in uint64_t value)
-   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedMin64(in uint pos, in int64_t value);
+   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint pos, in uint64_t value);
+   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint pos, in int64_t value);
+   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint pos, in uint64_t value);
+   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original);
 
    // 64-bit integer atomic compare/exchange operations
    void InterlockedCompareStore64(in uint pos, in uint64_t compare, in uint64_t value);
@@ -383,45 +241,48 @@ tile resource and false otherwise. If tiled resourced are not enabled, it will r
 };
 \end{HLSL}
 
-\Sub{Constructors}{Resources.rwbabufs.ctrs}
+\Sub{Constructors}{Resources.babufs.ctrs}
 
-Since their contents are viewed as raw bytes, RWByteAddressBuffers are defined as a simple variable definition.
+Since their contents are viewed as raw bytes, ByteAddressBuffers are defined without any type parameters.
 \begin{HLSL}
-  RWByteAddressBuffer buf;
+  ByteAddressBuffer robuf;
+  RWByteAddressBuffer rwbuf;
 \end{HLSL}
 
-When defined at global scope, RWByteAccessBuffers are bound to externally-defined backing stores
+When defined at global scope, ByteAccessBuffers are bound to externally-defined backing stores
 using the explicit binding location if provided or the implicit binding if not.
 
-When defined at local scope, RWByteAccessBuffers represent local references
-that can be associated with global RWByteAccessBuffers when assigned,
+When defined at local scope, ByteAccessBuffers represent local references
+that can be associated with global ByteAccessBuffers when assigned,
 but must be resolvable to a unique global buffer.
 
 \begin{HLSL}
-  RWByteAddressBuffer gbuf;
-  void doit() {
-    RWByteAddressBuffer lbuf = gbuf;
+  ByteAddressBuffer grobuf;
+  RWByteAddressBuffer grwbuf;
+  void main() {
+    ByteAddressBuffer lrobuf = grobuf;
+    RWByteAddressBuffer lrwbuf = grwbuf;
   }
 \end{HLSL}
 
-\Sub{Dimensions}{Resources.rwbabufs.dims}
+\Sub{Dimensions}{Resources.babufs.dims}
 
-The size of a RWByteAddressBuffer can be retrieved using the \texttt{GetDimensions} method.
+The size of a ByteAddressBuffer can be retrieved using the \texttt{GetDimensions} method.
 \begin{HLSL}
-void GetDimensions(out uint size);
+void GetDimensions(out uint size) const;
 \end{HLSL}
 
-This returns the full size of the buffer in bytes through the \texttt{width} out parameter.
+This returns the full size of the buffer in bytes through the \texttt{size} out parameter.
 
-\Sub{Element Access}{Resources.rwbabufs.access}
+\Sub{Element Access}{Resources.babufs.access}
 
-The contents of RWByteAccessBuffers can be retrieved using the \texttt{Load} methods.
+The contents of ByteAddressBuffers can be retrieved using the \texttt{Load} methods.
 
 \begin{HLSL}
- uint Load(in uint byteOffset)
- uint2 Load2(in uint byteOffset)
- uint3 Load3(in uint byteOffset)
- uint4 Load4(in uint byteOffset)
+ uint Load(in uint byteOffset) const;
+ uint2 Load2(in uint byteOffset) const;
+ uint3 Load3(in uint byteOffset) const;
+ uint4 Load4(in uint byteOffset) const;
 \end{HLSL}
 
 These each return the bytes at the given position \texttt{byteOffset} in the form of one or more unsigned integers.
@@ -433,7 +294,7 @@ of the type given in the template parameter. This can be a scalar, vector, matri
 
 \begin{HLSL}
   template<typename T>
-  T Load(in uint byteOffset);
+  T Load(in uint byteOffset) const;
 \end{HLSL}
 
 The alignment requirements of \texttt{byteOffset} for this operation is the size in bytes of the largest
@@ -442,12 +303,12 @@ scalar type contained in the given tyep \texttt{T}.
 Additional \texttt{Load} methods return the same values as the others,
 but also take a second \texttt{status} parameter that returns information about the accessed resource.
 \begin{HLSL}
-  uint Load(in uint byteOffset, out uint status)
-  uint2 Load2(in uint byteOffset, out uint status)
-  uint3 Load3(in uint byteOffset, out uint status)
-  uint4 Load4(in uint byteOffset, out uint status)
+  uint Load(in uint byteOffset, out uint status) const;
+  uint2 Load2(in uint byteOffset, out uint status) const;
+  uint3 Load3(in uint byteOffset, out uint status) const;
+  uint4 Load4(in uint byteOffset, out uint status) const;
   template<typename T>
-  T Load(in uint byteOffset, out uint status);
+  T Load(in uint byteOffset, out uint status) const;
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
@@ -455,8 +316,7 @@ resource. This parameter is interpretted using the \texttt{CheckAccessFullyMappe
 built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
 tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
 
-
-\Sub{Atomic Operations}{Resources.rwbabufs.atomics}
+\Sub{Atomic Operations}{Resources.babufs.atomics}
 
 RWByteAddressBuffers have a suite of atomic methods that perform the given operation
 on signed or unsigned integer element data indexed by the given integer size
@@ -465,32 +325,32 @@ Each has an overload that optionally returns the original value before the atomi
 
 \begin{HLSL}
    void InterlockedAdd(in uint pos, in uint value);
-   void InterlockedAdd(in uint pos, in uint value, out uint original)
+   void InterlockedAdd(in uint pos, in uint value, out uint original);
    void InterlockedAnd(in uint pos, in uint value);
-   void InterlockedAnd(in uint pos, in uint value, out uint original)
+   void InterlockedAnd(in uint pos, in uint value, out uint original);
    void InterlockedOr(in uint pos, in uint value);
-   void InterlockedOr(in uint pos, in uint value, out uint original)
+   void InterlockedOr(in uint pos, in uint value, out uint original);
    void InterlockedXor(in uint pos, in uint value);
-   void InterlockedXor(in uint pos, in uint value, out uint original)
+   void InterlockedXor(in uint pos, in uint value, out uint original);
 \end{HLSL}
 
-Performs atomic addition, bitwise and, bitwise or, or bitwise exclusive or
+Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or
 on the element found in 32-bit integer position \texttt{pos} and the provided \texttt{value}
 and stores the resulting sum in that buffer position,
 optionally returning the orignal value of the buffer position through \texttt{original}
 
 \begin{HLSL}
-   void InterlockedMin(in uint pos, in int value)
-   void InterlockedMin(in uint pos, in uint value)
-   void InterlockedMin(in uint pos, in int value, out int original)
-   void InterlockedMin(in uint pos, in uint value, out uint original)
-   void InterlockedMax(in uint pos, in int value)
-   void InterlockedMax(in uint pos, in uint value)
-   void InterlockedMax(in uint pos, in int value, out int original)
-   void InterlockedMax(in uint pos, in uint value, out uint original)
+   void InterlockedMin(in uint pos, in int value);
+   void InterlockedMin(in uint pos, in uint value);
+   void InterlockedMin(in uint pos, in int value, out int original);
+   void InterlockedMin(in uint pos, in uint value, out uint original);
+   void InterlockedMax(in uint pos, in int value);
+   void InterlockedMax(in uint pos, in uint value);
+   void InterlockedMax(in uint pos, in int value, out int original);
+   void InterlockedMax(in uint pos, in uint value, out uint original);
 \end{HLSL}
 
-Performs the sign-approrpriate minimum or maximum comparison of the 32-bit integer indexed by \texttt{pos}
+Perform the sign-approrpriate minimum or maximum comparison of the 32-bit integer indexed by \texttt{pos}
 and the provided \texttt{value} and assigns the less or greater as appropriate to that buffer position,
 optionally returning the orignal value at that buffer position through \texttt{original}
 
@@ -507,19 +367,19 @@ the value of \texttt{value} and returns the original value at that position thro
                                     out uint original);
 \end{HLSL}
 
-These perform an atomic exchange of or store to the the 32-bit integer indexed by \texttt{pos}
+Perform an atomic exchange of or store to the the 32-bit integer indexed by \texttt{pos}
 with the provided \texttt{value} if the value at that position matches the value of \texttt{compare}.
 \texttt{InterlockedCompareExchange} returns the original value at that position through \texttt{original}.
 
 \begin{HLSL}
    void InterlockedAdd64(in uint pos, in uint64_t value);
-   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedAnd64(in uint pos, in uint64_t value);
-   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedOr64(in uint pos, in uint64_t value);
-   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original);
    void InterlockedXor64(in uint pos, in uint64_t value);
-   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original);
 \end{HLSL}
 
 Performs atomic addition, bitwise and, bitwise or, or bitwise exclusive or
@@ -528,14 +388,14 @@ and stores the resulting sum in that buffer position,
 optionally returning the orignal value of the buffer position through \texttt{original}
 
 \begin{HLSL}
-   void InterlockedMin64(in uint pos, in int64_t value)
-   void InterlockedMin64(in uint pos, in uint64_t value)
-   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original)
-   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original)
-   void InterlockedMax64(in uint pos, in int64_t value)
-   void InterlockedMax64(in uint pos, in uint64_t value)
-   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original)
-   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original)
+   void InterlockedMin64(in uint pos, in int64_t value);
+   void InterlockedMin64(in uint pos, in uint64_t value);
+   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint pos, in int64_t value);
+   void InterlockedMax64(in uint pos, in uint64_t value);
+   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original);
 \end{HLSL}
 
 Performs the sign-approrpriate minimum or maximum comparison of the 64-bit integer indexed by \texttt{pos}
@@ -556,7 +416,7 @@ the value of \texttt{value} and returns the original value at that position thro
                                       in uint64_t value, out uint64_t original);
 \end{HLSL}
 
-These perform an atomic exchange of or store to the the 64-bit integer indexed by \texttt{pos}
+Perform an atomic exchange of or store to the the 64-bit integer indexed by \texttt{pos}
 with the provided \texttt{value} if the value at that position matches the value of \texttt{compare}.
 \texttt{InterlockedCompareExchange64} returns the original value at that position through \texttt{original}.
 
@@ -577,229 +437,134 @@ the value of \texttt{value} and returns the original value at that position thro
                                                out float original);
 \end{HLSL}
 
-These perform an atomic exchange of or store to the the 32-bit float indexed by \texttt{pos}
-with the provided \texttt{value} if the value at that position matches the value of \texttt{compare}
-in a bitwise comparison.
-Unlike standard floating point comparisons, values will only match if the bit representation matches
-which can miss some matching values that have different bit repesantations in addition to ignoring
-floating point rules surrounding NaN and infinite values.
-\texttt{InterlockedCompareExchangeFloatBitwise} returns the original value at that position through \texttt{original}.
+Perform an atomic exchange of or store to the the 32-bit float indexed by
+\texttt{pos} with the provided \texttt{value} if the value at that position
+matches the value of \texttt{compare} in a bitwise comparison.
+\texttt{InterlockedCompareExchangeFloatBitwise} returns the original value at
+that position through \texttt{original}.
+
+Unlike standard floating point comparisons, values will only match if the bit
+representation matches which can miss some matching values that have different
+bit repesantations in addition to ignoring floating point rules surrounding NaN
+and infinite values.
 
 \Sec{Structured Buffers}{Resources.stbufs}
 
-StructuredBuffers are raw buffers with associated types that facilitate indexing.
+Structured buffers are raw buffers with associated types that facilitate
+indexing.
 Unlike typed buffers, they perform no format conversions.
-The buffer contents is treated as raw data and the casting to the given types is done bit for bit.
-StructuredBuffers can be defined with scalar, vector, matrix, or user-defined struct elements.
+The buffer contents is treated as raw data and the casting to the given types
+is done bit for bit.
+Structured buffers can be defined with scalar, vector, matrix, or user-defined
+struct elements.
 
-\Sec{Read-only Structured Buffers}{Resources.rostbufs}
+\Sec{Structured Buffers}{Resources.stbufs}
+
+Structured buffers can be read-only, writable, appendable, or consumable.
+Writable buffers can have their elements assigned in arbitrary locations.
+Append structured buffers can only have elements added to the end.
+Consume structured buffers can only have elements removed from the end.
 
 \begin{HLSL}
 template <typename T>
  class StructuredBuffer {
+ public:
    StructuredBuffer();
+   StructuredBuffer(StructuredBuffer buf);
    StructuredBuffer operator=(StructuredBuffer buf);
 
-   void GetDimensions(out uint count, out uint stride);
+   void GetDimensions(out uint count, out uint stride) const;
 
-   // element access
-   T operator[](uint pos);
-   T Load(in int pos);
-   T Load(in int pos, out uint status);
+   // Element access.
+   T operator[](uint pos) const;
+   T Load(in int pos) const;
+   T Load(in int pos, out uint status) const;
 };
-\end{HLSL}
 
-\Sub{Constructors}{Resources.rostbufs.ctrs}
-
-StructuredBuffers must be defined with explicit template parameter types.
-\begin{HLSL}
-  struct S {int i; float f;};
-  StructuredBuffer<S> buf1;
-  StructuredBuffer<float4> buf2;
-  StructuredBuffer<float2x3> buf3;
-\end{HLSL}
-
-When defined at global scope, StructuredBuffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
-
-When defined at local scope, StructuredBuffers represent local references
-that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
-
-\begin{HLSL}
-  StructuredBuffer<int3x3> gbuf;
-  void doit() {
-    StructuredBuffer lbuf<int3x3> = gbuf;
-  }
-\end{HLSL}
-StructuredBuffer operands to the assignment operator must have the same element type.
-
-\Sub{Dimensions}{Resources.rostbufs.dims}
-
-The structure count and stride of a StructuredBuffer can be retrieved using the \texttt{GetDimensions} method.
-\begin{HLSL}
-void GetDimensions(out uint count, out uint stride);
-\end{HLSL}
-
-This returns number of structured elements of the buffer through the \texttt{count} out parameter
-and the size of each element in bytes through the \texttt{stride} out parameter.
-
-\Sub{Element Access}{Resources.rostbufs.access}
-
-The contents of StructuredBuffers can be retrieved using the \texttt{Load} methods
-or the subscript operator.
-
-\begin{HLSL}
- T Load(in int pos);
- T operator[](uint pos);
-\end{HLSL}
-
-These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
-
-An additional \texttt{Load} method returns the indicated element just as the other,
-but also takes a second \texttt{status} parameter that returns information about the accessed resource.
-\begin{HLSL}
- T Load(in int pos, out uint status);
-\end{HLSL}
-
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
-
-\Sec{Writable Structured Buffers}{Resources.rwstbufs}
-
-\begin{HLSL}
-template <typename T>
  class RWStructuredBuffer {
+ public:
    RWStructuredBuffer();
+   RWStructuredBuffer(RWStructuredBuffer buf);
    RWStructuredBuffer operator=(RWStructuredBuffer buf);
 
-   void GetDimensions(out uint count, out uint stride);
+   // Element assignment.
+   T &operator[](uint pos);
 
-   // element access
-   T operator[](uint pos);
-   T Load(in int pos);
-   T Load(in int pos, out uint status);
-
-   // Hidden counter increment/decrement
+   // Hidden counter increment/decrement.
    uint IncrementCounter();
    uint DecrementCounter();
-
 };
-\end{HLSL}
 
-\Sub{Constructors}{Resources.rwstbufs.ctrs}
-
-RWStructuredBuffers must be defined with explicit template parameter types.
-\begin{HLSL}
-  struct S {int i; float f;};
-  RWStructuredBuffer<S> buf1;
-  RWStructuredBuffer<float4> buf2;
-  RWStructuredBuffer<float2x3> buf3;
-\end{HLSL}
-
-When defined at global scope, RWStructuredBuffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
-
-When defined at local scope, RWStructuredBuffers represent local references
-that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
-
-\begin{HLSL}
-  RWStructuredBuffer<int3x3> gbuf;
-  void doit() {
-    RWStructuredBuffer lbuf<int3x3> = gbuf;
-  }
-\end{HLSL}
-RWStructuredBuffer operands to the assignment operator must have the same element type.
-
-\Sub{Dimensions}{Resources.rwstbufs.dims}
-
-The structure count and stride of a RWStructuredBuffer can be retrieved using the \texttt{GetDimensions} method.
-\begin{HLSL}
-void GetDimensions(out uint count, out uint stride);
-\end{HLSL}
-
-This returns number of structured elements of the buffer through the \texttt{count} out parameter
-and the size of each element in bytes through the \texttt{stride} out parameter.
-
-\Sub{Element Access}{Resources.rwstbufs.access}
-
-The contents of RWStructuredBuffers can be retrieved using the \texttt{Load} methods
-or the subscript operator.
-
-\begin{HLSL}
- T Load(in int pos);
- T operator[](uint pos);
-\end{HLSL}
-
-These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
-
-An additional \texttt{Load} method returns the indicated element just as the other,
-but also takes a second \texttt{status} parameter that returns information about the accessed resource.
-\begin{HLSL}
- T Load(in int pos, out uint status);
-\end{HLSL}
-
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
-
-\Sub{Counter Manipulation}{Resources.rwstbufs.counter}
-
-\begin{HLSL}
-   uint IncrementCounter();
-   uint DecrementCounter();
-\end{HLSL}
-
-Increments or decrements the hidden counter associated with the RWStructuredbuffer.
-
-\Sec{AppendStructuredBuffer}{Resources.apstbufs}
-
-AppendStructuredBuffers are buffers that can only be appended to as an output stream.
-
-\begin{HLSL}
 template <typename T>
  class AppendStructuredBuffer {
    AppendStructuredBuffer();
+   AppendStructuredBuffer(AppendStructuredBuffer buf);
    AppendStructuredBuffer operator=(AppendStructuredBuffer buf);
 
-   void GetDimensions(out uint count, out uint stride);
+   void GetDimensions(out uint count, out uint stride) const;
 
    void Append(in T value);
 };
+
+template <typename T>
+ class ConsumeStructuredBuffer {
+   ConsumeStructuredBuffer();
+   ConsumeStructuredBuffer(ConsumeStructuredBuffer buf);
+   ConsumeStructuredBuffer operator=(ConsumeStructuredBuffer buf);
+
+   void GetDimensions(out uint count, out uint stride) const;
+
+   void Consume();
+};
+
 \end{HLSL}
 
-\Sub{Constructors}{Resources.apstbufs.ctrs}
+\Sub{Constructors}{Resources.stbufs.ctrs}
 
-AppendStructuredBuffers must be defined with explicit template parameter types.
+Structured buffers must be defined with explicit template parameter types.
 \begin{HLSL}
   struct S {int i; float f;};
-  AppendStructuredBuffer<S> buf1;
-  AppendStructuredBuffer<float4> buf2;
-  AppendStructuredBuffer<float2x3> buf3;
+  StructuredBuffer<S> robuf1;
+  StructuredBuffer<float4> robuf2;
+  StructuredBuffer<float2x3> robuf3;
+
+  RWStructuredBuffer<S> rwbuf1;
+  RWStructuredBuffer<float4> rwbuf2;
+  RWStructuredBuffer<float2x3> rwbuf3;
+
+  AppendStructuredBuffer<S> apbuf1;
+  AppendStructuredBuffer<float4> apbuf2;
+  AppendStructuredBuffer<float2x3> apbuf3;
+
+  ConsumeStructuredBuffer<S> cobuf1;
+  ConsumeStructuredBuffer<float4> cobuf2;
+  ConsumeStructuredBuffer<float2x3> cobuf3;
 \end{HLSL}
 
-When defined at global scope, AppendStructuredBuffers are bound to externally-defined backing stores
+When defined at global scope, structured buffers are bound to externally-defined backing stores
 using the explicit binding location if provided or the implicit binding if not.
 
-When defined at local scope, AppendStructuredBuffers represent local references
+When defined at local scope, structured buffers represent local references
 that can be associated with global buffers when assigned,
 but must be resolvable to a unique global buffer.
 
 \begin{HLSL}
-  AppendStructuredBuffer<int3x3> gbuf;
-  void doit() {
-    AppendStructuredBuffer lbuf<int3x3> = gbuf;
+  StructuredBuffer<int3x3> grobuf;
+  RWStructuredBuffer<int3x3> grwbuf;
+  AppendStructuredBuffer<int3x3> gapbuf;
+  ConsumeStructuredBuffer<int3x3> gcobuf;
+  void main() {
+    StructuredBuffer lrobuf<int3x3> = grobuf;
+    RWStructuredBuffer lrwbuf<int3x3> = grwbuf;
+    AppendStructuredBuffer lbuf<int3x3> = gapbuf;
+    ConsumeStructuredBuffer lcobuf<int3x3> = gcobuf;
   }
 \end{HLSL}
-AppendStructuredBuffer operands to the assignment operator must have the same element type.
+Structured buffer operands to the assignment operator must have the same element type.
 
-\Sub{Dimensions}{Resources.apstbufs.dims}
+\Sub{Dimensions}{Resources.stbufs.dims}
 
-The structure count and stride of a AppendStructuredBuffer can be retrieved using the \texttt{GetDimensions} method.
+The structure count and stride of a structured buffer can be retrieved using the \texttt{GetDimensions} method.
 \begin{HLSL}
 void GetDimensions(out uint count, out uint stride);
 \end{HLSL}
@@ -807,67 +572,60 @@ void GetDimensions(out uint count, out uint stride);
 This returns number of structured elements of the buffer through the \texttt{count} out parameter
 and the size of each element in bytes through the \texttt{stride} out parameter.
 
-\Sub{Append}{Resources.apstbufs.append}
+\Sub{Element Access}{Resources.stbufs.access}
+
+The contents of read-only StructuredBuffers and writable RWStructuredBuffers can be retrieved
+using the \texttt{Load} methods or the subscript operator.
 
 \begin{HLSL}
-   void Append(in T value )
+ T Load(in int pos) const;
+ T operator[](uint pos) const;
+\end{HLSL}
+
+These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
+
+An additional \texttt{Load} method returns the indicated element just as the other,
+but also takes a second \texttt{status} parameter that returns information about the accessed resource.
+\begin{HLSL}
+ T Load(in int pos, out uint status) const;
+\end{HLSL}
+
+The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
+resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
+built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
+tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
+
+Writable RWStructuredBuffers have an additional subscript operator that allows assignment to a structure element of the buffer.
+It behaves as if it returns a reference to that element.
+\begin{HLSL}
+ T &operator[](uint pos);
+\end{HLSL}
+
+\Sub{Counter Manipulation}{Resources.stbufs.counter}
+
+RWStructuredBuffers may have a hidden counter that can be incremented and decremented using methods.
+
+\begin{HLSL}
+   uint IncrementCounter();
+   uint DecrementCounter();
+\end{HLSL}
+
+Increment or decrements the hidden counter associated with the RWStructuredBuffer.
+
+\Sub{Append}{Resources.stbufs.append}
+
+AppendStructuredBuffers can only be appended to as an output stream.
+
+\begin{HLSL}
+   void Append(in T value);
 \end{HLSL}
 
 Appends the \texttt{value} of the template parameter types to the end of the AppendStructuredBuffer.
 Subsequent appends will continue to add elements to the end of the buffer.
 
-\Sec{ConsumeStructuredBuffer}{Resources.cnstbufs}
-
-ConsumeStructuredBuffers are buffers that can only have values pulled from them as an input stream.
-
-\begin{HLSL}
-template <typename T>
- class ConsumeStructuredBuffer {
-   ConsumeStructuredBuffer();
-   ConsumeStructuredBuffer operator=(ConsumeStructuredBuffer buf);
-
-   void GetDimensions(out uint count, out uint stride);
-
-   void Consume();
-};
-\end{HLSL}
-
-\Sub{Constructors}{Resources.cnstbufs.ctrs}
-
-ConsumeStructuredBuffers must be defined with explicit template parameter types.
-\begin{HLSL}
-  struct S {int i; float f;};
-  ConsumeStructuredBuffer<S> buf1;
-  ConsumeStructuredBuffer<float4> buf2;
-  ConsumeStructuredBuffer<float2x3> buf3;
-\end{HLSL}
-
-When defined at global scope, ConsumeStructuredBuffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
-
-When defined at local scope, ConsumeStructuredBuffers represent local references
-that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
-
-\begin{HLSL}
-  ConsumeStructuredBuffer<int3x3> gbuf;
-  void doit() {
-    ConsumeStructuredBuffer lbuf<int3x3> = gbuf;
-  }
-\end{HLSL}
-ConsumeStructuredBuffer operands to the assignment operator must have the same element type.
-
-\Sub{Dimensions}{Resources.cnstbufs.dims}
-
-The structure count and stride of a ConsumeStructuredBuffer can be retrieved using the \texttt{GetDimensions} method.
-\begin{HLSL}
-void GetDimensions(out uint count, out uint stride);
-\end{HLSL}
-
-This returns number of structured elements of the buffer through the \texttt{count} out parameter
-and the size of each element in bytes through the \texttt{stride} out parameter.
-
 \Sub{Consume}{Resources.cnstbufs.consume}
+
+ConsumeStructuredBuffers can only have values pulled from them as an input stream.
 
 \begin{HLSL}
    void Consume();
@@ -879,7 +637,6 @@ Removes and returns a value of the template parameter types from the end of the 
 
 \Sec{Samplers}{Resources.samp}
 
-
 \Sec{Resource Binding}{Resources.binding}
 
 Resources are bound to external memory using virtual registers within logical registers spaces.
@@ -890,10 +647,8 @@ or implicitly by leaving them off.
   \define{resource-binding}\br
   \terminal{: register(} register-type bind-number \terminal{)}\br
   \terminal{: register(} register-type bind-number , \terminal{space} bind-number \terminal{)}\br
-
   \define{register-type} \textnormal{one of}\br
   \terminal{t u b s}\br
-
   \define{bind-number}\br
   digit\br
   bind-number digit\br
@@ -934,11 +689,16 @@ This includes elements of arrays of resources as such array elements must be ind
 \end{note}
 
 \begin{HLSL}
-  Buffer<float> fbuf[3] : register(t0, space0); // Occupies t0, t1, and t2.
-  Buffer<int4> ibuf[4][3] : register(t3, space0); // Occupies registers t3 - t14.
-  struct {RWBuffer<int> rwbuf; Buffer buf;} sbufs : register(t15) : register(u0); // Occupies registers t15 and u0.
-  struct {Buffer bufs[5]; Buffer buf;} robufs : register(t16); // Occupies registers t16 - t21.
-  struct {Buffer r; RWBuffer<int> w;} bibufs[2] : register(t22) : register(u1); // Occupies registers t22-24 and u1-u2
+  // Occupies t0, t1, and t2.
+  Buffer<float> fbuf[3] : register(t0, space0);
+  // Occupies registers t3 - t14.
+  Buffer<int4> ibuf[4][3] : register(t3, space0);
+  // Occupies registers t15 and u0.
+  struct {RWBuffer<int> rwbuf; Buffer buf;} sbufs : register(t15) : register(u0);
+  // Occupies registers t16 - t21.
+  struct {Buffer bufs[5]; Buffer buf;} robufs : register(t16);
+  // Occupies registers t22-24 and u1-u2
+  struct {Buffer r; RWBuffer<int> w;} bibufs[2] : register(t22) : register(u1);
 \end{HLSL}
 
 If the register binding or register space is not specified, implicit values are used.
