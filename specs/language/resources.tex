@@ -36,7 +36,7 @@ template <typename T = float4>
    void GetDimensions(out uint width) const;
 
    // Element access.
-   T operator[](uint pos) const;
+   T operator[](int pos) const;
    T Load(in int pos) const;
    T Load(in int pos, out uint status) const;
 };
@@ -50,7 +50,7 @@ template <typename T>
    RWBuffer operator=(RWBuffer buf);
 
    // element access
-   T &operator[](uint n);
+   T &operator[](int n);
 };
 }
 \end{HLSL}
@@ -81,8 +81,8 @@ but must be resolvable to a unique global buffer.
   Buffer<int> grobuf;
   RWBuffer<int> grwbuf;
   void main() {
-    Buffer lrobuf<int> = grobuf;
-    RWBuffer lrwbuf<int> = grwbuf;
+    Buffer<int> lrobuf = grobuf;
+    RWBuffer<int> lrwbuf = grwbuf;
   }
 \end{HLSL}
 Buffer operands to the assignment operator must have the same element type.
@@ -103,7 +103,7 @@ or the subscript operator.
 
 \begin{HLSL}
  T Load(in int pos) const;
- T operator[](uint pos) const;
+ T operator[](int pos) const;
 \end{HLSL}
 
 These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
@@ -114,15 +114,15 @@ but also takes a second \texttt{status} parameter that returns information about
  T Load(in int pos, out uint status) const;
 \end{HLSL}
 
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
 
 Writable buffers have an additional subscript operator that allows assignment to an element of the buffer.
 It behaves as if it returns a reference to that element.
 \begin{HLSL}
- T &operator[](uint pos);
+ T &operator[](int pos);
 \end{HLSL}
 
 Partial writes aren't allowed.
@@ -311,10 +311,10 @@ but also take a second \texttt{status} parameter that returns information about 
   T Load(in uint byteOffset, out uint status) const;
 \end{HLSL}
 
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
 
 \Sub{Atomic Operations}{Resources.babufs.atomics}
 
@@ -476,7 +476,7 @@ template <typename T>
    void GetDimensions(out uint count, out uint stride) const;
 
    // Element access.
-   T operator[](uint pos) const;
+   T operator[](int pos) const;
    T Load(in int pos) const;
    T Load(in int pos, out uint status) const;
 };
@@ -488,7 +488,7 @@ template <typename T>
    RWStructuredBuffer operator=(RWStructuredBuffer buf);
 
    // Element assignment.
-   T &operator[](uint pos);
+   T &operator[](int pos);
 
    // Hidden counter increment/decrement.
    uint IncrementCounter();
@@ -554,10 +554,10 @@ but must be resolvable to a unique global buffer.
   AppendStructuredBuffer<int3x3> gapbuf;
   ConsumeStructuredBuffer<int3x3> gcobuf;
   void main() {
-    StructuredBuffer lrobuf<int3x3> = grobuf;
-    RWStructuredBuffer lrwbuf<int3x3> = grwbuf;
-    AppendStructuredBuffer lbuf<int3x3> = gapbuf;
-    ConsumeStructuredBuffer lcobuf<int3x3> = gcobuf;
+    StructuredBuffer<int3x3> lrobuf = grobuf;
+    RWStructuredBuffer<int3x3> lrwbuf = grwbuf;
+    AppendStructuredBuffer<int3x3> lbuf = gapbuf;
+    ConsumeStructuredBuffer<int3x3> lcobuf = gcobuf;
   }
 \end{HLSL}
 Structured buffer operands to the assignment operator must have the same element type.
@@ -579,7 +579,7 @@ using the \texttt{Load} methods or the subscript operator.
 
 \begin{HLSL}
  T Load(in int pos) const;
- T operator[](uint pos) const;
+ T operator[](int pos) const;
 \end{HLSL}
 
 These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
@@ -590,15 +590,15 @@ but also takes a second \texttt{status} parameter that returns information about
  T Load(in int pos, out uint status) const;
 \end{HLSL}
 
-The \texttt{status} parameter returns an indication of whether the value retrieved accessed a mapped tile
-resource. This parameter is interpretted using the \texttt{CheckAccessFullyMapped}
-built-in function. If tiled resources are enabled, it returns true if the value was accessed from a mapped
-tile resource and false otherwise. If tiled resourced are not enabled, it will return true.
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
 
 Writable RWStructuredBuffers have an additional subscript operator that allows assignment to a structure element of the buffer.
 It behaves as if it returns a reference to that element.
 \begin{HLSL}
- T &operator[](uint pos);
+ T &operator[](int pos);
 \end{HLSL}
 
 \Sub{Counter Manipulation}{Resources.stbufs.counter}
@@ -636,6 +636,18 @@ Removes and returns a value of the template parameter types from the end of the 
 \Sec{Constant Buffers}{Resources.cnbuf}
 
 \Sec{Samplers}{Resources.samp}
+
+\Sec{CheckAccessFullyMapped}{Resources.mapcheck}
+
+The mapped status value returned by certain texture and buffer methods can be intrepreted by a built-in function:
+
+\begin{HLSL}
+  bool CheckAccessFullyMapped(in uint status);
+\end{HLSL}
+
+This function returns true is the value was accessed from a fully committed resource,
+or from fully mapped pages of a sparse resource.
+If any part of the return value was from unmapped memory, false is returned.
 
 \Sec{Resource Binding}{Resources.binding}
 
