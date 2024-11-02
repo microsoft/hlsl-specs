@@ -5,7 +5,7 @@ Resources are built-in intangible types representing memory with an external int
 These take the form of Typed Buffers, Raw Buffers, Textures, and Samplers.
 Buffer and Texture types can be read-only or writable.
 
-\Sec{Typed Buffers}{Resources.tybuf}
+\Sec{Typed Buffers}{Resources.tybufs}
 
 The typed buffer class template represents a one-dimensional resource containing an array of a single given type.
 Its contents are indexed by typed access to each element
@@ -22,8 +22,6 @@ The total size of a single contained element must be less than 16 bytes.
 
 Typed buffers perform format conversions on load such that the underlying data
 gets converted to the destination type.
-
-\Sec{Typed Buffers}{Resources.tybufs}
 
 \begin{HLSL}
 template <typename T = float4>
@@ -71,7 +69,7 @@ RWBuffers must be defined with explicit template parameter types.
 \end{HLSL}
 
 When defined at global scope, typed buffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
 
 When defined at local scope, typed buffers represent local references
 that can be associated with global buffers when assigned,
@@ -128,7 +126,7 @@ It behaves as if it returns a reference to that element.
 Partial writes aren't allowed.
 Assignment to individual vector elements will result in an error.
 
-\Sec{Raw Buffer Types}{Resources.rawbufs}
+\Sec{Raw Buffers}{Resources.rawbufs}
 
 Raw buffers are one-dimensional resources of arbitrary memory layout.
 They are either ByteAddressBuffers or StructuredBuffers.
@@ -250,7 +248,7 @@ Since their contents are viewed as raw bytes, ByteAddressBuffers are defined wit
 \end{HLSL}
 
 When defined at global scope, ByteAccessBuffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
 
 When defined at local scope, ByteAccessBuffers represent local references
 that can be associated with global ByteAccessBuffers when assigned,
@@ -458,8 +456,6 @@ is done bit for bit.
 Structured buffers can be defined with scalar, vector, matrix, or user-defined
 struct elements.
 
-\Sec{Structured Buffers}{Resources.stbufs}
-
 Structured buffers can be read-only, writable, appendable, or consumable.
 Writable buffers can have their elements assigned in arbitrary locations.
 Append structured buffers can only have elements added to the end.
@@ -542,7 +538,7 @@ Structured buffers must be defined with explicit template parameter types.
 \end{HLSL}
 
 When defined at global scope, structured buffers are bound to externally-defined backing stores
-using the explicit binding location if provided or the implicit binding if not.
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
 
 When defined at local scope, structured buffers represent local references
 that can be associated with global buffers when assigned,
