@@ -88,12 +88,13 @@ depth-first traversal of the subobjects of an object following the defined
 subobject ordering.
 
 \p Each \textit{braced initializer list} is comprised of zero or more
-\textit{initializer-clause} expressions, which in turn may be another
-initializer-list or an \textit{assignment-expression}. Each
-assignment-expression is an object, which may be a scalar or aggregate type. A
-\textit{flattened initializer sequence} is constructed by a depth-first
-traversal over each assignment-expression in an initializer-list and performing
-a depth-first traversal accessing each subobject of the assignment-expression.
+\textit{initializer-clause} expressions, which is either another braced
+initializer list or an expression which generates a value that either is or can
+be implicitly converted to an rvalue. Each assignment-expression is an object,
+which may be a scalar or aggregate type. A \textit{flattened initializer
+sequence} is constructed by a depth-first traversal over each
+assignment-expression in an initializer-list and performing a depth-first
+traversal accessing each subobject of the assignment-expression.
 
 \p An initializer-list is a valid initializer if for each element \(E_n\) in the
 target object's flattened ordering there is a corresponding initializer \(I_n\)
