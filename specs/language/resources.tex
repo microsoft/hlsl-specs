@@ -28,15 +28,15 @@ template <typename T = float4>
  class Buffer {
  public:
    Buffer();
-   Buffer(Buffer buf);
+   Buffer(Buffer &buf);
    Buffer operator=(Buffer buf);
 
    void GetDimensions(out uint width) const;
 
    // Element access.
-   T operator[](int pos) const;
-   T Load(in int pos) const;
-   T Load(in int pos, out uint status) const;
+   T operator[](int index) const;
+   T Load(in int index) const;
+   T Load(in int index, out uint status) const;
 };
 
 
@@ -73,7 +73,12 @@ using the explicit binding location if provided or the implicit binding if not (
 
 When defined at local scope, typed buffers represent local references
 that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
+but must be resolvable to a unique global buffer declaration.
+
+\begin{note}
+Local buffers must be resolvable to a unique global declaration, but not necessarily a unique individual buffer.
+Local buffer assignments can map to different resource array elements depending on runtime values.
+\end{note}
 
 \begin{HLSL}
   Buffer<int> grobuf;
@@ -92,7 +97,7 @@ The size of a typed buffer can be retrieved using the \texttt{GetDimensions} met
 void GetDimensions(out uint width) const;
 \end{HLSL}
 
-This returns the full legnth, in elements of the buffer through the \texttt{width} out parameter.
+This returns the full length, in elements of the buffer through the \texttt{width} out parameter.
 
 \Sub{Element Access}{Resources.tybufs.access}
 
@@ -100,16 +105,16 @@ The contents of typed buffers can be retrieved using the \texttt{Load} methods
 or the subscript operator.
 
 \begin{HLSL}
- T Load(in int pos) const;
- T operator[](int pos) const;
+ T Load(in int index) const;
+ T operator[](int index) const;
 \end{HLSL}
 
-These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
+These each return the element of the buffer's type at the given index \texttt{index}.
 
 An additional \texttt{Load} method returns the indicated element just as the other,
 but also takes a second \texttt{status} parameter that returns information about the accessed resource.
 \begin{HLSL}
- T Load(in int pos, out uint status) const;
+ T Load(in int index, out uint status) const;
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether all of the retrieved value
@@ -120,7 +125,7 @@ in order to interpret it.
 Writable buffers have an additional subscript operator that allows assignment to an element of the buffer.
 It behaves as if it returns a reference to that element.
 \begin{HLSL}
- T &operator[](int pos);
+ T &operator[](int index);
 \end{HLSL}
 
 Partial writes aren't allowed.
@@ -140,91 +145,93 @@ indexed. This type can be a scalar, vector, matrix, or user-defined struct.
  class ByteAddressBuffer {
  public:
    ByteAddressBuffer();
-   ByteAddressBuffer(ByteAddressBuffer buf);
+   ByteAddressBuffer(ByteAddressBuffer &buf);
    ByteAddressBuffer operator=(ByteAddressBuffer buf);
 
    void GetDimensions(out uint size) const;
 
    // Element access.
-   uint Load(in uint byteOffset) const;
-   uint2 Load2(in uint byteOffset) const;
-   uint3 Load3(in uint byteOffset) const;
-   uint4 Load4(in uint byteOffset) const;
+   uint Load(in uint offset) const;
+   uint2 Load2(in uint offset) const;
+   uint3 Load3(in uint offset) const;
+   uint4 Load4(in uint offset) const;
    template<typename T>
-   T Load(in uint byteOffset) const;
+   T Load(in uint offset) const;
 
-   uint Load(in uint byteOffset, out uint status) const;
-   uint2 Load2(in uint byteOffset, out uint status) const;
-   uint3 Load3(in uint byteOffset, out uint status) const;
-   uint4 Load4(in uint byteOffset, out uint status) const;
+   uint Load(in uint offset, out uint status) const;
+   uint2 Load2(in uint offset, out uint status) const;
+   uint3 Load3(in uint offset, out uint status) const;
+   uint4 Load4(in uint offset, out uint status) const;
    template<typename T>
-   T Load(in uint byteOffset, out uint status) const;
+   T Load(in uint offset, out uint status) const;
 };
 
  class RWByteAddressBuffer : public ByteAddressBuffer {
  public:
    RWByteAddressBuffer();
-   RWByteAddressBuffer(RWByteAddressBuffer buf);
+   RWByteAddressBuffer(RWByteAddressBuffer &buf);
    RWByteAddressBuffer operator=(RWByteAddressBuffer buf);
 
    // Element assignment.
-   void Store(in uint byteOffset, in uint value);
-   void Store2(in uint byteOffset, in uint2 value);
-   void Store3(in uint byteOffset, in uint3 value);
-   void Store4(in uint byteOffset, in uint4 value);
+   void Store(in uint offset, in uint value);
+   void Store2(in uint offset, in uint2 value);
+   void Store3(in uint offset, in uint3 value);
+   void Store4(in uint offset, in uint4 value);
    template<typename T>
-   void Store(in uint byteOffset, in T value);
+   void Store(in uint offset, in T value);
 
    // 32-bit integer atomic arithmetic/bitwise operations.
-   void InterlockedAdd(in uint pos, in uint value);
-   void InterlockedAdd(in uint pos, in uint value, out uint original);
-   void InterlockedAnd(in uint pos, in uint value);
-   void InterlockedAnd(in uint pos, in uint value, out uint original);
-   void InterlockedOr(in uint pos, in uint value);
-   void InterlockedOr(in uint pos, in uint value, out uint original);
-   void InterlockedXor(in uint pos, in uint value);
-   void InterlockedXor(in uint pos, in uint value, out uint original);
+   void InterlockedAdd(in uint offset, in uint value);
+   void InterlockedAdd(in uint offset, in uint value, out uint original);
+   void InterlockedAnd(in uint offset, in uint value);
+   void InterlockedAnd(in uint offset, in uint value, out uint original);
+   void InterlockedOr(in uint offset, in uint value);
+   void InterlockedOr(in uint offset, in uint value, out uint original);
+   void InterlockedXor(in uint offset, in uint value);
+   void InterlockedXor(in uint offset, in uint value, out uint original);
 
    // 32-bit integer atomic comparison operations
-   void InterlockedMin(in uint pos, in int value);
-   void InterlockedMin(in uint pos, in uint value);
-   void InterlockedMin(in uint pos, in int value, out int original);
-   void InterlockedMin(in uint pos, in uint value, out uint original);
-   void InterlockedMax(in uint pos, in int value);
-   void InterlockedMax(in uint pos, in uint value);
-   void InterlockedMax(in uint pos, in int value, out int original);
-   void InterlockedMax(in uint pos, in uint value, out uint original);
+   void InterlockedMin(in uint offset, in int value);
+   void InterlockedMin(in uint offset, in uint value);
+   void InterlockedMin(in uint offset, in int value, out int original);
+   void InterlockedMin(in uint offset, in uint value, out uint original);
+   void InterlockedMax(in uint offset, in int value);
+   void InterlockedMax(in uint offset, in uint value);
+   void InterlockedMax(in uint offset, in int value, out int original);
+   void InterlockedMax(in uint offset, in uint value, out uint original);
 
    // 32-bit integer atomic compare/exchange operations
-   void InterlockedCompareStore(in uint pos, in uint compare, in uint value);
-   void InterlockedExchange(in uint pos, in uint value, out uint original);
-   void InterlockedCompareExchange(in uint pos, in uint compare, in uint value,
+   void InterlockedCompareStore(in uint offset, in uint compare, in uint value);
+   void InterlockedExchange(in uint offset, in uint value, out uint original);
+   void InterlockedCompareExchange(in uint offset, in uint compare, in uint value,
                                     out uint original);
 
    // 64-bit integer atomic arithmatic/bitwise operations
-   void InterlockedAdd64(in uint pos, in uint64_t value);
-   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedAnd64(in uint pos, in uint64_t value);
-   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedOr64(in uint pos, in uint64_t value);
-   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedXor64(in uint pos, in uint64_t value);
-   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedAdd64(in uint offset, in uint64_t value);
+   void InterlockedAdd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedAnd64(in uint offset, in uint64_t value);
+   void InterlockedAnd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedOr64(in uint offset, in uint64_t value);
+   void InterlockedOr64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedXor64(in uint offset, in uint64_t value);
+   void InterlockedXor64(in uint offset, in uint64_t value, out uint64_t original);
 
    // 64-bit integer atomic comparison operations
-   void InterlockedMin64(in uint pos, in int64_t value);
-   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original);
-   void InterlockedMin64(in uint pos, in uint64_t value);
-   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedMax64(in uint pos, in int64_t value);
-   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original);
-   void InterlockedMax64(in uint pos, in uint64_t value);
-   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedMin64(in uint offset, in int64_t value);
+   void InterlockedMin64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint offset, in uint64_t value);
+   void InterlockedMin64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint offset, in int64_t value);
+   void InterlockedMax64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint offset, in uint64_t value);
+   void InterlockedMax64(in uint offset, in uint64_t value, out uint64_t original);
 
    // 64-bit integer atomic compare/exchange operations
-   void InterlockedCompareStore64(in uint pos, in uint64_t compare, in uint64_t value);
-   void InterlockedExchange64(in uint pos, in int64_t value, out int64_t original);
-   void InterlockedCompareExchange64(in uint pos, in uint64_t compare,
+   void InterlockedCompareStore64(in uint offset, in uint64_t compare,
+                                   in uint64_t value);
+   void InterlockedExchange64(in uint offset, in int64_t value,
+                               out int64_t original);
+   void InterlockedCompareExchange64(in uint offset, in uint64_t compare,
                                       in uint64_t value, out int64_t original);
 
    // 32-bit float atomic compare/exchange operations
@@ -252,7 +259,7 @@ using the explicit binding location if provided or the implicit binding if not (
 
 When defined at local scope, ByteAccessBuffers represent local references
 that can be associated with global ByteAccessBuffers when assigned,
-but must be resolvable to a unique global buffer.
+but must be resolvable to a unique global buffer declaration.
 
 \begin{HLSL}
   ByteAddressBuffer grobuf;
@@ -277,14 +284,14 @@ This returns the full size of the buffer in bytes through the \texttt{size} out 
 The contents of ByteAddressBuffers can be retrieved using the \texttt{Load} methods.
 
 \begin{HLSL}
- uint Load(in uint byteOffset) const;
- uint2 Load2(in uint byteOffset) const;
- uint3 Load3(in uint byteOffset) const;
- uint4 Load4(in uint byteOffset) const;
+ uint Load(in uint offset) const;
+ uint2 Load2(in uint offset) const;
+ uint3 Load3(in uint offset) const;
+ uint4 Load4(in uint offset) const;
 \end{HLSL}
 
-These each return the bytes at the given position \texttt{byteOffset} in the form of one or more unsigned integers.
-The \texttt{byteOffset} address is in bytes and must be a multiple of 4.
+These each return the bytes at the given byte offset into the buffer \texttt{offset} in the form of one or more unsigned integers.
+The \texttt{offset} address must be a multiple of 4.
 Each of the variants returns a number of bytes corresponding to the size of the uint vector returned.
 
 An additional templated load method allows returning the bytes at the given byte offset in the form
@@ -292,21 +299,21 @@ of the type given in the template parameter. This can be a scalar, vector, matri
 
 \begin{HLSL}
   template<typename T>
-  T Load(in uint byteOffset) const;
+  T Load(in uint offset) const;
 \end{HLSL}
 
-The alignment requirements of \texttt{byteOffset} for this operation is the size in bytes of the largest
+The alignment requirements of \texttt{offset} for this operation is the size in bytes of the largest
 scalar type contained in the given tyep \texttt{T}.
 
 Additional \texttt{Load} methods return the same values as the others,
 but also take a second \texttt{status} parameter that returns information about the accessed resource.
 \begin{HLSL}
-  uint Load(in uint byteOffset, out uint status) const;
-  uint2 Load2(in uint byteOffset, out uint status) const;
-  uint3 Load3(in uint byteOffset, out uint status) const;
-  uint4 Load4(in uint byteOffset, out uint status) const;
+  uint Load(in uint offset, out uint status) const;
+  uint2 Load2(in uint offset, out uint status) const;
+  uint3 Load3(in uint offset, out uint status) const;
+  uint4 Load4(in uint offset, out uint status) const;
   template<typename T>
-  T Load(in uint byteOffset, out uint status) const;
+  T Load(in uint offset, out uint status) const;
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether all of the retrieved value
@@ -317,114 +324,127 @@ in order to interpret it.
 \Sub{Atomic Operations}{Resources.babufs.atomics}
 
 RWByteAddressBuffers have a suite of atomic methods that perform the given operation
-on signed or unsigned integer element data indexed by the given integer size
+on type-appropriate-sized element data at the given buffer offset
 in a way that ensures no contention from other threads performing other operations.
-Each has an overload that optionally returns the original value before the atomic operation was performed.
+Each of these operates on two 32 or 64 bit values: the given parameter value and the buffer value.
+The buffer value is a 32 or 64 bit value at a given offset into the buffer.
+Each method has an overload that returns the original buffer value before the atomic operation was performed.
 
 \begin{HLSL}
-   void InterlockedAdd(in uint pos, in uint value);
-   void InterlockedAdd(in uint pos, in uint value, out uint original);
-   void InterlockedAnd(in uint pos, in uint value);
-   void InterlockedAnd(in uint pos, in uint value, out uint original);
-   void InterlockedOr(in uint pos, in uint value);
-   void InterlockedOr(in uint pos, in uint value, out uint original);
-   void InterlockedXor(in uint pos, in uint value);
-   void InterlockedXor(in uint pos, in uint value, out uint original);
+   void InterlockedAdd(in uint offset, in uint value);
+   void InterlockedAdd(in uint offset, in uint value, out uint original);
+   void InterlockedAnd(in uint offset, in uint value);
+   void InterlockedAnd(in uint offset, in uint value, out uint original);
+   void InterlockedOr(in uint offset, in uint value);
+   void InterlockedOr(in uint offset, in uint value, out uint original);
+   void InterlockedXor(in uint offset, in uint value);
+   void InterlockedXor(in uint offset, in uint value, out uint original);
 \end{HLSL}
 
-Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or
-on the element found in 32-bit integer position \texttt{pos} and the provided \texttt{value}
-and stores the resulting sum in that buffer position,
-optionally returning the orignal value of the buffer position through \texttt{original}
+Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or on
+the 32-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the result to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedMin(in uint pos, in int value);
-   void InterlockedMin(in uint pos, in uint value);
-   void InterlockedMin(in uint pos, in int value, out int original);
-   void InterlockedMin(in uint pos, in uint value, out uint original);
-   void InterlockedMax(in uint pos, in int value);
-   void InterlockedMax(in uint pos, in uint value);
-   void InterlockedMax(in uint pos, in int value, out int original);
-   void InterlockedMax(in uint pos, in uint value, out uint original);
+   void InterlockedMin(in uint offset, in int value);
+   void InterlockedMin(in uint offset, in uint value);
+   void InterlockedMin(in uint offset, in int value, out int original);
+   void InterlockedMin(in uint offset, in uint value, out uint original);
+   void InterlockedMax(in uint offset, in int value);
+   void InterlockedMax(in uint offset, in uint value);
+   void InterlockedMax(in uint offset, in int value, out int original);
+   void InterlockedMax(in uint offset, in uint value, out uint original);
 \end{HLSL}
 
-Perform the sign-approrpriate minimum or maximum comparison of the 32-bit integer indexed by \texttt{pos}
-and the provided \texttt{value} and assigns the less or greater as appropriate to that buffer position,
-optionally returning the orignal value at that buffer position through \texttt{original}
+Perform the sign-approrpriate minimum or maximum comparison on
+the 32-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the lesser or greater value, as appropriate, to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedExchange(in uint pos, in uint value, out uint original);
+   void InterlockedExchange(in uint offset, in uint value, out uint original);
 \end{HLSL}
 
-Performs an atomic exchange of the the 32-bit integer indexed by \texttt{pos} with
-the value of \texttt{value} and returns the original value at that position through \texttt{original}.
+Performs an atomic exchange of
+the 32-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedCompareStore(in uint pos, in uint compare, in uint value);
-   void InterlockedCompareExchange(in uint pos, in uint compare, in uint value,
+   void InterlockedCompareStore(in uint offset, in uint compare, in uint value);
+   void InterlockedCompareExchange(in uint offset, in uint compare, in uint value,
                                     out uint original);
 \end{HLSL}
 
-Perform an atomic exchange of or store to the the 32-bit integer indexed by \texttt{pos}
-with the provided \texttt{value} if the value at that position matches the value of \texttt{compare}.
-\texttt{InterlockedCompareExchange} returns the original value at that position through \texttt{original}.
+Perform an atomic exchange of or store to
+the 32-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare}.
+\texttt{InterlockedCompareExchange} returns the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedAdd64(in uint pos, in uint64_t value);
-   void InterlockedAdd64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedAnd64(in uint pos, in uint64_t value);
-   void InterlockedAnd64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedOr64(in uint pos, in uint64_t value);
-   void InterlockedOr64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedXor64(in uint pos, in uint64_t value);
-   void InterlockedXor64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedAdd64(in uint offset, in uint64_t value);
+   void InterlockedAdd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedAnd64(in uint offset, in uint64_t value);
+   void InterlockedAnd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedOr64(in uint offset, in uint64_t value);
+   void InterlockedOr64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedXor64(in uint offset, in uint64_t value);
+   void InterlockedXor64(in uint offset, in uint64_t value, out uint64_t original);
 \end{HLSL}
 
-Performs atomic addition, bitwise and, bitwise or, or bitwise exclusive or
-on the element found in 64-bit integer position \texttt{pos} and the provided \texttt{value}
-and stores the resulting sum in that buffer position,
-optionally returning the orignal value of the buffer position through \texttt{original}
+Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or on
+the 64-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the result to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedMin64(in uint pos, in int64_t value);
-   void InterlockedMin64(in uint pos, in uint64_t value);
-   void InterlockedMin64(in uint pos, in int64_t value, out int64_t original);
-   void InterlockedMin64(in uint pos, in uint64_t value, out uint64_t original);
-   void InterlockedMax64(in uint pos, in int64_t value);
-   void InterlockedMax64(in uint pos, in uint64_t value);
-   void InterlockedMax64(in uint pos, in int64_t value, out int64_t original);
-   void InterlockedMax64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedMin64(in uint offset, in int64_t value);
+   void InterlockedMin64(in uint offset, in uint64_t value);
+   void InterlockedMin64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint offset, in int64_t value);
+   void InterlockedMax64(in uint offset, in uint64_t value);
+   void InterlockedMax64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint offset, in uint64_t value, out uint64_t original);
 \end{HLSL}
 
-Performs the sign-approrpriate minimum or maximum comparison of the 64-bit integer indexed by \texttt{pos}
-and the provided \texttt{value} and assigns the less or greater as appropriate to that buffer position,
-optionally returning the orignal value at that buffer position through \texttt{original}
+Perform the sign-approrpriate minimum or maximum comparison on
+the 64-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the lesser or greater value, as appropriate, to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedExchange64(in uint pos, in uint64_t value, out uint64_t original);
+   void InterlockedExchange64(in uint offset, in uint64_t value, out uint64_t original);
 \end{HLSL}
 
-Performs an atomic exchange of the the 64-bit integer indexed by \texttt{pos} with
-the value of \texttt{value} and returns the original value at that position through \texttt{original}.
+Performs an atomic exchange of
+the 64-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
 
 \begin{HLSL}
-   void InterlockedCompareStore64(in uint pos, in uint64_t compare,
+   void InterlockedCompareStore64(in uint offset, in uint64_t compare,
                                    in uint64_t value);
-   void InterlockedCompareExchange64(in uint pos, in uint64_t compare,
+   void InterlockedCompareExchange64(in uint offset, in uint64_t compare,
                                       in uint64_t value, out uint64_t original);
 \end{HLSL}
 
-Perform an atomic exchange of or store to the the 64-bit integer indexed by \texttt{pos}
-with the provided \texttt{value} if the value at that position matches the value of \texttt{compare}.
-\texttt{InterlockedCompareExchange64} returns the original value at that position through \texttt{original}.
+Perform an atomic exchange of or store to
+the 64-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare}.
+\texttt{InterlockedCompareExchange} returns the original buffer value through \texttt{original}.
 
 \begin{HLSL}
    void InterlockedExchangeFloat(in uint byteOffest, in float value,
                                   out float original);
 \end{HLSL}
 
-Performs an atomic exchange of the the 32-bit float indexed by \texttt{pos} with
-the value of \texttt{value} and returns the original value at that position through \texttt{original}.
+Performs an atomic exchange of
+the 32-bit float buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
+
 
 \begin{HLSL}
   void InterlockedCompareStoreFloatBitwise(in uint byteOffest, in float compare,
@@ -435,11 +455,10 @@ the value of \texttt{value} and returns the original value at that position thro
                                                out float original);
 \end{HLSL}
 
-Perform an atomic exchange of or store to the the 32-bit float indexed by
-\texttt{pos} with the provided \texttt{value} if the value at that position
-matches the value of \texttt{compare} in a bitwise comparison.
-\texttt{InterlockedCompareExchangeFloatBitwise} returns the original value at
-that position through \texttt{original}.
+Perform an atomic exchange of or store to
+the 32-bit float buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare} in a bitwise comparison.
+\texttt{InterlockedCompareExchangeFloatBitwise} returns the original buffer value through \texttt{original}.
 
 Unlike standard floating point comparisons, values will only match if the bit
 representation matches which can miss some matching values that have different
@@ -466,25 +485,26 @@ template <typename T>
  class StructuredBuffer {
  public:
    StructuredBuffer();
-   StructuredBuffer(StructuredBuffer buf);
+   StructuredBuffer(StructuredBuffer &buf);
    StructuredBuffer operator=(StructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
 
    // Element access.
-   T operator[](int pos) const;
-   T Load(in int pos) const;
-   T Load(in int pos, out uint status) const;
+   T operator[](int index) const;
+   T Load(in int index) const;
+   T Load(in int index, out uint status) const;
 };
 
- class RWStructuredBuffer {
+template <typename T>
+ class RWStructuredBuffer : public StructuredBuffer {
  public:
    RWStructuredBuffer();
-   RWStructuredBuffer(RWStructuredBuffer buf);
+   RWStructuredBuffer(RWStructuredBuffer &buf);
    RWStructuredBuffer operator=(RWStructuredBuffer buf);
 
    // Element assignment.
-   T &operator[](int pos);
+   T &operator[](int index);
 
    // Hidden counter increment/decrement.
    uint IncrementCounter();
@@ -493,8 +513,9 @@ template <typename T>
 
 template <typename T>
  class AppendStructuredBuffer {
+ public:
    AppendStructuredBuffer();
-   AppendStructuredBuffer(AppendStructuredBuffer buf);
+   AppendStructuredBuffer(AppendStructuredBuffer &buf);
    AppendStructuredBuffer operator=(AppendStructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
@@ -504,13 +525,14 @@ template <typename T>
 
 template <typename T>
  class ConsumeStructuredBuffer {
+ public:
    ConsumeStructuredBuffer();
-   ConsumeStructuredBuffer(ConsumeStructuredBuffer buf);
+   ConsumeStructuredBuffer(ConsumeStructuredBuffer &buf);
    ConsumeStructuredBuffer operator=(ConsumeStructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
 
-   void Consume();
+   T Consume();
 };
 
 \end{HLSL}
@@ -542,7 +564,13 @@ using the explicit binding location if provided or the implicit binding if not (
 
 When defined at local scope, structured buffers represent local references
 that can be associated with global buffers when assigned,
-but must be resolvable to a unique global buffer.
+but must be resolvable to a unique global buffer declaration.
+
+\begin{note}
+Resource types contained in structs are only allocated registers when they are explicitly used.
+This includes elements of arrays of resources as such array elements must be indexed with literals.
+\end{note}
+
 
 \begin{HLSL}
   StructuredBuffer<int3x3> grobuf;
@@ -574,16 +602,16 @@ The contents of read-only StructuredBuffers and writable RWStructuredBuffers can
 using the \texttt{Load} methods or the subscript operator.
 
 \begin{HLSL}
- T Load(in int pos) const;
- T operator[](int pos) const;
+ T Load(in int index) const;
+ T operator[](int index) const;
 \end{HLSL}
 
-These each return the element at the given position \texttt{pos} of the type specified in the buffer definition.
+These each return the element of the buffer's type at the given index \texttt{index}.
 
 An additional \texttt{Load} method returns the indicated element just as the other,
 but also takes a second \texttt{status} parameter that returns information about the accessed resource.
 \begin{HLSL}
- T Load(in int pos, out uint status) const;
+ T Load(in int index, out uint status) const;
 \end{HLSL}
 
 The \texttt{status} parameter returns an indication of whether all of the retrieved value
@@ -594,7 +622,7 @@ in order to interpret it.
 Writable RWStructuredBuffers have an additional subscript operator that allows assignment to a structure element of the buffer.
 It behaves as if it returns a reference to that element.
 \begin{HLSL}
- T &operator[](int pos);
+ T &operator[](int index);
 \end{HLSL}
 
 \Sub{Counter Manipulation}{Resources.stbufs.counter}
@@ -624,7 +652,7 @@ Subsequent appends will continue to add elements to the end of the buffer.
 ConsumeStructuredBuffers can only have values pulled from them as an input stream.
 
 \begin{HLSL}
-   void Consume();
+   T Consume();
 \end{HLSL}
 
 Removes and returns a value of the template parameter types from the end of the ConsumeStructuredBuffer.
@@ -685,8 +713,15 @@ sets of register numbers. Meaning the following is all allowed:
   RWBuffer<float> herbuf : register(u0, space1);
 \end{HLSL}
 
-Resource aggregates structs containing multiple resources types or arrays of resource types or structs containing one or more resource types.
-When aggregate types have register annotations, they occupy the first register they specify as well as however many additional sequential registers
+A aggregate resource type can be:
+\begin{itemize}
+\item a struct containing one or more resources types
+\item an array of resource types
+\item an array or struct containing either of the above
+\end{itemize}
+
+When aggregate resource types have register annotations,
+they occupy the first register they specify as well as however many additional sequential registers
 the aggregate requires to assign a register to each of its elements that correspond to the given register type.
 Multiple register annotations can be placed on aggregates involving structs where each corresponds to a distinct
 register type that will apply to all the registers of that type in the aggregate.
