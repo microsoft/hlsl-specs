@@ -6,7 +6,7 @@
 * Author(s): [Cassandra Beckley](https://github.com/cassiebeckley)
 * Sponsor: [Steven Perron](https://github.com/s-perron) and TBD
 * Status: **Under Consideration**
-* Required Version: HLSL 202x
+* Required Version: HLSL 2021
 <!--
 * PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
 * Issues:
@@ -118,6 +118,12 @@ They will have the same interface as the corresponding methods for the
 or `SamplerComparisonState` argument. (SPIR-V does not have separate sampler
 types for comparison operations, and the combined sampler will be sufficient
 for all methods listed).
+
+`[[vk::combinedImageSampler]]` will be marked as deprecated in HLSL 2021, and
+removed in HLSL 202x.
+
+A new feature check `__has_feature(hlsl_vk_sampled_texture)` will be added to
+the preprocessor.
 
 ### Interchange Format Additions
 
