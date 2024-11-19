@@ -829,12 +829,12 @@ only of shaders, but also of the code after the loop.
 ```C++
 for( int bounceCount=0; ; bounceCount++ )
 {
-    HitObject hit;    // initialize to NOP-hitobject
+    HitObject hit;    // initialize to NOP-HitObject
 
     // Have threads conditionally participate in the next bounce depending on
     // loop iteration count and path throughput. Instead of having
     // non-participating threads break out of the loop here, we let them
-    // participate in the reordering with a NOP-hitobject first.
+    // participate in the reordering with a NOP-HitObject first.
     // This will cause them to be grouped together and execute the work after
     // the loop with higher coherence. Note that the values of 'bounceCount'
     // might differ between threads in a wave, because reordering may group
@@ -873,7 +873,10 @@ for( int bounceCount=0; ; bounceCount++ )
 
 ## Reorder points
 
-A _reorder point_ is a point in the control flow of a shader or sequence of
+The existing DXR API define _repacking points_ at `TraceRay` and `CallShader`.
+This proposal aims to formalize the concept and suggests renaming them to _reorder points_.
+
+A reorder point is a point in the control flow of a shader or sequence of
 shaders where the system may arbitrarily change the physical arrangement of
 threads executing on the GPU, usually with the goal of increasing coherence.
 That is, the system may choose to migrate thread contexts that arrive at a
@@ -918,18 +921,17 @@ scenarios.
 
 While it is understood that reordering at `TraceRay` and `CallShader` is done
 at the discretion of the driver, `HitObject::TraceRay` and `HitObject::Invoke`
-are intended to be used in combination with `ReorderThread`.
-The desired behavior, as communicated from a shader to the driver, is inferred
-from the presence of `ReorderThread`.
-If no `ReorderThread` call is made, it implies that the driver should minimize
-its efforts to reorder for hit coherence.
-Conversely, the existence of a `ReorderThread` call implies that more sophisticated
-reordering will be beneficial, and that reordering conceptually occurs at the
-`ReorderThread` call.
-This describes the intended behavior communicated from an application, though
-the actual behavior remains at the driver's discretion.
-For example, an implementation may choose to defer the reordering operation
-implied by `ReorderThread` to the next reorder point.
+are intended to be used in conjunction with `ReorderThread`.
+Reordering at `HitObject::TraceRay` and `HitObject::Invoke` is permitted but the
+driver should minimize its efforts to reorder for hit coherence and instead
+prioritize reordering through `ReorderThread`.
+
+Some implementations may achieve best performance when `HitObject::TraceRay`,
+`ReorderThread`, and `HitObject::Invoke` are called back-to-back.
+This case is semantically equivalent to DXR 1.0 `TraceRay` but with defined
+reordering characteristics.
+The back-to-back combination of `ReorderThread` and `HitObject::Invoke` may
+similarly see a performance benefit on some implementations.
 
 For performance reasons, it is crucial that the DXIL-generating compiler does
 not move non-uniform resource access across reorder points in general, and across
@@ -983,9 +985,17 @@ Due to the existence of non-coherent caches on most modern GPUs, an
 application must take special care when communicating information across
 reorder points through memory (UAVs).
 
-Specifically, if UAV stores or atomics are performed on one side of a reorder
-point, and on the other side the data is read via non-atomic UAV reads, the
-following is required:
+This proposal includes a new coherence scope for reorder points. The scope
+is limited to communication within the same dispatch index. Specifically,
+if UAV stores or atomics are performed on one side of a reorder point, and
+on the other side the data is read via non-atomic UAV reads, the following
+is required:
+- The UAV must be declared `[reordercoherent]`.
+- The UAV writer must issue a `Barrier(UAV_MEMORY, REORDER_SCOPE)` between
+the write and the reorder point.
+
+When communicating both between threads and across reorder points, global coherency
+can be utilized:
 - The UAV must be declared `[globallycoherent]`.
 - The UAV writer must issue a `DeviceMemoryBarrier` between the write and the
 reorder point.
@@ -1030,6 +1040,9 @@ Some examples follow.
 
 ### Example: Common computations that rely on large raygeneration state
 
+In this example, a large number of surface events are tracked in the ray generation shader.
+Only the result is communicated to the invoked shader via the payload.
+
 ```C++
 struct IorData
 {
@@ -1056,6 +1069,9 @@ for( ... )
 
 ### Example: Do common computations with hit-coherence
 
+In this example, common code runs in the raygeneration shader, after
+the thread has been reordered for hit coherence.
+
 ```C++
 hit = HitObject::TraceRay( ... );
 ReorderThread( hit );
@@ -1067,11 +1083,17 @@ HitObject::Invoke( hit, payload );
 
 ### Example: Same surface shader but different behavior in the raygeneration shader
 
+This example demonstrates varying reordering behavior and shadow logic, despite
+using the same shader code.
+
 ```C++
-// Primary ray wants perfect shadows and does not need to reorder as it is
-// coherent enough.
+// Primary ray wants perfect shadows and does not need to explicitly
+// reorder for hit coherence as it is coherent enough.
 ray = GeneratePrimaryRay();
 hit = HitObject::TraceRay( ... );
+// NOTE: Although ReorderThread is not explicitly invoked here,
+// reordering can still occur at any reorder point based on
+// driver-specific decisions.
 RayDesc shadowRay = SampleShadow( hit );
 payload.shadowTerm = HitObject::TraceRay( shadowRay ).IsHit() ? 0.0f : 1.0f;
 HitObject::Invoke( hit, payload );
@@ -1086,6 +1108,9 @@ HitObject::Invoke( hit, payload );
 
 ### Example: Unified shading
 
+No hit shader is invoked in this example; however, reordering can still
+improve data coherence.
+
 ```C++
 hit = HitObject::TraceRay( ... );
 
@@ -1096,8 +1121,12 @@ ReorderThread( hit );
 
 ### Example: Coherently break render loop on miss
 
-Rationale: Executing the miss shader when not needed is unnecessarily
-inefficient on some architectures.
+Executing the miss shader when not needed is unnecessarily inefficient
+on some architectures. In this example, miss shader execution is skipped.
+
+Note that behavior can vary. Other architectures may have better efficiency
+when `HitObject::TraceRay`, `ReorderThread` and `HitObject::Invoke` are
+called back-to-back (see [Reorder Points](#reorder-points)).
 
 ```C++
 for( ;; )
@@ -1114,6 +1143,10 @@ for( ;; )
 
 ### Example: Two-step shading, single reorder
 
+In this example, shading is performed in two steps.
+The first step gathers material information, while the second step dispatches a common surface shader.
+This approach can help reduce shader permutations.
+
 ```C++
 hit = HitObject::TraceRay( ... );
 ReorderThread( hit );
@@ -1125,12 +1158,22 @@ HitObject::Invoke( hit, payload );
 // Alter the hit object to point to a unified surface shader.
 hit.SetShaderTableIndex( payload.surfaceShaderIdx );
 
-// Invoke unified surface shading. We are already hit-coherent so not worth
-// reordering again.
+// Invoke unified surface shading. We are already hit-coherent so it is not
+// worth explicitly reordering again.
+// Reordering may still occur at any reorder point based on driver-specific
+// decisions.
 HitObject::Invoke( hit, payload );
 ```
 
 ### Example: Live state optimization
+
+In this example, logic is added to compress and uncompress part of the
+payload across `ReorderThread`.
+This can make sense if live state is more expensive across `ReorderThread`.
+
+Some implementations may favor cases where `HitObject::TraceRay`, `ReorderThread`
+and `HitObject::Invoke` are called back-to-back (see [Reorder Points](#reorder-points)),
+so performance profiling is necessary.
 
 ```C++
 hit = HitObject::TraceRay( ... );
@@ -1139,6 +1182,21 @@ uint compressedNormal = CompressNormal( payload.normal );
 ReorderThread( hit );
 payload.normal = UncompressNormal( compressedNormal );
 
+HitObject::Invoke( hit, payload );
+```
+
+### Example: Back-to-back calls
+
+This example demonstrates the back-to-back arrangement of `HitObject::TraceRay`,
+`ReorderThread`, and `HitObject::Invoke`.
+For some architectures, this arrangement is the most efficient, as it can be
+recognized as a single reorder point, reducing call overhead
+(see [Reorder Points](#reorder-points)).
+Additional logic between these calls should only be added when necessary.
+
+```C++
+hit = HitObject::TraceRay( ... );
+ReorderThread( hit );
 HitObject::Invoke( hit, payload );
 ```
 
@@ -1178,7 +1236,7 @@ XXX + 5  | HitObject_Invoke | Represents the invocation of the CH/MS shader repr
 XXX + 6  | ReorderThread | Reorders the current thread. Optionally accepts a `HitObject` arg, or `undef`.
 XXX + 7  | HitObject_IsMiss | Returns `true` if the `HitObject` represents a miss.
 XXX + 8  | HitObject_IsHit | Returns `true` if the `HitObject` represents a hit.
-XXX + 9  | HitObject_IsNop | Returns `true` if the `HitObject` is a Nop-HitObject.
+XXX + 9  | HitObject_IsNop | Returns `true` if the `HitObject` is a NOP-HitObject.
 XXX + 10 | HitObject_RayFlags | Returns the ray flags set in the HitObject.
 XXX + 11 | HitObject_RayTMin | Returns the TMin value set in the HitObject.
 XXX + 12 | HitObject_RayTCurrent | Returns the current T value set in the HitObject.
@@ -1410,7 +1468,7 @@ Matrix getters use the `hitobject_StateMatrix` dxil intrinsic and the return typ
 :------------         |:----------- |:--------- |:-----------
  HitObject_IsMiss            | `i1`    | scalar | Returns `true` if the `HitObject` represents a miss.
  HitObject_IsHit             | `i1`    | scalar | Returns `true` if the `HitObject` represents a hit.
- HitObject_IsNop             | `i1`    | scalar | Returns `true` if the `HitObject` is a Nop-HitObject.
+ HitObject_IsNop             | `i1`    | scalar | Returns `true` if the `HitObject` is a NOP-HitObject.
  HitObject_RayFlags          | `i32`   | scalar | Returns the ray flags set in the HitObject.
  HitObject_RayTMin           | `float` | scalar | Returns the TMin value set in the HitObject.
  HitObject_RayTCurrent       | `float` | scalar | Returns the current T value set in the HitObject.
