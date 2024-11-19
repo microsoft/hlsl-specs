@@ -115,10 +115,11 @@ impact any other `HitObject` in the shader. A shader can have any number of
 active `HitObject`s at a time. Each `HitObject` will take up some hardware
 resources to hold information related to the hit or miss, including ray,
 intersection attributes and information about the shader to invoke. The size
-of a `HitObject` is unspecified. As a consequence, `HitObject` cannot be
-stored in structured buffers. Ray payload structs must not have members of
-`HitObject` type. `HitObject` supports assignment (by-value copy) and can be
-passed as arguments to and returned from local functions.
+of a `HitObject` is unspecified, and thus considered intangible. As a
+consequence, `HitObject` cannot be stored in memory buffers, in groupshared
+memory, in ray payloads, or in intersection attributes. `HitObject` supports
+assignment (by-value copy) and can be passed as arguments to and returned from
+local inlined functions.
 
 A `HitObject` is default-initialized to encode a NOP-HitObject (see `HitObject::MakeNop`).
 A NOP-HitObject can be used with `HitObject::Invoke` and `ReorderThread` but
