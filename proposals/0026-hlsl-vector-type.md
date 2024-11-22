@@ -2,7 +2,7 @@
 
 * Proposal: [0026-HLSL-Vectors](0026-hlsl-vector-type.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra)
-* Sponsor: Damyan Pepper
+* Sponsor: [Damyan Pepper](https://github.com/damyanp)
 * Status: **Under Consideration**
 
 # HLSL Vectors
