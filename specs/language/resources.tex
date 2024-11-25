@@ -28,7 +28,7 @@ template <typename T = float4>
  class Buffer {
  public:
    Buffer();
-   Buffer(Buffer &buf);
+   Buffer(const Buffer &buf);
    Buffer operator=(Buffer buf);
 
    void GetDimensions(out uint width) const;
@@ -145,7 +145,7 @@ indexed. This type can be a scalar, vector, matrix, or user-defined struct.
  class ByteAddressBuffer {
  public:
    ByteAddressBuffer();
-   ByteAddressBuffer(ByteAddressBuffer &buf);
+   ByteAddressBuffer(const ByteAddressBuffer &buf);
    ByteAddressBuffer operator=(ByteAddressBuffer buf);
 
    void GetDimensions(out uint size) const;
@@ -169,7 +169,7 @@ indexed. This type can be a scalar, vector, matrix, or user-defined struct.
  class RWByteAddressBuffer : public ByteAddressBuffer {
  public:
    RWByteAddressBuffer();
-   RWByteAddressBuffer(RWByteAddressBuffer &buf);
+   RWByteAddressBuffer(const RWByteAddressBuffer &buf);
    RWByteAddressBuffer operator=(RWByteAddressBuffer buf);
 
    // Element assignment.
@@ -485,7 +485,7 @@ template <typename T>
  class StructuredBuffer {
  public:
    StructuredBuffer();
-   StructuredBuffer(StructuredBuffer &buf);
+   StructuredBuffer(const StructuredBuffer &buf);
    StructuredBuffer operator=(StructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
@@ -500,7 +500,7 @@ template <typename T>
  class RWStructuredBuffer : public StructuredBuffer {
  public:
    RWStructuredBuffer();
-   RWStructuredBuffer(RWStructuredBuffer &buf);
+   RWStructuredBuffer(const RWStructuredBuffer &buf);
    RWStructuredBuffer operator=(RWStructuredBuffer buf);
 
    // Element assignment.
@@ -515,7 +515,7 @@ template <typename T>
  class AppendStructuredBuffer {
  public:
    AppendStructuredBuffer();
-   AppendStructuredBuffer(AppendStructuredBuffer &buf);
+   AppendStructuredBuffer(const AppendStructuredBuffer &buf);
    AppendStructuredBuffer operator=(AppendStructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
@@ -527,7 +527,7 @@ template <typename T>
  class ConsumeStructuredBuffer {
  public:
    ConsumeStructuredBuffer();
-   ConsumeStructuredBuffer(ConsumeStructuredBuffer &buf);
+   ConsumeStructuredBuffer(const ConsumeStructuredBuffer &buf);
    ConsumeStructuredBuffer operator=(ConsumeStructuredBuffer buf);
 
    void GetDimensions(out uint count, out uint stride) const;
@@ -713,22 +713,22 @@ sets of register numbers. Meaning the following is all allowed:
   RWBuffer<float> herbuf : register(u0, space1);
 \end{HLSL}
 
-A aggregate resource type can be:
+An aggregate resource type can be:
 \begin{itemize}
 \item a struct containing one or more resources types
 \item an array of resource types
 \item an array or struct containing either of the above
 \end{itemize}
 
-When aggregate resource types have register annotations,
-they occupy the first register they specify as well as however many additional sequential registers
+Aggregate resource types with register annotations
+occupy the first register they specify and however many additional sequential registers
 the aggregate requires to assign a register to each of its elements that correspond to the given register type.
 Multiple register annotations can be placed on aggregates involving structs where each corresponds to a distinct
 register type that will apply to all the registers of that type in the aggregate.
 
 \begin{note}
 Resource types contained in structs are only allocated registers when they are explicitly used.
-This includes elements of arrays of resources as such array elements must be indexed with literals.
+This includes elements of arrays of resources since such array elements must be indexed with literals.
 \end{note}
 
 \begin{HLSL}
