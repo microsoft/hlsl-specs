@@ -76,7 +76,7 @@ overall.  See the D3D12 flag definition for more details:
 also need to be aware that OMMs may be in use.  The above `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` 
 doesn't apply for inline raytracing however. `RayQuery` objects are 
 independent of raytracing pipelines. For `RayQuery` the template for 
-instantiating the object a new optional `RAYQUERY_FLAGS` parameter:
+instantiating the object includes a new optional `RAYQUERY_FLAGS` parameter:
 
 `RayQuery<RAY_FLAGS, RAYQUERY_FLAGS>`
 
