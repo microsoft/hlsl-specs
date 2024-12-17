@@ -1,11 +1,11 @@
 <!-- {% raw %} -->
 
-* Proposal: [0026-HLSL-Vectors](0026-hlsl-vector-type.md)
+* Proposal: [0026-HLSL-Vectors](0026-hlsl-long-vector-type.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra)
 * Sponsor: [Damyan Pepper](https://github.com/damyanp)
 * Status: **Under Consideration**
 
-# HLSL Vectors
+# HLSL Long Vectors
 
 ## Introduction
 
