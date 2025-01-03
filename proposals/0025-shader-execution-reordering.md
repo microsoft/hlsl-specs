@@ -80,7 +80,7 @@ the programming model is limited to HLSL and DXIL.
 This section describes the HLSL additions for `HitObject` and `ReorderThread`
 in detail.
 The canonical use of these features involve changing a `TraceRay` call to the
-following sequence:
+following sequence that is functionally equivalent:
 
 ```C++
 HitObject Hit = HitObject::TraceRay( ..., Payload );
