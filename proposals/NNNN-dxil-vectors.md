@@ -48,7 +48,11 @@ Scalarization of these vectors will continue to be done for uses that don't supp
 
 Single-element vectors are not valid in DXIL.
 At the language level, they may be supported for corresponding intrinsic overloads,
-  but such vectors should be represented as scalars in the final DXIL output.
+ but such vectors should be represented as scalars in the final DXIL output.
+Since they only contain a single scalar, single-element vectors are
+ informationally equivalent to actual scalars.
+Rather than include conversions to and from scalars and single-element vectors,
+ it is cleaner and functionally equivalent to represent these as scalars in DXIL.
 
 Although matrices are represented as vectors in some contexts such as unlinked library shaders,
  their final DXIL representation will continue to be as arrays of scalars.
@@ -62,6 +66,8 @@ The returned vector value and the status indicator are grouped into a new `ResRe
  that the load intrinsic returns.
 
 ```asm
+  ; overloads: SM6.9: f16|f32|i16|i32
+  ; returns: status, vector
   declare %dx.types.ResRet.v[NUM][TY] @dx.op.rawBufferLoad.v[NUM][TY](
       i32,                  ; opcode
       %dx.types.Handle,     ; resource handle
@@ -90,8 +96,8 @@ Elementwise intrinsics are those that perform their calculations irrespective of
 An elementwise intrinsic `foo` that takes scalar or vector arguments could theoretically implement its vector version using a simple loop and the scalar intrinsic variant.
 
 ```c++
-vec<TYPE, NUM> foo(vec<TYPE, NUM> a, vec<TYPE, NUM> b) {
-  vec<TYPE, NUM> ret;
+vector<TYPE, NUM> foo(vector<TYPE, NUM> a, vector<TYPE, NUM> b) {
+  vector<TYPE, NUM> ret;
   for (int i = 0; i < NUM; i++)
     ret[i] = foo(a[i], b[i]);
 }
@@ -167,6 +173,8 @@ These native vectors must be supported for the above indicated DXIL intrinsics.
 A compiler targeting shader model 6.9 should be able to represent vectors in the supported memory spaces
  in their native form and generate native calls for supported intrinsics
  and scalarized versions for unsupported intrinsics.
+
+Verify that supported intrinsics and operations will retain vector types.
 
 The DXIL 6.9 validator should allow native vectors in the supported memory and intrinsic uses.
 It should produce errors for uses in signatures, cbuffers, and type buffers and any uses in unsupported intrinsics.

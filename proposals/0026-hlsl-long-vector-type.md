@@ -9,13 +9,13 @@
 
 ## Introduction
 
-HLSL has always supported vectors of as many as four elements of different element types (int3, float4, etc.).
+HLSL has previously supported vectors of as many as four elements (int3, float4, etc.).
 These are useful in a traditional graphics context for representation and manipulation of
  geometry and color information.
 The evolution of HLSL as a more general purpose language targeting Graphics and Compute
  greatly benefit from longer vectors to fully represent these operations rather than to try to
  break them down into smaller constituent vectors.
-This feature adds the ability to declare and use native HLSL vectors longer than four elements.
+This feature adds the ability to load, store, and perform select operations on HLSL vectors longer than four elements.
 
 ## Motivation
 
@@ -56,6 +56,13 @@ Unlike vector sizes between 1 and 4, no shorthand declarations that concatenate
 
 The new vectors will be supported in all shader stages including Node shaders. There are no control flow or wave
 uniformity requirements, but implementations may specify best practices in certain uses for optimal performance.
+
+Long vectors can be:
+
+* Elements of arrays, structs, StructuredBuffers, and ByteAddressBuffers.
+* Parameters and return types of non-etry functions.
+* Stored in groupshared memory.
+* Static global varaibles.
 
 Long vectors are not permitted in:
 
@@ -200,13 +207,17 @@ Verify that long vectors can be declared in all appropriate contexts:
 * Templated Load/Store methods on ByteAddressBuffers
 * As members of arrays and structs in any of the above contexts
 
+Verify that long vectors can be correctly initialized in all the forms listed in [Constructing vectors](constructing-vectors).
+
 Verify that long vectors in supported intrinsics produce appropriate outputs.
 For the intrinsic functions listed in [Native vector intrinsics](#native-vector-intrinsics),
  the generated DXIL intrinsic calls will have long vector parameters.
 For other elementwise vector intrinsic functions listed in [Allowed elementwise vector intrinsics](#allowed-elementwise-vector-intrinsics),
  the generated DXIL should scalarize the parameters and produce scalar calls to the corresponding DXIL intrinsics.
-
 Verify that long vector elements can be accessed using the subscript operation.
+
+Verify that long vectors of different sizes will reference different overloads of user and built-in functions.
+Verify that template instantiation using long vectors correctly creates variants for the right sizes.
 
 #### Invalid usage testing
 
