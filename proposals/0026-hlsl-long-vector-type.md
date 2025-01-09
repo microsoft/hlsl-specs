@@ -153,7 +153,7 @@ Of the above list, the following will produce the appropriate unary, binary, or 
 
 #### Disallowed vector intrinsics
 
-* Only applicable to for shorter vectors: AddUint64, asdouble, asfloat, asfloat16, asint, asint16, asuint, asuint16, D3DCOLORtoUBYTE4, cross, distance, dst, faceforward, length, normalize, reflect, refract, NonUniformResourceIndex
+* Only applicable to shorter vectors: AddUint64, asdouble, asfloat, asfloat16, asint, asint16, asuint, asuint16, D3DCOLORtoUBYTE4, cross, distance, dst, faceforward, length, normalize, reflect, refract, NonUniformResourceIndex
 * Only useful for disallowed variables: EvaluateAttributeAtSample, EvaluateAttributeCentroid, EvaluateAttributeSnapped, GetAttributeAtVertex
 
 ### Debug Support

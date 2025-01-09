@@ -22,7 +22,7 @@ While the original shape of the vectors may be reconstructed from their scalariz
  it requires additional work of the DXIL consumer and results in larger DXIL binary sizes.
 Although it has never been allowed in DXIL, the LLVM IR that DXIL is based on can represent native vectors.
 By allowing these native vector types in DXIL, the size of generated DXIL can be reduced and
- new opportunities for expanding vector capabilities in DXIL ar introduced.
+ new opportunities for expanding vector capabilities in DXIL are introduced.
 
 ## Proposed solution
 
