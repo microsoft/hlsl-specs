@@ -49,7 +49,7 @@ third-parties.
 
 6. **Representations and Warranties.** You represent that You are legally
 entitled to provide Input according to these Terms and grant the licenses in
-Section 6.  If You are joining this meeting on behalf of Your employer, You
+Section 5.  If You are joining this meeting on behalf of Your employer, You
 represent and warrant that You have the necessary authority to bind Your
 employer to the obligations contained in these Terms. UNLESS REQUIRED BY
 APPLICABLE LAW OR AGREED TO IN WRITING, AND EXCEPT FOR THE WARRANTIES EXPRESSLY
