@@ -18,16 +18,27 @@ This feature introduces the ability to represent native vectors in DXIL for some
 
 ## Motivation
 
-While the original shape of the vectors may be reconstructed from their scalarized form,
- it requires additional work of the DXIL consumer and results in larger DXIL binary sizes.
-Although it has never been allowed in DXIL, the LLVM IR that DXIL is based on can represent native vectors.
-By allowing these native vector types in DXIL, the size of generated DXIL can be reduced and
- new opportunities for expanding vector capabilities in DXIL are introduced.
+Although many GPUs support vector operations, DXIL has been unable to directly leverage those capabilities.
+Instead, it has scalarized all vector operations, losing their original representation.
+To restore those vector representations, platforms have had to rely on auto-vectorization to
+ rematerialize vectors late in the compilation.
+Scalarization is a trivial compiler transformation that never fails,
+ but auto-vectorization is a notoriously difficult compiler optimization that frequently generates sub-optimal code.
+Allowing DXIL to retain vectors as they appeared in source allows hardware that can utilize
+ vector optimizations to do so more easily without penalizing hardware that requires scalarization.
+
+Native vector support can also help with the size of compiled DXIL programs.
+Vector operations can express in a single instruction operations that would have taken N instructions in scalar DXIL.
+This may allow reduced file sizes for compiled DXIL programs that utilize vectors.
+
+DXIL is based on LLVM 3.7 which already supports native vectors.
+These could only be used to a limited degree in DXIL library targets, and never for DXIL operations.
+This innate support is expected to make adding them a relatively low impact change to DXIL tools.
 
 ## Proposed solution
 
 Native vectors are allowed in DXIL version 1.9 or greater.
-These can be stored in allocas, static globals, and groupshared variables.
+These can be stored in allocas, static globals, groupshared variables, and SSA values.
 They can be loaded from or stored to raw buffers and used as arguments to a selection
  of element-wise intrinsic functions as well as the standard math operators.
 They cannot be used in shader signatures, constant buffers, typed buffer, or texture types.
@@ -42,21 +53,15 @@ Previously individual vectors would get scalarized into scalar arrays and arrays
 Individual vectors will now be represented as a single native vector and arrays of vectors will remain
  as arrays of native vectors, though multi-dimensional arrays will still be flattened to one dimension.
 
-Scalarization of these vectors will continue to be done for uses that don't support native vectors,
- but it will be done using extractelement instructions from the native vectors
- instead of loads from the scalarized array representation.
-
-Single-element vectors are not valid in DXIL.
+Single-element vectors are generally not valid in DXIL.
 At the language level, they may be supported for corresponding intrinsic overloads,
  but such vectors should be represented as scalars in the final DXIL output.
 Since they only contain a single scalar, single-element vectors are
  informationally equivalent to actual scalars.
 Rather than include conversions to and from scalars and single-element vectors,
  it is cleaner and functionally equivalent to represent these as scalars in DXIL.
-
-Although matrices are represented as vectors in some contexts such as unlinked library shaders,
- their final DXIL representation will continue to be as arrays of scalars.
-This is consistent with both their past and future intended representation.
+The exception is in exported library functions, which need to maintain vector representations
+ to correctly match overloads when linking.
 
 ### Changes to DXIL Intrinsics
 
@@ -87,6 +92,12 @@ The return struct contains a single vector and a single integer representing map
 Here and hereafter, `NUM` is the number of elements in the loaded vector, `TYPE` is the element type name,
  and `TY` is the corresponding abbreviated type name (e.g. `i64`, `f32`).
 
+#### Vector access
+
+Dynamic access to vectors were previously converted to array accesses.
+Native vectors can be accessed using `extractelement`, `insertelement`, or `getelementptr` operations.
+Previously usage of `extractelement` and `insertelement` in DXIL didn't allow dynamic index parameters.
+
 #### Elementwise intrinsics
 
 A selection of elementwise intrinsics are given additional native vector forms.
@@ -116,73 +127,62 @@ The elementwise intrinsics that have native vector variants represent the
  <[NUM] x [TYPE]> @dx.op.tertiary.v[NUM][TY](i32 opcode, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2, <[NUM] x [TYPE]> operand3)
 ```
 
-The only opcodes allowed with vector variants are:
+The scalarized variants of these DXIL intrinsics will remain unchanged and can be used in conjunction
+ with the vector variants.
+This means that the same language-level vector could be used in scalarized operations and native vector operations
+ within the same shader by being scalarized as needed even within the same shader.
 
-* Unary
-  * Exp
-  * Htan
-  * Atan
-  * Log
-* Binary
-  * FMin
-  * FMax
-* Tertiary
-  * Fma
+### Validation Changes
 
-Unsupported DXIL intrinsics will continue to operate on scalarized representations even if those scalars
- are extracted from native vectors.
+Blanket validation errors for use of native vectors DXIL are removed.
+Specific disallowed usages of native vector types will be determined by
+ examining arguments to operations and intrinsics and producing errors where appropriate.
+Aggregate types will be recursed into to identify any native vector components.
 
-### Potential Changes to DXIL Consumers
+Native vectors should produce validation errors when:
 
-As this removes no existing DXIL features, the former representation of vectors is still valid.
-However, DXIL consumers may expect native vectors where they are supported and may misinterpret
- vectors scalarized into arrays as being native arrays.
-This is unlikely to produce any faulty results, but may miss some optimizations.
+* Used in cbuffers.
+* Used in unsupported intrinsics or operations as before, but made more specific to the operations.
+* Any usage in previous shader model shaders apart from exported library functions.
 
-As DXIL with native vectors might be linked to create a DXIL shader without that support,
- some additional scalarization might be necessary when linking in such cases.
+Error should be produced for any representation of a single element vector outside of
+ exported library functions.
 
-This feature involves no changes to previous shader models and any DXIL produced for earlier versions
-  should continue to behave exactly as before.
+Specific errors might be generated for invalid overloads of `LoadInput` and `StoreOutput`
+ as they represent usage of vectors in entry point signatures.
 
-#### Validation Changes
+### Device Capability
 
-Validation errors for use of native vectors in DXIL are removed.
-Any errors for using vectors in unsupported intrinsics or operations are maintained,
- but made more specific to the operations or locations that don't allow native vector types.
-More specific errors will be generated for usage of native vectors in any unsupported intrinsics.
-New errors will be generated for any use of native vectors in shader signatures or cbuffer locations.
-
-A validation error should be produced for any representation of a single element vector.
-Such vectors should be represented as scalars.
-
-### Runtime Additions
-
-#### Runtime information
-
-When native vectors are present, a DXIL unit will signal a dependency on Shader Model 6.9.
-
-#### Device Capability
-
-Devices that support Shader Model 6.9 will be required to support native vectors in rawbuffer resources,
- allocas, and groupshared memory.
-These native vectors must be supported for the above indicated DXIL intrinsics.
+Devices that support Shader Model 6.9 will be required to fully support this feature.
 
 ## Testing
 
-A compiler targeting shader model 6.9 should be able to represent vectors in the supported memory spaces
- in their native form and generate native calls for supported intrinsics
- and scalarized versions for unsupported intrinsics.
+### Compilation Testing
 
-Verify that supported intrinsics and operations will retain vector types.
+A compiler targeting shader model 6.9 should be able to represent vectors in the supported memory spaces
+ in their native form and generate native calls for supported intrinsics.
+
+Test that appropriate output is produced for:
+
+* Supported intrinsics and operations will retain vector types.
+* Dynamic indexing of vectors produces the correct `extractelement`, `insertelement`
+ operations with dynamic index parameters.
+
+### Validation testing
 
 The DXIL 6.9 validator should allow native vectors in the supported memory and intrinsic uses.
-It should produce errors for uses in signatures, cbuffers, and type buffers and any uses in unsupported intrinsics.
-Any representation of a single element vector should produce a validation error.
-These shouldn't be directlty produceable with a compatible compiler and will require custom DXIL generation.
+It should produce errors for uses in unsupported intrinsics, cbuffers, and typed buffers.
 
-Full runtime execution should be tested by using the native vector intrinsics on different types of memory
- and confirming that the calculations produce the correct results in all cases for an assortment of vector sizes.
+Single-element vectors are allowed only as interfaces to library shaders.
+Other usages of a single element vector should produce a validation error.
+
+### Execution testing
+
+Full runtime execution should be tested by using the native vector intrinsics using
+ groupshared and non-groupshared memory.
+Calculations should produce the correct results in all cases for a range of vector sizes.
+In practice, this testing will largely represent verifying correct intrinsic output
+ with the new shader model.
 
 ## Acknowledgments
 
