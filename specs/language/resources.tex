@@ -29,7 +29,7 @@ template <typename T = float4>
  public:
    Buffer();
    Buffer(const Buffer &buf);
-   Buffer operator=(Buffer buf);
+   Buffer &operator=(Buffer &buf);
 
    void GetDimensions(out uint width) const;
 
@@ -45,7 +45,7 @@ template <typename T>
  public:
    RWBuffer();
    RWBuffer(RWBuffer buf);
-   RWBuffer operator=(RWBuffer buf);
+   RWBuffer &operator=(RWBuffer &buf);
 
    // element access
    T &operator[](int n);
@@ -76,7 +76,7 @@ that can be associated with global buffers when assigned,
 but must be resolvable to a unique global buffer declaration.
 
 \begin{note}
-Local buffers must be resolvable to a unique global declaration, but not necessarily a unique individual buffer.
+In the case of a buffer array declaration, a unique global declaration references all the buffers in the array.
 Local buffer assignments can map to different resource array elements depending on runtime values.
 \end{note}
 
@@ -88,7 +88,9 @@ Local buffer assignments can map to different resource array elements depending 
     RWBuffer<int> lrwbuf = grwbuf;
   }
 \end{HLSL}
-Buffer operands to the assignment operator must have the same element type.
+
+Buffers cannot be implicitly nor explicitly cast from one type to another.
+This means that local buffers can only be assigned from buffers with the same element type.
 
 \Sub{Dimensions}{Resources.tybufs.dims}
 
@@ -146,7 +148,7 @@ indexed. This type can be a scalar, vector, matrix, or user-defined struct.
  public:
    ByteAddressBuffer();
    ByteAddressBuffer(const ByteAddressBuffer &buf);
-   ByteAddressBuffer operator=(ByteAddressBuffer buf);
+   ByteAddressBuffer &operator=(ByteAddressBuffer &buf);
 
    void GetDimensions(out uint size) const;
 
@@ -170,7 +172,7 @@ indexed. This type can be a scalar, vector, matrix, or user-defined struct.
  public:
    RWByteAddressBuffer();
    RWByteAddressBuffer(const RWByteAddressBuffer &buf);
-   RWByteAddressBuffer operator=(RWByteAddressBuffer buf);
+   RWByteAddressBuffer &operator=(RWByteAddressBuffer &buf);
 
    // Element assignment.
    void Store(in uint offset, in uint value);
@@ -302,8 +304,8 @@ of the type given in the template parameter. This can be a scalar, vector, matri
   T Load(in uint offset) const;
 \end{HLSL}
 
-The alignment requirements of \texttt{offset} for this operation is the size in bytes of the largest
-scalar type contained in the given tyep \texttt{T}.
+The alignment requirements of \texttt{offset} for this operation is the alignment requirement
+of an object of type \texttt{T} in the device memory space (\ref{Intro.Memory.Alignment}).
 
 Additional \texttt{Load} methods return the same values as the others,
 but also take a second \texttt{status} parameter that returns information about the accessed resource.
@@ -470,8 +472,8 @@ and infinite values.
 Structured buffers are raw buffers with associated types that facilitate
 indexing.
 Unlike typed buffers, they perform no format conversions.
-The buffer contents is treated as raw data and the casting to the given types
-is done bit for bit.
+The buffer contents is treated as raw data.
+Accessors return the contained bytes as the target type with no conversions or interpolations applied.
 Structured buffers can be defined with scalar, vector, matrix, or user-defined
 struct elements.
 
@@ -486,7 +488,7 @@ template <typename T>
  public:
    StructuredBuffer();
    StructuredBuffer(const StructuredBuffer &buf);
-   StructuredBuffer operator=(StructuredBuffer buf);
+   StructuredBuffer &operator=(StructuredBuffer &buf);
 
    void GetDimensions(out uint count, out uint stride) const;
 
@@ -501,7 +503,7 @@ template <typename T>
  public:
    RWStructuredBuffer();
    RWStructuredBuffer(const RWStructuredBuffer &buf);
-   RWStructuredBuffer operator=(RWStructuredBuffer buf);
+   RWStructuredBuffer &operator=(RWStructuredBuffer &buf);
 
    // Element assignment.
    T &operator[](int index);
@@ -516,7 +518,7 @@ template <typename T>
  public:
    AppendStructuredBuffer();
    AppendStructuredBuffer(const AppendStructuredBuffer &buf);
-   AppendStructuredBuffer operator=(AppendStructuredBuffer buf);
+   AppendStructuredBuffer &operator=(AppendStructuredBuffer &buf);
 
    void GetDimensions(out uint count, out uint stride) const;
 
@@ -528,7 +530,7 @@ template <typename T>
  public:
    ConsumeStructuredBuffer();
    ConsumeStructuredBuffer(const ConsumeStructuredBuffer &buf);
-   ConsumeStructuredBuffer operator=(ConsumeStructuredBuffer buf);
+   ConsumeStructuredBuffer &operator=(ConsumeStructuredBuffer &buf);
 
    void GetDimensions(out uint count, out uint stride) const;
 
@@ -635,6 +637,8 @@ RWStructuredBuffers may have a hidden counter that can be incremented and decrem
 \end{HLSL}
 
 Increment or decrements the hidden counter associated with the RWStructuredBuffer.
+\texttt{IncrementCounter} returns the pre-increment value of the counter.
+\texttt{DecrementCounter} returns the post-decrement value of the counter.
 
 \Sub{Append}{Resources.stbufs.append}
 
