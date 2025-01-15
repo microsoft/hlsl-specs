@@ -66,7 +66,7 @@ Long vectors can be:
 * Elements of arrays, structs, StructuredBuffers, and ByteAddressBuffers.
 * Parameters and return types of non-entry functions.
 * Stored in groupshared memory.
-* Static global varaibles.
+* Static global variables.
 
 Long vectors are not permitted in:
 
@@ -98,10 +98,6 @@ vector<float, 10> ArrArr = {arr, arr};
 vector<float, 15> Scal = 4.2;
 ```
 
-float4 main(uint size: S) : SV_Target {
-   return (float4)arr;
-vector<uint, 8> vecC = {uint2(coord.xy), vecB};
-
 #### Vectors in Raw Buffers
 
 N-element vectors are loaded and stored from ByteAddressBuffers using the templated load and store methods
@@ -132,7 +128,6 @@ myBuffer.Store(elementIndex, val);
 
 Long vectors support the existing vector subscript operators `[]` to access the scalar element values.
 They do not support any swizzle operations.
-Swizzle operations are limited to the first four elements and the accessors are named according to the graphics domain.
 
 #### Operations on long vectors
 
@@ -294,6 +289,12 @@ The restrictions outlined in [Allowed Usage](allowed-usage) were chosen because 
 They omitted out of unclear utility and to simplify the design.
 There's nothing about those use cases that is inherently incompatible with long vectors
  and future work might consider relaxing those restrictions.
+
+Swizzle operations were not supported because they are limited to the first four elements.
+The names of the accessors (xyzw or rgba) are named according to the expected content of
+ those vectors in a graphics context.
+Since that intretation does not apply to longer vectors, it could be confusing.
+The subscript access is flexible and generic and makes other accessors redundant.
 
 ## Open Issues
 
