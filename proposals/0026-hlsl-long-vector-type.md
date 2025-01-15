@@ -15,7 +15,8 @@ These are useful in a traditional graphics context for representation and manipu
 The evolution of HLSL as a more general purpose language targeting Graphics and Compute
  greatly benefit from longer vectors to fully represent these operations rather than to try to
  break them down into smaller constituent vectors.
-This feature adds the ability to load, store, and perform select operations on HLSL vectors longer than four elements.
+This feature adds the ability to load, store, and perform elementwise operations on HLSL
+ vectors longer than four elements.
 
 ## Motivation
 
@@ -70,10 +71,10 @@ Long vectors can be:
 Long vectors are not permitted in:
 
 * Resource types other than ByteAddressBuffer or StructuredBuffer.
-* Any part of the shader's signature including entry function parameters and return types.
+* Any part of the shader's signature including entry function parameters and return types or
+  user-defined struct parameters.
 * Cbuffers or tbuffers.
-* A mesh/amplification `Payload` entry parameter structure.
-* A ray tracing `Parameter`, `Attributes`, or `Payload` parameter structure.
+* A ray tracing `Parameter`, `Attributes`, or `Payload` parameter structures.
 * A work graph record.
 
 #### Constructing vectors
@@ -153,10 +154,11 @@ Refer to the HLSL spec for an exhaustive list of [Operators](https://learn.micro
 * Quad Ops: ddx, ddx_coarse, ddx_fine, ddy, ddy_coarse, ddy_fine, fwidth, QuadReadLaneAt, QuadReadLaneAcrossX, QuadReadLaneAcrossY, QuadReadLaneAcrossDiagonal
 * Wave Ops: WaveActiveBitAnd, WaveActiveBitOr, WaveActiveBitXor, WaveActiveProduct, WaveActiveSum, WaveActiveMin, WaveActiveMax, WaveMultiPrefixBitAnd, WaveMultiPrefixBitOr, WaveMultiPrefixBitXor, WaveMultiPrefixProduct, WaveMultiPrefixSum, WavePrefixSum, WavePrefixProduct, WaveReadLaneAt, WaveReadLaneFirst
 * Wave Reductions: WaveActiveAllEqual, WaveMatch
+* Type Conversions: asdouble, asfloat, asfloat16, asint, asint16, asuint, asuint16
 
 #### Disallowed vector intrinsics
 
-* Only applicable to shorter vectors: AddUint64, asdouble, asfloat, asfloat16, asint, asint16, asuint, asuint16, D3DCOLORtoUBYTE4, cross, distance, dst, faceforward, length, normalize, reflect, refract, NonUniformResourceIndex
+* Only applicable to shorter vectors: AddUint64, D3DCOLORtoUBYTE4, cross, distance, dst, faceforward, length, normalize, reflect, refract, NonUniformResourceIndex
 * Only useful for disallowed variables: EvaluateAttributeAtSample, EvaluateAttributeCentroid, EvaluateAttributeSnapped, GetAttributeAtVertex
 
 ### Interchange Format Additions
@@ -171,7 +173,7 @@ These should enable tracking vectors through their scalarized and native vector 
 
 ### Diagnostic Changes
 
-Error messages should be produced for use of long vectors in unsupported interfaces.
+Error messages should be produced for use of long vectors in unsupported interfaces:
 
 * Typed buffer element types.
 * Parameters to the entry function.
@@ -181,9 +183,8 @@ Error messages should be produced for use of long vectors in unsupported interfa
 * Tbuffers.
 * Work graph records.
 * Mesh/amplification payload entry parameter structures.
-* Ray tracing `Payload` parameter structures used in `TraceRay` and `anyhit`/`closesthit`/`miss` entry functions.
-* Ray tracing `Parameter` parameter structures used in `CallShader` and `callable` entry functions.
-* Ray tracing `Attributes` parameter structures used in `ReportHit` and `closesthit` entry functions.
+* `Payload`, `Parameter`, and `Attributes` parameter user-defined structs used in
+  `TraceRay()`, `CallShader()`, and `ReportHit()` ray tracing intrinsics.
 
 Errors should also be produced when long vectors are used as parameters to intrinsics
  with vector parameters of variable length, but aren't permitted as listed in [Disallowed vector intrinsics](#disallowed-vector-intrinsics)
@@ -197,11 +198,12 @@ Validation should produce errors when a long vector is found in:
 * The shader signature.
 * A cbuffer/tbuffer.
 * Work graph records.
-* Mesh/amplification payload entry parameter structures.
-* Ray tracing `Payload` parameter structures used in `TraceRay` and `anyhit`/`closesthit`/`miss` entry functions.
-* Ray tracing `Parameter` parameter structures used in `CallShader` and `callable` entry functions.
-* Ray tracing `Attributes` parameter structures used in `ReportHit` and `closesthit` entry functions.
+* `Payload`, `Parameter`, and `Attributes` parameter user-defined structs used in
+  `TraceRay()`, `CallShader()`, and `ReportHit()` ray tracing intrinsics.
 * Metadata
+
+Note that the disallowing long vectors in entry function signatures includes any user-defined structs
+ used in mesh and ray tracing shaders.
 
 Use of long vectors in unsupported intrinsics should produce validation errors.
 
@@ -254,13 +256,17 @@ Verify that long vectors produce compilation errors when:
 
 ### Validation Testing
 
-Verify that long vectors produce validation errors when:
+Verify that long vectors produce validation errors in:
 
-* Verify that Validation produces errors for any DXIL intrinsic that corresponds to the
- HLSL intrinsic functions listed in [Disallowed vector intrinsics](#disallowed-vector-intrinsics).
-Verify that Validation produces errors for any DXIL intrinsic with native vector parameters
- that corresponds to the [allowed elementwise vector intrinsics](#allowed-elementwise-vector-intrinsics)
- and are not listed in [native vector intrinsics](#native-vector-intrinsics).
+* Each element of the shader signature.
+* A cbuffer block struct.
+* Work graphs record structs.
+* The mesh/amplification entry `Payload` parameter struct.
+* Each of the `Payload`, `Parameter`, `Attributes` parameter structs used in
+  `TraceRay()`, `CallShader()`, and `ReportHit()`,
+  and `anyhit`, `closesthit`, `miss`, `callable`, and `closesthit` entry functions.
+* Any DXIL intrinsic that corresponds to the HLSL intrinsic functions listed in [Disallowed vector intrinsics](#disallowed-vector-intrinsics).
+* Any metadata type.
 
 ### Execution Testing
 
