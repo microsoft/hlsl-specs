@@ -26,6 +26,14 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
+## Public Design Meeting
+
+The HLSL team organizes a meeting every two weeks which is open to the public to discuss work in progress in this repository.
+That includes proposals for new HLSL features as well as the ongoing work to write a language specification.
+
+For more information on this meeting and the terms and conditions for
+participation, see the [Design Meeting](docs/DesignMeeting.md) documentation.
+
 ## Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
