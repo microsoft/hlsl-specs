@@ -58,8 +58,7 @@ Unlike vector sizes between 1 and 4, no shorthand declarations that concatenate
 
 #### Allowed Usage
 
-The new vectors will be supported in all shader stages including Node shaders. There are no control flow or wave
-uniformity requirements, but implementations may specify best practices in certain uses for optimal performance.
+The new vectors will be supported in all shader stages including Node shaders.
 
 Long vectors can be:
 
@@ -76,6 +75,9 @@ Long vectors are not permitted in:
 * Cbuffers or tbuffers.
 * A ray tracing `Parameter`, `Attributes`, or `Payload` parameter structures.
 * A work graph record.
+
+While this describes where long vecgtors can be used and later sections will describe how,
+implementations may specify best practices in certain uses for optimal performance.
 
 #### Constructing vectors
 

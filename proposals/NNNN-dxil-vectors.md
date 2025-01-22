@@ -73,15 +73,14 @@ The returned vector value and the status indicator are grouped into a new `ResRe
 ```asm
   ; overloads: SM6.9: f16|f32|i16|i32
   ; returns: status, vector
-  declare %dx.types.ResRet.v[NUM][TY] @dx.op.rawBufferLoad.v[NUM][TY](
+  declare %dx.types.ResRet.v[NUM][TY] @dx.op.rawBufferVectorLoad.v[NUM][TY](
       i32,                  ; opcode
       %dx.types.Handle,     ; resource handle
-      i32,                  ; coordinate c0 (index)
+      i32,                  ; coordinate c0 (byteOffset)
       i32,                  ; coordinate c1 (elementOffset)
-      i8,                   ; mask
-      i32,                  ; alignment
-  )
+      i32)                  ; alignment
 ```
+
 
 The return struct contains a single vector and a single integer representing mapped tile status.
 
