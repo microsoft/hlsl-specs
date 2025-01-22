@@ -724,7 +724,10 @@ Parameter                           | Definition
 
 This variant of `ReorderThread` reorders threads based on a generic
 user-provided hint. Similarity of hint values should indicate expected
-similarity of subsequent work being performed by threads. The resolution of
+similarity of subsequent work being performed by threads. In general, more
+significant bits of the hint value are more important than less significant
+bits for determining coherency, though scheduling behavior is implementation
+specific. The resolution of
 the hint is implementation-specific. If an implementation cannot resolve all
 values of `CoherenceHint`, it is free to ignore an arbitrary number of least
 significant bits. The thread ordering resulting from this call may be
