@@ -27,7 +27,7 @@ To take advantage of specialized hardware that can accelerate longer vector oper
 
 ## Proposed solution
 
-Enable vectors of length between 4 and 128 inclusive in HLSL using existing template-based vector declarations.
+Enable vectors of length between 5 and 128 inclusive in HLSL using existing template-based vector declarations.
 Such vectors will hereafter be referred to as "long vectors".
 These will be supported for all elementwise intrinsics that take variable-length vector parameters.
 For certain operations, these vectors will be represented as native vectors using
@@ -44,10 +44,11 @@ vector<T, N> name;
 ```
 
 `T` is any [scalar](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-scalar) type.
-`N` is the number of components and must be an integer between 1 and 4 inclusive.
+`N` is the number of components and must be a constant integer expression between 1 and 4 inclusive.
 See the vector definition [documentation](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-vector) for more details.
 This proposal adds support for long vectors of length greater than 4 by
- allowing `N` to be greater than 4 where previously such a declaration would produce an error.
+ allowing `N` to be a constant integer expression greater than 4
+ where previously such a declaration would produce an error.
 
 The default behavior of HLSL vectors is preserved for backward compatibility, meaning, skipping the last parameter `N`
 defaults to 4-component vectors and the use `vector name;` declares a 4-component float vector, etc. More examples
@@ -66,6 +67,7 @@ Long vectors can be:
 * Parameters and return types of non-entry functions.
 * Stored in groupshared memory.
 * Static global variables.
+* Local function scoped variables.
 
 Long vectors are not permitted in:
 
@@ -82,7 +84,8 @@ implementations may specify best practices in certain uses for optimal performan
 #### Constructing vectors
 
 HLSL vectors can be constructed through initializer lists, constructor syntax initialization, or by assignment.
-Vectors can be initialized and assigned from various casting operations including scalars and arrays.
+Vectors can be initialized and assigned from various casting operations including scalars, arrays, and initialization lists.
+Initialization of vectors from vectors or initialization lists with fewer elements than the assigned vector are not allowed.
 Long vectors will maintain equivalent casting abilities.
 
 Examples:
@@ -314,12 +317,9 @@ Having a limit facilitates testing and sets expectations for both hardware and s
 * Q: Should this change the default N = 4 for vectors?
   * A: No. While the default size of 4 is less intuitive in a world of larger vectors, existing code depends on this default, so it remains unchanged.
 * Q: How will SPIR-V be supported?
-  * A: TBD
+  * A: TBD. SPIR-V could be represented as an array of elements, scalarized to use scalars, or a new vector type.
 * Q: should swizzle accessors be allowed for long vectors?
   * A: No. It doesn't make sense since they can't be used to access all elements
        and there's no way to create enough swizzle members to accommodate the longest allowed vector.
-* Q: How should scalar groupshared arrays be loaded/stored into/out of long vectors.
-  * A: After some consideration, we opted not to include explicit Load/Store operations for this function.
-       There are at least a couple ways this could be resolved, and the preferred solution is outside the scope.
 
 <!-- {% endraw %} -->

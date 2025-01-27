@@ -94,7 +94,7 @@ Here and hereafter, `NUM` is the number of elements in the loaded vector, `TYPE`
 #### Vector access
 
 Dynamic access to vectors were previously converted to array accesses.
-Native vectors can be accessed using `extractelement`, `insertelement`, or `getelementptr` operations.
+Native vectors can be dynamically accessed using `extractelement`, `insertelement`, or `getelementptr` operations.
 Previously usage of `extractelement` and `insertelement` in DXIL didn't allow dynamic index parameters.
 
 #### Elementwise intrinsics
@@ -126,10 +126,10 @@ The elementwise intrinsics that have native vector variants represent the
  <[NUM] x [TYPE]> @dx.op.tertiary.v[NUM][TY](i32 opcode, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2, <[NUM] x [TYPE]> operand3)
 ```
 
-The scalarized variants of these DXIL intrinsics will remain unchanged and can be used in conjunction
+The scalar variants of these DXIL intrinsics will remain unchanged and can be used in conjunction
  with the vector variants.
-This means that the same language-level vector could be used in scalarized operations and native vector operations
- within the same shader by being scalarized as needed even within the same shader.
+This means that the same language-level vector (of any length) could be used
+ in scalarized operations and native vector operations even within the same shader.
 
 ### Validation Changes
 
