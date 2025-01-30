@@ -84,7 +84,7 @@ class RayQuery;
 ```
 
 ```hlsl
-enum RAYQUERY_FLAG : uint
+enum class RAYQUERY_FLAG : uint32_t
 {
     RAYQUERY_FLAG_NONE = 0x00, // default
     RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS = 0x01,
@@ -137,7 +137,7 @@ DXIL op is used.
 Currently, the `AllocateRayQuery` DXIL Op has the following function signature:
 `uint [[hidden]] AllocateRayQuery(in uint flags);`
 The new DXIL Op, `AllocateRayQuery2`, will instead have this signature:
-`uint [[hidden]] AllocateRayQuery(in uint flags, in uint ray_query_flags);`
+`uint [[hidden]] AllocateRayQuery2(in uint flags, in uint ray_query_flags);`
 
 The DXIL operations which either accept or return `RayFlags`, and therefore may
 accept or return the new `RAY_FLAG_FORCE_OMM_2_STATE` are the following (along
@@ -250,58 +250,45 @@ point to the RayQuery object declaration, where this RayQueryFlag needs to be
 specified.
 
 #### Validation Changes
-
-Validation will be added to ensure that the shader model is at least 6.9 when
-the `RaytracingPipelineFlags::AllowOpacityMicromaps` flag is used in a
-[Raytracing pipeline config1][pipeline-config] subobject.
-
-Proposed validation error diagnostic for AllowOpacityMicromaps:
-
-- `"RaytracingPipelineFlags in RaytracingPipelineConfig1 subobject '%0' specifies unknown flags (0x%1) for shader model %2"`
-
-Validation will be added to ensure that the shader model is at least 6.9 when 
-the `RAYQUERY_FLAG::RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag is used
-in any [RayQuery][https://github.com/Microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery] object.
-
-Proposed validation error diagnostic:
-
-- `"RayQueryFlag in RayQuery object '%0' specifies unknown flags (0x%1) for shader model %2"`
-
 Three DXIL operations accept `RayFlags` as input, but only one requires this
 input to be immediate: `AllocateRayQuery`.
 
-Validation will be added to check the `RayFlags` parameters for each applicable
-DXIL operation, with an error emitted if the flags are constant, the new flag
-is used, and the shader model is less than 6.9.
+Validation will be added to check the `RayFlags` parameters, and, if 
+applicable, the `RayQueryFlags` parameters, for each applicable DXIL operation,
+including the new `AllocateRayQuery2` operation. An error will be emitted if 
+the flags are constant, the new flag is used, and the shader model 
+is less than 6.9.
 
 Proposed validation error diagnostic:
 
 - `"RayFlags used in '%0' specifies unknown flags (0x%1) for shader model %2"`
 
 Validation will also be added to ensure the flags are constant on input to
-the `AllocateRayQuery` DXIL operation.
+the `AllocateRayQuery` and `AllocateRayQuery2` DXIL operation.
 
-Proposed validation error diagnostic:
+Proposed validation error diagnostics:
 
 - `"ConstRayFlags argument of AllocateRayQuery '%0' must be constant"`
+- `"ConstRayFlags and RayQueryFlags arguments of AllocateRayQuery2 '%0' must be constant"`
 
-Finally, validation will be added to ensure that when `RayFlag::ForceOMM2State`
-is set on any RayQuery Object, that RayQuery object will be accompanied by the
-`RAYQUERY_FLAG::RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
+Finally, validation will be added for the `AllocateRayQuery2` DXIL operation
+to ensure that when `RAY_FLAG_FORCE_OMM_2_STATE` is set on the ConstRayFlags
+argument, the `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` is also set on the
+RayQueryFlags argument.
 
 Proposed validation error diagnostic:
 
-- `"RAYQUERY_FLAG::RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS is required on constant RayQuery object %0 when RayFlag::ForceOMM2State is set."`.
+- `"RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS must be set for RayQueryFlags when RAY_FLAG_FORCE_OMM_2_STATE is set for ConstRayFlags on AllocateRayQuery2 operation %0."`.
 
 
 ### Runtime Additions
 
-A new optional feature bit for the FeatureInfo part will be added, to indicate
-that this OMM feature is present, since it cannot be determined by DXC state
-objects in the runtime. 
-Any driver supporting SM 6.9 must support the new DXIL OP variant of 
-`AllocateRayQuery`, but may ignotre the new `RayQueryFlag` if the driver does
-not support OMM.
+The new `AllocateRayQuery2` DXIL op is a required part of shader model 6.9.
+Drivers that do not support OMM must ignore the new flags:
+`RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`,
+`RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS`, and `RAY_FLAG_FORCE_OMM_2_STATE`.
+This is equivalent to a driver that does support OMM traversing a BVH built
+without OMM data.
 
 #### Runtime information
 
@@ -393,13 +380,11 @@ See [Opacity Micromaps][dxr-omm] in the Raytracing spec for details.
 
 ### Validation
 
-- Check constant flag validation for shader models 6.9 and for an earlier
-  shader model, for each applicable intrinsic.
-- Check subobject flag validation for a shader model less than 6.9.
-  - Compile with the flag to 6.9 and change the target for manual assembly.
-- Check that any RayQuery object with the `RayFlag::ForceOMM2State` flag
-  in its first template argument also has an accompanying 
-  `RAYQUERY_FLAG::RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.  
+- Check constant value validation on `AllocateRayQuery` and `AllocateRayQuery2`
+  DXIL ops.
+- Check `AllocateRayQuery2` DXIL op validation for
+  `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` requirement when
+  `RAY_FLAG_FORCE_OMM_2_STATE` is used.
 
 ### Execution
 
