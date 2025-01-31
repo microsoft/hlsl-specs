@@ -203,10 +203,6 @@ Proposed warning diagnostic:
   This new warning will have a new warning group to allow it to be targeted
   easily for command-line override, such as `hlsl-availability-constant`.
 
-Current HLSL diagnostics in DXC do not verify `RayFlags` values in any context.
-`TraceRay()` and `RayQuery::TraceRayInline()` accept non-immediate values, but
-the `RayFlags` provided as a template argument to `RayQuery` must be immediate.
-
 A check will be added on the declaration of a RayQuery object 
 (when not dependent), so that when the RayQueryFlags template argument is
 non-zero, it requires shader model 6.9 or above.
@@ -344,7 +340,7 @@ See [Opacity Micromaps][dxr-omm] in the Raytracing spec for details.
   - Check both DXR entry scenarios and non-library RayQuery scenarios.
 - Check that any RayQuery object with the `RayFlag::ForceOMM2State` flag
   in its first template argument also has an accompanying 
-  `RAYQUERY_FLAG::RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
+  `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
 - Check diagnostics for subobject, and lack of diagnostics for non-library
   target, where subobjects are ignored.
 - Test the custom HLSL availability attribute, that it correctly locates
