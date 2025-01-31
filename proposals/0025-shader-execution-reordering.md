@@ -987,21 +987,28 @@ removed from the wave, again observing `A <= B`.
 
 Due to the existence of non-coherent caches on most modern GPUs, an
 application must take special care when communicating information across
-reorder points through memory (UAVs).
+reorder points through memory (UAVs). This proposal introduces a new
+coherence scope for communication between reorder points within the same
+dispatch index. The following additions are made:
+- A new `[reordercoherent]` storage class for UAVs.
+- A new `REORDER_SCOPE = 0x8` member in the `SEMANTIC_FLAG` enum for use in barriers.
 
-This proposal includes a new coherence scope for reorder points. The scope
-is limited to communication within the same dispatch index. Specifically,
-if UAV stores or atomics are performed on one side of a reorder point, and
-on the other side the data is read via non-atomic UAV reads, the following
-is required:
-- The UAV must be declared `[reordercoherent]`.
-- The UAV writer must issue a `Barrier(UAV_MEMORY, REORDER_SCOPE)` between
-the write and the reorder point.
+Specifically, if UAV stores or atomics are performed on one side of a
+reorder point, and on the other side the data is read via non-atomic
+UAV reads, the following steps are required:
+1. The UAV must be declared `[reordercoherent]`.
+2. The UAV writer must issue a `Barrier(UAV_MEMORY, REORDER_SCOPE)` between the write and the reorder point.
 
-When communicating both between threads and across reorder points, global coherency
-can be utilized:
-- The UAV must be declared `[globallycoherent]`.
-- The UAV writer must issue a `DeviceMemoryBarrier` between the write and the
+Note that these steps are required to ensure coherence across any reorder point.
+For example, between a write performed before `ReorderThread` or `TraceRay` and a
+subsequent read in the same shader, or between shader stages (such as data written
+in the closesthit shader and read in the raygeneration shader).
+
+When communicating both between threads with different dispatch index and
+across reorder points the reorder coherence scope is insufficient.
+Instead, global coherency can be utilized as follows:
+1. The UAV must be declared `[globallycoherent]`.
+2. The UAV writer must issue a `DeviceMemoryBarrier` between the write and the
 reorder point.
 
 ## Separation of ReorderThread and HitObject::Invoke
