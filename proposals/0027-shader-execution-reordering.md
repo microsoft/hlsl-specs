@@ -1527,3 +1527,56 @@ Validation errors:
 - Validate that `opcode` is one of the supported opcodes in the table above.
 - Validate that `hit object` is not undef.
 - Validate that `index`, `row`, and `col` are constant and in a valid range.
+
+## Device Support
+
+Devices that support Shader Model 6.9 and raytracing must support the 
+Shader Execution Reordering HLSL methods in this spec. This doesn't mean 
+all devices must support performing thread reordering - it is valid for 
+an implementation to do nothing there.  Applications write one codebase 
+using SER, and devices that can take advantage will, and other devices 
+will just behave as if no reordering happened.
+
+To help applications understand if the device actually does reordering,
+D3D12 exposes a device capability indicating it that can be queried via
+`CheckFeatureSupport()`:
+
+```C++
+// OPTIONSNN - NN TBD when this is added to D3D12
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN
+{
+    ...
+    _Out_ BOOL ShaderExecutionReorderingActuallyReorders;
+    ...
+} D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
+```
+
+e.g.:
+
+```C++
+D3D12_FEATURE_DATA_D3D12_OPTIONSNN Options; // NN TBD when implemented
+VERIFY_SUCCEEDED(pDevice->CheckFeatureSupport(
+    D3D12_FEATURE_D3D12_OPTIONSNN, &Options, sizeof(Options)));
+if (!Options.ShaderExecutionReorderingActuallyReorders) {
+    // Maybe app wants to do it's own manuall sorting.
+    // Or maybe a developer just wants to double check what's happening
+    // on a given device during development.
+}
+```
+ 
+Even on devices that don't do reordering, the `HitObject` portion 
+of SER can be useful.
+
+For instance, suppose an app wants to trace a ray, potentially including AnyHit 
+shader invocations, and just wants the final T value without running
+the ClosestHit shader (even if it happens to exist in the HitGroup).
+
+The app can call `TraceRay()` returning a `HitObject`, call
+`GetRayTCurrent()` on the `HitObject` to get the `T` value and be done.
+Not calling `Invoke()`, skips `ClosestHit`/`Miss` invocation, and this 
+works on any device with Shader Model 6.9 support.
+
+The app might still want to call `ReorderThread()` after `TraceRay()` 
+if the subsequent work could benefit, as illustrated in the Unified 
+Shading example above.  And devices that can't reorder would just 
+ignore the `ReorderThread()` call.
