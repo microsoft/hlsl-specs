@@ -136,8 +136,8 @@ DXIL op is used.
 
 The new DXIL Op, `AllocateRayQuery2`, will have this signature:
 ```DXIL
-; Function Attrs:
-nounwind declare i32 @dx.op.allocateRayQuery2(i32 OpCode, i32 constRayFlags, i32 RayQueryFlags)
+; Function Attrs: nounwind 
+declare i32 @dx.op.allocateRayQuery2(i32 OpCode, i32 constRayFlags, i32 RayQueryFlags)
 ```
 
 The DXIL operations which either accept or return `RayFlags`, and therefore may
@@ -229,8 +229,8 @@ point to the RayQuery object declaration, where this RayQueryFlag needs to be
 specified.
 
 #### Validation Changes
-Three DXIL operations accept `RayFlags` as input, but only one requires this
-input to be immediate: `AllocateRayQuery`.
+Four DXIL operations accept `RayFlags` as input, but only two requires these
+flags input to be immediate: `AllocateRayQuery` and `AllocateRayQuery2`.
 
 Validation will be added to ensure the flags are constant on input to
 the `AllocateRayQuery` and `AllocateRayQuery2` DXIL operation.
