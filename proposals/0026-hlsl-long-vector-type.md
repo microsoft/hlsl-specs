@@ -27,7 +27,7 @@ To take advantage of specialized hardware that can accelerate longer vector oper
 
 ## Proposed solution
 
-Enable vectors of length between 5 and 128 inclusive in HLSL using existing template-based vector declarations.
+Enable vectors of length between 5 and 1024 inclusive in HLSL using existing template-based vector declarations.
 Such vectors will hereafter be referred to as "long vectors".
 These will be supported for all elementwise intrinsics that take variable-length vector parameters.
 For certain operations, these vectors will be represented as native vectors using
@@ -304,7 +304,7 @@ The subscript access is flexible and generic and makes other accessors redundant
 ## Open Issues
 
 * Q: Is there a limit on the Number of Components in a vector?
-  * A: 128. It's big enough for some known uses.
+  * A: 1024. It's big enough for known uses.
 There aren't concrete reasons to restrict the vector length.
 Having a limit facilitates testing and sets expectations for both hardware and software developers.
 
