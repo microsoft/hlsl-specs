@@ -1,7 +1,7 @@
 
 # Shader Execution Reordering (SER)
 
-* Proposal: [0025](0025-shader-execution-reordering.md)
+* Proposal: [0027](0027-shader-execution-reordering.md)
 * Author(s): [Rasmus Barringer](https://github.com/rasmusnv), Robert Toth,
 Michael Haidl, Simon Moll, Martin Stich
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
