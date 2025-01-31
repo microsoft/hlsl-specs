@@ -10,11 +10,11 @@ Michael Haidl, Simon Moll, Martin Stich
 
 ## Introduction
 
-This proposal introduces `ReorderThread`, a built-in function for raygeneration shaders to
+This proposal introduces `TryReorderThread`, a built-in function for raygeneration shaders to
 explicitly specify where and how shader execution coherence can be improved.
 Additionally, `HitObject` is introduced to decouple traversal, intersection
 testing and anyhit shading from closesthit and miss shading. Decoupling these
-shader stages gives an increase in flexibility and enables `ReorderThread` to
+shader stages gives an increase in flexibility and enables `TryReorderThread` to
 improve coherence for closesthit and miss shading, as well as subsequent operations.
 
 ## Motivation
@@ -41,13 +41,13 @@ the hit which must be transferred back to the caller through the payload.
 ## Proposed Solution
 
 Shader Execution Reordering (SER) introduces a new HLSL built-in intrinsic,
-`ReorderThread`,
+`TryReorderThread`,
 that enables application-controlled reordering of work across the GPU for
 improved execution and data coherence.
 Additionally, the introduction of `HitObject` allows separation of traversal,
 anyhit shading and intersection testing from closesthit and miss shading.
 
-`HitObject` and `ReorderThread` can be combined to improve coherence for
+`HitObject` and `TryReorderThread` can be combined to improve coherence for
 closesthit and miss shader execution in a controlled manner.
 Applications can control coherence based on hit properties,
 ray generation state, ray payload, or any combination thereof. Applications can
@@ -62,14 +62,14 @@ raygeneration shader and execute before closesthit shading. Second, simple
 visibility rays no longer have to invoke hit shaders in order to access basic
 information about the hit, such as the distance to the closest hit. Finally,
 `HitObject` can be constructed from a `RayQuery`, which enables
-`ReorderThread` and shader table-based closesthit and miss shading to be combined with
+`TryReorderThread` and shader table-based closesthit and miss shading to be combined with
 `RayQuery`.
 
 The proposed extension to HLSL should be relatively straightforward to adopt by
 current DXR implementations: `HitObject` merely decouples existing `TraceRay`
 functionality into two distinct stages: the traversal stage and the shading
 stage.
-For SER's `ReorderThread`, the minimal allowed implementation is simply a
+For SER's `TryReorderThread`, the minimal allowed implementation is simply a
 no-op, while implementations that already employ more sophisticated scheduling
 strategies are likely able to reuse existing mechanisms to implement support
 for SER. No DXR runtime changes are necessary, since the proposed extension to
@@ -77,25 +77,25 @@ the programming model is limited to HLSL and DXIL.
 
 ## Detailed Design
 
-This section describes the HLSL additions for `HitObject` and `ReorderThread`
+This section describes the HLSL additions for `HitObject` and `TryReorderThread`
 in detail.
 The canonical use of these features involve changing a `TraceRay` call to the
 following sequence that is functionally equivalent:
 
 ```C++
 HitObject Hit = HitObject::TraceRay( ..., Payload );
-ReorderThread( Hit );
+TryReorderThread( Hit );
 HitObject::Invoke( Hit, Payload );
 ```
 
 This snippet traces a ray and stores the result of traversal, intersection
-testing and anyhit shading in `Hit`. The call to `ReorderThread` improves
+testing and anyhit shading in `Hit`. The call to `TryReorderThread` improves
 coherence based on the information inside the `Hit`. Closesthit or miss
 shading is then invoked in a more coherent context.
 
 Note that this is a very basic example. Among other things, it is possible to
-query information about the hit to influence `ReorderThread` with additional
-hints. See [Separation of ReorderThread and HitObject::Invoke](#separation-of-reorderthread-and-hitobjectinvoke)
+query information about the hit to influence `TryReorderThread` with additional
+hints. See [Separation of TryReorderThread and HitObject::Invoke](#separation-of-TryReorderThread-and-hitobjectinvoke)
 for more elaborate examples.
 
 ### HitObject HLSL Additions
@@ -108,7 +108,7 @@ The `HitObject` type encapsulates information about a hit or a miss. A
 `HitObject` is constructed using `HitObject::TraceRay`,
 `HitObject::FromRayQuery`, `HitObject::MakeMiss`, or `HitObject::MakeNop`. It
 can be used to invoke closesthit or miss shading using `HitObject::Invoke`,
-and to reorder threads for shading coherence with `ReorderThread`.
+and to reorder threads for shading coherence with `TryReorderThread`.
 
 The `HitObject` has value semantics, so modifying one `HitObject` will not
 impact any other `HitObject` in the shader. A shader can have any number of
@@ -122,7 +122,7 @@ assignment (by-value copy) and can be passed as arguments to and returned from
 local inlined functions.
 
 A `HitObject` is default-initialized to encode a NOP-HitObject (see `HitObject::MakeNop`).
-A NOP-HitObject can be used with `HitObject::Invoke` and `ReorderThread` but
+A NOP-HitObject can be used with `HitObject::Invoke` and `TryReorderThread` but
 does not call shaders or provide additional information for reordering.
 Most accessors will return zero-initialized values for a NOP-HitObject.
 
@@ -229,7 +229,7 @@ Parameter                           | Definition
 
 Construct a NOP-HitObject that represents neither a hit nor a miss. This is
 the same as a default-initialized `HitObject`. NOP-HitObjects can be useful in
-certain scenarios when combined with `ReorderThread`, e.g., when a thread
+certain scenarios when combined with `TryReorderThread`, e.g., when a thread
 wants to participate in reordering without executing a closesthit or miss
 shader.
 
@@ -658,32 +658,32 @@ the following additional PAQ rules apply:
 - At the call to `HitObject::Invoke`, any field declared as `write(anyhit)`
 is treated as `write(caller)`
 
-### ReorderThread HLSL Additions
+### TryReorderThread HLSL Additions
 
-`ReorderThread` provides an efficient way for the application to reorder work
+`TryReorderThread` provides an efficient way for the application to reorder work
 across the physical threads running on the GPU in order to improve the
 coherence and performance of subsequently executed code. The target ordering
-is given by the arguments passed to `ReorderThread`. For example, the
+is given by the arguments passed to `TryReorderThread`. For example, the
 application can pass a `HitObject`, indicating to the system that coherent
 execution is desired with respect to a ray hit location in the scene.
 Reordering based on a `HitObject` is particularly useful in situations with
 highly incoherent hits, e.g., in path tracing applications.
 
-`ReorderThread` is available only in shaders of type `raygeneration`.
+`TryReorderThread` is available only in shaders of type `raygeneration`.
 
 This function introduces a [Reorder Point](#reorder-points).
 
 #### Example 1
 
 The following example shows a common pattern of combining `HitObject` and
-`ReorderThread`:
+`TryReorderThread`:
 
 ```C++
 // Trace a ray without invoking closesthit/miss shading.
 HitObject hit = HitObject::TraceRay( ... );
 
 // Reorder by hit point to increase coherence of subsequent shading.
-ReorderThread( hit );
+TryReorderThread( hit );
 
 // Invoke shading.
 HitObject::Invoke( hit, ... );
@@ -691,9 +691,9 @@ HitObject::Invoke( hit, ... );
 
 ---
 
-#### ReorderThread with HitObject
+#### TryReorderThread with HitObject
 
-This variant of `ReorderThread` reorders calling threads based on the
+This variant of `TryReorderThread` reorders calling threads based on the
 information contained in a `HitObject`.
 
 It is implementation defined which `HitObject` properties are taken into
@@ -701,17 +701,17 @@ account when defining the ordering. For example, an implementation may decide
 to order threads with respect to their hit group index, hit locations in
 3d-space, or other factors.
 
-`ReorderThread` may access both information about the instance in the
+`TryReorderThread` may access both information about the instance in the
 acceleration structure as well as the shader record at the shader table
 offset contained in the `HitObject`. The respective fields in the `HitObject`
 must therefore represent valid instances and shader table offsets.
 NOP-HitObjects is an exception, which do not contain information about a hit
-or a miss, but are still legal inputs to `ReorderThread`. Similarly, a
+or a miss, but are still legal inputs to `TryReorderThread`. Similarly, a
 `HitObject` constructed from a `RayQuery` but did not set a shader table
 index is exempt from having a valid shader table record.
 
 ```C++
-void ReorderThread( HitObject Hit );
+void TryReorderThread( HitObject Hit );
 ```
 
 Parameter                           | Definition
@@ -720,9 +720,9 @@ Parameter                           | Definition
 
 ---
 
-#### ReorderThread with coherence hint
+#### TryReorderThread with coherence hint
 
-This variant of `ReorderThread` reorders threads based on a generic
+This variant of `TryReorderThread` reorders threads based on a generic
 user-provided hint. Similarity of hint values should indicate expected
 similarity of subsequent work being performed by threads. More significant
 bits of the hint value are more important than less significant bits for
@@ -734,19 +734,19 @@ significant bits. The thread ordering resulting from this call may be
 approximate.
 
 ```C++
-void ReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
+void TryReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
 ```
 
 Parameter                           | Definition
 ---------                           | ----------
 `uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
-`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `TryReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
 ---
 
-#### ReorderThread with HitObject and coherence hint
+#### TryReorderThread with HitObject and coherence hint
 
-This variant of `ReorderThread` reorders threads based on the information
+This variant of `TryReorderThread` reorders threads based on the information
 contained in a `HitObject`, supplemented by additional information expressed
 as a user-defined hint. The user-provided hint should mainly map properties
 that an implementation cannot infer from the `HitObject` itself. This can
@@ -764,12 +764,12 @@ coherence hint to reduce divergence from important branches within closesthit
 shaders, like the aforementioned material traits.
 
 Note that the number of coherence hint bits that the implementation actually
-honors can be smaller in this overload of `ReorderThread` compared to the one
+honors can be smaller in this overload of `TryReorderThread` compared to the one
 described in
-[ReorderThread with coherence hint](#reorderthread-with-coherence-hint).
+[TryReorderThread with coherence hint](#TryReorderThread-with-coherence-hint).
 
 ```C++
-void ReorderThread( HitObject Hit,
+void TryReorderThread( HitObject Hit,
                     uint CoherenceHint,
                     uint NumCoherenceHintBitsFromLSB );
 ```
@@ -778,7 +778,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `HitObject Hit` | `HitObject` that encapsulates the hit or miss according to which reordering should be performed.
 `uint CoherenceHint` | User-defined value that determines the desired ordering of a thread relative to others.
-`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `ReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
+`uint NumCoherenceHintBitsFromLSB` | Indicates how many of the least significant bits in `CoherenceHint` the implementation should try to take into account. Applications should set this to the lowest value required to represent all possible values of `CoherenceHint` (at the given `TryReorderThread` call site). All threads should provide the same value at a given call site to achieve best performance.
 
 ---
 
@@ -807,7 +807,7 @@ for( int bounceCount=0; ; bounceCount++ )
 
     // Reorder based on the hit, while taking into account how likely we are to
     // exit the loop this round.
-    ReorderThread( hit, coherenceHints, 1 );
+    TryReorderThread( hit, coherenceHints, 1 );
 
     // Invoke shading for the current hit. Due to the reordering performed
     // above, this will have increased coherence.
@@ -856,7 +856,7 @@ for( int bounceCount=0; ; bounceCount++ )
     // shader ID represented by the hitobject. This is as opposed to coherence
     // hint bits, which have lower priority than the shader ID during
     // reordering.
-    ReorderThread( hit );
+    TryReorderThread( hit );
 
     // Now that we've reordered, break non-participating threads out of the
     // loop.
@@ -903,13 +903,13 @@ shaders. In the case of multiple `anyhit` or `intersection` shader
 invocations, each shader stage transition is a separate reorder point.
 - `HitObject::Invoke`: transitions to and from `closeshit` and `miss` shaders.
 Constitutes a reorder point even in cases where no shader is invoked.
-- `ReorderThread`: the `ReorderThread` call site.
+- `TryReorderThread`: the `TryReorderThread` call site.
 
-`ReorderThread` stands out as it explicitly separates reordering from a
+`TryReorderThread` stands out as it explicitly separates reordering from a
 transition between shader stages, thus, it allows applications to (carefully)
 choose the most effective reorder locations given a specific workload. The
 combination of `HitObject` and coherence hints provides additional control
-over the reordering itself. These characteristics make `ReorderThread` a
+over the reordering itself. These characteristics make `TryReorderThread` a
 versatile tool for improving performance in a variety of workloads that suffer
 from divergent execution or data access.
 
@@ -925,21 +925,21 @@ scenarios.
 
 While it is understood that reordering at `TraceRay` and `CallShader` is done
 at the discretion of the driver, `HitObject::TraceRay` and `HitObject::Invoke`
-are intended to be used in conjunction with `ReorderThread`.
+are intended to be used in conjunction with `TryReorderThread`.
 Reordering at `HitObject::TraceRay` and `HitObject::Invoke` is permitted but the
 driver should minimize its efforts to reorder for hit coherence and instead
-prioritize reordering through `ReorderThread`.
+prioritize reordering through `TryReorderThread`.
 
 Some implementations may achieve best performance when `HitObject::TraceRay`,
-`ReorderThread`, and `HitObject::Invoke` are called back-to-back.
+`TryReorderThread`, and `HitObject::Invoke` are called back-to-back.
 This case is semantically equivalent to DXR 1.0 `TraceRay` but with defined
 reordering characteristics.
-The back-to-back combination of `ReorderThread` and `HitObject::Invoke` may
+The back-to-back combination of `TryReorderThread` and `HitObject::Invoke` may
 similarly see a performance benefit on some implementations.
 
 For performance reasons, it is crucial that the DXIL-generating compiler does
 not move non-uniform resource access across reorder points in general, and across
-`ReorderThread` in particular. It should be assumed that the shader will perform
+`TryReorderThread` in particular. It should be assumed that the shader will perform
 the access where coherence is maximized.
 
 ---
@@ -963,19 +963,19 @@ int MyFunc(int coherenceCoord)
 {
     int A = WaveActiveBallot(true);
     if (WaveIsFirstLane())
-        ReorderThread(coherenceCoord, 32);
+        TryReorderThread(coherenceCoord, 32);
     int B = WaveActiveBallot(true);
     return A - B;
 }
 ```
 
 In this example, a number of different things could happen:
-- If the implementation does not honor `ReorderThread` at all, the function
+- If the implementation does not honor `TryReorderThread` at all, the function
 will most likely return zero, as the set of threads before and after the
 conditional reorder would be the same.
-- If the implementation reorders threads invoking `ReorderThread` but does not
+- If the implementation reorders threads invoking `TryReorderThread` but does not
 replace them, B will likely be less than A for threads not invoking
-`ReorderThread`, while the reordered threads will likely resume execution with
+`TryReorderThread`, while the reordered threads will likely resume execution with
 a newly formed full wave, thereby obtaining `A <= B`.
 - If the implementation replaces threads in a wave, the threads not
 participating in the reorder may possibly be joined by more threads than were
@@ -1000,7 +1000,7 @@ UAV reads, the following steps are required:
 2. The UAV writer must issue a `Barrier(UAV_MEMORY, REORDER_SCOPE)` between the write and the reorder point.
 
 Note that these steps are required to ensure coherence across any reorder point.
-For example, between a write performed before `ReorderThread` or `TraceRay` and a
+For example, between a write performed before `TryReorderThread` or `TraceRay` and a
 subsequent read in the same shader, or between shader stages (such as data written
 in the closesthit shader and read in the raygeneration shader).
 
@@ -1011,14 +1011,14 @@ Instead, global coherency can be utilized as follows:
 2. The UAV writer must issue a `DeviceMemoryBarrier` between the write and the
 reorder point.
 
-## Separation of ReorderThread and HitObject::Invoke
+## Separation of TryReorderThread and HitObject::Invoke
 
-`ReorderThread` and `HitObject::Invoke` are kept separate. It enables calling
-`ReorderThread` without `HitObject::Invoke`, and `HitObject::Invoke` without
-calling `ReorderThread`. These are valid use cases as reordering can be
+`TryReorderThread` and `HitObject::Invoke` are kept separate. It enables calling
+`TryReorderThread` without `HitObject::Invoke`, and `HitObject::Invoke` without
+calling `TryReorderThread`. These are valid use cases as reordering can be
 beneficial even when shading happens inline in the raygeneration shader, and
 reordering before a known to be coherent or cheap shader can be
-counterproductive. For cases in which both is desired, keeping `ReorderThread`
+counterproductive. For cases in which both is desired, keeping `TryReorderThread`
 and `HitObject::Invoke` separated is still beneficial as detailed below.
 
 Common hit processing can happen in the raygeneration shader with the
@@ -1026,7 +1026,7 @@ additional efficiency gains of hit coherence. Benefits include:
 - Logic otherwise duplicated can be hoisted into the raygeneration shader
 without a loss of hit coherence. This can reduce instruction cache pressure
 and reduce compile times.
-- Logic between `ReorderThread` and `HitObject::Invoke` have access to the
+- Logic between `TryReorderThread` and `HitObject::Invoke` have access to the
 full state of the raygeneration shader. It can access a large material stack
 keeping track of surface boundaries, for example. This is difficult or
 impossible to communicate through the payload.
@@ -1038,13 +1038,13 @@ common light sampling. On a second bounce a shadow map lookup may be enough.
 
 In addition to the above, API complexity is reduced by only having separate
 calls, as opposed to both separate calls and a fused variant. Further,
-`ReorderThread` naturally communicates a reorder point, when hit-coherent
+`TryReorderThread` naturally communicates a reorder point, when hit-coherent
 execution starts and that it will persist after the call (until the next
 reorder point). Reasoning about the execution and that it is hit-coherent is
 not as obvious after a call to a hypothetical (fused)
 `HitObject::ReorderAndInvoke`. Finally, tools can report live state across
-`ReorderThread` and users can optimize live state across it. This is important
-as live state across `ReorderThread` may be more expensive on some
+`TryReorderThread` and users can optimize live state across it. This is important
+as live state across `TryReorderThread` may be more expensive on some
 architectures.
 
 Some examples follow.
@@ -1067,7 +1067,7 @@ uint iorListSize = 0;
 for( ... )
 {
     HitObject hit = HitObject::TraceRay( ... );
-    ReorderThread( hit );
+    TryReorderThread( hit );
 
     IorData newEntry = LoadIorDataFromHit( hit );
     bool enter = hit.GetHitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
@@ -1085,7 +1085,7 @@ the thread has been reordered for hit coherence.
 
 ```C++
 hit = HitObject::TraceRay( ... );
-ReorderThread( hit );
+TryReorderThread( hit );
 
 payload.giData = GlobalIlluminationCacheLookup( hit );
 
@@ -1102,7 +1102,7 @@ using the same shader code.
 // reorder for hit coherence as it is coherent enough.
 ray = GeneratePrimaryRay();
 hit = HitObject::TraceRay( ... );
-// NOTE: Although ReorderThread is not explicitly invoked here,
+// NOTE: Although TryReorderThread is not explicitly invoked here,
 // reordering can still occur at any reorder point based on
 // driver-specific decisions.
 RayDesc shadowRay = SampleShadow( hit );
@@ -1112,7 +1112,7 @@ HitObject::Invoke( hit, payload );
 // Secondary ray is incoherent but does not need perfect shadows.
 ray = ContinuePath( payload );
 hit = HitObject::TraceRay( ... );
-ReorderThread( hit );
+TryReorderThread( hit );
 payload.shadowTerm = SampleShadowMap( hit );
 HitObject::Invoke( hit, payload );
 ```
@@ -1125,7 +1125,7 @@ improve data coherence.
 ```C++
 hit = HitObject::TraceRay( ... );
 
-ReorderThread( hit );
+TryReorderThread( hit );
 
 // Do not call HitObject::Invoke. Shade in raygeneration.
 ```
@@ -1136,14 +1136,14 @@ Executing the miss shader when not needed is unnecessarily inefficient
 on some architectures. In this example, miss shader execution is skipped.
 
 Note that behavior can vary. Other architectures may have better efficiency
-when `HitObject::TraceRay`, `ReorderThread` and `HitObject::Invoke` are
+when `HitObject::TraceRay`, `TryReorderThread` and `HitObject::Invoke` are
 called back-to-back (see [Reorder Points](#reorder-points)).
 
 ```C++
 for( ;; )
 {
     hit = HitObject::TraceRay( ... );
-    ReorderThread( hit );
+    TryReorderThread( hit );
 
     if( hit.IsMiss() )
         break;
@@ -1160,7 +1160,7 @@ This approach can help reduce shader permutations.
 
 ```C++
 hit = HitObject::TraceRay( ... );
-ReorderThread( hit );
+TryReorderThread( hit );
 
 // Gather surface parameters into payload, e.g., compute normal and albedo
 // based on surface-specific functions and/or textures.
@@ -1179,10 +1179,10 @@ HitObject::Invoke( hit, payload );
 ### Example: Live state optimization
 
 In this example, logic is added to compress and uncompress part of the
-payload across `ReorderThread`.
-This can make sense if live state is more expensive across `ReorderThread`.
+payload across `TryReorderThread`.
+This can make sense if live state is more expensive across `TryReorderThread`.
 
-Some implementations may favor cases where `HitObject::TraceRay`, `ReorderThread`
+Some implementations may favor cases where `HitObject::TraceRay`, `TryReorderThread`
 and `HitObject::Invoke` are called back-to-back (see [Reorder Points](#reorder-points)),
 so performance profiling is necessary.
 
@@ -1190,7 +1190,7 @@ so performance profiling is necessary.
 hit = HitObject::TraceRay( ... );
 
 uint compressedNormal = CompressNormal( payload.normal );
-ReorderThread( hit );
+TryReorderThread( hit );
 payload.normal = UncompressNormal( compressedNormal );
 
 HitObject::Invoke( hit, payload );
@@ -1199,7 +1199,7 @@ HitObject::Invoke( hit, payload );
 ### Example: Back-to-back calls
 
 This example demonstrates the back-to-back arrangement of `HitObject::TraceRay`,
-`ReorderThread`, and `HitObject::Invoke`.
+`TryReorderThread`, and `HitObject::Invoke`.
 For some architectures, this arrangement is the most efficient, as it can be
 recognized as a single reorder point, reducing call overhead
 (see [Reorder Points](#reorder-points)).
@@ -1207,7 +1207,7 @@ Additional logic between these calls should only be added when necessary.
 
 ```C++
 hit = HitObject::TraceRay( ... );
-ReorderThread( hit );
+TryReorderThread( hit );
 HitObject::Invoke( hit, payload );
 ```
 
@@ -1244,7 +1244,7 @@ XXX + 2  | HitObject_FromRayQueryWithAttrs | Creates a new `HitObject` represent
 XXX + 3  | HitObject_MakeMiss | Creates a new `HitObject` representing a miss.
 XXX + 4  | HitObject_MakeNop | Creates an empty nop `HitObject`.
 XXX + 5  | HitObject_Invoke | Represents the invocation of the CH/MS shader represented by the `HitObject`.
-XXX + 6  | ReorderThread | Reorders the current thread. Optionally accepts a `HitObject` arg, or `undef`.
+XXX + 6  | TryReorderThread | Reorders the current thread. Optionally accepts a `HitObject` arg, or `undef`.
 XXX + 7  | HitObject_IsMiss | Returns `true` if the `HitObject` represents a miss.
 XXX + 8  | HitObject_IsHit | Returns `true` if the `HitObject` represents a hit.
 XXX + 9  | HitObject_IsNop | Returns `true` if the `HitObject` is a NOP-HitObject.
@@ -1390,15 +1390,15 @@ Validation errors:
 - Validate the compatibility of type `PayloadT`.
 - Validate that `payload` is a valid pointer.
 
-#### ReorderThread
+#### TryReorderThread
 
 Operation that reorders the current thread based on the supplied hints and
 `HitObject`. The canonical lowering of the
-HLSL intrinsic `ReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB )`
+HLSL intrinsic `TryReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB )`
 uses `undef` for the `HitObject` parameter.
 
 ```DXIL
-declare void @dx.op.reorderThread(
+declare void @dx.op.TryReorderThread(
     i32,                      ; opcode
     %dx.types.HitObject,      ; hit object
     i32,                      ; coherence hint
@@ -1407,7 +1407,7 @@ declare void @dx.op.reorderThread(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `ReorderThread`.
+- Validate that `opcode` equals `TryReorderThread`.
 - Validate that `coherence hint` is not undef.
 - Validate that `num coherence hint bits from LSB` is not undef.
 
