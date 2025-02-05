@@ -177,10 +177,10 @@ If no hit is committed in the RayQuery,
 the HitObject returned is a NOP-HitObject. A shader table record can be assigned
 separately, which in turn allows invoking a shader.
 
-An overload takes custom attributes associated with
-COMMITTED_PROCEDURAL_PRIMITIVE_HIT. It is ok to always use the overload, even
-for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit, the
-specified attributes are ignored.
+An overload takes a user-defined hit kind and custom attributes associated with
+COMMITTED_PROCEDURAL_PRIMITIVE_HIT (see `ReportHit` for details).
+It is ok to always use the overload, even for COMMITTED_TRIANGLE_HIT. For anything
+other than a procedural hit, the specified hit kind and attributes are ignored.
 
 ```C++
 static HitObject HitObject::FromRayQuery(
@@ -189,6 +189,7 @@ static HitObject HitObject::FromRayQuery(
 template<attr_t>
 static HitObject HitObject::FromRayQuery(
     RayQuery Query,
+    uint CommittedCustomHitKind,
     attr_t CommittedCustomAttribs);
 ```
 
@@ -1326,10 +1327,11 @@ Validation errors:
 declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery.AttrT(
     i32,                           ; opcode
     i32,                           ; ray query
+    i32,                           ; hit kind
     AttrT*)                        ; attributes
     nounwind argmemonly
 ```
-This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQuery` and the user-defined `Attribute` struct.
+This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQuery`, a user-defined hit kind, and `Attribute` struct.
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
 
 Validation errors:
@@ -1337,6 +1339,9 @@ Validation errors:
 - Validate that `ray query` is a valid ray query handle.
 - Validate the compatibility of type `AttrT`.
 - Validate that `attributes` is a valid pointer.
+
+Validation warnings:
+- Validate that `hit kind` is in the range of 0-127.
 
 #### HitObject_MakeMiss
 
