@@ -178,7 +178,7 @@ the HitObject returned is a NOP-HitObject. A shader table record can be assigned
 separately, which in turn allows invoking a shader.
 
 An overload takes a user-defined hit kind and custom attributes associated with
-COMMITTED_PROCEDURAL_PRIMITIVE_HIT (see `ReportHit` for details).
+COMMITTED_PROCEDURAL_PRIMITIVE_HIT.
 It is ok to always use the overload, even for COMMITTED_TRIANGLE_HIT. For anything
 other than a procedural hit, the specified hit kind and attributes are ignored.
 
@@ -197,6 +197,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `RayQuery Query` | RayQuery from which the hit is created.
+`uint CommittedCustomHitKind` | See the `HitKind` parameter of `ReportHit` for definition.
 `attr_t CommittedCustomAttribs` | See the `Attributes` parameter of `ReportHit` for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader.
 
 The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
