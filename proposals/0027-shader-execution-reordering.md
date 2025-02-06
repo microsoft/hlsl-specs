@@ -98,6 +98,15 @@ query information about the hit to influence `ReorderThread` with additional
 hints. See [Separation of ReorderThread and HitObject::Invoke](#separation-of-reorderthread-and-hitobjectinvoke)
 for more elaborate examples.
 
+`TraceRay` returning a `HitObject` can be called on its own as well without
+calling `ReorderThread` or `Invoke`.  The caller might just want a `HitObject` 
+without caring about thread reordering or Closesthit or miss shading. 
+This is discussed in [Device Support](#device-support), in particular
+the implication given that SER is required as part of Shader Model 6.9 for 
+raytracing capable devices: Even for devices that only trivially support SER 
+by doing nothing on `ReorderThread` must also support `Invoke` not being called,
+essentially a new capability to skip final shading not available before.
+
 ### HitObject HLSL Additions
 
 ```C++
