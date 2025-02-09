@@ -2,10 +2,16 @@
 
 # DXIL 1.8
 
+* Proposal: [0028](0028-dxil18.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Accepted**
 * Planned Version: Shader Model 6.8
+
+> Note: this proposal is preserved as documentation for DXIL 1.8. It was
+> implemented as a fast-track extension and shipped in DXC 1.8. This
+> documentation is not completely accurate, but it is a good starting point that
+> we don't want to lose.
 
 ## Introduction
 
