@@ -143,17 +143,17 @@ the following index table:
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
 │kDxilNodeOutputIDTag                     │    0     │MDList: (MDString, i32)   │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
-│kDxilNodeIOFlagsTag                      │    1     │MDList: (i32)             │
+│kDxilNodeIOFlagsTag                      │    1     │i32                       │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
-│kDxilNodeRecordTypeTag                   │    2     │MDList: (MDList[])        │
+│kDxilNodeRecordTypeTag                   │    2     │MDList: (<tag-value list>)│
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
-│kDxilNodeMaxRecordsTag                   │    3     │MDList: (i32)             │
+│kDxilNodeMaxRecordsTag                   │    3     │i32                       │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
 │kDxilNodeMaxRecordsSharedWithTag         │    4     │MDList: (MDString, i32)   │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
-│kDxilNodeOutputArraySizeTag              │    5     │MDList: (i32)             │
+│kDxilNodeOutputArraySizeTag              │    5     │i32                       │
 ├─────────────────────────────────────────┼──────────┼──────────────────────────┤
-│kDxilNodeAllowSparseNodesTag             │    6     │MDList: (i1)              │
+│kDxilNodeAllowSparseNodesTag             │    6     │i1                        │
 └─────────────────────────────────────────┴──────────┴──────────────────────────┘
 ```
 
