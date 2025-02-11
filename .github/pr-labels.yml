@@ -4,4 +4,4 @@ needs-triage:
 
 language-spec:
 - changed-files:
-  - any-glob-to-any-file: 'spec/**/*'
+  - any-glob-to-any-file: 'specs/**/*'
