@@ -1,7 +1,7 @@
 needs-triage:
-- chagned-files:
+- changed-files:
   - any-glob-to-any-file: 'proposals/**/*'
 
 language-spec:
-- chagned-files:
+- changed-files:
   - any-glob-to-any-file: 'spec/**/*'
