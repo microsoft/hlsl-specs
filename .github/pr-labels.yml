@@ -1,2 +1,3 @@
 needs-triage:
-  - proposals/**/*
+- chagned-files:
+  - any-glob-to-any-file: 'proposals/**/*'
