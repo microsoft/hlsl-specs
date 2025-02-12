@@ -88,10 +88,10 @@ const-correctness patterns of existing HLSL data types. With this change we will
 perform an audit of existing data types to provide constant and non-constant
 member functions as appropriate for the data type.
 
-This will introduce differentiation of the subscript operators for resource
-types to provide constant and non-constant variations. The constant variation
-will return a constant lvalue reference while the non-constant variation will
-return an lvalue reference.
+When applied to HLSL intangible types, the `const` qualifier will apply as if to
+the handle, not the data the handle grants access to. For example, a `const
+RWBuffer<T>` will still allow writes to the underlying resource, however the
+resource variable itself cannot be re-assigned.
 
 ### Impact on Existing Code
 
@@ -125,18 +125,27 @@ The code is ill-formed because these declarations inside a `cbuffer` are
 implicitly constant. Today we ignore the `const`-ness of the object parameter
 and resolve the function.
 
-Implementing const-correct member functions on built-in HLSL data types will
-also introduce code breakages. Take the following valid HLSL:
+### Const-correct Resources
+
+Implementing const-correct member functions on built-in HLSL data types should
+have no disruption to users.
+
+Consider the following code:
 
 ```c++
-void setValue(const RWBuffer<int> R, int Val, int Index) {
+void setValue(RWBuffer<int> R, int Val, int Index) {
   R[Index] = Val;
+}
+void setValueConst(const RWBuffer<int> R, int Val, int Index) {
+  setValue(R, Val, Index);
 }
 ```
 
-With const-correct implementations of resource subscript operators, the
-const-qualified subscript operator will return a const-qualified lvalue which
-is immutable. This code will produce a diagnostic.
+In `setValueConst`, the `const` qualifier applies to the _instance_ of the
+`RWBuffer` parameter. A new `RWBuffer<T>` variable can be created from a `const
+RWBuffer<T>` via copy-initialization (standard copy construction), allowing
+`setValueConst` to call `setValue`. This does not violate const-correctness
+since the handle is treated as const while the data it references is not.
 
 ### Detailed Description of Overload Resolution Rules
 
