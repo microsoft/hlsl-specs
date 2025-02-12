@@ -124,16 +124,18 @@ Below are a few more examples of C++ attributes that we could support:
     }
   }
 ```
+
 ## Detailed design
 
 The simplest explanation of this feature is supporting C++11 attribute syntax on
 all shared grammar elements between HLSL and C++. This spec attempts to detail
 some of the grammar and parsing implications and will specify the process by
 which existing attributes will convert to C++ attributes.
+
 ### Attribute Parsing
 
-This proposal introduces new grammar formulations for parsing attributes
-matching some formulations from C++ `dcl.attr.grammar`. Specifically:
+This proposal introduces grammar formulations for parsing attributes matching
+some formulations from C++ `dcl.attr.grammar`. Specifically:
 
 ```ebnf
 attribute-specifier-seq:    [ attribute-specifier-seq ], attribute-specifier
@@ -156,7 +158,7 @@ balanced-token:             "(" , balanced-token-seq , ")"
 ```
 
 In contrast to existing HLSL annotations and Microsoft-style attributes, these
-attribute identifiers are case-sensitive `identifier` tokens.
+formulations use case-sensitive identifier tokens
 
 
 #### Statements
