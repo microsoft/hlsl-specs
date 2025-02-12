@@ -77,7 +77,7 @@ default constructor executes.
 
 For example:
 
-```c++   
+```c++
   struct VSIn {
     uint ID : SV_VertexID;
     float F;
@@ -104,6 +104,12 @@ constructors. Default initialization is incompatible with HLSL annotations, and
 can only be used on variable declarations that either use C++ attributes for
 annotations, or have no annotation (see:
 [proposal for C++ Attributes](0002-cxx-attributes.md)).
+
+HLSL will adopt C++ rules for implicitly defining special member functions as
+defined in the C++ 11 specification under
+[`[special]`](https://timsong-cpp.github.io/cppwp/n3337/#special). This will
+include a default constructor, destructor, copy constructor, move constructor,
+and copy assignment operator, and move assignment operator.
 
 For example:
 
