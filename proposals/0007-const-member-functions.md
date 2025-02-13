@@ -1,7 +1,7 @@
 <!-- {% raw %} -->
-# `const`-qualified Instance Methods
+# `const`-qualified Non-`static` Member Functions
 
-* Proposal: [0007](0007-const-instance-methods.md)
+* Proposal: [0007](0007-const-member-functions.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
 * Status: **Under Consideration**
@@ -9,14 +9,14 @@
 
 ## Introduction
 
-HLSL does not currently support `const` instance methods for user-defined data
-types. This proposal seeks to add support for `const` instance methods, and to
+HLSL does not currently support `const` non-`static` member functions for user-defined data
+types. This proposal seeks to add support for `const` non-`static` member functions, and to
 adopt const-correct behaviors across the HLSL library objects.
 
 ## Motivation
 
-The absence of `const` instance methods causes some challenges since HLSL
-injected ASTs do have `const` and non-`const` instance methods. Further, since
+The absence of `const` non-`static` member functions causes some challenges since HLSL
+injected ASTs do have `const` and non-`const` non-`static` member functions. Further, since
 variables can be `const`-qualified, without the ability to specify `const` there
 are some cases that cannot be worked around without breaking
 `const`-correctness.
@@ -27,7 +27,7 @@ listed below:
 * https://github.com/microsoft/DirectXShaderCompiler/issues/4340
 * https://github.com/microsoft/DirectXShaderCompiler/issues/4706
 
-In the first issue, a user defined data type's methods are basically unusable if
+In the first issue, a user defined data type's functions are basically unusable if
 the data type is placed in a `ConstantBuffer`. This results from the
 `ConstantBuffer` access returning `const &` objects.
 
@@ -36,7 +36,7 @@ instances of `const`-qualified user-defined types are unusable.
 
 ## Proposed solution
 
-Following C++, HLSL will enable support for `const` instance methods and
+Following C++, HLSL will enable support for `const` non-`static` member functions and
 instance operator overloads (henceforth collectively referred to as constant
 member functions) to allow execution of member functions on `const` objects and
 preserve `const` qualifiers.
@@ -44,7 +44,7 @@ preserve `const` qualifiers.
 Updates to HLSL's built-in data types to observe best practices in
 const-correctness will follow the introduction of language support. Functions
 which return mutable lvalue references will become non-constant member
-functions, and method which return constant lvalue references or object values
+functions, and functions which return constant lvalue references or object values
 will become constant member functions.
 
 ## Detailed design
@@ -54,8 +54,10 @@ C++'s existing syntax for declaring constant instance functions is compatible
 with HLSL. Adoption of this syntax does not introduce any syntactic ambiguities
 with existing HLSL constructs. Adding the `const` keyword to the end of the
 function declarator before the optional function body will denote a const
-instance function. See the examples below defining both a constant method and a
-constant overload of the call `()` operator:
+member function function. The `const` keyword applies to the implicit object
+argument so it can only be applied to non-`static` member functions. See the
+examples below defining both a constant function and a constant overload of the
+call `()` operator:
 
 ```c++
 struct Pupper {
@@ -76,7 +78,7 @@ account for the const-ness of object parameters. When performing lookup of
 possible overload candidates, overloaded functions with non-constant implicit
 object parameters are invalid candidates when the implicit object is constant.
 
-Standard HLSL argument promotion rules will apply for the object method, but
+Standard HLSL argument promotion rules will apply for the object parameter, but
 they cannot remove the `const` qualifier and shall not convert from a constant
 lvalue to a non-constant rvalue by copying the implicit argument as is valid for
 other arguments.
@@ -95,10 +97,9 @@ resource variable itself cannot be re-assigned.
 
 ### Impact on Existing Code
 
-Two of the changes described above have breaking impact on existing code. First,
-supporting constant member function overload resolution will break existing code
-that calls methods on `cbuffer`, `tbuffer` or global constant variables. Take
-the following valid HLSL:
+Supporting constant member function overload resolution will break existing code
+that calls member functions on `cbuffer`, `tbuffer` or global constant variables.
+Consider the following valid HLSL:
 
 ```c++
 struct Hat {
@@ -117,9 +118,9 @@ export int GetFeatherCount() {
 }
 ```
 
-This code is currently valid because HLSL ignores the const-ness of the implicit
-object parameter. On introducing constant member functions, this code is
-ill-formed and will produce a diagnostic.
+This code is valid under HLSL 2021 because HLSL ignores the const-ness of the
+implicit object parameter. On introducing constant member functions, this code
+is ill-formed and will produce a diagnostic.
 
 The code is ill-formed because these declarations inside a `cbuffer` are
 implicitly constant. Today we ignore the `const`-ness of the object parameter
