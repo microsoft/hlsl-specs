@@ -5,7 +5,7 @@
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
 * Status: **Under Consideration**
 
-[anumpamachandra]: (https://github.com/anupamachandra)
+[anupamachandra]: https://github.com/anupamachandra
 [damyanp]: https://github.com/damyanp
 [pow2clk]: https://github.com/pow2clk
 
