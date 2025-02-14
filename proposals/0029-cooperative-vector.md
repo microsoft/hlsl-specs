@@ -1,6 +1,6 @@
 <!-- {% raw %} -->
 
-* Proposal: [NNNN](NNNN-cooperative-vector.md)
+* Proposal: [0029](0029-cooperative-vector.md)
 * Author(s): [Anupama Chandrasekhar][anupamachandra]
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
 * Status: **Under Consideration**
