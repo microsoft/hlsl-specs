@@ -98,8 +98,7 @@ statements, declarations and expressions.
 Below are a few more examples of C++ attributes that we could support:
 
 ```c++
-  [[hlsl::layout_attribute]] // applies to the struct type
-  struct {
+  struct [[hlsl::layout_attribute]] { // applies to the struct type
     int x;
     int y;
   };
@@ -137,25 +136,46 @@ which existing attributes will convert to C++ attributes.
 This proposal introduces grammar formulations for parsing attributes matching
 some formulations from C++ `dcl.attr.grammar`. Specifically:
 
-```ebnf
-attribute-specifier-seq:    [ attribute-specifier-seq ], attribute-specifier
-attribute-specifier:        "[" , "[" , attribute-list , "]" , "]"
-attribute-list:             [ attribute ] ||
-                            attribute-list , "," , [attribute] ||
-                            { attribute } ||
-                            attribute-list ,  "," , { attribute }
-attribute:                  attribute-token , [attribute-argument-clause]
-attribute-token:            identifier ||
-                            attribute-scoped-token
-attribute-scoped-token:     attribute-namespace , "::" , identifier
-attribute-namespace:        identifier
-attribute-argument-clause:  "(" , balanced-token-seq , ")"
-balanced-token-seq:         [ balanced-token ] ||
-                            balanced-token-seq , balanced-token
-balanced-token:             "(" , balanced-token-seq , ")"
-                            "[" , balanced-token-seq , "]"
-                            "{" , balanced-token-seq , "}"
+```latex
+\begin{grammar}
+  \define{attribute-specifier-seq}\br
+  \opt{attribute-specifier-seq} \textit{attribute-specifier}\br
+
+  \define{attribute-specifier}\br
+  \terminal{[ [} \textit{attribute-list} \terminal{] ]}\br
+
+  \define{attribute-list}\br
+  \opt{attribute}\br
+  \textit{attribute-list} \terminal{,} \opt{attribute}\br
+
+  \define{attribute}\br
+  \textit{attribute-token} \opt{attribute-argument-clause}\br
+
+  \define{attribute-token}\br
+  \textit{identifier}\br
+  \textit{attribute-scoped-token}\br
+
+  \define{attribute-scoped-token}\br
+  \textit{attribute-namespace} \terminal{::} \textit{identifier}\br
+
+  \define{attribute-namespace}\br
+  \textit{identifier}\br
+
+  \define{attribute-argument-clause}\br
+  \terminal{(} \textit{balanced-token-seq} \terminal{)}\br
+
+  \define{balanced-token-seq}\br
+  \opt{balanced-token}\br
+  \textit{balanced-token-seq} \textit{balanced-token}\br
+
+  \define{balanced-token}\br
+  \terminal{(} \textit{balanced-token-seq} \terminal{)}\br
+  \terminal{[} \textit{balanced-token-seq} \terminal{]}\br
+  \terminal{\{} \textit{balanced-token-seq} \terminal{\}}\br
+  any token other than a parenthesis, bracket or brace\br
+\end{grammar}
 ```
+![Latex Rendering](0002-assets/AttributeGrammarRendering.png)
 
 In contrast to existing HLSL annotations and Microsoft-style attributes, these
 formulations use case-sensitive identifier tokens
@@ -163,28 +183,51 @@ formulations use case-sensitive identifier tokens
 
 #### Statements
 
-```ebnf
-statement: [ attribute-specifier-seq ] , expression-statement ||
-           [ attribute-specifier-seq ] , compound-statement ||
-           [ attribute-specifier-seq ] , selection-statement ||
-           [ attribute-specifier-seq ] , iteration-statement ||
-           [ attribute-specifier-seq ] , jump-statement ||
-           declaration-statement
-           labeled-statement
-labeled-statement: [ attribute-specifier-seq ] , "case" , constant-expression , ":" , statement
-                   [ attribute-specifier-seq ] , "default" , ":" , statement
+> Note: This is already reflected in the language specification.
+
+```latex
+\begin{grammar}
+    \define{statement}\br
+    labeled-statement\br
+    \opt{attribute-specifier-sequence} expression-statement\br
+    \opt{attribute-specifier-sequence} compound-statement\br
+    \opt{attribute-specifier-sequence} iteration-statement\br
+    \opt{attribute-specifier-sequence} selection-statement\br
+    declaration-statement
+\end{grammar}
 ```
+![Latex Rendering](0002-assets/StatementGrammarRendering.png)
 
 #### Declarations
 
 The `attribute-specifier-seq` element supports annotating type declarations. The
 following grammar formulations are valid:
 
-```ebnf
-class-key: "class" || "struct"
-class-declaration: class-key , attribute-specifier-seq , identifier
+```latex
+\begin{grammar}
+  \define{class-name}\br
+  \textit{identifier}\br
+  \textit{simple-template-id}\br
 
-alias-declaration: "using" , identifier , [ attribute-specifier-seq ] , "=" , type-id , ";"
+  \define{class-specifier}\br
+  \textit{class-head} \terminal{\}} \opt{member-specification} \terminal{\}}\br
+
+  \define{class-head}\br
+  \textit{class-key} \opt{attribute-specifier-seq} \textit{class-head-name} \opt{base-clause}\br
+  \textit{class-key} \opt{attribute-specifier-seq} \opt{base-clause}\br
+
+  \define{class-head-name}\br
+  \opt{nested-name-specifier} \textit{class-name}\br
+
+  \define{class-key}\br
+  \terminal{class}\br
+  \terminal{struct}\br
+
+  \define{alias-declaration}\br
+  \terminal{using} \textit{identifier} \opt{attribute-specifier-seq} \terminal{=} \textit{type-id} \terminal{;}\br
+\end{grammar}
 ```
+
+![Latex Rendering](0002-assets/ClassGrammarRendering.png)
 
 <!-- {% endraw %} -->
