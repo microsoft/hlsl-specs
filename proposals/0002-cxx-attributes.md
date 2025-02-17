@@ -175,7 +175,7 @@ some formulations from C++ `dcl.attr.grammar`. Specifically:
   any token other than a parenthesis, bracket or brace\br
 \end{grammar}
 ```
-![Latex Rendering](0002-assets/AttributeGrammarRendering.png)
+![Latex Rendering](0002-assets/AttributeGrammarRender.png)
 
 In contrast to existing HLSL annotations and Microsoft-style attributes, these
 formulations use case-sensitive identifier tokens
@@ -196,7 +196,7 @@ formulations use case-sensitive identifier tokens
     declaration-statement
 \end{grammar}
 ```
-![Latex Rendering](0002-assets/StatementGrammarRendering.png)
+![Latex Rendering](0002-assets/StatementGrammarRender.png)
 
 #### Declarations
 
@@ -228,6 +228,6 @@ following grammar formulations are valid:
 \end{grammar}
 ```
 
-![Latex Rendering](0002-assets/ClassGrammarRendering.png)
+![Latex Rendering](0002-assets/ClassGrammarRender.png)
 
 <!-- {% endraw %} -->
