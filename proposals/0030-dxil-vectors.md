@@ -4,7 +4,7 @@
 
 ---
 
-* Proposal: [NNNN](NNNN-dxil-vectors.md)
+* Proposal: [0030](0030-dxil-vectors.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
 * Status: **Under Consideration**
@@ -112,7 +112,7 @@ vector<TYPE, NUM> foo(vector<TYPE, NUM> a, vector<TYPE, NUM> b) {
     ret[i] = foo(a[i], b[i]);
 }
 ```
-  
+
 For example, `fma` is an elementwise intrinsic because it multiplies or adds each element of its argument vectors,
  but `cross` is not because it performs an operation on the vectors as units,
  pulling elements from different locations as the operation requires.
