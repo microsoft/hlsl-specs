@@ -123,35 +123,35 @@ Introduce new DXIL operations to accelarate matrix-vector operations. In this sp
 
 ``` llvm 
 declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
-    i32               ; opcode
+    immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    i32,              ; input interpretation
+    immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
-    i32,              ; matrix interpretation
-    i32,              ; matrix M dimension    
-    i32,              ; matrix K dimension    
-    i32,              ; matrix layout
-    i32,              ; matrix transpose      <<< should this be i1?
+    immarg i32,       ; matrix interpretation
+    immarg i32,       ; matrix M dimension    
+    immarg i32,       ; matrix K dimension    
+    immarg i32,       ; matrix layout
+    immarg i32,       ; matrix transpose      <<< should this be i1?
     i32,              ; matrix stride
-    i1)               ; isResultSigned        <<< what is this for?
+    immarg i1)        ; isResultSigned        <<< See #399
 
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
-    i32               ; opcode
+    immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    i32,              ; input interpretation
+    immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
-    i32,              ; matrix interpretation
-    i32,              ; matrix M dimension    
-    i32,              ; matrix K dimension    
-    i32,              ; matrix layout
-    i32,              ; matrix transpose      <<< should this be i1?
+    immarg i32,       ; matrix interpretation
+    immarg i32,       ; matrix M dimension    
+    immarg i32,       ; matrix K dimension    
+    immarg i32,       ; matrix layout
+    immarg i32,       ; matrix transpose      <<< should this be i1?
     i32,              ; matrix stride
     %dx.types.Handle, ; bias vector resource
     i32,              ; bias vector offset
-    i32,              ; bias vector interpretation
-    i1)               ; isResultSigned        <<< what is this for?
+    immarg i32,       ; bias vector interpretation
+    immarg i1)        ; isResultSigned        <<< See #399
 ```
 
 #### Overview
@@ -164,11 +164,13 @@ The `@dx.op.matvecmuladd` operation behaves as `@dx.op.matvecmul`, but also adds
 an **M**-sized bias vector (loaded from memory) to the result.
 
 > Note that the dimensions of the matrix are **M**x**K** versus **M**x**N**
-> usually found in linear algebra texbooks. This is to futureproof for potential
-> matrix-matrix operations in the future where the inputs could be **M**x**K**
-> and **K**x**N** to produce an **M**x**N** result matrix.
+> usually found in linear algebra textbooks. This is to futureproof for
+> potential matrix-matrix operations in the future where the inputs could be
+> **M**x**K** and **K**x**N** to produce an **M**x**N** result matrix.
 
 #### Arguments
+
+| Argument | Type | 
 
 ##### Input Vector
 
@@ -212,7 +214,6 @@ aligned.
 
 ##### Bias Matrix
 
-> * TODO: alignment requirements for **bias vector offset**
 > * TODO: are packed types allowed for bias vectors?
 
 The bias matrix is loaded from the raw-buffer, **bias vector resource**,
@@ -229,14 +230,14 @@ The base address of **bias vector resource** and **bias vector offset** must be
 
 ``` llvm
 declare void @dx.op.vecouterproductacc.v[M][TY].v[N][TY](
-    i32,              ; opcode 
+    immarg i32,       ; opcode 
     <[M] x [TY]>,     ; input vector 1
     <[N] x [TY]>,     ; input vector 2
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset 
     i32,              ; matrix stride 
-    i32,              ; matrix interpretation 
-    i32)              ; matrix layout 
+    immarg i32,       ; matrix interpretation 
+    immarg i32)       ; matrix layout 
 ```
 
 #### Overview
@@ -273,7 +274,7 @@ on all implementations can be found in [Minimum Support Set].
 
 ``` llvm
 declare void @dx.op.vecreducesumacc.v[NUM][TY](
-    i32,              ; opcode
+    immarg i32,       ; opcode
     <[NUM] x [TY]>,   ; input vector
     %dx.types.Handle, ; output array resource 
     i32)              ; output array offset
