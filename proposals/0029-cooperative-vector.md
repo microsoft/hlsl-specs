@@ -1,7 +1,7 @@
 <!-- {% raw %} -->
 
 * Proposal: [0029](0029-cooperative-vector.md)
-* Author(s): [Anupama Chandrasekhar][anupamachandra]
+* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp]
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
 * Status: **Under Review**
 * Planned Version: Shader Model 6.9
@@ -11,14 +11,23 @@
 [damyanp]: https://github.com/damyanp
 [pow2clk]: https://github.com/pow2clk
 
-# HLSL Cooperative Vectors
+# Cooperative Vectors
 
 ## Introduction
 In research and in industry, machine learning based approaches have made their way to mainstream, replacing/augmenting
 traditional techniques. In graphics, neural network (NN) based rendering methods are gaining popularity over
 traditional methods of image reconstruction, texture compression, material shading etc. Simultaneously, the increasing
 use of GPUs for general purpose ML/DL means that GPU vendors continue to add more specialized hardware in GPUs to
-accelerate neural network computations, like accelerating matrix operations. This specification introduces HLSL and DXIL intrinsics for vector-matrix operations that can accelerated by the underlying hardware.
+accelerate neural network computations, like accelerating matrix operations.
+
+This proposal introduces DXIL operations for vector-matrix operations that can
+accelerated by the underlying hardware, building on support for long verctors
+described in proposals [0026] and [0030]. This proposal describes HLSL builtins
+that can be used for example and testing purposes as well as the building blocks
+for a high-level HLSL API. The high-level API is described in proposal \[TBD\].
+
+[0026]: 0026-hlsl-long-vector-type.md
+[0030]: 0030-dxil-vectors.md
 
 ## Motivation
 
@@ -28,7 +37,7 @@ Note that the NN simply replaces the computations in the original shader with no
 
 **Original Shader**
 
-``` 
+```c++ 
 void ps_main(args) // args: texture, normal, position
 {   
     PreProcessing(args);
@@ -48,7 +57,7 @@ void ps_main(args) // args: texture, normal, position
 
 Below shader is in HLSL-like psuedocode, to highlight the idea of what replacing physical computations with a neural network based evaluation looks like. The exact syntax for the new intrinsics is intentionally skipped to keep it simple, later sections contain examples with the correct syntax and sample descriptors.
 
-``` 
+```c++
 ByteAddressBuffer inputMatrix0; 
 ByteAddressBuffer inputMatrix1; 
 ByteAddressBuffer biasVector0; 
@@ -92,7 +101,7 @@ void ps_main(args) // args: texture, normal, position
 
 ## Proposed solution
 
-Introduce new HLSL intrinsics to accelarate matrix-vector operations. In this specification we add four operations:
+Introduce new DXIL operations to accelarate matrix-vector operations. In this specification we add four operations:
 
 * **Matrix-Vector Multiply:** Multiply a matrix in memory and a vector parameter.
 * **Matrix-Vector Multiply-Add:** Multiply a matrix in memory and a vector parameter and add a vector from memory.
@@ -102,44 +111,202 @@ Introduce new HLSL intrinsics to accelarate matrix-vector operations. In this sp
 
 ## Detailed design
 
-### Intrinsics for Vector-Matrix Operations
+### Matrix-Vector Multiply and Multiply-Add Operations
 
-**Matrix-Vector Multiply and Add Intrinsic**
+#### Syntax
+ 
+> NOTES FOR REVIEW, REMOVE BEFORE MERGING: 
+>  
+> Added @dx.op.matvecmuladd version, and also renamed  from
+> @dx.op.vecmatmul[add] to @dx.op.matvecmul[add] since it is a left matrix
+> multiply.
 
-Intrinsics for specifying a multiplication operation between a matrix(Dim: M * K) loaded from memory and aa vector(Dim: K), a
-variant of this with an add, where a bias vector(Dim: K), loaded from memory, is added to the result vector(Dim: M) of the matrix-vector
-multiply operation.
+``` llvm 
+declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
+    i32               ; opcode
+    <[NUMi] x [TYi]>, ; input vector
+    i32,              ; input interpretation
+    %dx.types.Handle, ; matrix resource
+    i32,              ; matrix offset
+    i32,              ; matrix interpretation
+    i32,              ; matrix M dimension    
+    i32,              ; matrix K dimension    
+    i32,              ; matrix layout
+    i32,              ; matrix transpose      <<< should this be i1?
+    i32,              ; matrix stride
+    i1)               ; isResultSigned        <<< what is this for?
 
-Note that the dimensions of the matrix are `M X K` versus `M x N`  usually found in linear algebra texbooks. This is to
-futureproof for potential Matrix-Matrix operations in the future where the inputs could be `M X K` and `K x N` to
-produce an `M X N` result matrix.
-
-The `InputVector` is an HLSL vector and the `Matrix` and `BiasVector` are loaded from memory at specified offsets.
-
+declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
+    i32               ; opcode
+    <[NUMi] x [TYi]>, ; input vector
+    i32,              ; input interpretation
+    %dx.types.Handle, ; matrix resource
+    i32,              ; matrix offset
+    i32,              ; matrix interpretation
+    i32,              ; matrix M dimension    
+    i32,              ; matrix K dimension    
+    i32,              ; matrix layout
+    i32,              ; matrix transpose      <<< should this be i1?
+    i32,              ; matrix stride
+    %dx.types.Handle, ; bias vector resource
+    i32,              ; bias vector offset
+    i32,              ; bias vector interpretation
+    i1)               ; isResultSigned        <<< what is this for?
 ```
-// Result = Matrix * InputVector + Bias
-template<typename DESC, typename InputTy, typename ResultTy, uint InputComponents>
-vector<ResultTy, DESC::M> VectorMatrixMulAdd(vector<InputTy, InputComponents>  InputVector,
-                                                      (RW)ByteAddressBuffer             Matrix,
-                                                      uint                              MatrixOffset,
-                                                      uint                              MatrixStride,
-                                                      (RW)ByteAddressBuffer             BiasVector,
-                                                      uint                              BiasOffset);
 
-// Result = Matrix * InputVector
-template<typename DESC, typename InputTy, typename ResultTy, uint InputComponents>
-vector<ResultTy, DESC::M> VectorMatrixMul(vector<InputTy, InputComponents> InputVector,
-                                                   (RW)ByteAddressBuffer            Matrix,
-                                                   uint                             MatrixOffset,
-                                                   uint                             MatrixStride);
+#### Overview
 
+The `@dx.op.matvecmul` operation multiplies a **MxK** dimension matrix and a
+**K** sized input vector. The matrix is loaded from memory while the vector is
+stored in a variable.
+
+The `@dx.op.matvecmuladd` operation behaves as `@dx.op.matvecmul`, but also adds
+an **M**-sized bias vector (loaded from memory) to the result.
+
+> Note that the dimensions of the matrix are **M**x**K** versus **M**x**N**
+> usually found in linear algebra texbooks. This is to futureproof for potential
+> matrix-matrix operations in the future where the inputs could be **M**x**K**
+> and **K**x**N** to produce an **M**x**N** result matrix.
+
+#### Arguments
+
+##### Input Vector
+
+The **input vector** is of size `NUMi` and contains elements of physical type
+`TYi`. The **input interpretation** describes how to interpret the contents of
+the vector. `NUMi` has a relationship with **K** as follows:
+
+* for non-packed interpretations: `NUMi` equals **K**,
+* for packed interpretations: `NUMi` equals the least number that can hold **K**
+  values of the packed type.
+
+Non-packed interpretations are standard types such as float16, uint etc.  Packed
+types are types such as **SignedInt8x4Packed** where each 32-bit element of the
+vector corresponds to four 8-bit signed integers. See [Type Interpretations] for
+details.
+
+
+##### Matrix
+
+The matrix is loaded from the raw-buffer, **matrix resource**,  starting at
+**matrix offset**. The **matrix interpretation** argument specifies the element
+type of the matrix (see [Type Interpretations]). The **matrix M dimension** and
+**matrix K dimension** arguments specify the dimensions of the matrix. The
+**matrix layout** argument specifies the layout of the matrix (see [Matrix
+Layouts]). If the **matrix transpose** is non-zero then the matrix is transposed
+before performing the multiply (see [Matrix Transpose]). For row-major and
+column-major layouts, **matrix stride** specifies the number of bytes to go from
+one row/column to the next.  For optimal layouts, **matrix stride** is ignored.
+
+Only non-packed interpretations are valid for matrices.
+
+The base address of **matrix resource** and **matrix offset** must be 64 byte
+aligned.
+
+
+
+> TODO: consider using a different set of interpretation values for in-memory
+> interpretations versus vector interpretations.
+
+
+
+##### Bias Matrix
+
+> * TODO: alignment requirements for **bias vector offset**
+> * TODO: are packed types allowed for bias vectors?
+
+The bias matrix is loaded from the raw-buffer, **bias vector resource**,
+starting at **bias vector offset**. The **bias vector interpretation** argument
+specifies the element type of the bias vector (see [Type Interpretations]).
+
+The base address of **bias vector resource** and **bias vector offset** must be
+64 byte aligned.
+
+
+### Vector Outer Product
+
+#### Syntax
+
+``` llvm
+declare void @dx.op.vecouterproductacc.v[M][TY].v[N][TY](
+    i32,              ; opcode 
+    <[M] x [TY]>,     ; input vector 1
+    <[N] x [TY]>,     ; input vector 2
+    %dx.types.Handle, ; matrix resource
+    i32,              ; matrix offset 
+    i32,              ; matrix stride 
+    i32,              ; matrix interpretation 
+    i32)              ; matrix layout 
 ```
 
-Note that the `InputVector` has a physical storage type `InputTy` and an interpretation type that specifies how it is
-interpreted. Similarly,`Matrix` and `BiasVector` are loaded from a memory buffer and have interpretation parameters
-that specify how the buffer elements are interpreted. See the section on Type Interpretation for more details.
+#### Overview
 
+Computes the outer product between column vectors and an **M**x**N** matrix* is accumulated atomically (with device scope) in memory. 
+
+``` 
+ResultMatrix = InputVector1 * Transpose(InputVector2); 
 ```
+
+
+#### Arguments
+
+The two input vectors are specified via **input vector 1** and **input vector
+2**.
+
+The matrix is accumulated to the writeable raw-buffer specified by **matrix
+resource**, with **matrix offset**, **matrix stride**, **matrix interpretation**
+and **matrix layout** behaving as described
+[above](#matrix-vector-multiply-and-multiply-add-operations).
+
+The base address of **matrix resource** and **matrix offset** must be 64 byte
+aligned.
+
+Not all combinations of vector element type and matrix interpretations are
+supported by all implementations. [CheckFeatureSupport] can be used to determine
+which combinations. A list of combinations that are guaranteed to be supported
+on all implementations can be found in [Minimum Support Set].
+
+
+### Reduce Sum Accumulate
+
+#### Syntax
+
+``` llvm
+declare void @dx.op.vecreducesumacc.v[NUM][TY](
+    i32,              ; opcode
+    <[NUM] x [TY]>,   ; input vector
+    %dx.types.Handle, ; output array resource 
+    i32)              ; output array offset
+```
+
+#### Overview
+
+Accumulates the components of a vector atomically (with device scope) to the
+corresponding elements of an array in memory.
+
+#### Arguments
+
+The input vector is specified by **input vector**, and has `NUM` elements of type `TY`.
+
+The output array is accumulated to the writeable raw-buffer resource specified
+by **output array resource** and **output array offset**.  The base address and
+**output array offset** must be 64 byte aligned.
+
+[CheckFeatureSupport] can be used to determine which vector element types can be accumulated. A list of types that are guaranteed to be supported on all devices can be found in [Minimum Support Set].
+
+
+[Type Interpretations]: #type-interpretations
+[Matrix Layouts]: #matrix-layouts
+[Matrix Transpose]: #matrix-transpose
+[Minimum Support Set]: #minimum-support-set
+[CheckFeatureSupport]: #check-feature-support
+
+
+### Type Interpretations
+
+The various "interpretation" arguments specify a value from the following enum:
+
+```c++
 enum class DXILTypeInterpretation :uint {
   Float16               = 0,
   Float32               = 1,
@@ -155,330 +322,124 @@ enum class DXILTypeInterpretation :uint {
   FloatE5M2             = 11,
   Unsupported           = 32
 };
-
-enum class DXILMatrixLayout : uint {
-  RowMajor              = 0,
-  ColumnMajor           = 1,
-  InferencingOptimal    = 2,
-  TrainingOptimal       = 3,
-};
-
-template<uint m, uint k, uint input_interp, uint matrix_interp, uint bias_interp, 
-         uint layout, bool transpose>
-struct VecMatOpDescriptor {
-  static const uint M               = m;
-  static const uint K               = k;
-  static const uint Ii              = input_interp;
-  static const uint Mi              = matrix_interp;
-  static const uint Bi              = bias_interp;
-  static const uint Layout          = layout;
-  static const bool Transposed      = transpose;
-};
-
-// Result = Matrix * InputVector + Bias
-template<typename DESC, typename InputTy, typename ResultTy, uint InputComponents>
-vector<ResultTy, DESC::M> VectorMatrixMulAdd(vector<InputTy, InputComponents> InputVector,
-                               (RW)ByteAddressBuffer Matrix,
-                               uint MatrixOffset,
-                               uint MatrixStride,
-                               (RW)ByteAddressBuffer BiasVector,
-                               uint BiasOffset);
-
-// Result = Matrix * InputVector
-template<typename DESC, typename InputTy, typename ResultTy, uint InputComponents>
-vector<ResultTy, DESC::M> VectorMatrixMul(vector<InputTy, InputComponents> InputVector,
-                             (RW)ByteAddressBuffer Matrix,
-                             uint MatrixOffset,
-                             uint MatrixStride);
-
 ```
 
-*InputVector* is the vector operand of the matrix-vector mul/mul-add operation. *InputTy* is the physical storage type
- of the elements of the vector, which might vary from the actual type that the elements of the vector are interpreted
- as, *InputInptretation* from *DESC*. *InputComponents* is the number of components in the input vector, which equals
- the matrix dimension *K* for a non-packed type and for a packed type, equals the least number that can hold *K* values
- of the packed type. Where, packed type, refers to types like `SignedInt8x4Packed` where each 32-bit element of the
- vector corresponds to four 8-bit signed integers; Unpacked types are the standard types like float16, uint etc. The
- elements of the *InputVector* are converted to type specified by *DESC: Ii* present in, if it is legal. More details
- in the [Type Interpretations](#type-interpretations) section.
+For matrices and vectors that are specified by resource handles and stored in
+raw-buffers, the interpretation value directly specifies the element type.  It
+is invalid to specify a packed interpretation in these cases.
 
-*Matrix* is loaded starting from a byte offset *MatrixOffset* from the start of Buffer, and raw data is loaded according
- to the type interpretation parameter *DESC: Mi*. *DESC: MxK* is the dimension of the matrix. No conversion is
- performed. The *MatrixOffset* and the base address of the Matrix buffer must be 64B aligned. The *DESC: Layout* of the
- matrix is one of the enum values *DXILMatrixLayout* listed above.
+For input vectors that come from variables there is a distinction between the
+physical type and the logical type. The **input interpretation** argument for
+these vectors describes how to convert from the physical to logical type. This
+allows elements to be interpreted as types not natively supported by HLSL, e.g.
+uint8/sint8. For packed interpretations, a single physical element can expand
+into multiple logical elements.
 
-*MatrixStride*, for RowMajor or ColumnMajor layouts, is the number of bytes to go from one row/column to the next. For
- optimal layouts, *MatrixStride* is ignored.
-
-*BiasVector*, the bias vector, is loaded starting from a byte offset of *BiasOffset* from the start of the array, and
- raw data is loaded according to the type interpretation parameter *DESC: Bi*. *M* consecutive elements are loaded. No
- conversion is performed. The *BiasOffset* and the base address of the BiasVector buffer must be 64B aligned.
-
- **VecMatOpDescriptor Parameters** 
-
- The *VecMatOpDescriptor* describes the interpretation of the Input, Matrix and Bias elements. Bias interpretation
- applies only for the *VectorMatrixMulAdd* operation and is ignored for *VectorMatrixMul* operation. 
-
-*Ii* Input Interpretation, *Mi* MatrixInterpretation and *Bi* BiasInterpretation define what type the respective objects
- will be interpreted as. These values are constrained by the combinations allowed by the device, *Matrix* and *Bias*
- are typeless buffers and their respective interpretations determine the types. See [Type Interpretations]
- (#type-interpretations) section for more details.
-
-
-*Mi* and *Bi* determines the type of the Weight Matrix and Bias Vector elements.
-
-For the unpacked case, *M x K* is the dimension of the Matrix, *M* is the size of the result vector, *K* is the size of
-the input vector. For the packed case, the number of components in the input vector must large enough to hold the *K*
-packed components.
-
-*Layout* is an enum value, `DXILMatrixLayout`. Optimal layouts are opaque implementation specific layouts, the D3D call
- `CooperativeVectorConvertMatrix` can be used to convert the *Matrix* to an optimal layout. Row-Major and Column-Major
- layouts are also supported.
-
-The *Transposed* parameter indicates if the *Matrix* is transposed before performing the multiply. In linear algebra,
-the[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator which flips a matrix over its
-diagonal; that is, it switches the row and column indices of the matrix. Transposing is not supported for the
-RowMajor/ColumnMajor layouts. Not all component types support transposing. It is left to implementations to define
-which types support matrix transposing. "TransposeSupported" flag from the [CheckFeatureSupport]
-(#check-feature-support) struct is used to determine if a matrix transpose is supported. Note that even for the
-type/interpretation combinations with guaranteed [support](#minimum-support-set), transpose support isn't guaranteed
-and needs to be checked explicitly.
-
-**Type Interpretations**
-
-The types of *InputVector*, *Matrix* and *BiasVector* are all determined by their respective interpretation parameters.
-For the Matrix and BiasVector which are stored in (RW)ByteAddressBuffers, this is straightforward: the *M*
-and *K* *VecMatOpDescriptor* parameters describe the dimensions of the *Matrix*/*BiasVector*, these are loaded from the
-offsets *MatrixOffset* and *Biasoffset* respectively and the *Mi* and *Bi* parameters which
-are *DXILTypeInterpretation* enums specify the element type.
-
-*InputVector* is an HLSL vectors of a given type *InputTy* . However, the type that the elements of this vector are
- interpreted as in the matrix-vector operation is specified by the *InputInterpretation* parameter. The reason is that
- the interpretation parameter allows the elements to be interpreted as types not natively supported by HLSL, e.g.
- uint8/sint8. 
-
-The legal conversions from the declared *InputType* to *InputInterpretation: Ii* and the
-corresponding *MatrixInterpretation: Mi* and *BiasInterpretation: Bi* are implementation dependent and can be queried.
-See[CheckFeatureSupport](#check-feature-support) section for details. An exception to this rule is the set of
-combinations guaranteed to be supported on all devices supporting this feature. See [Minimum Support Set]
-(#minimum-support-set).  Note that *Transposed* is always queried.
+[CheckFeatureSupport] can be used to determine what combinations of **TYi**,
+**input interpretation**, **matrix interpretation**, **matrix transpose**,
+**bias vector interpretation** and **TYo** are supported on a particular
+implementation. A list of combinations that are guaranteed to be supported on
+all implementations can be found in [Minimum Support Set]. Note that there is no
+guaranteed support for **matrix tranpose**, and so it must always queried. s
+queried.
 
 Non-"Packed" type interpretations are used to request arithmetic conversions. Input type must be a 32-bit or 16-bit
 scalar integer or a 32-bit or 16-bit float. Integer to integer conversion saturates, float to float conversion is
 implementation dependent and preserves the value as accurately as possible. Float to integer conversion is RTNE and
 saturating. Integer to float conversion is RTNE.
 
-/// XXX TODO: These rules make sense for NN applications but diverge from HLSL conversion rules [here]
-    (https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Conv).
+> TODO: These rules make sense for NN applications but diverge from HLSL
+> conversion rules
+> [here](https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Conv).
 
 "Packed" type conversions are bitcasts to a smaller type. The declared input type must be 32-bit unsigned integer. 
 
-/// XXX TODO: Error handling for illegal conversions. 
+> /// XXX TODO: Error handling for illegal conversions. 
 
 Examples:
 
 Packed Case:
-```
-// Declare an input vector
-vector<uint, 8> ipVector;
+``` llvm
+; Using SignedInt8x4Packed input interpretation, each uint element (32-bit) in the 
+; input vector will be interpreted as 4 int8 values.
+;
+; Note that TYi = i32 and NUMi = 8 (8 x 4 = 32 sint8 values ), and the result is a 
+; 32-element vector.
 
-// Set interpretation value to DXILCoopVectorTypeInterpretation::SignedInt8x4Packed
-// Each uint element (32-bit) in the input vector, ipVector, will be interpreted as 4 int8 values in the VectorMatrixMul intrinsic. 
-// Note that InputTy = uint and InputComponents = 8 (8 x 4 = 32 sint8 values )
-VecMatOpDescriptor<32 /*M*/, 
-                   32 /*K*/, 
-                   DXILTypeInterpretation::SignedInt8x4Packed /*InputInterpretation*/, 
-                   DXILTypeInterpretation::SignedInt8 /*MatrixInterpretation*/,
-                   DXILTypeInterpretation::Unsupported /*BiasInterpretation*/, 
-                   DXILMatrixLayout::InferencingOptimal /*Layout*/,
-                   false /*Transpose*/> desc;
+%inputVector = <8 x i32> ...
 
-vector<int, 32> resultVector; //Note that the ResultComponents equals M(32)
-// Matrix is a ByteAddressBuffer
-resultVector = VectorMatrixMul(ipVector, Matrix, 0/*MatrixOffset*/, 0/*MatrixStride*/);
-
+%result = <32 x i32> call @dx.op.matvecmul.v[32][i32].v[8][i32](
+     OPCODE,
+     %inputVector,
+     8,               ; input interpretation - SignedInt8x4Packed
+     %matrixResource,
+     0,               ; matrix offset
+     5,               ; matrix interpretation - SignedInt8
+     32,              ; matrix M dimension
+     32,              ; matrix K dimension
+     2,               ; matrix layout - InferencingOptimal
+     0,               ; matrix transpose - false
+     0,               ; matrix stride
+     1);              ; isResultSigned - true
 ```
 
 Non-Packed Case:
-```
-// Declare an input vector
-vector<float, 32> ipVector;
+``` llvm
+; Using SignedInt8 input interpretation, each float element will be arithmetically
+; converted to a sint8 value.
 
-// Set interpretation value to DXILCoopVectorTypeInterpretation::SignedInt8x4Packed
-// Each float element of the input vector, ipVector, will be arithmetically converted to a sint8 value in the VectorMatrixMul intrinsic. 
-VecMatOpDescriptor<64 /*M*/, 
-                   32 /*K*/, 
-                   DXILTypeInterpretation::SignedInt8 /*InputInterpretation*/, 
-                   DXILTypeInterpretation::SignedInt8 /*MatrixInterpretation*/,
-                   DXILTypeInterpretation::SignedInt8 /*BiasInterpretation*/, 
-                   DXILMatrixLayout::InferencingOptimal /*Layout*/,
-                   false /*Transpose*/> desc;
+%inputVector = <32 x float> ...
 
-vector<int, 64> resultVector; // Note that the ResultComponents equals M(64)
-
-// Matrix and Bias are ByteAddressBuffers
-resultVector = VectorMatrixMul(ipVector, Matrix, 0/*MatrixOffset*/, 0/*MatrixStride*/, Bias, 0/*BiasStride*/);
-
-```
-
-
-**Vector Outer Product**
-
-Computes the outer product between column vectors and an *MxN Matrix* is accumulated atomically (with device scope) in memory. The device should be queried in `CheckFeatureSupport` to determine type of InputVector supported and the corresponding Accumulation type.
-An exception to this rule is the set of combinations guaranteed to be supported on all devices supporting the cooperative vector feature. See [here](#minimum-support-set).
-
-``` 
-ResultMatrix = InputVector1 * Transpose(InputVector2); 
+%result = <64 x i32> call @dx.op.matvecmul.v[64][i32].v[32][float](
+    OPCODE,
+    %inputVector,
+    5,               ; input interpretation - SignedInt8
+    %matrixResource,
+    0,               ; matrix offset
+    5,               ; matrix interpretation - SignedInt8
+    64,              ; matrix M dimension
+    32,              ; matrix K dimension
+    2,               ; matrix layout - InferencingOptimal
+    0,               ; matrix transpose - false
+    0,               ; matrix stride
+    1)               ; isResultSigned - true
 ```
 
 
-```
-template<uint matrix_interp, uint layout>
-struct OuterProductAccDescriptor{
-  static const uint Mi     = matrix_interp;
-  static const uint Layout = layout;
+### Matrix Layouts
+
+The **matrix layout** argument specifies a value from the following enum:
+
+```c++
+enum class DXILMatrixLayout : uint {
+  RowMajor              = 0,
+  ColumnMajor           = 1,
+  InferencingOptimal    = 2,
+  TrainingOptimal       = 3,
 };
-
-template<typename DESC, typename T, uint M, uint N>
-void OuterProductAccumulate(vector<T, M> InputVector1,
-                            vector<T, N> InputVector2,
-                            RWByteAddressBuffer ResultMatrix,
-                            uint ResultMatrixOffset,
-                            uint ResultMatrixStride);
 ```
 
-*InputVector1* is an M component vector of type T.
+Optimal layouts are opaque implementation specific layouts, the D3D call
+`CooperativeVectorConvertMatrix` can be used to convert the *Matrix* to an
+optimal layout. Row-Major and Column-Major layouts are also supported.
 
-*InputVector2* is an N component vector of type T.
+ 
+### Matrix Transpose
 
-*ResultMatrix* is the resulting *MxN* matrix accumulated atomically (with device scope) in memory
- (RWByteAddressBuffer) at offset *ResultMatrixOffset*. The base address and *ResultMatrixOffset* of the Matrix buffer
- must be 64B aligned.
+The **matrix transpose** parameter indicates if the matrix is transposed before
+performing the multiply. In linear algebra,
+the[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an
+operator which flips a matrix over its diagonal; that is, it switches the row
+and column indices of the matrix. 
 
-*ResultMatrixStride* for RowMajor or ColumnMajor layouts, is the number of bytes to go from one row/column to the next.
- For optimal lyouts, stride is ignored.
+Transposing is not supported for the RowMajor/ColumnMajor layouts. 
 
- **OuterProductAccDescriptor Parameters**
-
- *Mi* determines the type of the Result Matrix. See [Type Interpretations](#type-interpretations) section for more
-  details.
-
- *Layout* is an enum value, `DXILMatrixLayout`. Optimal layouts are opaque implementation specific layouts, the D3D call
-  `CooperativeVectorConvertMatrix` can be used to convert the *Matrix* to an optimal layout. Row-Major and Column-Major
-  layouts are also supported.
-
-The device should be queried in [Check Feature Support](#check-feature-support) to determine datatypes of InputVector
-supported along with the AccumulationType. An exception to this rule is the set of combinations guaranteed to be
-supported on all devices supporting this feature. See [Minimum Support Set](#minimum-support-set).
-
-
-**Reduce Sum Accumulate**
-
-Accumulates the components of a vector atomically (with device scope) to the corresponding elements of an array in
-memory.
-
-```
-template<typename T, uint M>
-void ReduceSumAccumulate(vector<T, M> InputVector,
-                         RWByteAddressBuffer Buf,
-                         uint BufOffset);
-
-```
-
-*InputVector* is an M component vector of type T.
-
-*Buf* is the array into which the *InputVector* is accummulated. The base address and *BufOffset* of the buffer
- must be 64B aligned.
-
-*BufOffset* is the offset to the first element of the array to which the *InputVector* is accummulated. It is 64B aligned.
-
-The device should be queried in [Check Feature Support](#check-feature-support) to determine datatypes of InputVector supported along
-with the AccumulationType. An exception to this rule is the set of combinations guaranteed to be supported on all
-devices supporting this feature. See [Minimum Support Set](#minimum-support-set).
-
-### Example HLSL Shader
-
-// XXX TODO
-
-### Interchange Format Additions
-
-**Vector Matrix Multiply(Add)**
-
-*HLSL*
-
-``` 
-template<typename DESC, typename InputTy, typename ResultTy, uint InputComponents>
-vector<ResultTy, DESC::M> VectorMatrixMulAdd(vector<InputTy, InputComponents> InputVector,
-                                                      (RW)ByteAddressBuffer Matrix,
-                                                      uint MatrixOffset,
-                                                      uint MatrixStride,
-                                                      (RW)ByteAddressBuffer BiasVector,
-                                                      uint BiasOffset);
-
-```
-
-*DXIL*
-
-``` 
-<n1 x ty1> @dx.op.vecmatmul.v<n1><ty1>.v<n2<ty2>(i32 opcode, 
-                                                 <n2 x ty2> %ipVec, 
-                                                 i32 inputInterpretation, 
-                                                 %dx.types.Handle %matrix, 
-                                                 i32 %matrixoffset, 
-                                                 i32 matrixInterpretation, 
-                                                 i32 matrixMdim,
-                                                 i32 matrixKdim, 
-                                                 i32 matrixLayout, 
-                                                 i32 matrixTranspose, 
-                                                 i32 matrixStride
-                                                 i1 isResultSigned); 
-```
-
-**Outer Product Accumulate**
-
-*HLSL*
-
-``` 
-template<typename DESC, typename T, uint M, uint N>
-void OuterProductAccumulate(vector<T, M> InputVector1,
-                            vector<T, N> InputVector2,
-                            RWByteAddressBuffer ResultMatrix,
-                            uint ResultMatrixOffset,
-                            uint ResultMatrixStride);
-
-```
-
-*DXIL*
-
-``` 
-void @dx.op.vecouterproductacc.v<n1><ty>.v<n2<ty>(i32 opcode, <n1 x ty> %ipVec1, 
-                                                  <n2 x ty> %ipVec2, 
-                                                  %dx.types.Handle %matrix, 
-                                                  i32 %matrixoffset, 
-                                                  i32 %matrixstride,
-                                                  i32 matrixInterpretation, 
-                                                  i32 matrixLayout); 
-```
-
-
-**Reduce Sum Accumulate**
-
-*HLSL*
-
-```
-void ReduceSumAccumulate(vector<T, M> InputVector,
-                         RWByteAddressBuffer Buf,
-                         uint BufOffset);
-
-```
-
-*DXIL*
-```
-void @dx.op.vecreducesumacc.v<n><ty>(i32 opcode, 
-                                     <n x ty> %ipVec, 
-                                     %dx.types.Handle %buf, 
-                                     i32 %bufoffset); 
-```
+Not all component types support transposing. It is left to implementations to
+define which types support matrix transposing. "TransposeSupported" flag from
+the [CheckFeatureSupport] (#check-feature-support) struct is used to determine
+if a matrix transpose is supported. Note that even for the type/interpretation
+combinations described in [Minimum Support Set], transpose support isn't
+guaranteed and needs to be checked explicitly.
 
 ### Non-Uniform control flow
 
@@ -488,25 +449,25 @@ implementations can enable fast paths by allowing vectors to cooperate behind th
 fully occupied waves and uniform values for Matrix, Matrix Offset, Matrix Interpretation, Matrix Layout, Matrix Stride,
 Matrix Transpose and Bias, Bias Offset, Bias Interpretation, but this is not a requirement for functionality.
 
-### Shade Stages
+### Shader Stages
 
 The vector-matrix intrinsics are expected to be supported in all shader stages.
 
-// XXX TODO: Add query to determine which shader stages support these intrinsics.
+> TODO: Add query to determine which shader stages support these intrinsics.
 
 ### Diagnostic Changes
 
 * Diagnostics for incorrect use of the new intrinsics.
 
 
-#### Validation Changes
+### Validation Changes
 
 
-### D3D12 API Additions
+#### D3D12 API Additions
 
 Note: The enums and structs need to be updated from the coop_vec name, once a new name for the feature is decided.
 
-#### Check Feature Support
+### Check Feature Support
 
 This feature requires calling CheckFeatureSupport(). Additional D3D12_FEATURE enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to enable discovering the Cooperative Vector tier along with the datatype and interpretation combinations supported by new vector-matrix intrinsics.
 
@@ -585,15 +546,15 @@ If pProperties is non-NULL for any intrinsic but its PropCount is less than the 
 
 // XXX TODO: Add query for emulated types. For example E4M3 and E5M2 might not be supported on certain h/w, but since these are in the minimum support set, they need to be emulated, possibly using FP16. Add capability for the application to query which types are natively supported and which ones are emulated.
 
-### Minimum Support Set
+#### Minimum Support Set
 
 Minimum set of properties that implementations are required to support for each intrinsic are listed below.
 
-#### For VectorMatrixMulAdd
+##### For Matrix-Vector Multiply and Multiply-Add
 
 Note that value of `TransposeSupported` is never guaranteed and needs to be explicitly checked for the combinations below.
 
-```
+
 | InputType    | InputInterpretation | MatrixInterpretation | BiasInterpretation | OutputType |
 |--------------|---------------------|----------------------|--------------------|------------|
 | FP16         | FP16                | FP16                 | FP16               | FP16       |
@@ -601,28 +562,25 @@ Note that value of `TransposeSupported` is never guaranteed and needs to be expl
 | FP16         | E5M2                | E5M2                 | FP16               | FP16       |
 | SINT8_PACKED | SINT8               | SINT8                | SINT32             | SINT32     |
 | FP32         | SINT8               | SINT8                | SINT32             | SINT32     |
-```
 
-#### For OuterProductAccumulate
 
-```
+##### For OuterProductAccumulate
+
 | InputType | AccumulationType |
 |-----------|------------------|
 | FP16      | FP16             |
 | FP16      | FP32             |
-```
 
-#### For ReduceSumAccumulate
+##### For ReduceSumAccumulate
 
-```
 | InputType | AccumulationType |
 |-----------|------------------|
 | FP16      | FP16             |
-```
 
-**Usage Example:**
 
-```
+#### Usage Example
+
+```c++
 // Check for CooperativeVector support and query properties for VectorMatrixMulAdd
 D3D12_FEATURE_DATA_D3D12_OPTIONSNN CoopVecSupport = {};
 
@@ -660,8 +618,8 @@ specific alignment constraints and performance characteristics. We introduce a d
 dataype of the weight matrix from and to any of the layouts in `D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT` and datatypes in
 `D3D12_COOPERATIVE_VECTOR_DATATYPE`.
 
-```
-typedef enum D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT {
+```c++
+enum D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT {
     D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_ROW_MAJOR,
     D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_COLUMN_MAJOR,
     D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_INFERENCING_OPTIMAL,
@@ -673,7 +631,7 @@ typedef enum D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT {
 
 The destination buffer (to hold the matrix) size can be implementation dependent. The API `GetCooperativeVectorMatrixConversionDestinationInfo` is added to query the size of the destination buffer in the desired layout and datatype. It takes a pointer to `D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor that provides the inputs required to calculate the necessary size. The same descriptor, updated with the calculated output size, is then passed to the conversion API. 
 
-```
+```c++
 
 // Descriptor to query the destination buffer size
 typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO { 
@@ -702,7 +660,7 @@ void ID3D12Device::GetCooperativeVectorMatrixConversionDestinationInfo(
 
 After the size of the destination buffer is known, user can pass the `D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor along with information of source layout and datatype in `D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_SOURCE_INFO` and addresses of the source and destination buffers to the layout and datatype conversion API.
 
-```
+```c++
 
 // GPU VAs of source and destination buffers
 
@@ -743,10 +701,10 @@ typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO {
 
 New API is added to the ID3D12CommandList interface. Multiple conversions can be done in a single call of the API. The number of descriptors pointed to by pDesc is specified using descCount. If DestSize passed to this API is less than the number of bytes returned in call to `GetCooperativeVectorMatrixConversionDestinationInfo`, behavior is undefined.
 
-```
+```c++
 // Converts source matrix to desired layout and datatype
 void ID3D12CommandList::CooperativeVectorConvertMatrix(D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO* pDesc,
-                                                          UINT DescCount);
+                                                       UINT DescCount);
 
 ```
 
@@ -766,7 +724,7 @@ void ID3D12CommandList::CooperativeVectorConvertMatrix(D3D12_COOPERATIVE_VECTOR_
 
 *Usage Example:*
 
-```
+```c++
 
 D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO infoDesc = 
 { 
