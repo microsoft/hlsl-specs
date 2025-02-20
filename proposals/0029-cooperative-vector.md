@@ -115,12 +115,6 @@ Introduce new DXIL operations to accelarate matrix-vector operations. In this sp
 
 #### Syntax
  
-> NOTES FOR REVIEW, REMOVE BEFORE MERGING: 
->  
-> Added @dx.op.matvecmuladd version, and also renamed  from
-> @dx.op.vecmatmul[add] to @dx.op.matvecmul[add] since it is a left matrix
-> multiply.
-
 ``` llvm 
 declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
