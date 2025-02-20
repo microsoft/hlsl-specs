@@ -3,7 +3,9 @@
 * Proposal: [0029](0029-cooperative-vector.md)
 * Author(s): [Anupama Chandrasekhar][anupamachandra]
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
-* Status: **Under Consideration**
+* Status: **Under Review**
+* Planned Version: Shader Model 6.9
+
 
 [anupamachandra]: https://github.com/anupamachandra
 [damyanp]: https://github.com/damyanp
