@@ -200,12 +200,6 @@ The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
 
-
-> TODO: consider using a different set of interpretation values for in-memory
-> interpretations versus vector interpretations.
-
-
-
 ##### Bias Matrix
 
 > * TODO: are packed types allowed for bias vectors?
