@@ -416,10 +416,10 @@ optimal layout. Row-Major and Column-Major layouts are also supported.
 ### Matrix Transpose
 
 The **matrix transpose** parameter indicates if the matrix is transposed before
-performing the multiply. In linear algebra,
-the[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an
-operator which flips a matrix over its diagonal; that is, it switches the row
-and column indices of the matrix. 
+performing the multiply. In linear algebra, the
+[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator
+which flips a matrix over its diagonal; that is, it switches the row and column
+indices of the matrix. 
 
 Transposing is not supported for the RowMajor/ColumnMajor layouts. 
 
