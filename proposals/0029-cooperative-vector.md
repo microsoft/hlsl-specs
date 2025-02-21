@@ -1,7 +1,8 @@
 <!-- {% raw %} -->
 
 * Proposal: [0029](0029-cooperative-vector.md)
-* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp]
+* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp],
+             [Shashank Wadhwa][shashankw]
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
 * Status: **Under Review**
 * Planned Version: Shader Model 6.9
@@ -10,6 +11,7 @@
 [anupamachandra]: https://github.com/anupamachandra
 [damyanp]: https://github.com/damyanp
 [pow2clk]: https://github.com/pow2clk
+[shashankw]: https://github.com/shashankw
 
 # Cooperative Vectors
 
