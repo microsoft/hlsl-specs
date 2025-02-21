@@ -442,8 +442,6 @@ Matrix Transpose and Bias, Bias Offset, Bias Interpretation, but this is not a r
 
 The vector-matrix intrinsics are expected to be supported in all shader stages.
 
-> TODO: Add query to determine which shader stages support these intrinsics.
-
 ### Diagnostic Changes
 
 * Diagnostics for incorrect use of the new intrinsics.
