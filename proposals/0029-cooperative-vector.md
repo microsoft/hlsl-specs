@@ -24,9 +24,8 @@ accelerate neural network computations, like accelerating matrix operations.
 
 This proposal introduces DXIL operations for vector-matrix operations that can
 be accelerated by the underlying hardware, building on support for long vectors
-described in proposals [0026] and [0030]. This proposal describes HLSL builtins
-that can be used for example and testing purposes as well as the building blocks
-for a high-level HLSL API. The high-level API is described in proposal \[TBD\].
+described in proposals [0026] and [0030]. The high-level API is described in
+proposal \[TBD\].
 
 [0026]: 0026-hlsl-long-vector-type.md
 [0030]: 0030-dxil-vectors.md
@@ -159,7 +158,7 @@ stored in a variable.
 The `@dx.op.matvecmuladd` operation behaves as `@dx.op.matvecmul`, but also adds
 an **M**-sized bias vector (loaded from memory) to the result.
 
-> Note that the dimensions of the matrix are **M**x**K** versus **M**x**N**
+> Note that the dimensions of the matrix are **M**x**K** versus the **M**x**N**
 > usually found in linear algebra textbooks. This is to futureproof for
 > potential matrix-matrix operations in the future where the inputs could be
 > **M**x**K** and **K**x**N** to produce an **M**x**N** result matrix.
@@ -173,8 +172,8 @@ The **input vector** is of size `NUMi` and contains elements of physical type
 the vector. `NUMi` has a relationship with **K** as follows:
 
 * for non-packed interpretations: `NUMi` equals **K**,
-* for packed interpretations: `NUMi` equals the least number that can hold **K**
-  values of the packed type.
+* for packed interpretations: `NUMi` equals the smallest number that can hold
+  **K** values of the packed type.
 
 Non-packed interpretations are standard types such as float16, uint etc.  Packed
 types are types such as **SignedInt8x4Packed** where each 32-bit element of the
@@ -253,8 +252,8 @@ aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to determine
-which combinations. A list of combinations that are guaranteed to be supported
-on all implementations can be found in [Minimum Support Set].
+which combinations are supported. A list of combinations that are guaranteed to
+be supported on all implementations can be found in [Minimum Support Set].
 
 
 ### Reduce Sum Accumulate
@@ -330,8 +329,7 @@ into multiple logical elements.
 **bias vector interpretation** and **TYo** are supported on a particular
 implementation. A list of combinations that are guaranteed to be supported on
 all implementations can be found in [Minimum Support Set]. Note that there is no
-guaranteed support for **matrix tranpose**, and so it must always queried. s
-queried.
+guaranteed support for **matrix tranpose**, and so it must always be queried.
 
 #### Conversation Rules
 
