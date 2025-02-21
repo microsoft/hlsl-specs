@@ -26,7 +26,7 @@ vector/matrix operations described in [0029].
 
 See [0029] for general background around the need for these new operations.
 
-A HLSL API needs to be defined to expose these new operations in a way that:
+An HLSL API needs to be defined to expose these new operations in a way that:
 * work well with existing HLSL APIs
 * is expected to work well with future HLSL APIs in the same problem space
 * can be implemented reasonably in DXC and cleanly in clang
@@ -56,7 +56,7 @@ void ps_main(args) // args: texture, normal, position
     vector<uint32_t, M> inputVector = SomeFunction(args);
 
     // Below the physical calculations are replaced by NN evaluation
-    // the Matrix and Bias are trained offline and loaded to memor
+    // the Matrix and Bias are trained offline and loaded to memory.
 
     // layer0 = inputVector*inputMatrix + biasVector0
     // The matrix and bias are loaded from memory at offsets : moffset0 and boffset0
