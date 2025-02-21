@@ -200,13 +200,13 @@ The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
 
-##### Bias Matrix
+##### Bias Vector
 
-> * TODO: are packed types allowed for bias vectors?
-
-The bias matrix is loaded from the raw-buffer, **bias vector resource**,
+The bias vector is loaded from the raw-buffer, **bias vector resource**,
 starting at **bias vector offset**. The **bias vector interpretation** argument
 specifies the element type of the bias vector (see [Type Interpretations]).
+
+Only non-packed interpretations are valid for bias vectors.
 
 The base address of **bias vector resource** and **bias vector offset** must be
 64 byte aligned.
