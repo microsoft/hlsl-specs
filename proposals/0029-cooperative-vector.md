@@ -166,8 +166,6 @@ an **M**-sized bias vector (loaded from memory) to the result.
 
 #### Arguments
 
-| Argument | Type | 
-
 ##### Input Vector
 
 The **input vector** is of size `NUMi` and contains elements of physical type
