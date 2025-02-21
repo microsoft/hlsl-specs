@@ -230,7 +230,8 @@ declare void @dx.op.vecouterproductacc.v[M][TY].v[N][TY](
 
 #### Overview
 
-Computes the outer product between column vectors and an **M**x**N** matrix* is accumulated atomically (with device scope) in memory. 
+Computes the outer product between column vectors and an **M**x**N** matrix is
+accumulated component-wise atomically (with device scope) in memory. 
 
 ``` 
 ResultMatrix = InputVector1 * Transpose(InputVector2); 
@@ -270,8 +271,8 @@ declare void @dx.op.vecreducesumacc.v[NUM][TY](
 
 #### Overview
 
-Accumulates the components of a vector atomically (with device scope) to the
-corresponding elements of an array in memory.
+Accumulates the components of a vector component-wise atomically (with device
+scope) to the corresponding elements of an array in memory.
 
 #### Arguments
 
@@ -331,6 +332,8 @@ implementation. A list of combinations that are guaranteed to be supported on
 all implementations can be found in [Minimum Support Set]. Note that there is no
 guaranteed support for **matrix tranpose**, and so it must always queried. s
 queried.
+
+#### Conversation Rules
 
 Non-"Packed" type interpretations are used to request arithmetic conversions. Input type must be a 32-bit or 16-bit
 scalar integer or a 32-bit or 16-bit float. Integer to integer conversion saturates, float to float conversion is
