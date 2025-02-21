@@ -15,15 +15,6 @@
 [llvm-beanz]: https://github.com/llvm-beanz
 [anupamachandra]: https://github.com/anupamachandra
 
-<!--
-*During the review process, add the following fields as needed:*
-
-* Planned Version: 20YY
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues:
-  [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
--->
-
 ## Introduction
 
 This proposes a set of HLSL APIs that enable the use of the hardware-accelerated
