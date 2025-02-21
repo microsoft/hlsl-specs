@@ -21,7 +21,7 @@ use of GPUs for general purpose ML/DL means that GPU vendors continue to add mor
 accelerate neural network computations, like accelerating matrix operations.
 
 This proposal introduces DXIL operations for vector-matrix operations that can
-accelerated by the underlying hardware, building on support for long verctors
+be accelerated by the underlying hardware, building on support for long vectors
 described in proposals [0026] and [0030]. This proposal describes HLSL builtins
 that can be used for example and testing purposes as well as the building blocks
 for a high-level HLSL API. The high-level API is described in proposal \[TBD\].
