@@ -218,7 +218,7 @@ conversions.
 This option is included only because it is technically feasible, not because it
 is a good idea.
 
-### Careful Curation of Overloads
+### Recommended Approach: Careful Curation of Overloads
 
 A more measured partial mitigation is to add additional overloads to builtin
 functions to resolve ambiguity in some but not all cases. Following this model
@@ -238,3 +238,15 @@ This proposal suggests that:
   warn about deprecation in 202x pending removal in 202y.
 * The third category of overloads should be left out from Clang and produce
   errors when migrating from DXC to Clang.
+
+As the recommended approach the following issues have been filed:
+* [[HLSL] max and min overloads with mixed scalar and vector arguments](https://github.com/llvm/llvm-project/issues/128231)
+* [[HLSL] clamp overloads with mixed scalar vector operands](https://github.com/llvm/llvm-project/issues/128230)
+* [[HLSL] Compatibility overloads for integer operations](https://github.com/llvm/llvm-project/issues/128229)
+* [[HLSL] hlsl202x double compatability overloads](https://github.com/llvm/llvm-project/issues/128228)
+* [[HLSL] Add bool compatibility overloads](https://github.com/llvm/llvm-project/issues/92941)
+* [[HLSL] select not resolving correctly for complex cases](https://github.com/llvm/llvm-project/issues/126570)
+
+Should the missing overloads for the third class of methods prove to be a
+significant burden for adoption they could be added under an additional opt-in
+compatibility mode.
