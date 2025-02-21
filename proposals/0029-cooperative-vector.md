@@ -126,7 +126,7 @@ declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32,       ; matrix M dimension    
     immarg i32,       ; matrix K dimension    
     immarg i32,       ; matrix layout
-    immarg i32,       ; matrix transpose      <<< should this be i1?
+    immarg i1,        ; matrix transpose
     i32,              ; matrix stride
     immarg i1)        ; isResultSigned        <<< See #399
 
@@ -140,7 +140,7 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32,       ; matrix M dimension    
     immarg i32,       ; matrix K dimension    
     immarg i32,       ; matrix layout
-    immarg i32,       ; matrix transpose      <<< should this be i1?
+    immarg i1,        ; matrix transpose
     i32,              ; matrix stride
     %dx.types.Handle, ; bias vector resource
     i32,              ; bias vector offset
