@@ -32,7 +32,7 @@ can be supported on all platforms (with some platform-specific limitations).
 
 ## Proposed solution
 
-Below is a proposed Pseudo-HLSL API. The proposal uses C++20 concepts to
+Below is a proposed pseudo-HLSL API. The proposal uses C++20 concepts to
 represent template type constraints so as to avoid needing SFINAE complications.
 
 ```c++
