@@ -51,7 +51,7 @@ uniformity to HLSL's type system and programming model.
 
 ### Uniformity as a Type Qualifier
 
-HLSL should introduce a new set of type qualifiers to represent the different
+This proposal introduces a new set of type qualifiers to represent the different
 scopes of uniformity:
 * `group_uniform`
 * `simd_uniform`
