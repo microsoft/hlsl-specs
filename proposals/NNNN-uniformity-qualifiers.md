@@ -35,7 +35,7 @@ Uniformity can refer to data or control flow. If a variable has the same value
 across all threads in a scope, it is said to be _uniform_ across that scope.
 Similarly if all threads within a scope are actively executing instructions
 within a control flow block, the control flow is said to be _uniform control
-flow_.
+flow_ across that scope.
 
 ## Motivation
 
