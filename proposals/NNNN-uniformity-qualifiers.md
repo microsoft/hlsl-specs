@@ -116,8 +116,8 @@ incorrect source annotations.
 
 ### Uniformity Requirements for Functions
 
-HLSL should introduce a new set of attributes for defining the control flow
-uniformity requirements of functions. These new attributes should take the form:
+This proposal introduces a new set of attributes for defining the control flow
+uniformity requirements of functions. These new attributes take the form:
 
 ```hlsl
 [[hlsl::required_uniform(group|simd|quad)]]
