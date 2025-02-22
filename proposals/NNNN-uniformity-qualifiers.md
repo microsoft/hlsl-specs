@@ -3,8 +3,9 @@
 # Uniformity Qualifiers
 
 * Proposal: [NNNN](NNNN-uniformity-qualifiers.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beeanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beeanz)
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
+* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
+
 * Status: **Under Consideration**
 
 ## Introduction
