@@ -106,8 +106,10 @@ Introduce new DXIL operations to accelarate matrix-vector operations. In this sp
 
 * **Matrix-Vector Multiply:** Multiply a matrix in memory and a vector parameter.
 * **Matrix-Vector Multiply-Add:** Multiply a matrix in memory and a vector parameter and add a vector from memory.
-* **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of two vectors.
-* **Reduce and Accumulate:** Add elements of a vector atomically to the corresponding elements of an array in memory.
+* **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of two vectors and accumulate the result
+    matrix atomically-elementwise in memory.
+* **Reduce and Accumulate:** Accumulate elements of a vector atomically-elementwise to corresponding elements in
+    memory.
 
 
 ## Detailed design
@@ -183,32 +185,32 @@ details.
 
 ##### Matrix
 
-The matrix is loaded from the raw-buffer, **matrix resource**,  starting at
+The matrix is loaded from a raw-buffer, **matrix resource**,  starting at
 **matrix offset**. The **matrix interpretation** argument specifies the element
-type of the matrix (see [Type Interpretations]). The **matrix M dimension** and
-**matrix K dimension** arguments specify the dimensions of the matrix. The
-**matrix layout** argument specifies the layout of the matrix (see [Matrix
-Layouts]). If the **matrix transpose** is non-zero then the matrix is transposed
-before performing the multiply (see [Matrix Transpose]). For row-major and
-column-major layouts, **matrix stride** specifies the number of bytes to go from
-one row/column to the next.  For optimal layouts, **matrix stride** is ignored.
+type of the matrix (see [Type Interpretations]), no conversion is performed. The **matrix M dimension** and **matrix K dimension** arguments specify the dimensions of the matrix. The**matrix layout** argument specifies the layout of the matrix (see [Matrix Layouts]). If the **matrix transpose** is non-zero then the matrix is transposedbefore performing the multiply (see [Matrix Transpose]). For row-major and column-major layouts, **matrix stride** specifies the number of bytes to go from one row/column to the next.  For optimal layouts, **matrix stride** is ignored. 
 
 Only non-packed interpretations are valid for matrices.
 
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
+The **matrix stride** is 16B aligned.
+
+This operation doesn't perform Bounds Checking for matrix loads. Out-Of-Bounds accesses are undefined.
+
 
 ##### Bias Vector
 
 The bias vector is loaded from the raw-buffer, **bias vector resource**,
 starting at **bias vector offset**. The **bias vector interpretation** argument
-specifies the element type of the bias vector (see [Type Interpretations]).
+specifies the element type of the bias vector (see [Type Interpretations]), no conversion is performed.
 
 Only non-packed interpretations are valid for bias vectors.
 
 The base address of **bias vector resource** and **bias vector offset** must be
 64 byte aligned.
+
+This operation doesn't perform Bounds Checking for bias loads. Out-Of-Bounds accesses are undefined.
 
 
 ### Vector Outer Product
@@ -250,6 +252,8 @@ and **matrix layout** behaving as described
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
+The **matrix stride** is 16B aligned.
+
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to determine
 which combinations are supported. A list of combinations that are guaranteed to
@@ -271,7 +275,7 @@ declare void @dx.op.vecreducesumacc.v[NUM][TY](
 #### Overview
 
 Accumulates the components of a vector component-wise atomically (with device
-scope) to the corresponding elements of an array in memory.
+scope) to the corresponding elements of an array in memory. See note in [Atomic Operations].
 
 #### Arguments
 
@@ -289,6 +293,8 @@ by **output array resource** and **output array offset**.  The base address and
 [Matrix Transpose]: #matrix-transpose
 [Minimum Support Set]: #minimum-support-set
 [CheckFeatureSupport]: #check-feature-support
+[Atomic Operations]: #atomic-operations
+[Precision Requirements]: #precision-requirements
 
 
 ### Type Interpretations
@@ -331,7 +337,7 @@ implementation. A list of combinations that are guaranteed to be supported on
 all implementations can be found in [Minimum Support Set]. Note that there is no
 guaranteed support for **matrix tranpose**, and so it must always be queried.
 
-#### Conversation Rules
+#### Conversion Rules
 
 Non-"Packed" type interpretations are used to request arithmetic conversions. Input type must be a 32-bit or 16-bit
 scalar integer or a 32-bit or 16-bit float. Integer to integer conversion saturates, float to float conversion is
@@ -395,6 +401,8 @@ Non-Packed Case:
     1)               ; isResultSigned - true
 ```
 
+#### Precision Requirements
+The precision for intermediate operations is implementation dependent.
 
 ### Matrix Layouts
 
@@ -430,6 +438,10 @@ the [CheckFeatureSupport] (#check-feature-support) struct is used to determine
 if a matrix transpose is supported. Note that even for the type/interpretation
 combinations described in [Minimum Support Set], transpose support isn't
 guaranteed and needs to be checked explicitly.
+
+### Atomic Operations
+
+> Internally these may done component-wise or multiple components may be accumulated in a single atomic, this implementation dependent. In other words, some implementations may use scalar atomics while others may use vector atomics of an arbitrary size. Also, implementations may serialize per-component atomic adds accross threads arbitrarily.
 
 ### Non-Uniform control flow
 
@@ -485,7 +497,7 @@ typedef enum D3D12_COOPERATIVE_VECTOR_DATATYPE {
 
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 {
-    D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,	
+    D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,    
     D3D12_COOPERATIVE_VECTOR_TIER_1_0
 }
 
@@ -576,7 +588,7 @@ d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &CoopVecSupport,
                                  sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
 
 if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
-	// PropCounts to be filled by driver implementation
+    // PropCounts to be filled by driver implementation
     D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
@@ -591,9 +603,9 @@ if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
-																
+                                                                
     // Use VectorMatrixMulAdd shader with datatype and interpretation combination matching one of those returned.
-	
+    
 } else {
     // Don't use Cooperative Vector
 }
@@ -779,16 +791,11 @@ enable generic vectors, it makes sense to not introduce a new datatype but use H
 ## Open Issues
 * Q: Type interpretations to use HLSL conversion rules of ML best practices?
 * A: This spec uses the ML best practices like the SpirV spec. // TODO: get approval
-* Q: The supported types might sometimes need to be emulated as some hardware might not support it.
-* A: Add a query to check which types are native versus emulated
 * Q: More details on formats and their precision requirements
-* A:
+* A: Implementation Dependent
 * Q: How do you handle cases where different implementations may not produce bit identical results?
 * A: Some combination of exactly representable results/ epsilon ranges.
-* Q: Programming guidance about divergence
-* A: While there are no uniformily constraints while using these intrinisics, best perfomance might be implementation specific, likely requiring uniform control flow.
 * Q: Using MatrixView and VectorView as a wrapper for the BAB containing the matrix/bias vectors and their corresponding interpretations.
-* Q: Rename to MatrixVectorMul(Add) to make the left multiply explicit
 
 ## Acknowledgments
 Would like to thank Jeff Bolz and Shashank Wadhwa for their contributions.
