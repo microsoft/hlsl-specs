@@ -196,7 +196,7 @@ aligned.
 
 The **matrix stride** is 16B aligned.
 
-This operation doesn't perform Bounds Checking for matrix loads. Out-Of-Bounds accesses are undefined.
+This operation doesn't perform bounds checking for matrix loads. If any part of the matrix load is out of bounds then the entire operation is undefined.
 
 
 ##### Bias Vector
