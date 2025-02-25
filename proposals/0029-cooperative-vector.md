@@ -201,9 +201,9 @@ Only non-packed interpretations are valid for matrices.
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
-The **matrix stride** is 16B aligned.
+The **matrix stride** is 16 byte aligned.
 
-This operation doesn't perform Bounds Checking for matrix loads. Out-Of-Bounds accesses are undefined.
+This operation doesn't perform bounds checking for matrix loads. If any part of the matrix load is out of bounds then the entire operation is undefined.
 
 
 ##### Bias Vector
@@ -217,7 +217,7 @@ Only non-packed interpretations are valid for bias vectors.
 The base address of **bias vector resource** and **bias vector offset** must be
 64 byte aligned.
 
-This operation doesn't perform Bounds Checking for bias loads. Out-Of-Bounds accesses are undefined.
+This operation doesn't perform bounds checking for bias loads. If any part of the vector load is out of bounds then the entire operation is undefined.
 
 #### Return Type
 
@@ -263,7 +263,7 @@ and **matrix layout** behaving as described
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
-The **matrix stride** is 16B aligned.
+The **matrix stride** is 16 byte aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to determine
@@ -413,6 +413,7 @@ Non-Packed Case:
 ```
 
 #### Precision Requirements
+
 The precision for intermediate operations is implementation dependent.
 
 ### Matrix Layouts
@@ -452,7 +453,7 @@ guaranteed and needs to be checked explicitly.
 
 ### Atomic Operations
 
-> Internally these may done component-wise or multiple components may be accumulated in a single atomic, this implementation dependent. In other words, some implementations may use scalar atomics while others may use vector atomics of an arbitrary size. Also, implementations may serialize per-component atomic adds accross threads arbitrarily.
+Internally these may done component-wise or multiple components may be accumulated in a single atomic, this is implementation dependent. In other words, some implementations may use scalar atomics while others may use vector atomics of an arbitrary size. Also, implementations may serialize per-component atomic adds accross threads arbitrarily.
 
 ### Non-Uniform control flow
 
