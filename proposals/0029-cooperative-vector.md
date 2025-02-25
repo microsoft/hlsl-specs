@@ -210,7 +210,7 @@ Only non-packed interpretations are valid for bias vectors.
 The base address of **bias vector resource** and **bias vector offset** must be
 64 byte aligned.
 
-This operation doesn't perform Bounds Checking for bias loads. Out-Of-Bounds accesses are undefined.
+This operation doesn't perform bounds checking for bias loads. If any part of the vector load is out of bounds then the entire operation is undefined.
 
 #### Return Type
 
