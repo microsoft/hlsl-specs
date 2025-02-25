@@ -212,6 +212,10 @@ The base address of **bias vector resource** and **bias vector offset** must be
 
 This operation doesn't perform Bounds Checking for bias loads. Out-Of-Bounds accesses are undefined.
 
+#### Return Type
+
+This operation returns a vector of size `NUMo` and contains elements of type `TYo`. The result vector does not have an interpretation parameter, its type is the declared type.
+
 
 ### Vector Outer Product
 
