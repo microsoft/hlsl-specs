@@ -187,7 +187,14 @@ details.
 
 The matrix is loaded from a raw-buffer, **matrix resource**,  starting at
 **matrix offset**. The **matrix interpretation** argument specifies the element
-type of the matrix (see [Type Interpretations]), no conversion is performed. The **matrix M dimension** and **matrix K dimension** arguments specify the dimensions of the matrix. The**matrix layout** argument specifies the layout of the matrix (see [Matrix Layouts]). If the **matrix transpose** is non-zero then the matrix is transposedbefore performing the multiply (see [Matrix Transpose]). For row-major and column-major layouts, **matrix stride** specifies the number of bytes to go from one row/column to the next.  For optimal layouts, **matrix stride** is ignored. 
+  type of the matrix (see [Type Interpretations]), no conversion is performed.
+  The **matrix M dimension** and **matrix K dimension** arguments specify the
+  dimensions of the matrix. The**matrix layout** argument specifies the layout
+  of the matrix (see [Matrix Layouts]). If the **matrix transpose** is non-zero
+  then the matrix is transposed before performing the multiply (see
+  [Matrix Transpose]). For row-major and column-major layouts, **matrix
+  stride** specifies the number of bytes to go from one row/column to the next.
+  For optimal layouts, **matrix stride** is ignored. 
 
 Only non-packed interpretations are valid for matrices.
 
