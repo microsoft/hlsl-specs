@@ -446,7 +446,7 @@ guaranteed and needs to be checked explicitly.
 
 ### Atomic Operations
 
-> Internally these may done component-wise or multiple components may be accumulated in a single atomic, this implementation dependent. In other words, some implementations may use scalar atomics while others may use vector atomics of an arbitrary size. Also, implementations may serialize per-component atomic adds accross threads arbitrarily.
+Internally these may done component-wise or multiple components may be accumulated in a single atomic, this is implementation dependent. In other words, some implementations may use scalar atomics while others may use vector atomics of an arbitrary size. Also, implementations may serialize per-component atomic adds accross threads arbitrarily.
 
 ### Non-Uniform control flow
 
