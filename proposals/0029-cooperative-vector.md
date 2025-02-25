@@ -256,7 +256,7 @@ and **matrix layout** behaving as described
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
-The **matrix stride** is 16B aligned.
+The **matrix stride** is 16 byte aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to determine
