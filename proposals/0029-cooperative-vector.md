@@ -406,6 +406,7 @@ Non-Packed Case:
 ```
 
 #### Precision Requirements
+
 The precision for intermediate operations is implementation dependent.
 
 ### Matrix Layouts
