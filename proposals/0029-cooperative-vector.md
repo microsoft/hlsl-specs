@@ -194,7 +194,7 @@ Only non-packed interpretations are valid for matrices.
 The base address of **matrix resource** and **matrix offset** must be 64 byte
 aligned.
 
-The **matrix stride** is 16B aligned.
+The **matrix stride** is 16 byte aligned.
 
 This operation doesn't perform bounds checking for matrix loads. If any part of the matrix load is out of bounds then the entire operation is undefined.
 
