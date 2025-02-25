@@ -595,7 +595,8 @@ if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                      sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
 
-    // Use VectorMatrixMulAddPropCount returned from the above CheckFeatureSupport call to query only VectorMatrixMulAddProperties
+    // Use VectorMatrixMulAddPropCount returned from the above 
+    // CheckFeatureSupport call to query only VectorMatrixMulAddProperties
     UINT VectorMatrixMulAddPropCount = CoopVecSupport.VectorMatrixMulAddPropCount;
     std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(VectorMatrixMulAddPropCount);
     CoopVecSupport.pVectorMatrixMulAddProperties = properties.data();
