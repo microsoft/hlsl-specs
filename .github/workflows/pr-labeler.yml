@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Automation Script
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github
-          ref: main
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: .github
+        ref: main
     - uses: actions/labeler@v5
       with:
-          configuration-path: .github/prs-labels.yml
+          configuration-path: .github/pr-labels.yml

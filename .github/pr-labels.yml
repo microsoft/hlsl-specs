@@ -1,2 +1,7 @@
 needs-triage:
-  - proposals/**/*
+- changed-files:
+  - any-glob-to-any-file: 'proposals/**/*'
+
+language-spec:
+- changed-files:
+  - any-glob-to-any-file: 'specs/**/*'

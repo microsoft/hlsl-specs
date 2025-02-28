@@ -1,0 +1,759 @@
+\Ch{Resource Types}{Resources}
+
+Resources are built-in intangible types representing memory with an external interface.
+
+These take the form of Typed Buffers, Raw Buffers, Textures, and Samplers.
+Buffer and Texture types can be read-only or writable.
+
+\Sec{Typed Buffers}{Resources.tybufs}
+
+The typed buffer class template represents a one-dimensional resource containing an array of a single given type.
+Its contents are indexed by typed access to each element
+Types may have their formats converted upon load.
+
+Template types can be any type that totals or can be padded to 16 bytes.
+
+All typed buffers can be read through subscript operators or Load methods.
+Writable typed buffers can be written through subscript operators.
+
+Where \texttt{T} can be any arithmetic type \ref{Basic.types.arithmetic}
+or a vector with a maximum of four elements containing such an arithmetic type.
+The total size of a single contained element must be less than 16 bytes.
+
+Typed buffers perform format conversions on load such that the underlying data
+gets converted to the destination type.
+
+\begin{HLSL}
+template <typename T = float4>
+ class Buffer {
+ public:
+   Buffer();
+   Buffer(const Buffer &buf);
+   Buffer &operator=(Buffer &buf);
+
+   void GetDimensions(out uint width) const;
+
+   // Element access.
+   T operator[](int index) const;
+   T Load(in int index) const;
+   T Load(in int index, out uint status) const;
+};
+
+
+template <typename T>
+ class RWBuffer : public Buffer {
+ public:
+   RWBuffer();
+   RWBuffer(RWBuffer buf);
+   RWBuffer &operator=(RWBuffer &buf);
+
+   // element access
+   T &operator[](int n);
+};
+}
+\end{HLSL}
+
+\Sub{Constructors}{Resources.tybufs.ctrs}
+
+Read-only Buffers can be defined with explicit or implicit template parameter types.
+\begin{HLSL}
+  Buffer buf1;
+  Buffer<> buf2;
+  Buffer<float4> buf3;
+\end{HLSL}
+Since \texttt{float4} is the default type, all of these definitions are equivalent.
+
+RWBuffers must be defined with explicit template parameter types.
+\begin{HLSL}
+  RWBuffer<float4> buf;
+\end{HLSL}
+
+When defined at global scope, typed buffers are bound to externally-defined backing stores
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
+
+When defined at local scope, typed buffers represent local references
+that can be associated with global buffers when assigned,
+but must be resolvable to a unique global buffer declaration.
+
+\begin{note}
+In the case of a buffer array declaration, a unique global declaration references all the buffers in the array.
+Local buffer assignments can map to different resource array elements depending on runtime values.
+\end{note}
+
+\begin{HLSL}
+  Buffer<int> grobuf;
+  RWBuffer<int> grwbuf;
+  void main() {
+    Buffer<int> lrobuf = grobuf;
+    RWBuffer<int> lrwbuf = grwbuf;
+  }
+\end{HLSL}
+
+Buffers cannot be implicitly nor explicitly cast from one type to another.
+This means that local buffers can only be assigned from buffers with the same element type.
+
+\Sub{Dimensions}{Resources.tybufs.dims}
+
+The size of a typed buffer can be retrieved using the \texttt{GetDimensions} method.
+\begin{HLSL}
+void GetDimensions(out uint width) const;
+\end{HLSL}
+
+This returns the full length, in elements of the buffer through the \texttt{width} out parameter.
+
+\Sub{Element Access}{Resources.tybufs.access}
+
+The contents of typed buffers can be retrieved using the \texttt{Load} methods
+or the subscript operator.
+
+\begin{HLSL}
+ T Load(in int index) const;
+ T operator[](int index) const;
+\end{HLSL}
+
+These each return the element of the buffer's type at the given index \texttt{index}.
+
+An additional \texttt{Load} method returns the indicated element just as the other,
+but also takes a second \texttt{status} parameter that returns information about the accessed resource.
+\begin{HLSL}
+ T Load(in int index, out uint status) const;
+\end{HLSL}
+
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
+
+Writable buffers have an additional subscript operator that allows assignment to an element of the buffer.
+It behaves as if it returns a reference to that element.
+\begin{HLSL}
+ T &operator[](int index);
+\end{HLSL}
+
+Partial writes aren't allowed.
+Assignment to individual vector elements will result in an error.
+
+\Sec{Raw Buffers}{Resources.rawbufs}
+
+Raw buffers are one-dimensional resources of arbitrary memory layout.
+They are either ByteAddressBuffers or StructuredBuffers.
+ByteAddressBuffers enable per-byte access to the raw data while
+StructuredBuffers have an associated structure type that determines how they are
+indexed. This type can be a scalar, vector, matrix, or user-defined struct.
+
+\Sec{Byte Access Buffers}{Resources.babufs}
+
+\begin{HLSL}
+ class ByteAddressBuffer {
+ public:
+   ByteAddressBuffer();
+   ByteAddressBuffer(const ByteAddressBuffer &buf);
+   ByteAddressBuffer &operator=(ByteAddressBuffer &buf);
+
+   void GetDimensions(out uint size) const;
+
+   // Element access.
+   uint Load(in uint offset) const;
+   uint2 Load2(in uint offset) const;
+   uint3 Load3(in uint offset) const;
+   uint4 Load4(in uint offset) const;
+   template<typename T>
+   T Load(in uint offset) const;
+
+   uint Load(in uint offset, out uint status) const;
+   uint2 Load2(in uint offset, out uint status) const;
+   uint3 Load3(in uint offset, out uint status) const;
+   uint4 Load4(in uint offset, out uint status) const;
+   template<typename T>
+   T Load(in uint offset, out uint status) const;
+};
+
+ class RWByteAddressBuffer : public ByteAddressBuffer {
+ public:
+   RWByteAddressBuffer();
+   RWByteAddressBuffer(const RWByteAddressBuffer &buf);
+   RWByteAddressBuffer &operator=(RWByteAddressBuffer &buf);
+
+   // Element assignment.
+   void Store(in uint offset, in uint value);
+   void Store2(in uint offset, in uint2 value);
+   void Store3(in uint offset, in uint3 value);
+   void Store4(in uint offset, in uint4 value);
+   template<typename T>
+   void Store(in uint offset, in T value);
+
+   // 32-bit integer atomic arithmetic/bitwise operations.
+   void InterlockedAdd(in uint offset, in uint value);
+   void InterlockedAdd(in uint offset, in uint value, out uint original);
+   void InterlockedAnd(in uint offset, in uint value);
+   void InterlockedAnd(in uint offset, in uint value, out uint original);
+   void InterlockedOr(in uint offset, in uint value);
+   void InterlockedOr(in uint offset, in uint value, out uint original);
+   void InterlockedXor(in uint offset, in uint value);
+   void InterlockedXor(in uint offset, in uint value, out uint original);
+
+   // 32-bit integer atomic comparison operations
+   void InterlockedMin(in uint offset, in int value);
+   void InterlockedMin(in uint offset, in uint value);
+   void InterlockedMin(in uint offset, in int value, out int original);
+   void InterlockedMin(in uint offset, in uint value, out uint original);
+   void InterlockedMax(in uint offset, in int value);
+   void InterlockedMax(in uint offset, in uint value);
+   void InterlockedMax(in uint offset, in int value, out int original);
+   void InterlockedMax(in uint offset, in uint value, out uint original);
+
+   // 32-bit integer atomic compare/exchange operations
+   void InterlockedCompareStore(in uint offset, in uint compare, in uint value);
+   void InterlockedExchange(in uint offset, in uint value, out uint original);
+   void InterlockedCompareExchange(in uint offset, in uint compare, in uint value,
+                                    out uint original);
+
+   // 64-bit integer atomic arithmatic/bitwise operations
+   void InterlockedAdd64(in uint offset, in uint64_t value);
+   void InterlockedAdd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedAnd64(in uint offset, in uint64_t value);
+   void InterlockedAnd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedOr64(in uint offset, in uint64_t value);
+   void InterlockedOr64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedXor64(in uint offset, in uint64_t value);
+   void InterlockedXor64(in uint offset, in uint64_t value, out uint64_t original);
+
+   // 64-bit integer atomic comparison operations
+   void InterlockedMin64(in uint offset, in int64_t value);
+   void InterlockedMin64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint offset, in uint64_t value);
+   void InterlockedMin64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint offset, in int64_t value);
+   void InterlockedMax64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint offset, in uint64_t value);
+   void InterlockedMax64(in uint offset, in uint64_t value, out uint64_t original);
+
+   // 64-bit integer atomic compare/exchange operations
+   void InterlockedCompareStore64(in uint offset, in uint64_t compare,
+                                   in uint64_t value);
+   void InterlockedExchange64(in uint offset, in int64_t value,
+                               out int64_t original);
+   void InterlockedCompareExchange64(in uint offset, in uint64_t compare,
+                                      in uint64_t value, out int64_t original);
+
+   // 32-bit float atomic compare/exchange operations
+   void InterlockedCompareStoreFloatBitwise(in uint byteOffest,
+                                             in float compare, in float value);
+   void InterlockedExchangeFloat(in uint byteOffest, in float value,
+                                  out float original);
+   void InterlockedCompareExchangeFloatBitwise(in uint byteOffest,
+                                                in float compare,
+                                                in float value,
+                                                out float original);
+};
+\end{HLSL}
+
+\Sub{Constructors}{Resources.babufs.ctrs}
+
+Since their contents are viewed as raw bytes, ByteAddressBuffers are defined without any type parameters.
+\begin{HLSL}
+  ByteAddressBuffer robuf;
+  RWByteAddressBuffer rwbuf;
+\end{HLSL}
+
+When defined at global scope, ByteAccessBuffers are bound to externally-defined backing stores
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
+
+When defined at local scope, ByteAccessBuffers represent local references
+that can be associated with global ByteAccessBuffers when assigned,
+but must be resolvable to a unique global buffer declaration.
+
+\begin{HLSL}
+  ByteAddressBuffer grobuf;
+  RWByteAddressBuffer grwbuf;
+  void main() {
+    ByteAddressBuffer lrobuf = grobuf;
+    RWByteAddressBuffer lrwbuf = grwbuf;
+  }
+\end{HLSL}
+
+\Sub{Dimensions}{Resources.babufs.dims}
+
+The size of a ByteAddressBuffer can be retrieved using the \texttt{GetDimensions} method.
+\begin{HLSL}
+void GetDimensions(out uint size) const;
+\end{HLSL}
+
+This returns the full size of the buffer in bytes through the \texttt{size} out parameter.
+
+\Sub{Element Access}{Resources.babufs.access}
+
+The contents of ByteAddressBuffers can be retrieved using the \texttt{Load} methods.
+
+\begin{HLSL}
+ uint Load(in uint offset) const;
+ uint2 Load2(in uint offset) const;
+ uint3 Load3(in uint offset) const;
+ uint4 Load4(in uint offset) const;
+\end{HLSL}
+
+These each return the bytes at the given byte offset into the buffer \texttt{offset} in the form of one or more unsigned integers.
+The \texttt{offset} address must be a multiple of 4.
+Each of the variants returns a number of bytes corresponding to the size of the uint vector returned.
+
+An additional templated load method allows returning the bytes at the given byte offset in the form
+of the type given in the template parameter. This can be a scalar, vector, matrix, or user-defined struct.
+
+\begin{HLSL}
+  template<typename T>
+  T Load(in uint offset) const;
+\end{HLSL}
+
+The alignment requirements of \texttt{offset} for this operation is the alignment requirement
+of an object of type \texttt{T} in the device memory space (\ref{Intro.Memory.Alignment}).
+
+Additional \texttt{Load} methods return the same values as the others,
+but also take a second \texttt{status} parameter that returns information about the accessed resource.
+\begin{HLSL}
+  uint Load(in uint offset, out uint status) const;
+  uint2 Load2(in uint offset, out uint status) const;
+  uint3 Load3(in uint offset, out uint status) const;
+  uint4 Load4(in uint offset, out uint status) const;
+  template<typename T>
+  T Load(in uint offset, out uint status) const;
+\end{HLSL}
+
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
+
+\Sub{Atomic Operations}{Resources.babufs.atomics}
+
+RWByteAddressBuffers have a suite of atomic methods that perform the given operation
+on type-appropriate-sized element data at the given buffer offset
+in a way that ensures no contention from other threads performing other operations.
+Each of these operates on two 32 or 64 bit values: the given parameter value and the buffer value.
+The buffer value is a 32 or 64 bit value at a given offset into the buffer.
+Each method has an overload that returns the original buffer value before the atomic operation was performed.
+
+\begin{HLSL}
+   void InterlockedAdd(in uint offset, in uint value);
+   void InterlockedAdd(in uint offset, in uint value, out uint original);
+   void InterlockedAnd(in uint offset, in uint value);
+   void InterlockedAnd(in uint offset, in uint value, out uint original);
+   void InterlockedOr(in uint offset, in uint value);
+   void InterlockedOr(in uint offset, in uint value, out uint original);
+   void InterlockedXor(in uint offset, in uint value);
+   void InterlockedXor(in uint offset, in uint value, out uint original);
+\end{HLSL}
+
+Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or on
+the 32-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the result to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedMin(in uint offset, in int value);
+   void InterlockedMin(in uint offset, in uint value);
+   void InterlockedMin(in uint offset, in int value, out int original);
+   void InterlockedMin(in uint offset, in uint value, out uint original);
+   void InterlockedMax(in uint offset, in int value);
+   void InterlockedMax(in uint offset, in uint value);
+   void InterlockedMax(in uint offset, in int value, out int original);
+   void InterlockedMax(in uint offset, in uint value, out uint original);
+\end{HLSL}
+
+Perform the sign-approrpriate minimum or maximum comparison on
+the 32-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the lesser or greater value, as appropriate, to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedExchange(in uint offset, in uint value, out uint original);
+\end{HLSL}
+
+Performs an atomic exchange of
+the 32-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedCompareStore(in uint offset, in uint compare, in uint value);
+   void InterlockedCompareExchange(in uint offset, in uint compare, in uint value,
+                                    out uint original);
+\end{HLSL}
+
+Perform an atomic exchange of or store to
+the 32-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare}.
+\texttt{InterlockedCompareExchange} returns the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedAdd64(in uint offset, in uint64_t value);
+   void InterlockedAdd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedAnd64(in uint offset, in uint64_t value);
+   void InterlockedAnd64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedOr64(in uint offset, in uint64_t value);
+   void InterlockedOr64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedXor64(in uint offset, in uint64_t value);
+   void InterlockedXor64(in uint offset, in uint64_t value, out uint64_t original);
+\end{HLSL}
+
+Perform atomic addition, bitwise and, bitwise or, or bitwise exclusive or on
+the 64-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the result to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedMin64(in uint offset, in int64_t value);
+   void InterlockedMin64(in uint offset, in uint64_t value);
+   void InterlockedMin64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMin64(in uint offset, in uint64_t value, out uint64_t original);
+   void InterlockedMax64(in uint offset, in int64_t value);
+   void InterlockedMax64(in uint offset, in uint64_t value);
+   void InterlockedMax64(in uint offset, in int64_t value, out int64_t original);
+   void InterlockedMax64(in uint offset, in uint64_t value, out uint64_t original);
+\end{HLSL}
+
+Perform the sign-approrpriate minimum or maximum comparison on
+the 64-bit integer buffer value at the byte offset \texttt{offset} and the provided \texttt{value}.
+Store the lesser or greater value, as appropriate, to that offset buffer location,
+optionally returning the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedExchange64(in uint offset, in uint64_t value, out uint64_t original);
+\end{HLSL}
+
+Performs an atomic exchange of
+the 64-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedCompareStore64(in uint offset, in uint64_t compare,
+                                   in uint64_t value);
+   void InterlockedCompareExchange64(in uint offset, in uint64_t compare,
+                                      in uint64_t value, out uint64_t original);
+\end{HLSL}
+
+Perform an atomic exchange of or store to
+the 64-bit integer buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare}.
+\texttt{InterlockedCompareExchange} returns the original buffer value through \texttt{original}.
+
+\begin{HLSL}
+   void InterlockedExchangeFloat(in uint byteOffest, in float value,
+                                  out float original);
+\end{HLSL}
+
+Performs an atomic exchange of
+the 32-bit float buffer value at the byte offset \texttt{offset} with the provided \texttt{value}.
+Stores \texttt{value} at the offset buffer location
+and returns the original buffer value through \texttt{original}.
+
+
+\begin{HLSL}
+  void InterlockedCompareStoreFloatBitwise(in uint byteOffest, in float compare,
+                                            in float value);
+  void InterlockedCompareExchangeFloatBitwise(in uint byteOffest,
+                                               in float compare,
+                                               in float value,
+                                               out float original);
+\end{HLSL}
+
+Perform an atomic exchange of or store to
+the 32-bit float buffer value at the byte offset \texttt{offset} with the provided \texttt{value}
+if the value at that location matches the value of \texttt{compare} in a bitwise comparison.
+\texttt{InterlockedCompareExchangeFloatBitwise} returns the original buffer value through \texttt{original}.
+
+Unlike standard floating point comparisons, values will only match if the bit
+representation matches which can miss some matching values that have different
+bit repesantations in addition to ignoring floating point rules surrounding NaN
+and infinite values.
+
+\Sec{Structured Buffers}{Resources.stbufs}
+
+Structured buffers are raw buffers with associated types that facilitate
+indexing.
+Unlike typed buffers, they perform no format conversions.
+The buffer contents is treated as raw data.
+Accessors return the contained bytes as the target type with no conversions or interpolations applied.
+Structured buffers can be defined with scalar, vector, matrix, or user-defined
+struct elements.
+
+Structured buffers can be read-only, writable, appendable, or consumable.
+Writable buffers can have their elements assigned in arbitrary locations.
+Append structured buffers can only have elements added to the end.
+Consume structured buffers can only have elements removed from the end.
+
+\begin{HLSL}
+template <typename T>
+ class StructuredBuffer {
+ public:
+   StructuredBuffer();
+   StructuredBuffer(const StructuredBuffer &buf);
+   StructuredBuffer &operator=(StructuredBuffer &buf);
+
+   void GetDimensions(out uint count, out uint stride) const;
+
+   // Element access.
+   T operator[](int index) const;
+   T Load(in int index) const;
+   T Load(in int index, out uint status) const;
+};
+
+template <typename T>
+ class RWStructuredBuffer : public StructuredBuffer {
+ public:
+   RWStructuredBuffer();
+   RWStructuredBuffer(const RWStructuredBuffer &buf);
+   RWStructuredBuffer &operator=(RWStructuredBuffer &buf);
+
+   // Element assignment.
+   T &operator[](int index);
+
+   // Hidden counter increment/decrement.
+   uint IncrementCounter();
+   uint DecrementCounter();
+};
+
+template <typename T>
+ class AppendStructuredBuffer {
+ public:
+   AppendStructuredBuffer();
+   AppendStructuredBuffer(const AppendStructuredBuffer &buf);
+   AppendStructuredBuffer &operator=(AppendStructuredBuffer &buf);
+
+   void GetDimensions(out uint count, out uint stride) const;
+
+   void Append(in T value);
+};
+
+template <typename T>
+ class ConsumeStructuredBuffer {
+ public:
+   ConsumeStructuredBuffer();
+   ConsumeStructuredBuffer(const ConsumeStructuredBuffer &buf);
+   ConsumeStructuredBuffer &operator=(ConsumeStructuredBuffer &buf);
+
+   void GetDimensions(out uint count, out uint stride) const;
+
+   T Consume();
+};
+
+\end{HLSL}
+
+\Sub{Constructors}{Resources.stbufs.ctrs}
+
+Structured buffers must be defined with explicit template parameter types.
+\begin{HLSL}
+  struct S {int i; float f;};
+  StructuredBuffer<S> robuf1;
+  StructuredBuffer<float4> robuf2;
+  StructuredBuffer<float2x3> robuf3;
+
+  RWStructuredBuffer<S> rwbuf1;
+  RWStructuredBuffer<float4> rwbuf2;
+  RWStructuredBuffer<float2x3> rwbuf3;
+
+  AppendStructuredBuffer<S> apbuf1;
+  AppendStructuredBuffer<float4> apbuf2;
+  AppendStructuredBuffer<float2x3> apbuf3;
+
+  ConsumeStructuredBuffer<S> cobuf1;
+  ConsumeStructuredBuffer<float4> cobuf2;
+  ConsumeStructuredBuffer<float2x3> cobuf3;
+\end{HLSL}
+
+When defined at global scope, structured buffers are bound to externally-defined backing stores
+using the explicit binding location if provided or the implicit binding if not (\ref{Resources.binding}).
+
+When defined at local scope, structured buffers represent local references
+that can be associated with global buffers when assigned,
+but must be resolvable to a unique global buffer declaration.
+
+\begin{note}
+Resource types contained in structs are only allocated registers when they are explicitly used.
+This includes elements of arrays of resources as such array elements must be indexed with literals.
+\end{note}
+
+
+\begin{HLSL}
+  StructuredBuffer<int3x3> grobuf;
+  RWStructuredBuffer<int3x3> grwbuf;
+  AppendStructuredBuffer<int3x3> gapbuf;
+  ConsumeStructuredBuffer<int3x3> gcobuf;
+  void main() {
+    StructuredBuffer<int3x3> lrobuf = grobuf;
+    RWStructuredBuffer<int3x3> lrwbuf = grwbuf;
+    AppendStructuredBuffer<int3x3> lbuf = gapbuf;
+    ConsumeStructuredBuffer<int3x3> lcobuf = gcobuf;
+  }
+\end{HLSL}
+Structured buffer operands to the assignment operator must have the same element type.
+
+\Sub{Dimensions}{Resources.stbufs.dims}
+
+The structure count and stride of a structured buffer can be retrieved using the \texttt{GetDimensions} method.
+\begin{HLSL}
+void GetDimensions(out uint count, out uint stride);
+\end{HLSL}
+
+This returns number of structured elements of the buffer through the \texttt{count} out parameter
+and the size of each element in bytes through the \texttt{stride} out parameter.
+
+\Sub{Element Access}{Resources.stbufs.access}
+
+The contents of read-only StructuredBuffers and writable RWStructuredBuffers can be retrieved
+using the \texttt{Load} methods or the subscript operator.
+
+\begin{HLSL}
+ T Load(in int index) const;
+ T operator[](int index) const;
+\end{HLSL}
+
+These each return the element of the buffer's type at the given index \texttt{index}.
+
+An additional \texttt{Load} method returns the indicated element just as the other,
+but also takes a second \texttt{status} parameter that returns information about the accessed resource.
+\begin{HLSL}
+ T Load(in int index, out uint status) const;
+\end{HLSL}
+
+The \texttt{status} parameter returns an indication of whether all of the retrieved value
+came from fully mapped parts of the resource.
+This parameter must be passed to the built-in function \texttt{CheckAccessFullyMapped} (\ref{Resources.mapcheck})
+in order to interpret it.
+
+Writable RWStructuredBuffers have an additional subscript operator that allows assignment to a structure element of the buffer.
+It behaves as if it returns a reference to that element.
+\begin{HLSL}
+ T &operator[](int index);
+\end{HLSL}
+
+\Sub{Counter Manipulation}{Resources.stbufs.counter}
+
+RWStructuredBuffers may have a hidden counter that can be incremented and decremented using methods.
+
+\begin{HLSL}
+   uint IncrementCounter();
+   uint DecrementCounter();
+\end{HLSL}
+
+Increment or decrements the hidden counter associated with the RWStructuredBuffer.
+\texttt{IncrementCounter} returns the pre-increment value of the counter.
+\texttt{DecrementCounter} returns the post-decrement value of the counter.
+
+\Sub{Append}{Resources.stbufs.append}
+
+AppendStructuredBuffers can only be appended to as an output stream.
+
+\begin{HLSL}
+   void Append(in T value);
+\end{HLSL}
+
+Appends the \texttt{value} of the template parameter types to the end of the AppendStructuredBuffer.
+Subsequent appends will continue to add elements to the end of the buffer.
+
+\Sub{Consume}{Resources.cnstbufs.consume}
+
+ConsumeStructuredBuffers can only have values pulled from them as an input stream.
+
+\begin{HLSL}
+   T Consume();
+\end{HLSL}
+
+Removes and returns a value of the template parameter types from the end of the ConsumeStructuredBuffer.
+
+\Sec{Constant Buffers}{Resources.cnbuf}
+
+\Sec{Samplers}{Resources.samp}
+
+\Sec{CheckAccessFullyMapped}{Resources.mapcheck}
+
+The mapped status value returned by certain texture and buffer methods can be intrepreted by a built-in function:
+
+\begin{HLSL}
+  bool CheckAccessFullyMapped(in uint status);
+\end{HLSL}
+
+This function returns true is the value was accessed from a fully committed resource,
+or from fully mapped pages of a sparse resource.
+If any part of the return value was from unmapped memory, false is returned.
+
+\Sec{Resource Binding}{Resources.binding}
+
+Resources are bound to external memory using virtual registers within logical registers spaces.
+These can be specified explicitly using attributes after the global resource declaration
+or implicitly by leaving them off.
+
+\begin{grammar}
+  \define{resource-binding}\br
+  \terminal{: register(} register-type bind-number \terminal{)}\br
+  \terminal{: register(} register-type bind-number , \terminal{space} bind-number \terminal{)}\br
+  \define{register-type} \textnormal{one of}\br
+  \terminal{t u b s}\br
+  \define{bind-number}\br
+  digit\br
+  bind-number digit\br
+\end{grammar}
+
+The register type indicates whether the binding is for a read-only (\texttt{t}), a writable (\texttt{u}),
+a constant buffer (\texttt{b}), or a sampler (\texttt{s}).
+The register bind number indicates the register number at which the resource variable begins.
+The optional second parameter indicates the virtual register space that the register belongs to.
+
+Sample syntax of virtual register binding attributes:
+\begin{HLSL}
+  Buffer<float> robuf : register(t0, space0);
+  RWBuffer<float> rwbuf : register(u0, space0);
+  SamplerState samp : register(s0, space0);
+  cbuffer cbuf : register(b0, space0) { float f; };
+\end{HLSL}
+
+Each resource must have a unique register. Different resources cannot occupy the same register,
+but read-only and writable buffers have separate namespaces and different logical register spaces have independent
+sets of register numbers. Meaning the following is all allowed:
+\begin{HLSL}
+  Buffer<float> mybuf : register(t0, space0);
+  Buffer<float> yourbuf : register(t0, space1);
+  RWBuffer<float> hisbuf : register(u0, space0);
+  RWBuffer<float> herbuf : register(u0, space1);
+\end{HLSL}
+
+An aggregate resource type can be:
+\begin{itemize}
+\item a struct containing one or more resources types
+\item an array of resource types
+\item an array or struct containing either of the above
+\end{itemize}
+
+Aggregate resource types with register annotations
+occupy the first register they specify and however many additional sequential registers
+the aggregate requires to assign a register to each of its elements that correspond to the given register type.
+Multiple register annotations can be placed on aggregates involving structs where each corresponds to a distinct
+register type that will apply to all the registers of that type in the aggregate.
+
+\begin{note}
+Resource types contained in structs are only allocated registers when they are explicitly used.
+This includes elements of arrays of resources since such array elements must be indexed with literals.
+\end{note}
+
+\begin{HLSL}
+  // Occupies t0, t1, and t2.
+  Buffer<float> fbuf[3] : register(t0, space0);
+  // Occupies registers t3 - t14.
+  Buffer<int4> ibuf[4][3] : register(t3, space0);
+  // Occupies registers t15 and u0.
+  struct {RWBuffer<int> rwbuf; Buffer buf;} sbufs : register(t15) : register(u0);
+  // Occupies registers t16 - t21.
+  struct {Buffer bufs[5]; Buffer buf;} robufs : register(t16);
+  // Occupies registers t22-24 and u1-u2
+  struct {Buffer r; RWBuffer<int> w;} bibufs[2] : register(t22) : register(u1);
+\end{HLSL}
+
+If the register binding or register space is not specified, implicit values are used.
+Whenever not specified, the space defaults to \texttt{space0}.
+
+\begin{HLSL}
+  Buffer<float2> buf1 : register(t0, space0);
+  Buffer<float2> buf2 : register(t1); // defaults to space0
+\end{HLSL}
+
+When the register is not specified, resources will recieve implementation-dependent register assignments.

@@ -167,7 +167,7 @@ even less likely.
 
 ### D3D Runtime Behavior
 
-Starting with AgilitySDK version TBD, the runtime adopts new behavior for how 
+Starting with AgilitySDK version 1.615, the runtime adopts new behavior for how 
 and when the shader hash is validated, including support for bytecode validation 
 in the debug layer.
 

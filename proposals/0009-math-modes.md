@@ -11,7 +11,7 @@
 
 Shaders frequently need fine-grained control over the way the compiler optimizes
 (or doesn't) math optimizations. To enhance developer control in a more robust
-way than the existing `precice` qualifier, HLSL should gain a higher level
+way than the existing `precise` qualifier, HLSL should gain a higher level
 concept of math modes.
 
 ## Motivation
