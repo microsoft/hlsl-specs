@@ -121,8 +121,8 @@ are converted to \texttt{true}.
 \Sec{Flat conversion}{Conv.flat}
 
 \p There is a flattened order of subobjects for an aggregate, \texttt{A},
-\texttt{A$^\prime$}, as described in section \ref{Decl.Init.Agg}.  An aggregate,
-\texttt{A}, can be flat converted to an aggregate, \texttt{B}, whose flattened
+\texttt{A$^\prime$}, as described in section \ref{Decl.Init.Agg}.  A prvalue of an aggregate,
+\texttt{A}, can be flat converted to a prvalue of an aggregate, \texttt{B}, whose flattened
 form is \texttt{B$^\prime$}, if the following conditions are true: 
 \begin{itemize}
 \item The length of \texttt{A$^\prime$}, \texttt{N}, is greater than or equal to the
@@ -130,6 +130,18 @@ length of \texttt{B$^\prime$}, \texttt{M}.
 \item For every index \texttt{I} from \texttt{0} to \texttt{M-1}, there exists an
 implicit conversion from \texttt{A$^\prime$[I]} to \texttt{B$^\prime$[I]}.
 \end{itemize}
+
+\p A glvalue of type \texttt{T[N]} can be converted to a cxvalue of type \texttt{T}.
+
+%{This is true if N is >= M but if N = M then there isnt really a cast}
+\p A glvalue of type \texttt{T[N]} can be converted to a cxvalue of type \texttt{T[M]},
+if \texttt{N} is greater than \texttt{M}.
+
+\p A glvalue of type \texttt{T[N]} can be converted to a cxvalue of type
+\texttt{vector<T,M>}, if \texttt{N} is greater than or equal to \texttt{M}.
+
+\p A glvalue of type \texttt{vector<T,N>} can be converted to a cxvalue of
+type \texttt{T[M]}, if \texttt{N} is greater than or equal to \texttt{M}.
 
 \Sec{Vector splat conversion}{Conv.vsplat}
 
@@ -143,41 +155,36 @@ replicated into each element of the destination.
 prvalue of type \texttt{matrix<T,x,y>}. The destination value is the source
 value replicated into each element of the destination.
 
-\p A glvalue of type \texttt{vector<T,1>} can be converted to a cxvalue of type
-\texttt{vector<T,x>} or a prvalue of type \texttt{vector<T,1>} can be converted
+\p A prvalue of type \texttt{vector<T,1>} can be converted
 to a prvalue of type \texttt{vector<T,x>}. The destination value is the value in
 the source vector replicated into each element of the destination.
 
 \Sec{Array and Class splat conversion}{Conv.asplat}
 
-\p A glvalue of type \texttt{T} can be converted to a cxvalue of type
-\texttt{struct S} or a prvalue of type \texttt{T} can be converted to a
+\p A prvalue of type \texttt{T} can be converted to a
 prvalue of type \texttt{struct S}, if there are valid conversions from
 \texttt{T} to each \texttt{U} in flattened \texttt{S}, see section
 \ref{Decl.init.Agg} for description of a flattened ordering. The destination
 value is the source value \texttt{T} replicated into each element of the
 flattened \texttt{S}.
 
-\p A glvalue of type \texttt{vector<T,1>} can be converted to a cxvalue of type
-\texttt{struct S} or a prvalue of type \texttt{vector<T,1>} can be converted to a
+\p A prvalue of type \texttt{vector<T,1>} can be converted to a
 prvalue of type \texttt{struct S}, if there are valid conversions from
 \texttt{T} to each \texttt{U} in flattened \texttt{S}. The destination value is
 the value in the source vector replicated into each element of the flattened
 \texttt{S}.
 
-\p A glvalue of type \texttt{T} can be converted to a cxvalue of type
-\texttt{U[]} or a prvalue of type \texttt{T} can be converted to a
-prvalue of type \texttt{U[]}, if there are valid conversions from
+\p A prvalue of type \texttt{T} can be converted to a
+prvalue of type \texttt{U[N]}, if there are valid conversions from
 \texttt{T} to each \texttt{V} in flattened \texttt{U}. The destination value
 is the source value \texttt{T} replicated into each element of the flattened
-\texttt{U[]}.
+\texttt{U[N]}.
 
-\p A glvalue of type \texttt{vector<T,1>} can be converted to a cxvalue of type
-\texttt{U[]} or a prvalue of type \texttt{vector<T,1>} can be converted to a
-prvalue of type \texttt{U[]}, if there are valid conversions from
+\p A prvalue of type \texttt{vector<T,1>} can be converted to a
+prvalue of type \texttt{U[N]}, if there are valid conversions from
 \texttt{T} to each \texttt{V} in flattened \texttt{U}. The destination value
 is the value in the source vector replicated into each element of the flattened
-\texttt{U[]}.
+\texttt{U[N]}.
 
 \Sec{Vector and matrix truncation conversion}{Conv.vtrunc}
 
@@ -211,14 +218,14 @@ row matrix, a vector of type \texttt{vector<T,x>}, or a scalar of type
 
 \Sec{Component-wise conversions}{Conv.cwise}
 
-\p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
+\p A glvalue of type \texttt{vector<T,x>} can be converted to a prvalue of type
 \texttt{vector<V,x>}, or a prvalue of type \texttt{vector<T,x>} can be converted
 to a prvalue of type \texttt{vector<V,x>}. The source value is converted by
 performing the appropriate conversion of each element of type \texttt{T} to an
 element of type \texttt{V} following the rules for standard conversions
 in chapter \ref{Conv}.
 
-\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of
+\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a prvalue of
 type \texttt{matrix<V,x,y>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
 converted to a prvalue of type \texttt{matrix<V,x,y>}. The source value is
 converted by performing the appropriate conversion of each element of type
