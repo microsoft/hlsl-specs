@@ -29,10 +29,11 @@ operations.
 This proposal introduces DXIL operations for vector-matrix operations that can
 be accelerated by the underlying hardware, building on support for long vectors
 described in proposals [0026] and [0030]. The high-level API is described in
-proposal \[TBD\].
+proposal [0031].
 
 [0026]: 0026-hlsl-long-vector-type.md
 [0030]: 0030-dxil-vectors.md
+[0031]: 0031-hlsl-vector-matrix-operations.md
 
 ## Motivation
 
