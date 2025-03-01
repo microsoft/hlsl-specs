@@ -127,10 +127,29 @@ specification we add four operations:
 
 ### Matrix-Vector Multiply and Multiply-Add Operations
 
+#### Opcodes
+
+Different opcode values are used to differentiate between float, unsigned
+integer and signed integer (in much the same was as `FMax`, `IMax` and `UMax`
+do.)
+
+> The exact numeric values are TBD.  Here the values are shown as "offset from
+> the first opcode value."
+
+| Opcode | Name          | Description                                                           |
+|--------|---------------|-----------------------------------------------------------------------|
+| 0      | FMatVecMul    | Matrix-Vector multiply that returns a vector of floats                |
+| 1      | FMatVecMulAdd | Matrix-Vector multiply-add that returns a vector of floats            |
+| 2      | IMatVecMul    | Matrix-Vector multiply that returns a vector of signed integers       |
+| 3      | IMatVecMulAdd | Matrix-Vector multiply-add that returns a vector of signed integers   |
+| 4      | UMatVecMul    | Matrix-Vector multiply that returns a vector of unsigned integers     |
+| 5      | UMatVecMulAdd | Matrix-Vector multiply-add that returns a vector of unsigned integers |
+
+
 #### Syntax
  
 ``` llvm 
-declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
+declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
     immarg i32,       ; input interpretation
@@ -141,8 +160,7 @@ declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32,       ; matrix K dimension    
     immarg i32,       ; matrix layout
     immarg i1,        ; matrix transpose
-    i32,              ; matrix stride
-    immarg i1)        ; isResultSigned        <<< See #399
+    i32)              ; matrix stride
 
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
@@ -158,8 +176,7 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     i32,              ; matrix stride
     %dx.types.Handle, ; bias vector resource
     i32,              ; bias vector offset
-    immarg i32,       ; bias vector interpretation
-    immarg i1)        ; isResultSigned        <<< See #399
+    immarg i32)       ; bias vector interpretation
 ```
 
 #### Overview
@@ -410,8 +427,7 @@ Packed Case:
      32,              ; matrix K dimension
      2,               ; matrix layout - InferencingOptimal
      0,               ; matrix transpose - false
-     0,               ; matrix stride
-     1);              ; isResultSigned - true
+     0)               ; matrix stride
 ```
 
 Non-Packed Case:
@@ -432,8 +448,7 @@ Non-Packed Case:
     32,              ; matrix K dimension
     2,               ; matrix layout - InferencingOptimal
     0,               ; matrix transpose - false
-    0,               ; matrix stride
-    1)               ; isResultSigned - true
+    0)               ; matrix stride
 ```
 
 #### Precision Requirements
@@ -883,7 +898,7 @@ use HLSL vectors.
 
 ## Acknowledgments
 
-We would like to thank Jeff Bolz, Yury Uralsky and Patrick Neill for their
-contributions to this specification.
+We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill and Tex Riddell
+for their contributions to this proposal.
 
 <!-- {% endraw %} -->
