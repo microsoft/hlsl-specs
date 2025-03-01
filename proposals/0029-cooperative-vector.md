@@ -129,8 +129,8 @@ specification we add four operations:
 
 #### Opcodes
 
-Different opcode values are used to differentiate between float, unsigned
-integer and signed integer (in much the same was as `FMax`, `IMax` and `UMax`
+Different opcode values are used to differentiate between float, signed
+integer and unsigned integer (in much the same was as `FMax`, `IMax` and `UMax`
 do.)
 
 > The exact numeric values are TBD.  Here the values are shown as "offset from
