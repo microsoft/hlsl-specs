@@ -471,7 +471,7 @@ Transposing is not supported for the RowMajor/ColumnMajor layouts.
 
 Not all component types support transposing. It is left to implementations to
 define which types support matrix transposing. "TransposeSupported" flag from
-the [CheckFeatureSupport] (#check-feature-support) struct is used to determine
+the [CheckFeatureSupport](#check-feature-support) struct is used to determine
 if a matrix transpose is supported. Note that even for the type/interpretation
 combinations described in [Minimum Support Set], transpose support isn't
 guaranteed and needs to be checked explicitly.
@@ -556,7 +556,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
     Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
-// Used for VectorMatrixMulAdd intinsic
+// Used for VectorMatrixMulAdd intrinsic
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 {
     D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;
@@ -774,7 +774,7 @@ typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO {
 
 New API is added to the ID3D12CommandList interface. Multiple conversions can be
 done in a single call of the API. The number of descriptors pointed to by pDesc
-is specified using descCount. If DestSize passed to this API is less than the
+is specified using DescCount. If DestSize passed to this API is less than the
 number of bytes returned in call to
 `GetCooperativeVectorMatrixConversionDestinationInfo`, behavior is undefined.
 
