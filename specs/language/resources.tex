@@ -2,7 +2,8 @@
 
 Resources are built-in intangible types representing memory with an external interface.
 
-These take the form of Typed Buffers, Raw Buffers, Textures, and Samplers.
+These take the form of Typed Buffers, Raw Buffers, Textures, Constant Buffers and Samplers.
+
 Buffer and Texture types can be read-only or writable.
 
 \Sec{Typed Buffers}{Resources.tybufs}
@@ -11,7 +12,7 @@ The typed buffer class template represents a one-dimensional resource containing
 Its contents are indexed by typed access to each element
 Types may have their formats converted upon load.
 
-Template types can be any type that totals or can be padded to 16 bytes.
+Template type can be any type that totals or can be padded to 16 bytes.
 
 All typed buffers can be read through subscript operators or Load methods.
 Writable typed buffers can be written through subscript operators.
@@ -663,19 +664,237 @@ Removes and returns a value of the template parameter types from the end of the 
 
 \Sec{Constant Buffers}{Resources.cnbuf}
 
+Constant buffer represent a resource that contains read-only constant data in a specific memory layout.
+
+\Sub{Constant Buffer Declaration Block}{Resources.cnbuf.cb}
+
+\p Constant buffer can be declared using the \texttt{cbuffer} specifier.
+
+\begin{grammar}
+  \define{cbuffer-declaration-group}\br
+  \terminal{cbuffer} name \opt{resource-binding} \terminal{\{}
+  \opt{cbuffer-declaration-seq} \terminal {\}}
+
+  \define{cbuffer-declaration-seq}\br
+  \textit{cbuffer-declaration}\br
+  \textit{cbuffer-declaration-seq cbuffer-declaration}
+
+  \define{cbuffer-declaration}\br
+  \textit{variable-declaration}\br
+  \textit{namespace-declaration}\br
+  \textit{function-declaration}\br
+  \textit{record-declaration}\br
+  \textit{empty-declaration}
+\end{grammar}
+
+\p The name of the \texttt{cbuffer} declaration group cannot be referenced from within the translation unit and is not required to be unique.
+
+\p Variable declarations in the \texttt{cbuffer} declaration group are called \textit{shader constants}.
+
+\p Shader constants can be referenced from anywhere in the translation unit after they are declared by directly using the declaration name. This implies that all shader constants declared in a translation unit must have unique names, even though they might be declared in different \texttt{cbuffer} declaration groups.
+
+\p Variable declarations in the \texttt{cbuffer} declaration group cannot have \texttt{groupshared} or \texttt{static} variable modifiers.
+
+\p Any declaration in the \texttt{cbuffer} declaration group that is not a
+\textit{namespace-declaration} or a \textit{variable-declaration} is going to be
+processed as if it was declared outside of the group at the
+global scope.
+
+\p Nesting of \texttt{cbuffer} declaration groups is not allowed.
+
+\p Any \textit{namespace-declaration} in the \texttt{cbuffer} declaration group can contain only declarations allowed by \textit{cbuffer-declaration}.
+
+\p For example:
+
+\begin{HLSL}
+  cbuffer MyConstants {
+    float4 CameraPos;
+  };
+
+  float4 getCameraPosition() {
+    return CameraPos;
+  }
+\end{HLSL}
+
+\Sub{Constant Buffer Class}{Resources.cnbuf.cbclass}
+
+\p Another way of declaring constant buffers is by using the
+\texttt{ConstantBuffer<T>} resource class.
+
+\p The template parameter \texttt{T} must be a class type (\ref{Classes}). 
+
+\begin{HLSL}
+  template <typename T>
+   class ConstantBuffer {
+   public:
+     ConstantBuffer();
+     ConstantBuffer(const ConstantBuffer &buf);
+     ConstantBuffer &operator=(ConstantBuffer &buf);
+  };
+\end{HLSL}
+
+\p The \textit{shader constants} are the fields of the class type \texttt{T}.
+They can be referenced from anywhere within the translation unit after the
+\texttt{ConstantBuffer<T>} declaration as if they were fields of the
+\texttt{ConstantBuffer<T>} class.
+
+\p For example:
+
+\begin{HLSL}
+  struct MyConstants {
+    float4 CameraPos;
+  };
+
+  ConstantBuffer<MyConstants> CB;
+
+  float4 getCameraPosition() {
+    return CB.CameraPos;
+  }
+\end{HLSL}
+
+\p The layout rules for constant buffer declared with the
+\texttt{ConstantBuffer<T>} syntax are the same as for named \texttt{cbuffer}
+declaration groups.
+
+\p \texttt{ConstantBuffer<T>} can be defined at local scope to represent a local
+reference to a constant buffer that can be associated with a global buffer when
+assigned. The reference must be resolvable to a unique global buffer declaration
+before use.
+
+\p Constant buffers cannot be implicitly nor explicitly cast from one type to
+another. This means that local \texttt{ConstantBuffer} can only be assigned from
+\texttt{ConstantBuffer} with the same template type \texttt{T}.
+
+\Sub{Constant Buffer Layout}{Resources.cnbuf.lay}
+
+\p Constant buffer is arranged like an array of 16-byte rows, or 4-component
+vectors of 32-bit elements. Shader constants are arranged into the buffer in the
+order they were declared based on following rules.
+
+\p Specific basic types are packed into the last used row of the buffer if they
+fit into the available space, starting at the next available aligned position.
+These types include:
+\begin{itemize}
+\item \textit{scalar types}
+\item \textit{vector types}
+\item \textit{matrix types} with only one row in \textit{column\_major} storage layout
+\end{itemize}
+
+\p If they do not fit the remaining space of the row, they will placed at the
+start a new 16-byte aligned row.
+
+\p Vectors are aligned by the size of a single vector element type.
+
+\p Aggregate types like arrays and structures are always 16-byte row-aligned. If
+the aggregate ends with an element that does not completely fill a row, the
+remaining space on the last row may be used by the next value.
+
+\p Individual array elements are always 16-byte row aligned.
+
+\p Matrix types with more than one row in \textit{column\_major} storage layout
+and matrix types in \textit{row\_major} storage layout in are aligned to the
+16-byte row. Each row in storage layout (each column for \textit{column\_major}
+matrix) is aligned to a 16-byte row.
+
+\p Members of structured types used in constant buffers follow these same rules.
+Because structures are always 16-byte row-aligned, the offset layout within the
+structure is independent of the particular structure instance location.
+
+\Sub{Packoffset annotations}{Resources.cnbuf.po}
+
+\p Shader constants declared in \texttt{cbuffer} declaration group can have an
+optional \texttt{packoffset} annotation added before their \texttt{;} terminal.
+
+\begin{grammar}
+  \define{packoffset-annotation}\br
+  \terminal{: packoffset(} packoffset-id packoffset-row \opt{packoffset-element} \terminal{)}
+
+  \define{packoffset-id}\textnormal{one of}\br
+  \terminal{c C}
+
+  \define{packoffset-row}\br
+  digit\br
+  packoffset-row digit
+
+  \define{packoffset-element}\br
+  \terminal{.} \textit{packoffset-element-id}
+
+  \define{packoffset-element-id}\textnormal{one of}\br
+  \terminal{x y z w r g b a}\br
+\end{grammar}
+
+\p The \texttt{packoffset} annotation defines specific offset in the constant
+buffer where the shader constant is located.
+
+\p The \textit{packoffset-row} number is the index into the array of 16-byte
+rows of the constant buffer. Each row treated as a vector of four 32-bit
+elements.
+
+\p The \textit{packoffset-element} identifies specific location within the
+vector where \texttt{x} or \texttt{r} is the first element of the vector,
+\texttt{y} or \texttt{g} is the second one, \texttt{z} or \texttt{b} is the
+third one and \texttt{w} or \texttt{a} is the fourth, and last element of the
+vector.
+
+\p Shader constant that has a structure, array or matrix type must always be
+16-byte row-aligned. It means that if it specifies a
+\textit{packoffset-element}, it must have a value of \texttt{x} or \texttt{r}.
+
+\p For example
+
+\begin{HLSL}
+  cbuffer MyConstants {
+    float2 Pos : packoffset(c1.z);
+  };
+\end{HLSL}
+
+The \texttt{Pos} shader constant will be located at byte offset \texttt{24} in
+the constant buffer \texttt{MyConstants}.
+
+\Sub{Default Constant Buffer}{Resources.cnbuf.defcb}
+
+\p All variables declaration in the global scope are implicitly added to default
+constant buffer called \texttt{\$Globals}, unless they are marked
+\texttt{static}, \texttt{groupshared}, or declare a resource or array of
+resources.
+
+\p Layout rules for a default constant buffer are the same as for a named
+\texttt{cbuffer} declaration group.
+
+\p Default constant buffer declarations can have an optional
+\textit{resource-binding} annotation with a \textit{register-type} \texttt{c} or
+\texttt{C} added before their \texttt{;} terminal. This annotation does not
+define a virtual register binding but rather an index into an array of 16-byte
+rows that represents the default constant buffer, similar to the
+\texttt{packoffset} annotation.
+
+\p For example
+\begin{HLSL}
+  float4 CameraPos : register(c2);
+\end{HLSL}
+
+is equivalent to
+
+\begin{HLSL}
+  cbuffer CB {
+    float4 CameraPos : packoffset(c2);
+  }
+\end{HLSL}
+
 \Sec{Samplers}{Resources.samp}
 
 \Sec{CheckAccessFullyMapped}{Resources.mapcheck}
 
-The mapped status value returned by certain texture and buffer methods can be intrepreted by a built-in function:
+The mapped status value returned by certain texture and buffer methods can be
+intrepreted by a built-in function:
 
 \begin{HLSL}
   bool CheckAccessFullyMapped(in uint status);
 \end{HLSL}
 
-This function returns true is the value was accessed from a fully committed resource,
-or from fully mapped pages of a sparse resource.
-If any part of the return value was from unmapped memory, false is returned.
+This function returns true is the value was accessed from a fully committed
+resource, or from fully mapped pages of a sparse resource. If any part of the
+return value was from unmapped memory, false is returned.
 
 \Sec{Resource Binding}{Resources.binding}
 
@@ -688,16 +907,21 @@ or implicitly by leaving them off.
   \terminal{: register(} register-type bind-number \terminal{)}\br
   \terminal{: register(} register-type bind-number , \terminal{space} bind-number \terminal{)}\br
   \define{register-type} \textnormal{one of}\br
-  \terminal{t u b s}\br
+  \terminal{t u b s c T U B S C}\br
   \define{bind-number}\br
   digit\br
   bind-number digit\br
 \end{grammar}
 
-The register type indicates whether the binding is for a read-only (\texttt{t}), a writable (\texttt{u}),
-a constant buffer (\texttt{b}), or a sampler (\texttt{s}).
-The register bind number indicates the register number at which the resource variable begins.
-The optional second parameter indicates the virtual register space that the register belongs to.
+The register type indicates whether the binding is for a read-only
+(\texttt{t}/\texttt{T}), a writable (\texttt{u}/\texttt{U}), a constant buffer
+(\texttt{b}/\texttt{B}), or a sampler (\texttt{s}/\texttt{S}). The register bind
+number indicates the register number at which the resource variable begins. The
+optional second parameter indicates the virtual register space that the register
+belongs to.
+
+Register type \texttt{c}/\texttt{C} defines layout information for the default
+constant buffer (\ref{Resources.cnbuf.defcb}).
 
 Sample syntax of virtual register binding attributes:
 \begin{HLSL}
