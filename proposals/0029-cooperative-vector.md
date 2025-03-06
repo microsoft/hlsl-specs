@@ -120,8 +120,8 @@ specification we add four operations:
 * **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
     two vectors and accumulate the result matrix atomically-elementwise in
     memory.
-* **Reduce and Accumulate:** Accumulate elements of a vector
-    atomically-elementwise to corresponding elements in memory.
+* **InterlockedAdd for vectors:** Accumulate elements of a vector
+    atomically-elementwise to corresponding elements in memory (Raw buffers).
 
 
 ## Detailed design
@@ -289,22 +289,26 @@ guaranteed to be supported on all implementations can be found in
 [Minimum Support Set].
 
 
-### Reduce Sum Accumulate
+### Vector InterlockedAdd
 
 #### Syntax
 
 ``` llvm
-declare void @dx.op.vecreducesumacc.v[NUM][TY](
-    immarg i32,       ; opcode
-    <[NUM] x [TY]>,   ; input vector
-    %dx.types.Handle, ; output array resource 
-    i32)              ; output array offset
+; overloads: SM6.9: vector types
+; returns: void
+declare void @dx.op.atomicBinOp.v[NUM][TY](
+    i32,                  ; opcode
+    %dx.types.Handle,     ; resource handle
+    i32,                  ; binary operation code: ADD
+    i32,                  ; coordinate c0
+    i32,                  ; coordinate c1
+    i32,                  ; coordinate c2
+    <[NUM] x [TY]>)       ; input vector
 ```
 
 #### Overview
 
-Accumulates the components of a vector component-wise atomically (with device
-scope) to the corresponding elements of an array in memory. See note in
+Adds new vector overloads to `@dx.op.atomicBinOp` to support accumulation of a vector component-wise atomically (with device scope) to the corresponding elements of an array in memory. See note in
 [Atomic Operations].
 
 #### Arguments
@@ -312,9 +316,11 @@ scope) to the corresponding elements of an array in memory. See note in
 The input vector is specified by **input vector**, and has `NUM` elements of
 type `TY`.
 
-The output array is accumulated to the writeable raw-buffer resource specified
-by **output array resource** and **output array offset**.  The base address
-and **output array offset** must be 64 byte aligned.
+The input vector is accumulated to the writeable raw-buffer resource specified
+by **resource handle** and offset **coordinate c0**.  The base address
+and **coordinate c0** must be 64 byte aligned.**coordinate c1** and **coordinate c2** are 0 for raw-buffers. The function doesn't return any value. 
+
+The **binary operation code** for *ADD* operation is `0`.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -546,7 +552,8 @@ typedef enum D3D12_COOPERATIVE_VECTOR_DATATYPE {
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 {
     D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,    
-    D3D12_COOPERATIVE_VECTOR_TIER_1_0
+    D3D12_COOPERATIVE_VECTOR_TIER_1_0,
+    D3D12_COOPERATIVE_VECTOR_TIER_1_1
 }
 
 // This struct may be augmented with more capability bits
@@ -556,7 +563,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
     Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
-// Used for VectorMatrixMulAdd intrinsic
+// Used for MatrixVectorMulAdd intrinsic
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 {
     D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;
@@ -567,7 +574,7 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
     BOOL                              TransposeSupported;
 };
 
-// Used for OuterProductAccumulate and ReduceSumAccumulate intrinsics
+// Used for OuterProductAccumulate and Vector InterlockedAdd intrinsics
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 {
     D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;  
@@ -576,12 +583,12 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 
 typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
-    InOut UINT                                         VectorMatrixMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pVectorMatrixMulAddProperties;
+    InOut UINT                                         MatrixVectorMulAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
     InOut UINT                                         OuterProductAccPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
-    InOut UINT                                         ReduceSumAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pReduceSumAccProperties;
+    InOut UINT                                         InterlockedAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pInterlockedAddProperties;
 };
 
 ```
@@ -596,11 +603,14 @@ pProperties upon return. If pProperties is non-NULL for any intrinsic but its
 PropCount is less than the number of properties available for that intrinsic,
 the operation fails and `E_INVALIDARG` is returned.
 
-// XXX TODO: Add query for emulated types. For example E4M3 and E5M2 might not
-be supported on certain h/w, but since these are in the minimum support set,
-they need to be emulated, possibly using FP16. Add capability for the
-application to query which types are natively supported and which ones are
-emulated.
+>Note about emulation: For example E4M3 and E5M2 might not
+be supported natively on certain implementations, but since these are in the minimum support set, they need to be emulated, possibly using FP16. Emulation versus native support is an implementation detail specific to implementations and outside the scope of this specification document.
+
+#### Support Tiers
+
+**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul* and *MatrixVectorMulAdd* intrinsics.
+
+**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous tiers, *OuterProductAccumulate* and *Vector InterlockedAdd* functions.
 
 #### Minimum Support Set
 
@@ -621,6 +631,7 @@ explicitly checked for the combinations below.
 | SINT8_PACKED | SINT8               | SINT8                | SINT32             | SINT32     |
 | FP32         | SINT8               | SINT8                | SINT32             | SINT32     |
 
+>Note: Only Optimal layouts can be used with for Float8(E4M3 and E5M2) `MatrixInterpretation`.
 
 ##### For OuterProductAccumulate
 
@@ -629,7 +640,7 @@ explicitly checked for the combinations below.
 | FP16      | FP16             |
 | FP16      | FP32             |
 
-##### For ReduceSumAccumulate
+##### For Vector InterlockedAdd
 
 | InputType | AccumulationType |
 |-----------|------------------|
@@ -639,7 +650,7 @@ explicitly checked for the combinations below.
 #### Usage Example
 
 ```c++
-// Check for CooperativeVector support and query properties for VectorMatrixMulAdd
+// Check for CooperativeVector support and query properties for MatrixVectorMulAdd
 D3D12_FEATURE_DATA_D3D12_OPTIONSNN CoopVecSupport = {};
 
 d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &CoopVecSupport, 
@@ -653,17 +664,17 @@ if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                      sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
 
-    // Use VectorMatrixMulAddPropCount returned from the above 
-    // CheckFeatureSupport call to query only VectorMatrixMulAddProperties
-    UINT VectorMatrixMulAddPropCount = CoopVecSupport.VectorMatrixMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(VectorMatrixMulAddPropCount);
-    CoopVecSupport.pVectorMatrixMulAddProperties = properties.data();
+    // Use MatrixVectorMulAddPropCount returned from the above 
+    // CheckFeatureSupport call to query only MatrixVectorMulAddProperties
+    UINT MatrixVectorMulAddPropCount = CoopVecSupport.MatrixVectorMulAddPropCount;
+    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    CoopVecSupport.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
-    // Use VectorMatrixMulAdd shader with datatype and interpretation combination matching one of those returned.
+    // Use MatrixVectorMulAdd shader with datatype and interpretation combination matching one of those returned.
     
 } else {
     // Don't use Cooperative Vector
@@ -697,7 +708,7 @@ datatype. It takes a pointer to
 `D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor that provides
 the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
-API. 
+API. The `DestStride` should be a multiple of 16 bytes.
 
 ```c++
 
