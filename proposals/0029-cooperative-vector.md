@@ -308,8 +308,9 @@ declare void @dx.op.atomicBinOp.v[NUM][TY](
 
 #### Overview
 
-Adds new vector overloads to `@dx.op.atomicBinOp` to support accumulation of a vector component-wise atomically (with device scope) to the corresponding elements of an array in memory. See note in
-[Atomic Operations].
+Adds new vector overloads to `@dx.op.atomicBinOp` to support accumulation of a
+vector component-wise atomically (with device scope) to the corresponding
+elements of an array in memory. See note in[Atomic Operations].
 
 #### Arguments
 
@@ -318,7 +319,9 @@ type `TY`.
 
 The input vector is accumulated to the writeable raw-buffer resource specified
 by **resource handle** and offset **coordinate c0**.  The base address
-and **coordinate c0** must be 64 byte aligned.**coordinate c1** and **coordinate c2** are 0 for raw-buffers. The function doesn't return any value. 
+and **coordinate c0** must be 64 byte aligned.**coordinate c1**
+and **coordinate c2** are 0 for raw-buffers. The function doesn't return any
+value. 
 
 The **binary operation code** for *ADD* operation is `0`.
 
@@ -603,14 +606,19 @@ pProperties upon return. If pProperties is non-NULL for any intrinsic but its
 PropCount is less than the number of properties available for that intrinsic,
 the operation fails and `E_INVALIDARG` is returned.
 
->Note about emulation: For example E4M3 and E5M2 might not
-be supported natively on certain implementations, but since these are in the minimum support set, they need to be emulated, possibly using FP16. Emulation versus native support is an implementation detail specific to implementations and outside the scope of this specification document.
+>Note about emulation: For example E4M3 and E5M2 might not be supported natively
+ on certain implementations, but since these are in the minimum support set,
+ they need to be emulated, possibly using FP16. Emulation versus native support
+ is an implementation detail specific to implementations and outside the scope
+ of this specification document.
 
 #### Support Tiers
 
-**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul* and *MatrixVectorMulAdd* intrinsics.
+**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
+  and *MatrixVectorMulAdd* intrinsics.
 
-**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous tiers, *OuterProductAccumulate* and *Vector InterlockedAdd* functions.
+**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
+  tiers, *OuterProductAccumulate* and *Vector InterlockedAdd* functions.
 
 #### Minimum Support Set
 
@@ -674,7 +682,8 @@ if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
-    // Use MatrixVectorMulAdd shader with datatype and interpretation combination matching one of those returned.
+    // Use MatrixVectorMulAdd shader with datatype and interpretation
+    // combination matching one of those returned.
     
 } else {
     // Don't use Cooperative Vector
@@ -707,8 +716,8 @@ added to query the size of the destination buffer in the desired layout and
 datatype. It takes a pointer to
 `D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor that provides
 the inputs required to calculate the necessary size. The same descriptor,
-updated with the calculated output size, is then passed to the conversion
-API. The `DestStride` should be a multiple of 16 bytes.
+updated with the calculated output size, is then passed to the conversion API.
+The `DestStride` should be a multiple of 16 bytes.
 
 ```c++
 
