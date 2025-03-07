@@ -240,6 +240,17 @@ This operation returns a vector of size `NUMo` and contains elements of type
 `TYo`. The result vector does not have an interpretation parameter, its type is
 the declared type.
 
+#### Validation
+
+* **input interpretation** must be a value corresponding to one of the following
+  `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `PackedS8x32`,
+  `PackedU8x32`, `U8`, `I8`, `F8_E4M3`, `F8_E5M2`.
+* **matrix interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
+* **bias vector interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
 
 ### Vector Outer Product
 
@@ -287,6 +298,12 @@ supported by all implementations. [CheckFeatureSupport] can be used to
 determine which combinations are supported. A list of combinations that are
 guaranteed to be supported on all implementations can be found in
 [Minimum Support Set].
+
+#### Validation
+
+* **matrix interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
 
 
 ### Reduce Sum Accumulate
