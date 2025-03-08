@@ -131,7 +131,7 @@ specification we add four operations:
 #### Syntax
  
 ``` llvm 
-declare <[NUMo] x [TYo] @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
+declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
     immarg i32,       ; input interpretation
@@ -240,6 +240,17 @@ This operation returns a vector of size `NUMo` and contains elements of type
 `TYo`. The result vector does not have an interpretation parameter, its type is
 the declared type.
 
+#### Validation
+
+* **input interpretation** must be a value corresponding to one of the following
+  `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `PackedS8x32`,
+  `PackedU8x32`, `U8`, `I8`, `F8_E4M3`, `F8_E5M2`.
+* **matrix interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
+* **bias vector interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
 
 ### Vector Outer Product
 
@@ -288,6 +299,12 @@ determine which combinations are supported. A list of combinations that are
 guaranteed to be supported on all implementations can be found in
 [Minimum Support Set].
 
+#### Validation
+
+* **matrix interpretation** must be a value corresponding to one of the
+  following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
+  `I8`, `F8_E4M3`, `F8_E5M2`, 
+
 
 ### Reduce Sum Accumulate
 
@@ -332,36 +349,98 @@ can be found in [Minimum Support Set].
 
 ### Type Interpretations
 
-The various "interpretation" arguments specify a value from the following enum:
+The `ComponentType` enum in `DxilConstants.h` is extended as shown below, with
+four new 8-bit types:
 
 ```c++
-enum class DXILTypeInterpretation :uint {
-  Float16               = 0,
-  Float32               = 1,
-  UnsignedInt8          = 2,
-  UnsignedInt16         = 3,
-  UnsignedInt32         = 4,
-  SignedInt8            = 5,
-  SignedInt16           = 6,
-  SignedInt32           = 7,
-  SignedInt8x4Packed    = 8,
-  UnsignedInt8x4Packed  = 9,
-  FloatE4M3             = 10,
-  FloatE5M2             = 11,
-  Unsupported           = 32
+enum class ComponentType : uint32_t {
+  Invalid = 0,
+  I1,
+  I16, // = 2
+  U16, // = 3
+  I32, // = 4
+  U32, // = 5
+  I64,
+  U64,
+  F16, // = 7
+  F32, // = 8
+  F64,
+  SNormF16,
+  UNormF16,
+  SNormF32,
+  UNormF32,
+  SNormF64,
+  UNormF64,
+  PackedS8x32, // = 16
+  PackedU8x32, // = 17
+
+  // BEGIN NEW FOR SM 6.9
+  U8,      // = 18
+  I8,      // = 19
+  F8_E4M3, // = 20  
+  F8_E5M2, // = 21
+  // END     
+
+  LastEntry
 };
 ```
 
-For matrices and vectors that are specified by resource handles and stored in
-raw-buffers, the interpretation value directly specifies the element type.  It
-is invalid to specify a packed interpretation in these cases.
+#### From-Register Interpretations
 
-For input vectors that come from variables there is a distinction between the
-physical type and the logical type. The **input interpretation** argument for
-these vectors describes how to convert from the physical to logical type. This
-allows elements to be interpreted as types not natively supported by HLSL, e.g.
-uint8/sint8. For packed interpretations, a single physical element can expand
-into multiple logical elements.
+Input vectors stored in registers (eg `vector<float, 16>`) are interpreted
+according to the Conversion Rules shown below.
+
+For these vectors there is a distinction between the physical type and the
+logical type. The **input interpretation** argument for these vectors describes
+how to convert from the physical to logical type. This allows elements to be
+interpreted as types not natively supported by HLSL, e.g. uint8/sint8. For
+packed interpretations, a single physical element can expand into multiple
+logical elements.
+
+Implementations are expected to support the interpretations listed in [Minimum
+Support Set], but may also report additional supported interpretations via
+[CheakFeatureSupport].
+
+The following `ComponentType`s are valid for use as input interpretations:
+* `I16`
+* `U16`
+* `I32`
+* `U32`
+* `F16`
+* `F32`
+* `PackedS8x32`
+* `PackedU8x32`
+* `U8`
+* `I8`
+* `F8_E4M3`
+* `F8_E5M2`
+
+
+#### Memory Interpretations
+
+Matrices and Vectors that are stored in raw-buffers and specified by resource
+handles (eg the matrix and bias-vector arguments to dx.op.matvecmul) are
+interpreted according to the Conversion Rules shown below.
+
+Implementations are expected to support the interpretations listed in [Minimum
+Support Set], but may also report additional supported interpretations via
+[CheakFeatureSupport].
+
+The following `ComponentType`s are valid for use as interpretations for matrices
+or vectors stored in memory: 
+* `I16`
+* `U16`
+* `I32`
+* `U32`
+* `F16`
+* `F32`
+* `U8`
+* `I8`
+* `F8_E4M3`
+* `F8_E5M2`.
+
+
+#### CheckFeatureSupport
 
 [CheckFeatureSupport] can be used to determine what combinations of **TYi**,
 **input interpretation**, **matrix interpretation**, **matrix transpose**,
@@ -392,7 +471,7 @@ Examples:
 
 Packed Case:
 ``` llvm
-; Using SignedInt8x4Packed input interpretation, each uint element (32-bit) in the 
+; Using PackedS8x32 input interpretation, each uint element (32-bit) in the 
 ; input vector will be interpreted as 4 int8 values.
 ;
 ; Note that TYi = i32 and NUMi = 8 (8 x 4 = 32 sint8 values ), and the result is a 
@@ -403,10 +482,10 @@ Packed Case:
 %result = <32 x i32> call @dx.op.matvecmul.v[32][i32].v[8][i32](
      OPCODE,
      %inputVector,
-     8,               ; input interpretation - SignedInt8x4Packed
+     16,              ; input interpretation - ComponentType::PackedS8x32
      %matrixResource,
      0,               ; matrix offset
-     5,               ; matrix interpretation - SignedInt8
+     19,              ; matrix interpretation - ComponentType::I8
      32,              ; matrix M dimension
      32,              ; matrix K dimension
      2,               ; matrix layout - InferencingOptimal
@@ -417,7 +496,7 @@ Packed Case:
 
 Non-Packed Case:
 ``` llvm
-; Using SignedInt8 input interpretation, each float element will be arithmetically
+; Using I8 input interpretation, each float element will be arithmetically
 ; converted to a sint8 value.
 
 %inputVector = <32 x float> ...
@@ -425,10 +504,10 @@ Non-Packed Case:
 %result = <64 x i32> call @dx.op.matvecmul.v[64][i32].v[32][float](
     OPCODE,
     %inputVector,
-    5,               ; input interpretation - SignedInt8
+    19,              ; input interpretation - ComponentType::I8
     %matrixResource,
     0,               ; matrix offset
-    5,               ; matrix interpretation - SignedInt8
+    5,               ; matrix interpretation - ComponentType::I8
     64,              ; matrix M dimension
     32,              ; matrix K dimension
     2,               ; matrix layout - InferencingOptimal
@@ -519,7 +598,7 @@ enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to
 enable discovering the Cooperative Vector tier along with the datatype and
 interpretation combinations supported by new vector-matrix intrinsics.
 
-```
+```c++
 typedef enum D3D12_FEATURE {
     ...
     // Contains cooperative vector tier.
@@ -528,19 +607,24 @@ typedef enum D3D12_FEATURE {
     D3D12_FEATURE_COOPERATIVE_VECTOR;
 };
 
+// This is designed to match the ComponentType enum values but omits data 
+// types that are not currently specified to work with this API. The names are chosen
+// to more closely match those used by HLSL developers, as opposed to the ComponentType 
+// names that align with LLVM IR.
+
 typedef enum D3D12_COOPERATIVE_VECTOR_DATATYPE {
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT16      = 0,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32      = 1,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8        = 2,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT16       = 3,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT32       = 4,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT8        = 5,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT16       = 6,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT32       = 7,    
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT8_PACKED = 8,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8_PACKED = 9,
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT_E4M3   = 10,      // FP8: 1 sign bit, 4 exp bits, 3 mantissa bits
-    D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT_E5M2   = 11       // FP8: 1 sign bit, 5 exp bits, 2 mantissa bits
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT16          =  2, // ComponentType::I16
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT16          =  3, // ComponentType::U16
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT32          =  4, // ComponentType::I32
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT32          =  5, // ComponentType::U32
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT16         =  7, // ComponentType::F16
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32         =  8, // ComponentType::F32
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_INT8_T4_PACKED  = 16, // ComponentType::PackedS8x32
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8           = 18, // ComponentType::U8
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT8           = 19, // ComponentType::I8
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_E4M3            = 20, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
+  D3D12_COOPERATIVE_VECTOR_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
 };
 
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
@@ -596,7 +680,7 @@ pProperties upon return. If pProperties is non-NULL for any intrinsic but its
 PropCount is less than the number of properties available for that intrinsic,
 the operation fails and `E_INVALIDARG` is returned.
 
-// XXX TODO: Add query for emulated types. For example E4M3 and E5M2 might not
+// #411 TODO: Add query for emulated types. For example E4M3 and E5M2 might not
 be supported on certain h/w, but since these are in the minimum support set,
 they need to be emulated, possibly using FP16. Add capability for the
 application to query which types are natively supported and which ones are
@@ -613,13 +697,13 @@ Note that value of `TransposeSupported` is never guaranteed and needs to be
 explicitly checked for the combinations below.
 
 
-| InputType    | InputInterpretation | MatrixInterpretation | BiasInterpretation | OutputType |
-|--------------|---------------------|----------------------|--------------------|------------|
-| FP16         | FP16                | FP16                 | FP16               | FP16       |
-| FP16         | E4M3                | E4M3                 | FP16               | FP16       |
-| FP16         | E5M2                | E5M2                 | FP16               | FP16       |
-| SINT8_PACKED | SINT8               | SINT8                | SINT32             | SINT32     |
-| FP32         | SINT8               | SINT8                | SINT32             | SINT32     |
+| InputType   | InputInterpretation | MatrixInterpretation | BiasInterpretation | OutputType |
+|-------------|---------------------|----------------------|--------------------|------------|
+| F16         | F16                 | F16                  | F16                | F16        |
+| F16         | F8_E4M3             | F8_E4M3              | F16                | F16        |
+| F16         | F8_E5M2             | F8_E5M2              | F16                | F16        |
+| PackedS8x32 | I8                  | I8                   | I32                | I32        |
+| F32         | I8                  | I8                   | I32                | I32        |
 
 
 ##### For OuterProductAccumulate
@@ -868,6 +952,10 @@ limit the scope of the feature to small neural network evaluation and also
 contain the scope for testing. But aligning with the long term roadmap of HLSL
 to enable generic vectors, it makes sense to not introduce a new datatype but
 use HLSL vectors.
+
+Various combinations of enums for specifying interpretations were considered
+with varying trade-offs of complexity versus typesafety and simplicity, before
+deciding to extend the existing `ComponentType` enum.
 
 ## Open Issues
 
