@@ -336,7 +336,7 @@ See [Opacity Micromaps][dxr-omm] in the Raytracing spec for details.
 ### Diagnostics
 
 - Check availability-based diagnostics for each flag, including recursing
-  through DeclRefs, DeclExprRefs, and their initializers.
+  through DeclRefExprs to Decls and their initializers.
   - Check both DXR entry scenarios and non-library RayQuery scenarios.
 - Check that any RayQuery object with the `RayFlag::ForceOMM2State` flag
   in its first template argument also has an accompanying 
