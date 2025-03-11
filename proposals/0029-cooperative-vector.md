@@ -713,7 +713,7 @@ the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
 API. 
 
-The `DestStride` should be a multiple of 16 bytes.
+The `DestStride` must be a multiple of 16 bytes.
 
 ```c++
 
