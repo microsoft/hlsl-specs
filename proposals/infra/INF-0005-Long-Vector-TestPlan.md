@@ -1,58 +1,77 @@
 # Test Plan
 There are three test categories we are concerned with:
 
-1. DXIL Intrinsic tests: Go through the operators that support vectors and make a list of the DXIL ops used.
-    - The table to reference for this is in HLOperationLower.cpp.
-    - Many, if not all, of these probably have existing test cases that just need to be modified to use vectors
-        - I think that the 'implementation' will largely be editing ShaderOpArithTable.xml, which is used to generate TAEF 'data driven' tests. Minor shader code updates and added input/output of vectors
-    - Some tests may need to be duplicated for the vector variant of the test.
-    - The tests cases in this category are any intrinsics in the below table that have a DXIL::OpCode::* in the DXIL OPCode colum
+1. DXIL Intrinsic tests: Go through the operators that support vectors and make a
+    list of the DXIL ops used.
+     - The table to reference for this is in HLOperationLower.cpp.
+     - Many, if not all, of these probably have existing test cases that just need
+        to be modified to use vectors
+          - I think that the 'implementation' will largely be editing
+             ShaderOpArithTable.xml, which is used to generate TAEF 'data driven'
+             tests. Minor shader code updates and added input/output of vectors
+     - Some tests may need to be duplicated for the vector variant of the test.
+     - The tests cases in this category are any intrinsics in the below table that
+        have a DXIL::OpCode::* in the DXIL OPCode column
 
 2. LLVM Native operation tests
-    - TBD: Where do we test these? Tex mentioned some existing tests but it sounds like we don't want to use those. And they aren't HLK tests anyways.
-    - TODO: Discuss how we want to test ops that don't boil down to a single DXIL op. Still seems like something we should test in the HLK?
+     - TBD: Where do we test these? Tex mentioned some existing tests but it sounds
+        like we don't want to use those. And they aren't HLK tests anyways.
+     - TODO: Discuss how we want to test ops that don't boil down to a single DXIL
+        op. Still seems like something we should test in the HLK?
 
 3. Standard loading and storing of long vectors
-    - TODO: Do we have tests that do this today?
+     - TODO: Do we have tests that do this today?
 
 # Vector Sizes to test
 
-I don't think there are any particularily interesting vector sizes to test. So I propose testing sizes of 5, 25, 100, 500, 
+I don't think there are any particularly interesting vector sizes to test. So I
+propose testing sizes of 5, 25, 100, 500. Sizes < 5 are assumed to already be
+covered by existing test collateral. But, as part of this work we will verify that
+assumption.
 
 # Phases
 Do the test work in two simple phases.
 
 1. Implement and validate (locally against WARP) the 3 test categories.
 2. HLK related work:
-    - Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
-    - Update mm_annotate_shader_op_arith_table.py to annotate the new test cases with HLK GUIDS and requirements
-    - Add new tests to HLK playlist
+     - Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
+     - Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
+        with HLK GUIDS and requirements
+     - Add new tests to HLK playlist
+     - Note: Test binaries/collateral will be shared with IHVs for validation
+        purposes.
 
 # New HLK Tests
-mm_annotate_shader_op_arith_table.py (WinTools repo) will need to be updated to recognize any new tests (not test cases) added. And additional GUIDs addded for new test cases. mm_annotate_shader_op_arith_table.py is called by mm-hlk-update.py when converiting from 'ExecTests' to the HLK 'DxilConf' tests. The aformentioned *table.py script is run by Integration.HLKTestsUpdate.yaml
+mm_annotate_shader_op_arith_table.py (WinTools repo) will need to be updated to
+recognize any new tests (not test cases) added. And additional GUIDs added for new
+test cases. mm_annotate_shader_op_arith_table.py is called by mm-hlk-update.py when
+converting from 'ExecTests' to the HLK 'DxilConf' tests. The aforementioned
+*table.py script is run by Integration.HLKTestsUpdate.yaml
 
 # Test Validation Requirements
-The following statements must be true and validated for this work to be considered completed.
+The following statements must be true and validated for this work to be considered
+completed.
  - All new test cases pass when run locally against a WARP device
- - All new test cases are confirmed to be lit up and available in the HLK when the target device reports support
+ - All new test cases are confirmed to be lit up and available in the HLK when the
+    target device reports support
  - All new tests/test cases are added to the HLK playlist
 
 # Requirements
-    - Gregs long vector changes. Check-in ETA of 3/7/25.
-    - WARP long vector support (Jesse). Needs Gregs work, or a private WIP branch of Gregs work. ETA of ~1 week to implement.
+     - Greg's long vector changes. Check-in ETA of 3/7/25.
+     - WARP long vector support (Jesse). Needs Greg's work, or a private WIP branch
+        of Greg's work. ETA of ~1 week to implement.
 
 # Notes
-    - The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests (DxilConf tests)
+     - The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests (DxilConf
+        tests)
+     - Private test binaries/collateral will be shared with IHVs for validation
+        purposes. This will enable IHVs to verify long vector functionality without
+        waiting for an OS/HLK release.
 
 # Open Questions
-    1. How does the HLK work for IHVs running DXIL tests given that we're undocked. Or does that not matter because the DXIL HLK tests provide raw DXIL? Just trying to understand the HLK testing lifecycle here vs what I was used to in the OS.
-    2. Do we need a new HLK requirement? If so, we probably need to get that in soon. That could also require HLK gatherer updates.
-        - For tests where we only add new test cases we do not need to update HLK test GUIDs.
-        - If we want to add a new HLK requirement, then we will probably want to create new tests which consume that requirement. Individual test cases can not have individual HLK requirements.
-        - The existing HLK reqs we have look pretty dated. "Device.Graphics.WDDM27.AdapterRender.D3D12.DXILCore.ShaderModel65.CoreRequirement". Add a requirement for SM 6.9? We're requiring Long Vectort support for SM 6.9
-    3. Do the work in two 'phases'? Add the tests. Then do the HLK side.
+     -
 
-# Mappings of HLSL intrinsics to DXIL opcosed or LLVM native operations
+# Mappings of HLSL intrinsics to DXIL opcodes or LLVM native operations
 
 ## Trigonometry
 
@@ -85,7 +104,7 @@ The following statements must be true and validated for this work to be consider
 | fma       | DXIL::OpCode::Fma |     |
 | fmod      | Emulated |              |
 | frac      | DXIL::OpCode::Frc |     |
-| frexp     | Emualted |              |
+| frexp     | Emulated |              |
 | ldexp     | Emulated: CreateFMul |  |
 | lerp      | Emulated: CreateFAdd |  |
 | log       | Emulated: CreateFMul |  |
