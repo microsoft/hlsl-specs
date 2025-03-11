@@ -642,7 +642,8 @@ typedef enum D3D12_COOPERATIVE_VECTOR_DATATYPE {
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 {
     D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,    
-    D3D12_COOPERATIVE_VECTOR_TIER_1_0
+    D3D12_COOPERATIVE_VECTOR_TIER_1_0,
+    D3D12_COOPERATIVE_VECTOR_TIER_1_1
 }
 
 // This struct may be augmented with more capability bits
@@ -652,7 +653,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
     Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
-// Used for VectorMatrixMulAdd intrinsic
+// Used for MatrixVectorMulAdd intrinsic
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 {
     D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;
@@ -672,8 +673,8 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 
 typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
-    InOut UINT                                         VectorMatrixMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pVectorMatrixMulAddProperties;
+    InOut UINT                                         MatrixVectorMulAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
     InOut UINT                                         OuterProductAccPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
     InOut UINT                                         ReduceSumAccPropCount;
@@ -692,11 +693,20 @@ pProperties upon return. If pProperties is non-NULL for any intrinsic but its
 PropCount is less than the number of properties available for that intrinsic,
 the operation fails and `E_INVALIDARG` is returned.
 
-// #411 TODO: Add query for emulated types. For example E4M3 and E5M2 might not
-be supported on certain h/w, but since these are in the minimum support set,
-they need to be emulated, possibly using FP16. Add capability for the
-application to query which types are natively supported and which ones are
-emulated.
+>Note about emulation: For example E4M3 and E5M2 might not be supported natively
+ on certain implementations, but since these are in the minimum support set,
+ they need to be emulated, possibly using FP16. Emulation versus native support
+ is an implementation detail specific to implementations and outside the scope
+ of this specification document.
+
+#### Support Tiers
+
+**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
+  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
+  `ReduceSumAccPropCount` are 0 in this case.
+
+**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
+  tiers, *OuterProductAccumulate* and *ReduceSumAccumulate* functions.
 
 #### Minimum Support Set
 
@@ -717,6 +727,8 @@ explicitly checked for the combinations below.
 | PackedS8x32 | I8                  | I8                   | I32                | I32        |
 | F32         | I8                  | I8                   | I32                | I32        |
 
+>Note: Only Optimal layouts can be used with for Float8(E4M3 and E5M2)
+ `MatrixInterpretation`.
 
 ##### For OuterProductAccumulate
 
@@ -735,7 +747,7 @@ explicitly checked for the combinations below.
 #### Usage Example
 
 ```c++
-// Check for CooperativeVector support and query properties for VectorMatrixMulAdd
+// Check for CooperativeVector support and query properties for MatrixVectorMulAdd
 D3D12_FEATURE_DATA_D3D12_OPTIONSNN CoopVecSupport = {};
 
 d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &CoopVecSupport, 
@@ -749,17 +761,19 @@ if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                      sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
 
-    // Use VectorMatrixMulAddPropCount returned from the above 
-    // CheckFeatureSupport call to query only VectorMatrixMulAddProperties
-    UINT VectorMatrixMulAddPropCount = CoopVecSupport.VectorMatrixMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(VectorMatrixMulAddPropCount);
-    CoopVecSupport.pVectorMatrixMulAddProperties = properties.data();
+    // Use MatrixVectorMulAddPropCount returned from the above
+
+    // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
+    UINT MatrixVectorMulAddPropCount = CoopVecSupport.MatrixVectorMulAddPropCount;
+    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    CoopVecSupport.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
-    // Use VectorMatrixMulAdd shader with datatype and interpretation combination matching one of those returned.
+    // Use MatrixVectorMulAdd shader with datatype and interpretation
+    // combination matching one of those returned.
     
 } else {
     // Don't use Cooperative Vector
@@ -794,6 +808,8 @@ datatype. It takes a pointer to
 the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
 API. 
+
+The `DestStride` must be a multiple of 16 bytes.
 
 ```c++
 
