@@ -1,26 +1,27 @@
 # Test Plan
+
+All tests are to be included in the HLK test binary which ships with the OS.
+This test binary is only built in the OS repo and based off of the 'ExecTests'
+'ExecTests' source code in the DXC repo. There is a script in the WinTools repo
+which generates and annotates the HLK tests.
+
 There are three test categories we are concerned with:
 
-1. DXIL Intrinsic tests: Go through the operators that support vectors and make a
-    list of the DXIL ops used.
-     - The table to reference for this is in HLOperationLower.cpp.
-     - Many, if not all, of these probably have existing test cases that just need
-        to be modified to use vectors
-          - I think that the 'implementation' will largely be editing
-             ShaderOpArithTable.xml, which is used to generate TAEF 'data driven'
-             tests. Minor shader code updates and added input/output of vectors
-     - Some tests may need to be duplicated for the vector variant of the test.
-     - The tests cases in this category are any intrinsics in the below table that
-        have a DXIL::OpCode::* in the DXIL OPCode column
+1. Implement DXIL Intrinsic tests:
+    - At the bottom of this document there is a table of all HLSL intrinsics and
+    their mapped DXIL OpCodes. We just need coverage for each DXIL OpCode. If the
+    DXIL OpCode column lists 'emulated' then this means that there are multiple
+    LLVM/DXIL Ops used to compute the intrinsic. We will need to do an audit of
+    them to confirm coverage of all vector ops.
 
-2. LLVM Native operation tests
-     - TBD: Where do we test these? Tex mentioned some existing tests but it sounds
-        like we don't want to use those. And they aren't HLK tests anyways.
-     - TODO: Discuss how we want to test ops that don't boil down to a single DXIL
-        op. Still seems like something we should test in the HLK?
+2. Implement LLVM Native operation tests:
+     - These are the test cases for the 'basic' HLSL operators listed in the HLSL
+     operators table below.
+     - We have added some test cases for these with the long vectors work, but we
+     will want to make sure we add HLK coverage for all of these.
 
 3. Standard loading and storing of long vectors
-     - TODO: Do we have tests that do this today?
+     - Ensure we have some basic tests doing standard loading/storing of long vectors.
 
 # Vector Sizes to test
 
@@ -29,7 +30,7 @@ propose testing sizes of 5, 25, 100, 500. Sizes < 5 are assumed to already be
 covered by existing test collateral. But, as part of this work we will verify that
 assumption.
 
-# Phases
+# Implementation phases
 Do the test work in two simple phases.
 
 1. Implement and validate (locally against WARP) the 3 test categories.
@@ -38,8 +39,12 @@ Do the test work in two simple phases.
      - Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
         with HLK GUIDS and requirements
      - Add new tests to HLK playlist
-     - Note: Test binaries/collateral will be shared with IHVs for validation
-        purposes.
+
+# Shipping
+1. Tests will be shared privately with IHV's along with the latest DXC and
+latest Agility SDK for tesing and validation.
+
+2. The tests will ship with the HLK at a TBD date in a later OS release.
 
 # New HLK Tests
 mm_annotate_shader_op_arith_table.py (WinTools repo) will need to be updated to
@@ -69,7 +74,27 @@ completed.
         waiting for an OS/HLK release.
 
 # Open Questions
-     -
+     - We speculate that the combiniation of test cases for HLSL operators and
+     HLSL intrinsics which map to DXIL ops should get us all, or most of the
+     coverage required for the 'emulated' intrinsics. But we should audit that.
+
+# HLSL Operators
+These operatores should generate LLVM native ops which use vectors.
+
+| Operator Name | Operator | Notes |
+|-----------|--------------|----------|
+Additive and Multiplicative Operators | +, -, *, /, % |
+Array Operator | [i] |
+Assignment Operators | =, +=, -=, *=, /=, %= |
+Binary Casts | C rules for float and int, C rules or HLSL intrinsics for bool |
+Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors
+Boolean Math Operators | & &, ||, ?: |
+Cast Operator | (type) |
+Comma Operator | , |
+Comparison Operators| <, >, ==, !=, <=, >= |
+Prefix or Postfix Operators| ++, -- |
+Structure Operator | . |
+Unary Operators | !, -, + |
 
 # Mappings of HLSL intrinsics to DXIL opcodes or LLVM native operations
 
