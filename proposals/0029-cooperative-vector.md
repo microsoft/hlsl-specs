@@ -66,6 +66,8 @@ void ps_main(args) // args: texture, normal, position
 
 Below shader is in HLSL-like psuedocode, to highlight the idea of what replacing physical computations with a neural network based evaluation looks like. The exact syntax for the new intrinsics is intentionally skipped to keep it simple, later sections contain examples with the correct syntax and sample descriptors.
 
+> NOTE: see proposal [0031] for the latest on the HLSL API.
+
 ```c++
 ByteAddressBuffer inputMatrix0; 
 ByteAddressBuffer inputMatrix1; 
