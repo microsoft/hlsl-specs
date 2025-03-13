@@ -409,7 +409,7 @@ logical elements.
 
 Implementations are expected to support the interpretations listed in [Minimum
 Support Set], but may also report additional supported interpretations via
-[CheakFeatureSupport].
+[CheckFeatureSupport].
 
 The following `ComponentType`s are valid for use as input interpretations:
 * `I16`
@@ -434,7 +434,7 @@ interpreted according to the Conversion Rules shown below.
 
 Implementations are expected to support the interpretations listed in [Minimum
 Support Set], but may also report additional supported interpretations via
-[CheakFeatureSupport].
+[CheckFeatureSupport].
 
 The following `ComponentType`s are valid for use as interpretations for matrices
 or vectors stored in memory: 
