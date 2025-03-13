@@ -128,7 +128,7 @@ specification we add four operations:
 * **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
     two vectors and accumulate the result matrix atomically-elementwise in
     memory.
-* **Reduce and Accumulate:** Accumulate elements of a vector
+* **Vector Accumulate:** Accumulate elements of a vector
     atomically-elementwise to corresponding elements in memory.
 
 
@@ -324,12 +324,12 @@ guaranteed to be supported on all implementations can be found in
   `I8`, `F8_E4M3`, `F8_E5M2`, 
 
 
-### Reduce Sum Accumulate
+### Vector Accumulate
 
 #### Syntax
 
 ``` llvm
-declare void @dx.op.vecreducesumacc.v[NUM][TY](
+declare void @dx.op.vectoraccumulate.v[NUM][TY](
     immarg i32,       ; opcode
     <[NUM] x [TY]>,   ; input vector
     %dx.types.Handle, ; output array resource 
@@ -669,7 +669,7 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE
     BOOL                          TransposeSupported;
 };
 
-// Used for OuterProductAccumulate and ReduceSumAccumulate intrinsics
+// Used for OuterProductAccumulate and VectorAccumulate intrinsics
 typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;  
@@ -683,8 +683,8 @@ typedef struct D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR
     Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
     InOut UINT                                                   OuterProductAccPropCount;
     Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
-    InOut UINT                                                   VectorSumAccPropCount;
-    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pVectorSumAccProperties;
+    InOut UINT                                                   VectorAccumulatePropCount;
+    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
 
 ```
@@ -709,10 +709,10 @@ the operation fails and `E_INVALIDARG` is returned.
 
 **D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
   and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
-  `ReduceSumAccPropCount` are 0 in this case.
+  `VactorAccumulatePropCount` are 0 in this case.
 
 **D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1**: Device supports previous
-  tiers, *OuterProductAccumulate* and *VectorSumAccumulate* functions.
+  tiers, *OuterProductAccumulate* and *VectorAccumulate* functions.
 
 #### Minimum Support Set
 
@@ -743,7 +743,7 @@ explicitly checked for the combinations below.
 | FP16      | FP16             |
 | FP16      | FP32             |
 
-##### For ReduceSumAccumulate
+##### For VectorAccumulate
 
 | InputType | AccumulationType |
 |-----------|------------------|
