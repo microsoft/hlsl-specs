@@ -15,7 +15,8 @@
 
 # Cooperative Vectors
 
-Cooperative Vectors is the name used for announcing this feature.
+Cooperative Vectors is the overall name for this feature, though it doesn't appear
+in code:
 
 In HLSL, DXIL and D3D, Cooperative Vectors are defined as Matrix Vector operations under the 
 umbrella of a Linear Algebra namespace.  E.g. `dx::linalg::` MatVec operations in HLSL, 
