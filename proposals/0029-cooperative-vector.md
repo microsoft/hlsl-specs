@@ -122,7 +122,7 @@ specification we add four operations:
 * **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
     two vectors and accumulate the result matrix atomically-elementwise in
     memory.
-* **Reduce and Accumulate:** Accumulate elements of a vector
+* **Vector Accumulate:** Accumulate elements of a vector
     atomically-elementwise to corresponding elements in memory.
 
 
@@ -218,8 +218,10 @@ For optimal layouts, **matrix stride** is ignored.
 
 Only non-packed interpretations are valid for matrices.
 
-The base address of **matrix resource** and **matrix offset** must be 64 byte
-aligned.
+The base address of **matrix resource** and **matrix offset** must be 128 byte
+aligned. Also note that the size of the underlying allocation is guaranteed to
+be a multiple of 16 bytes ensuring that the 16 bytes access of the last
+row/column of the matrix is valid memory.
 
 The **matrix stride** is 16 byte aligned.
 
@@ -300,8 +302,10 @@ resource**, with **matrix offset**, **matrix stride**, **matrix
 interpretation** and **matrix layout** behaving as described [above]
 (#matrix-vector-multiply-and-multiply-add-operations).
 
-The base address of **matrix resource** and **matrix offset** must be 64 byte
-aligned.
+The base address of **matrix resource** and **matrix offset** must be 128 byte
+aligned. Also note that the size of the underlying allocation is guaranteed to
+be a multiple of 16 bytes ensuring that the 16 bytes access of the last
+row/column of the matrix is valid memory
 
 The **matrix stride** is 16 byte aligned.
 
@@ -318,12 +322,12 @@ guaranteed to be supported on all implementations can be found in
   `I8`, `F8_E4M3`, `F8_E5M2`, 
 
 
-### Reduce Sum Accumulate
+### Vector Accumulate
 
 #### Syntax
 
 ``` llvm
-declare void @dx.op.vecreducesumacc.v[NUM][TY](
+declare void @dx.op.vectoraccumulate.v[NUM][TY](
     immarg i32,       ; opcode
     <[NUM] x [TY]>,   ; input vector
     %dx.types.Handle, ; output array resource 
@@ -666,7 +670,7 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
     BOOL                              TransposeSupported;
 };
 
-// Used for OuterProductAccumulate and ReduceSumAccumulate intrinsics
+// Used for OuterProductAccumulate and VectorAccumulate intrinsics
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 {
     D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;  
@@ -679,8 +683,8 @@ typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
     InOut UINT                                         OuterProductAccPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
-    InOut UINT                                         ReduceSumAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pReduceSumAccProperties;
+    InOut UINT                                         VectorAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
 
 ```
@@ -705,10 +709,10 @@ the operation fails and `E_INVALIDARG` is returned.
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
   and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
-  `ReduceSumAccPropCount` are 0 in this case.
+  `VectorAccumulatePropCount` are 0 in this case.
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
-  tiers, *OuterProductAccumulate* and *ReduceSumAccumulate* functions.
+  tiers, *OuterProductAccumulate* and *VectorAccumulate* functions.
 
 #### Minimum Support Set
 
@@ -739,7 +743,7 @@ explicitly checked for the combinations below.
 | FP16      | FP16             |
 | FP16      | FP32             |
 
-##### For ReduceSumAccumulate
+##### For VectorAccumulate
 
 | InputType | AccumulationType |
 |-----------|------------------|
@@ -811,7 +815,8 @@ the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
 API. 
 
-The `DestStride` must be a multiple of 16 bytes.
+The `DestSize` and `DestStride` must be a multiple of 16 bytes. The `DestVA`
+must be 128B aligned.
 
 ```c++
 
@@ -987,22 +992,9 @@ Various combinations of enums for specifying interpretations were considered
 with varying trade-offs of complexity versus typesafety and simplicity, before
 deciding to extend the existing `ComponentType` enum.
 
-## Open Issues
-
-* Q: Type interpretations to use HLSL conversion rules of ML best practices?
-* A: This spec uses the ML best practices like the SpirV spec. // TODO: get
-  approval
-* Q: More details on formats and their precision requirements
-* A: Implementation Dependent
-* Q: How do you handle cases where different implementations may not produce bit
-  identical results?
-* A: Some combination of exactly representable results/ epsilon ranges.
-* Q: Using MatrixView and VectorView as a wrapper for the BAB containing the
-  matrix/bias vectors and their corresponding interpretations.
-
 ## Acknowledgments
 
-We would like to thank Jeff Bolz, Yury Uralsky and Patrick Neill for their
-contributions to this specification.
+We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill, Tex Riddell and
+Amar Patel for their contributions to this specification.
 
 <!-- {% endraw %} -->
