@@ -15,6 +15,11 @@
 
 # Cooperative Vectors
 
+Cooperative Vectors is the name used for announcing this feature.  In HLSL, DXIL, 
+and D3D Cooperative Vectors are defined as Matrix Vector operations under the 
+umbrella of a Linear Algebra namespace, e.g. dx::linalg:: in HLSL, 
+D3D12_LINEAR_ALGEBRA_* in D3D API structs.
+
 ## Introduction
 
 In research and in industry, machine learning based approaches have made their
@@ -548,7 +553,7 @@ enum class DXILMatrixLayout : uint {
 ```
 
 Optimal layouts are opaque implementation specific layouts, the D3D call
-`CooperativeVectorConvertMatrix` can be used to convert the *Matrix* to an
+`ConvertLinearAlgebraMatrix` can be used to convert the *Matrix* to an
 optimal layout. Row-Major and Column-Major layouts are also supported.
 
  
@@ -602,23 +607,20 @@ The vector-matrix intrinsics are expected to be supported in all shader stages.
 
 #### D3D12 API Additions
 
-Note: The enums and structs need to be updated from the coop_vec name, once a
-new name for the feature is decided.
-
 ### Check Feature Support
 
 This feature requires calling CheckFeatureSupport(). Additional D3D12_FEATURE
 enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to
-enable discovering the Cooperative Vector tier along with the datatype and
+enable discovering the linear algebra matrix vector tier along with the datatype and
 interpretation combinations supported by new vector-matrix intrinsics.
 
 ```c++
 typedef enum D3D12_FEATURE {
     ...
-    // Contains cooperative vector tier.
+    // Contains liner algebra vector matrix tier.
     // NN tbd when implemented
     D3D12_FEATURE_D3D12_OPTIONSNN;
-    D3D12_FEATURE_COOPERATIVE_VECTOR;
+    D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR;
 };
 
 // This is designed to match the ComponentType enum values but omits data 
@@ -626,68 +628,69 @@ typedef enum D3D12_FEATURE {
 // to more closely match those used by HLSL developers, as opposed to the ComponentType 
 // names that align with LLVM IR.
 
-typedef enum D3D12_COOPERATIVE_VECTOR_DATATYPE {
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT16          =  2, // ComponentType::I16
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT16          =  3, // ComponentType::U16
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT32          =  4, // ComponentType::I32
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT32          =  5, // ComponentType::U32
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT16         =  7, // ComponentType::F16
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32         =  8, // ComponentType::F32
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_INT8_T4_PACKED  = 16, // ComponentType::PackedS8x32
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_UINT8           = 18, // ComponentType::U8
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_SINT8           = 19, // ComponentType::I8
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_E4M3            = 20, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
-  D3D12_COOPERATIVE_VECTOR_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
+typedef enum D3D12_LINEAR_ALGEBRA_DATATYPE {
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT16          =  2, // ComponentType::I16
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT16          =  3, // ComponentType::U16
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT32          =  4, // ComponentType::I32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32          =  5, // ComponentType::U32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  7, // ComponentType::F16
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  8, // ComponentType::F32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_INT8_T4_PACKED  = 16, // ComponentType::PackedS8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 18, // ComponentType::U8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 19, // ComponentType::I8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3            = 20, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
 };
 
-typedef enum D3D12_COOPERATIVE_VECTOR_TIER
+typedef enum D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER
 {
-    D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,    
-    D3D12_COOPERATIVE_VECTOR_TIER_1_0,
-    D3D12_COOPERATIVE_VECTOR_TIER_1_1
+    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_NOT_SUPPORTED,    
+    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0,
+    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1
 }
 
 // This struct may be augmented with more capability bits
 // as the feature develops
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
 {
-    Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
+    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER LinearAlgebraMatrixVectorTier;
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
 // Used for MatrixVectorMulAdd intrinsic
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE
 {
-    D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;
-    D3D12_COOPERATIVE_VECTOR_DATATYPE InputInterpretation;
-    D3D12_COOPERATIVE_VECTOR_DATATYPE MatrixInterpretation;
-    D3D12_COOPERATIVE_VECTOR_DATATYPE BiasInterpretation;
-    D3D12_COOPERATIVE_VECTOR_DATATYPE OutputType;
-    BOOL                              TransposeSupported;
+    D3D12_LINEAR_ALGEBRA_DATATYPE InputType;
+    D3D12_LINEAR_ALGEBRA_DATATYPE InputInterpretation;
+    D3D12_LINEAR_ALGEBRA_DATATYPE MatrixInterpretation;
+    D3D12_LINEAR_ALGEBRA_DATATYPE BiasInterpretation;
+    D3D12_LINEAR_ALGEBRA_DATATYPE OutputType;
+    BOOL                          TransposeSupported;
 };
 
 // Used for OuterProductAccumulate and ReduceSumAccumulate intrinsics
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING
 {
-    D3D12_COOPERATIVE_VECTOR_DATATYPE InputType;  
-    D3D12_COOPERATIVE_VECTOR_DATATYPE AccumulationType;
+    D3D12_LINEAR_ALGEBRA_DATATYPE InputType;  
+    D3D12_LINEAR_ALGEBRA_DATATYPE AccumulationType;
 };
 
-typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
+// ChecckFeatureSupport data struct used with type D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR:
+typedef struct D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR
 {    
-    InOut UINT                                         MatrixVectorMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
-    InOut UINT                                         ReduceSumAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pReduceSumAccProperties;
+    InOut UINT                                                   MatrixVectorMulAddPropCount;
+    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
+    InOut UINT                                                   OuterProductAccPropCount;
+    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
+    InOut UINT                                                   VectorSumAccPropCount;
+    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pVectorSumAccProperties;
 };
 
 ```
 
-Support for the CooperativeVector feature is queried through
-`CooperativeVectorTier`. User can also query properties supported for each
-intrinsic in `D3D12_FEATURE_DATA_COOPERATIVE_VECTOR`. If pProperties is NULL
+Support for the Linear Algebra: Matrix Vector feature is queried through
+`LinearAlgebraMatrixVectorTier`. User can also query properties supported for each
+intrinsic in `D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR`. If pProperties is NULL
 for any intrinsic, the count of available properties will be returned in
 PropCount. Otherwise, PropCount must represent the size of the pProperties
 array, which will be updated with the number of structures written to
@@ -703,12 +706,12 @@ the operation fails and `E_INVALIDARG` is returned.
 
 #### Support Tiers
 
-**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
+**D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
   and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
   `ReduceSumAccPropCount` are 0 in this case.
 
-**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
-  tiers, *OuterProductAccumulate* and *ReduceSumAccumulate* functions.
+**D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1**: Device supports previous
+  tiers, *OuterProductAccumulate* and *VectorSumAccumulate* functions.
 
 #### Minimum Support Set
 
@@ -749,64 +752,64 @@ explicitly checked for the combinations below.
 #### Usage Example
 
 ```c++
-// Check for CooperativeVector support and query properties for MatrixVectorMulAdd
-D3D12_FEATURE_DATA_D3D12_OPTIONSNN CoopVecSupport = {};
+// Check for matrix vector support and query properties for MatrixVectorMulAdd
+D3D12_FEATURE_DATA_D3D12_OPTIONSNN MatVecSupport = {};
 
-d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &CoopVecSupport, 
+d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &MatVecSupport, 
                                  sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
 
-if (CoopVecSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
+if (MatVecSupport.LinearAlgebraMatrixVectorTier == D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
-    D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
+    D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR MatVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
-                                     sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &MatVecProperties, 
+                                     sizeof(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR));
 
     // Use MatrixVectorMulAddPropCount returned from the above
 
     // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
-    UINT MatrixVectorMulAddPropCount = CoopVecSupport.MatrixVectorMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
-    CoopVecSupport.pMatrixVectorMulAddProperties = properties.data();
+    UINT MatrixVectorMulAddPropCount = MatVecProperties.MatrixVectorMulAddPropCount;
+    std::vector<D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    MatVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecSupport, 
-                                    sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &MatVecProperties, 
+                                    sizeof(D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR));
                                                                 
     // Use MatrixVectorMulAdd shader with datatype and interpretation
     // combination matching one of those returned.
     
 } else {
-    // Don't use Cooperative Vector
+    // Don't use matrix vector ops
 }
 ```
 
 ### Convert Matrix to desired layout and type
 
-The weight and bias matrices used in the cooperative vector intrinsics are
+The weight and bias matrices used in the Linear Algebra: Matrix Vector intrinsics are
 (RW)ByteAddressBuffers with implementation specific alignment constraints and
 performance characteristics. We introduce a driver side API to change the
 layout and dataype of the weight matrix from and to any of the layouts in
-`D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT` and datatypes in
-`D3D12_COOPERATIVE_VECTOR_DATATYPE`.
+`D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT` and datatypes in
+`D3D12_LINEAR_ALGEBRA_DATATYPE`.
 
 ```c++
-enum D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT {
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_ROW_MAJOR,
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_COLUMN_MAJOR,
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_INFERENCING_OPTIMAL,
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_TRAINING_OPTIMAL
+enum D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT {
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_ROW_MAJOR,
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_COLUMN_MAJOR,
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL,
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL
 }
 ```
 
 #### Query Destination Size
 
 The destination buffer (to hold the matrix) size can be implementation
-dependent. The API `GetCooperativeVectorMatrixConversionDestinationInfo` is
+dependent. The API `GetLinearAlgebraMatrixConversionDestinationInfo` is
 added to query the size of the destination buffer in the desired layout and
 datatype. It takes a pointer to
-`D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor that provides
+`D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO` descriptor that provides
 the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
 API. 
@@ -816,17 +819,17 @@ The `DestStride` must be a multiple of 16 bytes.
 ```c++
 
 // Descriptor to query the destination buffer size
-typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO { 
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO { 
     UINT                                   DestSize;      // !< [out]Destination buffer size in bytes
                                                           // required for conversion 
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT DestLayout;    // !< [in] Is the layout the matrix is converted to
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT     DestLayout;    // !< [in] Is the layout the matrix is converted to
     UINT                                   DestStride;    // !< [in] Is the number of bytes between a consecutive 
                                                           // row or column (depending on DestLayout) of the 
                                                           // destination matrix if it is row-major or 
                                                           // column-major.
     UINT                                   NumRows;       // !< [in] Is the number of rows in the matrix. 
     UINT                                   NumColumns;    // !< [in] Is the number of columns in the matrix. 
-    D3D12_COOPERATIVE_VECTOR_DATATYPE      DestDataType;  // !< [in] the type of a destination matrix element. 
+    D3D12_LINEAR_ALGEBRA_DATATYPE          DestDataType;  // !< [in] the type of a destination matrix element. 
 };
 
 // An API to return the number of bytes required in the destination buffer to
@@ -834,24 +837,24 @@ typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO {
 // the destination layout information and does not depend on the source layout
 // information.
 
-void ID3D12Device::GetCooperativeVectorMatrixConversionDestinationInfo(
-                        D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO* pDesc);
+void ID3D12Device::GetLinearAlgebraMatrixConversionDestinationInfo(
+                        D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
 
 ```
 
 #### Conversion descriptors
 
 After the size of the destination buffer is known, user can pass the
-`D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO` descriptor along with
+`D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO` descriptor along with
 information of source layout and datatype in
-`D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_SOURCE_INFO` and addresses of the
+`D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_SOURCE_INFO` and addresses of the
 source and destination buffers to the layout and datatype conversion API.
 
 ```c++
 
 // GPU VAs of source and destination buffers
 
-typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DATA {
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DATA {
     D3D12_GPU_VIRTUAL_ADDRESS               DestVA;               //!< [inout] GPU VA of destination 
                                                                   // buffer
     D3D12_GPU_VIRTUAL_ADDRESS               SrcVA;                //!< [in]    GPU VA of source 
@@ -859,15 +862,15 @@ typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DATA {
 };
  
 // Source information descriptor. Destination information comes from 
-// D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO
+// D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO
 
-typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_SRC_INFO {
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_SRC_INFO {
     UINT                                    SrcSize;                // !< [in] Is the length in bytes of 
                                                                     // srcData    
-    D3D12_COOPERATIVE_VECTOR_DATATYPE       SrcDataType;            // !< [in] Is the type of a 
+    D3D12_LINEAR_ALGEBRA_DATATYPE           SrcDataType;            // !< [in] Is the type of a 
                                                                     // source matrix 
                                                                     // element        
-    D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT  SrcLayout;              // !< [in] Is the layout of the 
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT      SrcLayout;              // !< [in] Is the layout of the 
                                                                     // source matrix.
     UINT                                    SrcStride;              // !< [in] Is the number of bytes  
                                                                     // between a consecutive row or column 
@@ -877,10 +880,10 @@ typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_SRC_INFO {
 };
 
 // Descriptor passed to the conversion API
-typedef struct D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO {
-    D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DEST_INFO      DestInfo;
-    D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_SRC_INFO       SrcInfo;    
-    D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_DATA           DataDesc;   
+typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO {
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO      DestInfo;
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_SRC_INFO       SrcInfo;    
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DATA           DataDesc;   
 };
 ```
 
@@ -890,12 +893,12 @@ New API is added to the ID3D12CommandList interface. Multiple conversions can be
 done in a single call of the API. The number of descriptors pointed to by pDesc
 is specified using DescCount. If DestSize passed to this API is less than the
 number of bytes returned in call to
-`GetCooperativeVectorMatrixConversionDestinationInfo`, behavior is undefined.
+`GetLinearAlgebraMatrixConversionDestinationInfo`, behavior is undefined.
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12CommandList::CooperativeVectorConvertMatrix(D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO* pDesc,
-                                                       UINT DescCount);
+void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
+                                                   UINT DescCount);
 
 ```
 
@@ -906,39 +909,39 @@ void ID3D12CommandList::CooperativeVectorConvertMatrix(D3D12_COOPERATIVE_VECTOR_
 * If DestLayout is row-major or column-major, then DestStride should be greater than the length of a row/column, and a
   multiple of the element size.
 * If SrcComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
-  SrcComponentType should be `D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32`.
+  SrcComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
 * If DestComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
-  DestComponentType should be `D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32`.
-* If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32`  or `D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
-* If DestComponentType is `D3D12_COOPERATIVE_VECTOR_DATATYPE_E4M3` or `D3D12_COOPERATIVE_VECTOR_DATATYPE_E5M2`, then DestLayout should be `D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
+  DestComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
+* If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
+* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
 
 
 *Usage Example:*
 
 ```c++
 
-D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO infoDesc = 
+D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO infoDesc = 
 { 
     // DestInfo
     {
         0,                                                              // DestSize to be populated by 
                                                                         // driver implementation
-        D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_INFERENCING_OPTIMAL,     // convert to inferencng optimal layout
+        D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL,         // convert to inferencng optimal layout
         0,                                                              // stride is ignored since optimal layout 
                                                                         // is implementation dependent
         numRows,                                                        // number of rows in weight matrix to be 
                                                                         // converted
         numColumns,                                                     // number of columns in weight matrix to 
                                                                         // be converted
-        D3D12_COOPERATIVE_VECTOR_DATATYPE_E4M3                          // convert to FP8 datatype
+        D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3                              // convert to FP8 datatype
     },
 
     //SrcInfo
     {
         srcSize,                                                        // number of bytes of matrix in source 
                                                                         // layout and datatype
-        D3D12_COOPERATIVE_VECTOR_DATATYPE_FLOAT32,                      // convert from float
-        D3D12_COOPERATIVE_VECTOR_MATRIX_LAYOUT_ROW_MAJOR,               // convert from row major layout
+        D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32,                          // convert from float
+        D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_ROW_MAJOR,                   // convert from row major layout
         (numColumns * sizeof(float))                                    // row major stride without padding
     },
 
@@ -952,14 +955,14 @@ D3D12_COOPERATIVE_VECTOR_MATRIX_CONVERSION_INFO infoDesc =
 }
 
 // Query destSize
-pD3D12Device->GetCooperativeVectorMatrixConversionDestinationInfo(&infoDesc.DestInfo);
+pD3D12Device->GetLinearAlgebraMatrixConversionDestinationInfo(&infoDesc.DestInfo);
 
 // After the size is known, initialize the DestVA. Offset the SrcVA with DestSize to get DestVA 
 // (alignment requirements are ignored for simplicity)
 infoDesc.DataDesc.DestVA = srcVA + infoDesc.DestInfo.DestSize;
 
 // Perform the conversion
-pD3D12CommandList->CooperativeVectorConvertMatrix(&infoDesc, 0);
+pD3D12CommandList->ConvertLinearAlgebraMatrix(&infoDesc, 0);
 
 ```
 ### D3D12 DDI Additions
