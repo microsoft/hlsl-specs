@@ -611,13 +611,13 @@ The vector-matrix intrinsics are expected to be supported in all shader stages.
 
 This feature requires calling CheckFeatureSupport(). Additional D3D12_FEATURE
 enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to
-enable discovering the linear algebra matrix vector tier along with the datatype and
+enable discovering the Linear Algebra: Matrix Vector tier along with the datatype and
 interpretation combinations supported by new vector-matrix intrinsics.
 
 ```c++
 typedef enum D3D12_FEATURE {
     ...
-    // Contains liner algebra vector matrix tier.
+    // Contains Linear Algebra: Matrix Vector tier.
     // NN tbd when implemented
     D3D12_FEATURE_D3D12_OPTIONSNN;
     D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR;
