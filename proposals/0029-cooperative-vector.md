@@ -66,6 +66,8 @@ void ps_main(args) // args: texture, normal, position
 
 Below shader is in HLSL-like psuedocode, to highlight the idea of what replacing physical computations with a neural network based evaluation looks like. The exact syntax for the new intrinsics is intentionally skipped to keep it simple, later sections contain examples with the correct syntax and sample descriptors.
 
+> NOTE: see proposal [0031] for the latest on the HLSL API.
+
 ```c++
 ByteAddressBuffer inputMatrix0; 
 ByteAddressBuffer inputMatrix1; 
@@ -409,7 +411,7 @@ logical elements.
 
 Implementations are expected to support the interpretations listed in [Minimum
 Support Set], but may also report additional supported interpretations via
-[CheakFeatureSupport].
+[CheckFeatureSupport].
 
 The following `ComponentType`s are valid for use as input interpretations:
 * `I16`
@@ -434,7 +436,7 @@ interpreted according to the Conversion Rules shown below.
 
 Implementations are expected to support the interpretations listed in [Minimum
 Support Set], but may also report additional supported interpretations via
-[CheakFeatureSupport].
+[CheckFeatureSupport].
 
 The following `ComponentType`s are valid for use as interpretations for matrices
 or vectors stored in memory: 
