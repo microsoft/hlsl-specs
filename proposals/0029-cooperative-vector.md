@@ -619,13 +619,13 @@ The vector-matrix intrinsics are expected to be supported in all shader stages.
 
 This feature requires calling CheckFeatureSupport(). Additional D3D12_FEATURE
 enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to
-enable discovering the Linear Algebra: Matrix Vector tier along with the datatype and
+enable discovering the Linear Algebra Matrix Vector tier along with the datatype and
 interpretation combinations supported by new vector-matrix intrinsics.
 
 ```c++
 typedef enum D3D12_FEATURE {
     ...
-    // Contains Linear Algebra: Matrix Vector tier.
+    // Contains Linear Algebra Matrix Vector tier.
     // NN tbd when implemented
     D3D12_FEATURE_D3D12_OPTIONSNN;
     D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR;
@@ -696,7 +696,7 @@ typedef struct D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR
 
 ```
 
-Support for the Linear Algebra: Matrix Vector feature is queried through
+Support for the Linear Algebra Matrix Vector feature is queried through
 `LinearAlgebraMatrixVectorTier`. User can also query properties supported for each
 intrinsic in `D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR`. If pProperties is NULL
 for any intrinsic, the count of available properties will be returned in
@@ -716,7 +716,7 @@ the operation fails and `E_INVALIDARG` is returned.
 
 **D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
   and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
-  `VactorAccumulatePropCount` are 0 in this case.
+  `VectorAccumulatePropCount` are 0 in this case.
 
 **D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1**: Device supports previous
   tiers, *OuterProductAccumulate* and *VectorAccumulate* functions.
@@ -795,7 +795,7 @@ if (MatVecSupport.LinearAlgebraMatrixVectorTier == D3D12_LINEAR_ALGEBRA_MATRIX_V
 
 ### Convert Matrix to desired layout and type
 
-The weight and bias matrices used in the Linear Algebra: Matrix Vector intrinsics are
+The weight and bias matrices used in the Linear Algebra intrinsics are
 (RW)ByteAddressBuffers with implementation specific alignment constraints and
 performance characteristics. We introduce a driver side API to change the
 layout and dataype of the weight matrix from and to any of the layouts in
