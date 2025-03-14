@@ -9,84 +9,95 @@ There are three test categories we are concerned with:
 
 1. Implement DXIL Intrinsic tests:
     - At the bottom of this document there is a table of all HLSL intrinsics and
-    their mapped DXIL OpCodes. We just need coverage for each DXIL OpCode. If the
-    DXIL OpCode column lists 'emulated' then this means that there are multiple
-    LLVM/DXIL Ops used to compute the intrinsic. We will need to do an audit of
-    them to confirm coverage of all vector ops.
+    their mapped DXIL OpCodes. We just need coverage for each DXIL OpCode. If
+    the DXIL OpCode column lists 'emulated' then this means that there are
+    multiple LLVM/DXIL Ops used to compute the intrinsic. We will need to do an
+    audit of them to confirm coverage of all vector ops.
 
 2. Implement LLVM Native operation tests:
-     - These are the test cases for the 'basic' HLSL operators listed in the HLSL
-     operators table below.
-     - We have added some test cases for these with the long vectors work, but we
-     will want to make sure we add HLK coverage for all of these.
+     - These are the test cases for the 'basic' HLSL operators listed in the
+     HLSL operators table below.
+     - We have added some test cases for these with the long vectors work, but
+     we will want to make sure we add HLK coverage for all of these.
 
 3. Standard loading and storing of long vectors
-     - Ensure we have some basic tests doing standard loading/storing of long vectors.
+     - Ensure we have some basic tests doing standard loading/storing of long
+     vectors.
 
 # Vector Sizes to test
 
 I don't think there are any particularly interesting vector sizes to test. So I
 propose testing sizes of 5, 25, 100, 500. Sizes < 5 are assumed to already be
-covered by existing test collateral. But, as part of this work we will verify that
-assumption.
+covered by existing test collateral. But, as part of this work we will verify
+that assumption.
 
 # Implementation phases
 Do the test work in two simple phases.
 
 1. Implement and validate (locally against WARP) the 3 test categories.
 2. HLK related work:
-     - Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
-     - Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
-        with HLK GUIDS and requirements
-     - Add new tests to HLK playlist
+    - Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
+    - Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
+    with HLK GUIDS and requirements
+    - Add new tests to HLK playlist
 
 # Shipping
+Note that because DXC and the Agility SDK are both undocked from Windows it is
+our normal operating behavior for the HLK tests to become available with a later
+TBD OS release. The good news is that this doesn't prevent the test from being
+available much earlier in the DXC repo. Just that they are simply TAEF tests in
+the DXC repo. An HLK test includes an extra level of infrastructure for test
+selection and result submission for WHQL signing of drivers.
+
 1. Tests will be shared privately with IHV's along with the latest DXC and
-latest Agility SDK for tesing and validation.
+latest Agility SDK for tesing and validation. IHVs will also be able to build
+and run the tests from the public DXC repo themselves.
 
 2. The tests will ship with the HLK at a TBD date in a later OS release.
 
 # New HLK Tests
 mm_annotate_shader_op_arith_table.py (WinTools repo) will need to be updated to
-recognize any new tests (not test cases) added. And additional GUIDs added for new
-test cases. mm_annotate_shader_op_arith_table.py is called by mm-hlk-update.py when
-converting from 'ExecTests' to the HLK 'DxilConf' tests. The aforementioned
-*table.py script is run by Integration.HLKTestsUpdate.yaml
+recognize any new tests (not test cases) added. And additional GUIDs added for
+new test cases. mm_annotate_shader_op_arith_table.py is called by
+mm-hlk-update.py when converting from 'ExecTests' to the HLK 'DxilConf' tests.
+The aforementioned *table.py script is run by Integration.HLKTestsUpdate.yaml
 
 # Test Validation Requirements
-The following statements must be true and validated for this work to be considered
-completed.
- - All new test cases pass when run locally against a WARP device
- - All new test cases are confirmed to be lit up and available in the HLK when the
-    target device reports support
- - All new tests/test cases are added to the HLK playlist
+The following statements must be true and validated for this work to be
+considered completed.
+- All new test cases pass when run locally against a WARP device
+- All new test cases are confirmed to be lit up and available in the HLK when
+  the target device reports support
+- All new tests/test cases are added to the HLK playlist
 
 # Requirements
-     - Greg's long vector changes. Check-in ETA of 3/7/25.
-     - WARP long vector support (Jesse). Needs Greg's work, or a private WIP branch
-        of Greg's work. ETA of ~1 week to implement.
+     - Greg's long vector changes:
+       https://github.com/microsoft/DirectXShaderCompiler/pull/7188
+     - WARP long vector support (Jesse). Needs Greg's work, or a private WIP
+        branch of Greg's work. ETA of ~1 week to implement.
 
 # Notes
-     - The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests (DxilConf
-        tests)
-     - Private test binaries/collateral will be shared with IHVs for validation
-        purposes. This will enable IHVs to verify long vector functionality without
-        waiting for an OS/HLK release.
+- The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests
+   (DxilConf tests)
+- Private test binaries/collateral will be shared with IHVs for validation
+   purposes. This will enable IHVs to verify long vector functionality without
+   waiting for an OS/HLK release.
 
 # Open Questions
-     - We speculate that the combiniation of test cases for HLSL operators and
-     HLSL intrinsics which map to DXIL ops should get us all, or most of the
-     coverage required for the 'emulated' intrinsics. But we should audit that.
+- We speculate that the combination of test cases for HLSL operators and HLSL
+intrinsics which map to DXIL ops should get us all, or most of the coverage
+required for the 'emulated' intrinsics. But we should audit that.
 
 # HLSL Operators
-These operatores should generate LLVM native ops which use vectors.
+These operators should generate LLVM native ops which use vectors.
 
+Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-operators#binary-casts)
 | Operator Name | Operator | Notes |
 |-----------|--------------|----------|
 Additive and Multiplicative Operators | +, -, *, /, % |
 Array Operator | [i] |
 Assignment Operators | =, +=, -=, *=, /=, %= |
-Binary Casts | C rules for float and int, C rules or HLSL intrinsics for bool |
+Binary Casts | asfloat(), asint(), asuint() |
 Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors
 Boolean Math Operators | & &, ||, ?: |
 Cast Operator | (type) |
