@@ -29,11 +29,12 @@ operations.
 This proposal introduces DXIL operations for vector-matrix operations that can
 be accelerated by the underlying hardware, building on support for long vectors
 described in proposals [0026] and [0030]. The high-level API is described in
-proposal [0031].
+proposal [0031]. The test plan is described in proposal [INF-0006].
 
 [0026]: 0026-hlsl-long-vector-type.md
 [0030]: 0030-dxil-vectors.md
 [0031]: 0031-hlsl-vector-matrix-operations.md
+[INF-0006]: infra/INF-0006-CoopVec-TestPlan.md
 
 ## Motivation
 
