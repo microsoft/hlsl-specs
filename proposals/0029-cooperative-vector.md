@@ -234,7 +234,7 @@ Only non-packed interpretations are valid for matrices.
 The base address of **matrix resource** and **matrix offset** must be 128 byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
-row/column of the matrix is valid memory.
+row/column of the matrix is valid memory. 
 
 The **matrix stride** is 16 byte aligned.
 
@@ -318,7 +318,9 @@ interpretation** and **matrix layout** behaving as described [above]
 The base address of **matrix resource** and **matrix offset** must be 128 byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
-row/column of the matrix is valid memory
+row/column of the matrix is valid memory. Implementations may write to the
+contents of the padding between the end of the matrix and the 16-byte boundary,
+so developers should not use this padding space for anything else.
 
 The **matrix stride** is 16 byte aligned.
 
@@ -359,8 +361,13 @@ The input vector is specified by **input vector**, and has `NUM` elements of
 type `TY`.
 
 The output array is accumulated to the writeable raw-buffer resource specified
-by **output array resource** and **output array offset**.  The base address
-and **output array offset** must be 64 byte aligned.
+by **output array resource** and **output array offset**.  The base address and
+**output array offset** must be 64-byte aligned.  Also note that the size of the
+underlying allocation is guaranteed to be a multiple of 16 bytes, ensuring that
+there is valid memory between the end of the array and the 16-byte bounadry.
+Implementations may write to the contents of the padding between the end of the
+matrix and the 16-byte boundary, so developers should not use this padding space
+for anything else.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -920,7 +927,7 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If SrcLayout is row-major or column-major, then SrcStride should be greater than the length of a row/column, and a
   multiple of the element size.
 * If DestLayout is row-major or column-major, then DestStride should be greater than the length of a row/column, and a
-  multiple 16.
+  multiple of 16.
 * If SrcComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
   SrcComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
 * If DestComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
