@@ -789,7 +789,7 @@ if (MatVecSupport.LinearAlgebraMatrixVectorTier == D3D12_LINEAR_ALGEBRA_MATRIX_V
     // combination matching one of those returned.
     
 } else {
-    // Don't use matrix vector ops
+    // Don't use LINEAR_ALGEBRA_MATRIX_VECTOR ops
 }
 ```
 
