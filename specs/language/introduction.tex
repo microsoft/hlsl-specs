@@ -327,3 +327,63 @@ TODO
 \p The alignment requirements of an offset into device memory space is the size
  in bytes of the largest scalar type contained in the given aggregate type.
 
+\Sec{\acrshort{hlsl} Object Models}{Intro.Object}
+
+\p An \acrshort{hlsl} program is a collection of operations that create,
+destroy, and otherwise manipulate \textit{objects}. An object has a
+\texttt{type} (\ref{Basic.types}). An object is created by a \textit{definition}
+(\ref{Basic.Decl}), or by the implementation when needed, as in the example
+cases of lvalue-to-rvalue conversions (\ref{Conv.lval}) or call expression
+argument temporaries (\ref{Expr.Post.Call}). An object can have a name
+(\ref{Basic.preamble}). An object has a \textit{storage duration}
+(\ref{Basic.Storage}), which impacts its \textit{lifetime}
+(\ref{Intro.Object.Lifetime}).
+
+\p An object may contain other objects; an object contained by another object is
+called a \textit{sub-object}. An object that is not contained by any other object
+is called a \textit{complete object}.
+
+\p An object or sub-object that is a non-intangible type will have an associated
+memory location. An object of intangible type will only have a memory location
+if it contains a sub-object of non-intangible type (\ref{Basic.types}).
+
+\Sub{Sub-object Ordering}{Intro.Object.SubOrdering}
+
+\p The sub-objects of an object have a defined order. For vectors and arrays
+the order is increasing subscript order. For matrices it is increasing subscript
+order with the subscript nesting such that in the notation
+\texttt{Mat[M][N]}, the ordering is \(Mat[0][0]...Mat[0][N]...
+Mat[M][0]...Mat[M][N]\). For classes the order is base class, followed by member
+sub-objects in declaration order.
+
+\p Objects that have explicit construction or destruction behavior
+(\ref{Classes.Special}) or non-public data members (\ref{Classes.Access}) are
+\textit{non-decomposable}.
+
+\p A \textit{scalar element ordering} of sub-objects can be produced by
+performing a depth-first traversal of the sub-objects of an object following the
+defined sub-object ordering. A scalar element ordering will include
+non-decomposable sub-objects as whole objects not deconstructed into their
+sub-objects.
+
+\begin{note}
+\p Consider the code below:
+
+\begin{HLSL}
+struct Firetruck {
+  int Wheels[4];
+  half2 Lights;
+  bool Siren;
+  RWBuffer<float4> Hose;
+};
+\end{HLSL}
+
+\p The scalar element ordering of sub-object types is: [\texttt{int}, \texttt{int},
+\texttt{int}, \texttt{int}, \texttt{half}, \texttt{half}, \texttt{bool},
+\texttt{RWBuffer<float4>}]. This ordering preserves the
+\texttt{RWBuffer<float4>} rather than traversing into its sub-objects because it
+is a non-decomposable sub-object.
+
+\end{note}
+
+\Sub{Object Lifetime}{Intro.Object.Lifetime}
