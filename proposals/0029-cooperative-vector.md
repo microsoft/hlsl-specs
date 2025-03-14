@@ -16,7 +16,7 @@
 # Cooperative Vectors
 
 Cooperative Vectors is the overall name for this feature, though it doesn't appear
-in code.
+in code other that feature tier/capability queries.
 
 Many implementations implement matrix-matrix and matrix-vector operations by allowing
 threads in a wave to cooperate under the hood while accessing the specialized hardware 
