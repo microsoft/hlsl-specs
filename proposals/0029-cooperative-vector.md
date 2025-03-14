@@ -619,16 +619,16 @@ The vector-matrix intrinsics are expected to be supported in all shader stages.
 
 This feature requires calling CheckFeatureSupport(). Additional D3D12_FEATURE
 enum and corresponding D3D12_FEATURE_DATA* structs (listed below) are added to
-enable discovering the Linear Algebra Matrix Vector tier along with the datatype and
+enable discovering the Cooperative Vector Tier along with the datatype and
 interpretation combinations supported by new vector-matrix intrinsics.
 
 ```c++
 typedef enum D3D12_FEATURE {
     ...
-    // Contains Linear Algebra Matrix Vector tier.
+    // Contains Cooperative Vector tier.
     // NN tbd when implemented
     D3D12_FEATURE_D3D12_OPTIONSNN;
-    D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR;
+    D3D12_FEATURE_COOPERATIVE_VECTOR;
 };
 
 // This is designed to match the ComponentType enum values but omits data 
@@ -651,22 +651,22 @@ typedef enum D3D12_LINEAR_ALGEBRA_DATATYPE {
   D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
 };
 
-typedef enum D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER
+typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 {
-    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_NOT_SUPPORTED,    
-    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0,
-    D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1
+    D3D12_COOPERATIVE_VECTOR_TIER_NOT_SUPPORTED,    
+    D3D12_COOPERATIVE_VECTOR_TIER_1_0,
+    D3D12_COOPERATIVE_VECTOR_TIER_1_1
 }
 
 // This struct may be augmented with more capability bits
 // as the feature develops
 typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
 {
-    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER LinearAlgebraMatrixVectorTier;
+    Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
 // Used for MatrixVectorMulAdd intrinsic
-typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;
     D3D12_LINEAR_ALGEBRA_DATATYPE InputInterpretation;
@@ -677,28 +677,28 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE
 };
 
 // Used for OuterProductAccumulate and VectorAccumulate intrinsics
-typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;  
     D3D12_LINEAR_ALGEBRA_DATATYPE AccumulationType;
 };
 
-// ChecckFeatureSupport data struct used with type D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR:
-typedef struct D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR
+// CheckFeatureSupport data struct used with type D3D12_FEATURE_COOPERATIVE_VECTOR:
+typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
-    InOut UINT                                                   MatrixVectorMulAddPropCount;
-    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                                   OuterProductAccPropCount;
-    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
-    InOut UINT                                                   VectorAccumulatePropCount;
-    Out D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
+    InOut UINT                                         MatrixVectorMulAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
+    InOut UINT                                         OuterProductAccPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
+    InOut UINT                                         VectorAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
 
 ```
 
-Support for the Linear Algebra Matrix Vector feature is queried through
-`LinearAlgebraMatrixVectorTier`. User can also query properties supported for each
-intrinsic in `D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR`. If pProperties is NULL
+Support for the Cooperative Vector feature is queried through
+`CooperativeVectorTier`. User can also query properties supported for each
+intrinsic in `D3D12_FEATURE_DATA_COOPERATIVE_VECTOR`. If pProperties is NULL
 for any intrinsic, the count of available properties will be returned in
 PropCount. Otherwise, PropCount must represent the size of the pProperties
 array, which will be updated with the number of structures written to
@@ -714,11 +714,11 @@ the operation fails and `E_INVALIDARG` is returned.
 
 #### Support Tiers
 
-**D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
+**D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
   and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
   `VectorAccumulatePropCount` are 0 in this case.
 
-**D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_1**: Device supports previous
+**D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
   tiers, *OuterProductAccumulate* and *VectorAccumulate* functions.
 
 #### Minimum Support Set
@@ -761,35 +761,35 @@ explicitly checked for the combinations below.
 
 ```c++
 // Check for matrix vector support and query properties for MatrixVectorMulAdd
-D3D12_FEATURE_DATA_D3D12_OPTIONSNN MatVecSupport = {};
+D3D12_FEATURE_DATA_D3D12_OPTIONSNN TierSupport = {};
 
-d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &MatVecSupport, 
+d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport, 
                                  sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
 
-if (MatVecSupport.LinearAlgebraMatrixVectorTier == D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_TIER_1_0) {
+if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
-    D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR MatVecProperties = {0, NULL, 0, NULL, 0, NULL};
+    D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &MatVecProperties, 
-                                     sizeof(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR));
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
+                                     sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
 
     // Use MatrixVectorMulAddPropCount returned from the above
 
     // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
-    UINT MatrixVectorMulAddPropCount = MatVecProperties.MatrixVectorMulAddPropCount;
-    std::vector<D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
-    MatVecProperties.pMatrixVectorMulAddProperties = properties.data();
+    UINT MatrixVectorMulAddPropCount = CoopVecProperties.MatrixVectorMulAddPropCount;
+    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &MatVecProperties, 
-                                    sizeof(D3D12_FEATURE_DATA_LINEAR_ALGEBRA_MATRIX_VECTOR));
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &CoopVecProperties, 
+                                    sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
     // Use MatrixVectorMulAdd shader with datatype and interpretation
     // combination matching one of those returned.
     
 } else {
-    // Don't use LINEAR_ALGEBRA_MATRIX_VECTOR ops
+    // Don't use Cooperative Vector ops
 }
 ```
 
