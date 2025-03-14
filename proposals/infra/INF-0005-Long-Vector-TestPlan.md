@@ -71,10 +71,10 @@ considered completed.
 - All new tests/test cases are added to the HLK playlist
 
 # Requirements
-     - Greg's long vector changes:
-       https://github.com/microsoft/DirectXShaderCompiler/pull/7188
-     - WARP long vector support (Jesse). Needs Greg's work, or a private WIP
-        branch of Greg's work. ETA of ~1 week to implement.
+- Greg's long vector changes:
+  https://github.com/microsoft/DirectXShaderCompiler/pull/7188
+- WARP long vector support (Jesse). Needs Greg's work, or a private WIP
+   branch of Greg's work. ETA of ~1 week to implement.
 
 # Notes
 - The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests
