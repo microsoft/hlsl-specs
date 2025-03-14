@@ -271,7 +271,7 @@ that the input vector is an unsigned integer.
 #### Syntax
 
 ``` llvm
-declare void @dx.op.vecouterproductacc.v[M][TY].v[N][TY](
+declare void @dx.op.outerproductacc.v[M][TY].v[N][TY](
     immarg i32,       ; opcode 
     <[M] x [TY]>,     ; input vector 1
     <[N] x [TY]>,     ; input vector 2
