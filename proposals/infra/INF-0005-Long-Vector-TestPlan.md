@@ -91,7 +91,7 @@ required for the 'emulated' intrinsics. But we should audit that.
 # HLSL Operators
 These operators should generate LLVM native ops which use vectors.
 
-Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-operators#binary-casts)
+Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-operators)
 | Operator Name | Operator | Notes |
 |-----------|--------------|----------|
 Additive and Multiplicative Operators | +, -, *, /, % |
