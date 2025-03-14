@@ -32,6 +32,32 @@ Modern GPUs have dedicated silicon to accelerate matrix operations, but HLSL doe
 
 We add the following types and APIs in the dx::linalg (Linear Algebra) namespace: 
 
+`dx.linalg.MatrixRef`
+
+`MatrixRef` is a wrapper class around a Matrix stored in a (RW)ByteAddressBuffer that also contains its type, dimension, layout, start offset and stride.
+
+```c++
+namespace dx {
+namespace linalg
+
+template<TypeInterpretation interpretation, uint M, uint K, MatrixLayout layout>
+class MatrixRef {
+    RWByteAddressBuffer Buffer;
+    uint Stride;
+    uint StartOffset;
+}
+
+template<TypeInterpretation interpretation>
+class VectorRef {
+    RWByteAddressBuffer Buffer;
+    uint StartOffset;
+}
+
+}
+}
+
+```
+
 
 
 
