@@ -231,8 +231,10 @@ For optimal layouts, **matrix stride** is ignored.
 
 Only non-packed interpretations are valid for matrices.
 
-The base address of **matrix resource** and **matrix offset** must be 64 byte
-aligned.
+The base address of **matrix resource** and **matrix offset** must be 128 byte
+aligned. Also note that the size of the underlying allocation is guaranteed to
+be a multiple of 16 bytes ensuring that the 16 bytes access of the last
+row/column of the matrix is valid memory.
 
 The **matrix stride** is 16 byte aligned.
 
@@ -282,7 +284,7 @@ that the input vector is an unsigned integer.
 #### Syntax
 
 ``` llvm
-declare void @dx.op.vecouterproductacc.v[M][TY].v[N][TY](
+declare void @dx.op.outerproductaccumulate.v[M][TY].v[N][TY](
     immarg i32,       ; opcode 
     <[M] x [TY]>,     ; input vector 1
     <[N] x [TY]>,     ; input vector 2
@@ -313,8 +315,10 @@ resource**, with **matrix offset**, **matrix stride**, **matrix
 interpretation** and **matrix layout** behaving as described [above]
 (#matrix-vector-multiply-and-multiply-add-operations).
 
-The base address of **matrix resource** and **matrix offset** must be 64 byte
-aligned.
+The base address of **matrix resource** and **matrix offset** must be 128 byte
+aligned. Also note that the size of the underlying allocation is guaranteed to
+be a multiple of 16 bytes ensuring that the 16 bytes access of the last
+row/column of the matrix is valid memory
 
 The **matrix stride** is 16 byte aligned.
 
@@ -822,7 +826,8 @@ the inputs required to calculate the necessary size. The same descriptor,
 updated with the calculated output size, is then passed to the conversion
 API. 
 
-The `DestStride` must be a multiple of 16 bytes.
+The `DestSize` and `DestStride` must be a multiple of 16 bytes. The `DestVA`
+must be 128B aligned.
 
 ```c++
 
@@ -998,22 +1003,9 @@ Various combinations of enums for specifying interpretations were considered
 with varying trade-offs of complexity versus typesafety and simplicity, before
 deciding to extend the existing `ComponentType` enum.
 
-## Open Issues
-
-* Q: Type interpretations to use HLSL conversion rules of ML best practices?
-* A: This spec uses the ML best practices like the SpirV spec. // TODO: get
-  approval
-* Q: More details on formats and their precision requirements
-* A: Implementation Dependent
-* Q: How do you handle cases where different implementations may not produce bit
-  identical results?
-* A: Some combination of exactly representable results/ epsilon ranges.
-* Q: Using MatrixView and VectorView as a wrapper for the BAB containing the
-  matrix/bias vectors and their corresponding interpretations.
-
 ## Acknowledgments
 
-We would like to thank Jeff Bolz, Yury Uralsky and Patrick Neill for their
-contributions to this specification.
+We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill, Tex Riddell and
+Amar Patel for their contributions to this specification.
 
 <!-- {% endraw %} -->
