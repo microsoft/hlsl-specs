@@ -72,7 +72,7 @@ considered completed.
 
 # Requirements
 - Greg's long vector changes:
-  https://github.com/microsoft/DirectXShaderCompiler/pull/7188
+  https://github.com/microsoft/hlsl-specs/blob/main/proposals/0026-hlsl-long-vector-type.md#allowed-elementwise-vector-intrinsics
 - WARP long vector support (Jesse). Needs Greg's work, or a private WIP
    branch of Greg's work. ETA of ~1 week to implement.
 
