@@ -231,12 +231,12 @@ For optimal layouts, **matrix stride** is ignored.
 
 Only non-packed interpretations are valid for matrices.
 
-The base address of **matrix resource** and **matrix offset** must be 128 byte
+The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
 row/column of the matrix is valid memory.
 
-The **matrix stride** is 16 byte aligned.
+The **matrix stride** is 16-byte aligned.
 
 This operation doesn't perform bounds checking for matrix loads. If any part of
 the matrix load is out of bounds then the entire operation is undefined.
@@ -252,7 +252,7 @@ conversion is performed.
 Only non-packed interpretations are valid for bias vectors.
 
 The base address of **bias vector resource** and **bias vector offset** must be
-64 byte aligned.
+64-byte aligned.
 
 This operation doesn't perform bounds checking for bias loads. If any part of
 the vector load is out of bounds then the entire operation is undefined.
@@ -315,12 +315,12 @@ resource**, with **matrix offset**, **matrix stride**, **matrix
 interpretation** and **matrix layout** behaving as described [above]
 (#matrix-vector-multiply-and-multiply-add-operations).
 
-The base address of **matrix resource** and **matrix offset** must be 128 byte
+The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
 row/column of the matrix is valid memory
 
-The **matrix stride** is 16 byte aligned.
+The **matrix stride** is 16-byte aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
@@ -360,7 +360,7 @@ type `TY`.
 
 The output array is accumulated to the writeable raw-buffer resource specified
 by **output array resource** and **output array offset**.  The base address
-and **output array offset** must be 64 byte aligned.
+and **output array offset** must be 64-byte aligned.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -827,7 +827,7 @@ updated with the calculated output size, is then passed to the conversion
 API. 
 
 The `DestSize` and `DestStride` must be a multiple of 16 bytes. The `DestVA`
-must be 128B aligned.
+must be 128-byte aligned.
 
 ```c++
 
