@@ -561,7 +561,7 @@ enum class DXILMatrixLayout : uint {
 ```
 
 Optimal layouts are opaque implementation specific layouts, the D3D call
-`ConvertLinearAlgebraMatrix` can be used to convert the *Matrix* to an
+`ConvertMatrixLayout` can be used to convert the *Matrix* to an
 optimal layout. Row-Major and Column-Major layouts are also supported.
 
  
@@ -814,7 +814,7 @@ enum D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT {
 #### Query Destination Size
 
 The destination buffer (to hold the matrix) size can be implementation
-dependent. The API `GetLinearAlgebraMatrixConversionDestinationInfo` is
+dependent. The API `GetMatrixConversionDestinationInfo` is
 added to query the size of the destination buffer in the desired layout and
 datatype. It takes a pointer to
 `D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO` descriptor that provides
@@ -845,7 +845,7 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO {
 // the destination layout information and does not depend on the source layout
 // information.
 
-void ID3D12Device::GetLinearAlgebraMatrixConversionDestinationInfo(
+void ID3D12Device::GetMatrixConversionDestinationInfo(
                         D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
 
 ```
@@ -901,12 +901,12 @@ New API is added to the ID3D12CommandList interface. Multiple conversions can be
 done in a single call of the API. The number of descriptors pointed to by pDesc
 is specified using DescCount. If DestSize passed to this API is less than the
 number of bytes returned in call to
-`GetLinearAlgebraMatrixConversionDestinationInfo`, behavior is undefined.
+`GetMatrixConversionDestinationInfo`, behavior is undefined.
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
-                                                   UINT DescCount);
+void ID3D12CommandList::ConvertMatrixLayout(D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
+                                            UINT DescCount);
 
 ```
 
@@ -963,14 +963,14 @@ D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO infoDesc =
 }
 
 // Query destSize
-pD3D12Device->GetLinearAlgebraMatrixConversionDestinationInfo(&infoDesc.DestInfo);
+pD3D12Device->GetMatrixConversionDestinationInfo(&infoDesc.DestInfo);
 
 // After the size is known, initialize the DestVA. Offset the SrcVA with DestSize to get DestVA 
 // (alignment requirements are ignored for simplicity)
 infoDesc.DataDesc.DestVA = srcVA + infoDesc.DestInfo.DestSize;
 
 // Perform the conversion
-pD3D12CommandList->ConvertLinearAlgebraMatrix(&infoDesc, 0);
+pD3D12CommandList->ConvertMatrixLayout(&infoDesc, 0);
 
 ```
 ### D3D12 DDI Additions
