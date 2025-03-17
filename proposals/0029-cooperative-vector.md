@@ -776,7 +776,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
-                                     sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
+                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
 
     // Use MatrixVectorMulAddPropCount returned from the above
 
@@ -786,7 +786,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &CoopVecProperties, 
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
     // Use MatrixVectorMulAdd shader with datatype and interpretation
