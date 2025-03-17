@@ -30,24 +30,74 @@ Modern GPUs have dedicated silicon to accelerate matrix operations, but HLSL doe
 
 ## Proposed solution
 
-We add the following types and APIs in the dx::linalg (Linear Algebra) namespace: 
+We introduce a the `dx.linalg` namespace that exposes functions for new matrix-vector operations:
 
-`dx.linalg.MatrixRef`
+* **Matrix-Vector Multiply:** Multiply a matrix in memory and a vector
+    parameter.
+* **Matrix-Vector Multiply-Add:** Multiply a matrix in memory and a vector
+    parameter and add a vector from memory.
+* **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
+    two vectors and accumulate the result matrix atomically-elementwise in
+    memory.
+* **Reduce and Accumulate:** Accumulate elements of a vector
+    atomically-elementwise to corresponding elements in memory.
 
-`MatrixRef` is a wrapper class around a Matrix stored in a (RW)ByteAddressBuffer that also contains its type, dimension, layout, start offset and stride.
+
+## Detailed Design
+
+### `dx.linalg.MatrixRef`
+
+`MatrixRef` is a wrapper class that represents a Matrix stored in a (RW)ByteAddressBuffer that also contains its type, dimension, layout, start offset and stride.
+
+#### Syntax
 
 ```c++
 namespace dx {
 namespace linalg
 
-template<TypeInterpretation interpretation, uint M, uint K, MatrixLayout layout>
+template<TypeInterpretation Interpretation, uint M, uint K, MatrixLayout Layout>
 class MatrixRef {
     RWByteAddressBuffer Buffer;
     uint Stride;
     uint StartOffset;
 }
 
-template<TypeInterpretation interpretation>
+}
+}
+```
+
+> Note we need to support RWByteAddressBuffer and ByteAddressBuffer if we want to use MatrixRef for both Mul and OuterProductAccumulate. How do we do this?
+
+#### Arguments
+
+##### Template parameters
+
+* **Interpretation**: This describes the type of the value in the buffer. See [Type Interpretation] section details.
+
+* **M x K**: Matrix Dimension
+
+* **Layout**: Specifies the layout of the matrix. See [Matrix Layouts] section for details.
+
+##### Member Variables
+
+The matrix is loaded from a raw buffer **Buffer**, starting at **StartOffset**. For row-major and column-major layouts, **Stride** specifies the number of bytes to go from one row/column to the next. For optimal layouts, **matrix stride** is ignored. 
+
+The base address of **Buffer** and the **StartOffset** must be 64 byte
+aligned.
+
+The **Stride** must 16 byte aligned.
+
+`dx::linalg::VectorRef`
+
+`VectorRef` is a wrapper class that represents a vector stored in a ByteAddressBuffer specfying its type and StartOffset.
+
+>TODO: Needs a length/size parameter?
+
+```c++
+namespace dx {
+namespace linalg {
+
+template<TypeInterpretation Interpretation>
 class VectorRef {
     RWByteAddressBuffer Buffer;
     uint StartOffset;
@@ -58,8 +108,125 @@ class VectorRef {
 
 ```
 
+#### Arguments
+
+##### Template Parameters
+
+* **Interpretation**: This describes the type of the value in the buffer. See [Type Interpretation] section details.
+
+##### Member Variables
+
+The vector is loaded from a raw buffer **Buffer**, starting at **Start Offset**.
+
+The base address of **Buffer** and the **StartOffset** must be 64 byte
+aligned.
+
+`dx.linalg.InterpretedVector`
+
+`InterpretedVector` is a wrapper class that represents a native vector `vector<T, N>` but with an interpretation type that determines the actual type that vector will be interpreted as.
+
+```c++
+namespace dx {
+namespace linalg {
+
+template<typename T, uint N, TypeInterpretation Interpretation>
+class InterpretedVector {
+    vector<T, N> vec;
+}
+
+}
+}
+```
+
+#### Arguments
+
+##### Template Parameters
+
+* **T**: The vector **vec** 's declared type.
+* **N**: The vector **vec** 's declared length.
+* **Interpretation**: Allows functions operating on these vectors to interpret the vector as a type different from its declared type. Based on the value the type conversion maybe arithmetic or bitcast. See [Type Interpretation section] for more details. This interpreted type also determines the actual number of elements in the vector which might differ from **N** for packed types.
+
+##### Member Variables
+ 
+ A native vector **vec** of type **T** and size **N**.
+
+ ### Functions
+
+`dx::linalg::Mul` and `dx::linalg::MulAdd`
+
+The `dx::linalg::Mul` function multiplies matrix and a input vector. The matrix is loaded from memory while the vector is stored in a variable.
+
+The `dx::linalg::MulAdd` operation behaves as `dx::linalg::Mul`, but also adds
+an bias vector (loaded from memory) to the result.
+
+#### Syntax
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <TypeInterpretation matrixInterpretation, uint M, uint K, MatrixLayout layout, typename InputType, uint InputNumcomp, TypeInterpretation InputInterpretation, typename ResultType, bool MatrixNeedsTranspose>
+vector<ResultType, M> Mul(MatrixRef<matrixInterpretation, M, N, layout> WeightMatrix, InterpretedVector<InputType, InputNumComp, InputInterpretation> InputVector);
+
+}
+}
+
+```
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <TypeInterpretation matrixInterpretation, uint M, uint K, MatrixLayout layout, TypeInterpretation biasVectorInterpretation, typename InputType, uint InputNumcomp, TypeInterpretation InputInterpretation, typename ResultType>
+vector<ResultType, M> MulAdd(MatrixRef<matrixInterpretation, M, N, layout> WeightMatrix, InterpretedVector<InputType, InputNumComp, InputInterpretation> InputVector, VectorRef<BiasInterpretation> BiasVector);
+
+}
+}
+```
+
+#### Arguments
+
+* **WeightMatrix** is the Matrix multiplicand loaded from a raw buffer.
+
+* **InputVector** is the vector multiplicand.
+
+* **BiasVector** For 
 
 
+`dx::linalg::OuterProductAccumulate`
+
+#### Syntax
+
+```c++
+namespace dx {
+namespece linalg {
+
+template <typename T, uint M, uint N, MatrixLayout layout, TypeInterpretation interpretation>
+void OuterProductAccumulate(vector<T, M> inputVector1, vector<T, N> inputVector2, MatrixRef<interpretation, M, N, layout> AccMatrix);  
+
+}
+}
+
+```
+
+#### Arguments
+
+`dx::linalg::VectorAccumulate`
+
+#### Syntax
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <typename T, uint N>
+void VectorAccumulate(vector<T, N> inputVector, RWByteAddressBuffer Buffer, uint StartOffset);
+
+}
+}
+```
+
+#### Arguments
 
 First strawman:
 
@@ -98,11 +265,8 @@ void ps_main(args) // args: texture, normal, position{   PreProcessing(args);
     output = exp(output); 
 
     color.r = output[0] * args.lightcolor; color.g = output
-    [1] * args.lightcolor; color.b = output[2] * args.lightcolor; } ```
-
-## Detailed design
-
-TBD
+    [1] * args.lightcolor; color.b = output[2] * args.lightcolor; } 
+```
 
 ## Alternatives considered (Optional)
 
