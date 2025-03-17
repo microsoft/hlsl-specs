@@ -186,11 +186,11 @@ vector<ResultType, M> MulAdd(MatrixRef<matrixInterpretation, M, N, layout> Weigh
 
 #### Arguments
 
-* **WeightMatrix** is the Matrix multiplicand loaded from a raw buffer.
+* **WeightMatrix**: is the Matrix multiplicand loaded from a raw buffer.
 
-* **InputVector** is the vector multiplicand.
+* **InputVector**: is the vector multiplicand.
 
-* **BiasVector** For 
+* **BiasVector**: add the result of the matrix-vector multiply to a vector loaded from a raw buffer. 
 
 
 `dx::linalg::OuterProductAccumulate`
@@ -228,7 +228,6 @@ void VectorAccumulate(vector<T, N> inputVector, RWByteAddressBuffer Buffer, uint
 
 #### Arguments
 
-
 ### Type Interpretation
 
 > To be filled
@@ -241,6 +240,9 @@ First strawman:
 
 > To be fixed
 
+First strawman:
+
+>>>>>>> e857746078b80f74259634f6115092b7af77c3ae
 ```c++ ByteAddressBuffer inputMatrix0; ByteAddressBuffer inputMatrix1;
 ByteAddressBuffer biasVector0; ByteAddressBuffer biasVector1;
 
