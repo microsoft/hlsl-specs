@@ -228,7 +228,18 @@ void VectorAccumulate(vector<T, N> inputVector, RWByteAddressBuffer Buffer, uint
 
 #### Arguments
 
+
+### Type Interpretation
+
+> To be filled
+
+### Matrix Layout
+
+> To be filled
+
 First strawman:
+
+> To be fixed
 
 ```c++ ByteAddressBuffer inputMatrix0; ByteAddressBuffer inputMatrix1;
 ByteAddressBuffer biasVector0; ByteAddressBuffer biasVector1;
@@ -274,6 +285,6 @@ TBD
 
 ## Acknowledgments (Optional)
 
-TBD
+We would like to thank Jeff Bolz for his contribution to this spec.
 
 <!-- {% endraw %} -->
