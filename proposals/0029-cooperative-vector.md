@@ -692,8 +692,8 @@ typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
     InOut UINT                                         MatrixVectorMulAddPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
+    InOut UINT                                         OuterProductAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
     InOut UINT                                         VectorAccumulatePropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
@@ -719,7 +719,7 @@ the operation fails and `E_INVALIDARG` is returned.
 #### Support Tiers
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
-  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
+  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccumulatePropCount` and
   `VectorAccumulatePropCount` are 0 in this case.
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
