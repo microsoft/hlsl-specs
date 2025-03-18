@@ -1,6 +1,6 @@
 # Constructors
 
-* Proposal: [NNNN](NNNN-constructors.md)
+* Proposal: [0031](0031-constructors.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
