@@ -118,11 +118,11 @@ prvalue of arithmetic or unscoped enumeration type can be converted to a prvalue
 of boolean type. A zero value is converted to \texttt{false}; all other values
 are converted to \texttt{true}.
 
-\Sec{Flat conversion}{Conv.flat}
+\Sec{Elementwise conversion}{Conv.flat}
 
 \p There is a flattened order of subobjects for an aggregate, \texttt{A},
 \texttt{A$^\prime$}, as described in section \ref{Decl.Init.Agg}.  A prvalue of an aggregate,
-\texttt{A}, can be flat converted to a prvalue of an aggregate, \texttt{B}, whose flattened
+\texttt{A}, can be elementwise converted to a prvalue of an aggregate, \texttt{B}, whose flattened
 form is \texttt{B$^\prime$}, if the following conditions are true: 
 \begin{itemize}
 \item The length of \texttt{A$^\prime$}, \texttt{N}, is greater than or equal to the
