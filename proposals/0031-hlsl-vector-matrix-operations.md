@@ -255,15 +255,15 @@ void OuterProductAccumulate(vector<T, M> inputVector1,
 #### Syntax
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template <typename T, uint N> 
-void VectorAccumulate(vector<T, N> inputVector,
-        RWByteAddressBuffer Buffer, uint StartOffset);
+template <typename T, uint N>
+void VectorAccumulate(vector<T, N> inputVector, RWByteAddressBuffer Buffer,
+                      uint StartOffset);
 
-} 
-} 
+} // namespace linalg
+} // namespace dx
 ```
 
 #### Arguments
