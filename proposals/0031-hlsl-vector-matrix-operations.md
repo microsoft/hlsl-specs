@@ -235,16 +235,16 @@ vector<ResultType, M> MulAdd(
 #### Syntax
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template <typename T, uint M, uint N, MatrixLayout layout, TypeInterpretation
-interpretation> 
+template <typename T, uint M, uint N, MatrixLayout layout,
+          TypeInterpretation interpretation>
 void OuterProductAccumulate(vector<T, M> inputVector1,
-        vector<T, N> inputVector2, MatrixRef<interpretation, M, N, layout>
-        AccMatrix); 
-} 
-}
+                            vector<T, N> inputVector2,
+                            MatrixRef<interpretation, M, N, layout> AccMatrix);
+} // namespace linalg
+} // namespace dx
 
 ```
 
