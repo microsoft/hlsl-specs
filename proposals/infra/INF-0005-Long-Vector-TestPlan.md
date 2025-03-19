@@ -110,8 +110,7 @@ Assignment Operators | =, +=, -=, *=, /=, %= |
 Binary Casts | asfloat(), asint(), asuint() |
 Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors
 Boolean Math Operators | & &, ||, ?: |
-Cast Operator | (type) | No direct operator, difference in GetElementPointer or
-load type
+Cast Operator | (type) | No direct operator, difference in GetElementPointer or load type
 Comparison Operators| <, >, ==, !=, <=, >= |
 Prefix or Postfix Operators| ++, -- |
 Unary Operators | !, -, + |
