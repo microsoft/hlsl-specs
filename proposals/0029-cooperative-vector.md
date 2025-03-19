@@ -647,7 +647,7 @@ typedef enum D3D12_LINEAR_ALGEBRA_DATATYPE {
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32          =  5, // ComponentType::U32
   D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  7, // ComponentType::F16
   D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  8, // ComponentType::F32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_INT8_T4_PACKED  = 16, // ComponentType::PackedS8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED = 16, // ComponentType::PackedS8x32
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 18, // ComponentType::U8
   D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 19, // ComponentType::I8
@@ -692,8 +692,8 @@ typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
     InOut UINT                                         MatrixVectorMulAddPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
+    InOut UINT                                         OuterProductAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
     InOut UINT                                         VectorAccumulatePropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
@@ -719,7 +719,7 @@ the operation fails and `E_INVALIDARG` is returned.
 #### Support Tiers
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
-  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
+  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccumulatePropCount` and
   `VectorAccumulatePropCount` are 0 in this case.
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
@@ -776,7 +776,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
-                                     sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
+                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
 
     // Use MatrixVectorMulAddPropCount returned from the above
 
@@ -786,7 +786,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &CoopVecProperties, 
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
     // Use MatrixVectorMulAdd shader with datatype and interpretation
