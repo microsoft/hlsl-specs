@@ -186,15 +186,20 @@ an bias vector (loaded from memory) to the result.
 #### Syntax
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template <TypeInterpretation matrixInterpretation, uint M, uint K, MatrixLayout
-layout, typename InputType, uint InputNumcomp, TypeInterpretation
-InputInterpretation, typename ResultType, bool MatrixNeedsTranspose>
-vector<ResultType, M> Mul(MatrixRef<matrixInterpretation, M, N, layout>
-WeightMatrix, InterpretedVector<InputType, InputNumComp, InputInterpretation>
-InputVector); } }
+template <TypeInterpretation matrixInterpretation, uint M, uint K,
+          MatrixLayout layout, typename InputType, uint InputNumcomp,
+          TypeInterpretation InputInterpretation, typename ResultType,
+          bool MatrixNeedsTranspose>
+vector<ResultType, M>
+Mul(MatrixRef<matrixInterpretation, M, N, layout> WeightMatrix,
+    InterpretedVector<InputType, InputNumComp, InputInterpretation>
+        InputVector);
+
+} // namespace linalg
+} // namespace dx
 
 ```
 
