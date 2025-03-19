@@ -1,9 +1,9 @@
 # Test Plan
 
 All tests are to be included in the HLK test binary which ships with the OS.
-This test binary is only built in the OS repo and based off of the 'ExecTests'
-'ExecTests' source code in the DXC repo. There is a script in the WinTools repo
-which generates and annotates the HLK tests.
+This test binary is only built in the OS repo and based off of the
+ExecutionTests source code in the DXC repo. There is a script in the WinTools
+repo which generates and annotates the HLK tests.
 
 There are three test categories we are concerned with:
 
@@ -26,10 +26,22 @@ There are three test categories we are concerned with:
 
 # Vector Sizes to test
 
-I don't think there are any particularly interesting vector sizes to test. So I
-propose testing sizes of 5, 25, 100, 500. Sizes < 5 are assumed to already be
-covered by existing test collateral. But, as part of this work we will verify
-that assumption.
+General sizes to test are in the range [5, 1024]. Sizes < 5 are assumed to
+already be covered by existing test collateral. But, as part of this work we
+will verify that assumption.
+
+Some noteable test sizes:
+
+- 128 bit boundaries : Memory access for Shader Model 5.0 and earlier operate on
+128-bit slots aligned on 128-bit boundaries. An example is vector<half, 7>,
+vector<half, 8> and vector<half, 9>. 112 bits, 128 bits, and 144 bits
+respectively. This boundary will tested for with 32-bit and 64-bit sized values
+as well.
+- vector<TYPE, 5> : Testing one above previous vector limit.
+- vector<TYPE, 16> : This size of 'vector' previously only appeared as matrices.
+- vector<TYPE, 17> : Larger than any vector previously possible.
+- vector<TYPE, 1024> : The new max size of a vector. Test for float, half,
+  double, and int64.
 
 # Implementation phases
 Do the test work in two simple phases.
@@ -59,7 +71,7 @@ and run the tests from the public DXC repo themselves.
 mm_annotate_shader_op_arith_table.py (WinTools repo) will need to be updated to
 recognize any new tests (not test cases) added. And additional GUIDs added for
 new test cases. mm_annotate_shader_op_arith_table.py is called by
-mm-hlk-update.py when converting from 'ExecTests' to the HLK 'DxilConf' tests.
+mm-hlk-update.py when converting from ExecutionTests to the HLK 'DxilConf' tests.
 The aforementioned *table.py script is run by Integration.HLKTestsUpdate.yaml
 
 # Test Validation Requirements
@@ -77,8 +89,6 @@ considered completed.
    branch of Greg's work. ETA of ~1 week to implement.
 
 # Notes
-- The 'ExecTests' (ExecutionTest.cpp) are used to generate the HLK tests
-   (DxilConf tests)
 - Private test binaries/collateral will be shared with IHVs for validation
    purposes. This will enable IHVs to verify long vector functionality without
    waiting for an OS/HLK release.
@@ -95,16 +105,15 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | Operator Name | Operator | Notes |
 |-----------|--------------|----------|
 Additive and Multiplicative Operators | +, -, *, /, % |
-Array Operator | [i] |
+Array Operator | [i] | llvm:ExtractElementInst
 Assignment Operators | =, +=, -=, *=, /=, %= |
 Binary Casts | asfloat(), asint(), asuint() |
 Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors
 Boolean Math Operators | & &, ||, ?: |
-Cast Operator | (type) |
-Comma Operator | , |
+Cast Operator | (type) | No direct operator, difference in GetElementPointer or
+load type
 Comparison Operators| <, >, ==, !=, <=, >= |
 Prefix or Postfix Operators| ++, -- |
-Structure Operator | . |
 Unary Operators | !, -, + |
 
 # Mappings of HLSL intrinsics to DXIL opcodes or LLVM native operations
@@ -130,8 +139,7 @@ Unary Operators | !, -, + |
 
 | Intrinsic | DXIL OPCode | Notes |
 |-----------|--------------|----------|
-| mod       | Emulated |              |
-| abs       | DXIL::OpCode::Imax |    |
+| abs       | DXIL::OpCode::Imax | DXIL::OpCode::Fabs |
 | ceil      | DXIL::OpCode::Round_pi ||
 | clamp     | DXIL::OpCode::UMax, UMin \ DXIL::OpCode::FMax/Fmin \ DXIL::OpCode::IMax/Imin ||
 | exp       | DXIL:OpCode::Exp |      |
