@@ -110,15 +110,16 @@ ByteAddressBuffer specfying its type and StartOffset.
 >TODO: Needs a length/size parameter?
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template<TypeInterpretation Interpretation> 
-    class VectorRef { 
-        RWByteAddressBuffer Buffer; uint StartOffset; }
-
-} 
+template <TypeInterpretation Interpretation> class VectorRef {
+  RWByteAddressBuffer Buffer;
+  uint StartOffset;
 }
+
+} // namespace linalg
+} // namespace dx
 
 ```
 
