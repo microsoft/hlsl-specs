@@ -204,18 +204,20 @@ Mul(MatrixRef<matrixInterpretation, M, N, layout> WeightMatrix,
 ```
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template <TypeInterpretation matrixInterpretation, uint M, uint K, MatrixLayout
-layout, TypeInterpretation biasVectorInterpretation, typename InputType, uint
-InputNumcomp, TypeInterpretation InputInterpretation, typename ResultType>
-vector<ResultType, M> MulAdd(MatrixRef<matrixInterpretation, M, N,
-layout> WeightMatrix, InterpretedVector<InputType, InputNumComp,
-InputInterpretation> InputVector, VectorRef<BiasInterpretation> BiasVector);
+template <TypeInterpretation matrixInterpretation, uint M, uint K,
+          MatrixLayout layout, TypeInterpretation biasVectorInterpretation,
+          typename InputType, uint InputNumcomp,
+          TypeInterpretation InputInterpretation, typename ResultType>
+vector<ResultType, M> MulAdd(
+    MatrixRef<matrixInterpretation, M, N, layout> WeightMatrix,
+    InterpretedVector<InputType, InputNumComp, InputInterpretation> InputVector,
+    VectorRef<BiasInterpretation> BiasVector);
 
-} 
-} 
+} // namespace linalg
+} // namespace dx
 ```
 
 #### Arguments
