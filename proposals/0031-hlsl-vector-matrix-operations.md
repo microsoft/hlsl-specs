@@ -61,15 +61,19 @@ offset and stride.
 #### Syntax
 
 ```c++ 
-namespace dx { 
-namespace linalg
+namespace dx {
+namespace linalg {
 
-template<TypeInterpretation Interpretation, uint M, uint K, MatrixLayout Layout>
-class MatrixRef { 
-    RWByteAddressBuffer Buffer; uint Stride; uint StartOffset; }
+template <TypeInterpretation Interpretation, uint M, uint K,
+          MatrixLayout Layout>
+class MatrixRef {
+  RWByteAddressBuffer Buffer;
+  uint Stride;
+  uint StartOffset;
+}
 
-} 
-} 
+} // namespace linalg
+} // namespace dx
 ```
 
 > Note we need to support RWByteAddressBuffer and ByteAddressBuffer if we want
