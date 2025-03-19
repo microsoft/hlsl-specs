@@ -22,7 +22,8 @@ There are three test categories we are concerned with:
 
 3. Standard loading and storing of long vectors
      - Ensure we have some basic tests doing standard loading/storing of long
-     vectors.
+     vectors across buffer types. __TODO: Add details about which types of
+     buffers to test and why.__
 
 # Vector Sizes to test
 
@@ -107,155 +108,166 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 Additive and Multiplicative Operators | +, -, *, /, % |
 Array Operator | [i] | llvm:ExtractElementInst
 Assignment Operators | =, +=, -=, *=, /=, %= |
-Binary Casts | asfloat(), asint(), asuint() |
-Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors
+Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on
+||| int and uint vectors
 Boolean Math Operators | & &, ||, ?: |
-Cast Operator | (type) | No direct operator, difference in GetElementPointer or load type
+Cast Operator | (type) | No direct operator, difference in GetElementPointer 
+||| or load type
 Comparison Operators| <, >, ==, !=, <=, >= |
 Prefix or Postfix Operators| ++, -- |
 Unary Operators | !, -, + |
 
-# Mappings of HLSL intrinsics to DXIL opcodes or LLVM native operations
+# Mappings of HLSL intrinsics to DXIL OPcodes or LLVM Operators
+
+Note: [ ] - Brackets are used in the below tables to signify that the operator
+is only used in specific paths. Operators sharing the same brackers are in the
+same logic path. If an operator is not in brackets then it is used in all cases.
 
 ## Trigonometry
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|----------|
-| acos      | DXIL::OpCode::Acos |  |
-| asin      | DXIL::OpCode::Asin |  |
-| atan      | DXIL::OpCode::Atan |  |
-| atan2     | Emulated |            |
-| cos       | DXIL::OpCode::Cos |   |
-| cosh      | DXIL::OpCode::Hcos |  |
-| degrees   | Emulated |            |
-| radians   | Emulated |            |
-| sin       | DXIL::OpCode::Sin |   |
-| sinh      | DXIL::OpCode::Hsin |  |
-| tan       | DXIL::OpCode::Tan |   |
-| tanh      | DXIL::Opcode::Htan |  |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| acos      | Acos | | |
+| asin      | Asin | | |
+| atan      | Atan | | |
+| atan2     | Atan | CreateFDiv, CreateFAdd, CreateFSub, CreateFCmpOLT,
+||| CreateFCpmOEQ, CreateFCmpOGE, CreateFCmpOLT, CreateAnd, CreateSelect | |
+| cos       | Cos | | |
+| cosh      | Hcos | | |
+| degrees   | | CreateFMul ||
+| radians   | | CreateFMul ||
+| sin       | Sin | | |
+| sinh      | Hsin | | |
+| tan       | Tan | | |
+| tanh      | Htan | | |
 
 ## Math
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|----------|
-| abs       | DXIL::OpCode::Imax | DXIL::OpCode::Fabs |
-| ceil      | DXIL::OpCode::Round_pi ||
-| clamp     | DXIL::OpCode::UMax, UMin \ DXIL::OpCode::FMax/Fmin \ DXIL::OpCode::IMax/Imin ||
-| exp       | DXIL:OpCode::Exp |      |
-| exp2      | DXIL::OpCode::Exp |     |
-| floor     | DXIL::OpCode::Round_ni ||
-| fma       | DXIL::OpCode::Fma |     |
-| fmod      | Emulated |              |
-| frac      | DXIL::OpCode::Frc |     |
-| frexp     | Emulated |              |
-| ldexp     | Emulated: CreateFMul |  |
-| lerp      | Emulated: CreateFAdd |  |
-| log       | Emulated: CreateFMul |  |
-| log10     | Emulated: CreateFMul |  |
-| log2      | DXIL::OpCode::Log |     |
-| mad       | DXIL::OpCode::IMad |    |
-| max       | DXIL::OpCode::IMax |    |
-| min       | DXIL::OpCode::IMin |    |
-| pow       | Emulated: CreateFMul or CreateFDiv ||
-| rcp       | Emulated: CreateFDiv |  |
-| round     | DXIL::OpCode::Round_ne ||
-| rsqrt     | DXIL::OpCode::Rsqrt |   |
-| sign      | Emulated: CreateSub |   |
-| smoothstep| Emulated: CreateFMul, CreateFSub ||
-| sqrt      | DXIL::OpCode::Sqrt |    |
-| step      | Emulated: CreateSelect ||
-| trunc     | DXIL::OpCode::Round_z | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| abs       | [Imax], [Fabs] |
+| ceil      | Round_pi ||
+| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | |
+| exp       | Exp | |
+| exp2      | Exp | |
+| floor     | Round_ni ||
+| fma       | Fma | |
+| fmod      | FAbs, Frc | CreateFDiv, CreateFNeg, CreateFCmpOGE,
+||| CreateSelect, CreateFMul | |
+| frac      | rc | |
+| frexp     | | CreateFCmpUNE, CreateSExt, CreateBitCast, CreateAnd, CreateAdd,
+||| CreateAShr, CreateSIToFP, CreateStore, CreateAnd, CreateOr | |
+| ldexp     | Exp | CreateFMul |  |
+| lerp      | | CreateFSub, CreateFMul, CreateFAdd | |
+| log       | Log | CreateFMul | |
+| log10     | Log | CreateFMul | |
+| log2      | Log | |
+| mad       | IMad | |
+| max       | IMax | |
+| min       | IMin | |
+| pow       | [Log, Exp] | [CreateFMul] , [CreateFDiv] ||
+| rcp       | | CreateFDiv | |
+| round     | Round_ne ||
+| rsqrt     | Rsqrt | |
+| sign      | | CreateZExt, CreateSub, [CreateICmpSLT], [CreateFCmpOLT] | |
+| smoothstep| Saturate | CreateFMul, CreateFSub, CreateFDiv ||
+| sqrt      | Sqrt | |
+| step      | | CreateFCmpOLT, CreateSelect ||
+| trunc     | Round_z | |
 
 ## Float Ops
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-----------|
-| f16tof32  | DXIL::OpCode::LegacyF16ToF32 | |
-| f32tof16  | DXIL::OpCode::LegacyF32ToF16 | |
-| isfinite  | DXIL::OpCode::IsFinite | |
-| isinf     | DXIL::OpCode::IsInf | |
-| isnan     | DXIL::OpCode::IsNan | |
-| modf      | Emulated | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| f16tof32  | LegacyF16ToF32 | |
+| f32tof16  | LegacyF32ToF16 | |
+| isfinite  | IsFinite | |
+| isinf     | IsInf | |
+| isnan     | IsNan | |
+| modf      | Round_z | CreateFSub, CreateStore | |
 
 ## Bitwise Ops
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-------------|
-| saturate  | DXIL::OpCode::Saturate | |
-| reversebits| DXIL::OpCode::Bfrev | |
-| countbits | DXIL::OpCode::Countbits | |
-| firstbithigh| DXIL::OpCode::FirstbitSHi | |
-| firstbitlow| DXIL::OpCode::FirstbitLo | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| saturate  | Saturate | |
+| reversebits| Bfrev | |
+| countbits | Countbits | |
+| firstbithigh| FirstbitSHi | |
+| firstbitlow| FirstbitLo | |
 
 ## Logic Ops
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-----------|
-| and       | Emulated | |
-| or        | Emulated | |
-| select    | Emulated | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| and       | | CreateAnd, [CreateExtractElement, CreateInsertElement] | |
+| or        | | CreateOr, [CreateExtractElement, CreateInsertElement] | |
+| select    | | CreateSelect, [CreateExtractElement, CreateInsertElement] | |
 
 ## Reductions
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-----------|
-| all       | Emulated | |
-| any       | Emulated | |
-| clamp     | Emulated | |
-| dot       | Emulated | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| all       | | [CreateFCmpUNE], [CreateICmpNE] ,
+||| [CreateExtractElement, CreateAnd] |
+| any       | | [CreateFCmpUNE], [CreateICmpNE] ,
+||| [CreateExtractElement, CreateOr] | |
+| clamp     | [UMax, UMin], [IMax, IMin] | |
+| dot       | | CreateExtractElement, CreateMul | Note: Follow up on implementation. Bugged? |
+
 
 ## Derivative and Quad Operations
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-----------|
-| ddx       | DXIL::OpCode::DerivCoarseX | |
-| ddx_coarse| DXIL::OpCode::DerivCoarseX | |
-| ddx_fine  | DXIL::OpCode::DerivFineX | |
-| ddy       | DXIL::OpCode::DerivCoarseY | |
-| ddy_coarse| DXIL::OpCode::DerivCoarseY | |
-| ddy_fine  | DXIL::OpCode::DerivFineY | |
-| fwidth    | DXIL::OpCode::QuadReadLaneAt | |
-| QuadReadLaneAcrossX | DXIL::OpCode::QuadOp | |
-| QuadReadLaneAcrossY | DXIL::OpCode::QuadOp | |
-| QuadReadLaneAcrossDiagonal | DXIL::OpCode::QuadOp | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| ddx       | DerivCoarseX | |
+| ddx_coarse| DerivCoarseX | |
+| ddx_fine  | DerivFineX | |
+| ddy       | DerivCoarseY | |
+| ddy_coarse| DerivCoarseY | |
+| ddy_fine  | DerivFineY | |
+| fwidth    | QuadReadLaneAt | |
+| QuadReadLaneAcrossX | QuadOp | |
+| QuadReadLaneAcrossY | QuadOp | |
+| QuadReadLaneAcrossDiagonal | QuadOp | |
 
 ## WaveOps
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-------------|
-| WaveActiveBitAnd | DXIL::OpCode::WaveActiveBit | |
-| WaveActiveBitOr  | DXIL::OpCode::WaveActiveBit | |
-| WaveActiveBitXor | DXIL::OpCode::WaveActiveBit | |
-| WaveActiveProduct| DXIL::OpCode::WaveActiveOp | |
-| WaveActiveSum    | DXIL::OpCode::WaveActiveOp | |
-| WaveActiveMin    | DXIL::OpCode::WaveActiveOp | |
-| WaveActiveMax    | DXIL::OpCode::WaveActiveOp | |
-| WaveMultiPrefixBitAnd | DXIL::OpCode::WaveMultiPrefixOp | |
-| WaveMultiPrefixBitOr  | DXIL::OpCode::WaveMultiPrefixOp | |
-| WaveMultiPrefixBitXor | DXIL::OpCode::WaveMultiPrefixOp | |
-| WaveMultiPrefixProduct| DXIL::OpCode::WaveMultiPrefixOp | |
-| WaveMultiPrefixSum    | DXIL::OpCode::WaveMultiPrefixOp | |
-| WavePrefixSum         | DXIL::OpCode::WavePrefixOp | |
-| WavePrefixProduct     | DXIL::OpCode::WavePrefixOp | |
-| WaveReadLaneAt        | DXIL::OpCode::WaveReadLaneAt | |
-| WaveReadLaneFirst     | DXIL::OpCode::WaveReadLaneFirst | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| WaveActiveBitAnd | WaveActiveBit | |
+| WaveActiveBitOr  | WaveActiveBit | |
+| WaveActiveBitXor | WaveActiveBit | |
+| WaveActiveProduct| WaveActiveOp | |
+| WaveActiveSum    | WaveActiveOp | |
+| WaveActiveMin    | WaveActiveOp | |
+| WaveActiveMax    | WaveActiveOp | |
+| WaveMultiPrefixBitAnd | WaveMultiPrefixOp | |
+| WaveMultiPrefixBitOr  | WaveMultiPrefixOp | |
+| WaveMultiPrefixBitXor | WaveMultiPrefixOp | |
+| WaveMultiPrefixProduct| WaveMultiPrefixOp | |
+| WaveMultiPrefixSum    | WaveMultiPrefixOp | |
+| WavePrefixSum         | WavePrefixOp | |
+| WavePrefixProduct     | WavePrefixOp | |
+| WaveReadLaneAt        | WaveReadLaneAt | |
+| WaveReadLaneFirst     | WaveReadLaneFirst | |
 
 ## Wave Reductions
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-------------|
-| WaveActiveAllEqual | DXIL::OpCode::WaveActiveAllEqual | |
-| WaveMatch          | DXIL::OpCode::WaveMatch | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| WaveActiveAllEqual | WaveActiveAllEqual | |
+| WaveMatch          | WaveMatch | |
 
 ## Type Casting Operations
 
-| Intrinsic | DXIL OPCode | Notes |
-|-----------|--------------|-----------|
-| WaveActiveAllEqual | DXIL::OpCode::WaveActiveAllEqual | |
-| WaveMatch          | DXIL::OpCode::WaveMatch | |
-| asdouble           | DXIL::OpCode::MakeDouble | |
-| asfloat            | Emulated | |
-| asfloat16          | Emulated | |
-| asint              | Emulated | |
-| asint16            | Emulated | |
-| asuint             | DXIL::OpCode::SplitDouble | |
-| asuint16           | Emulated | |
+| Intrinsic | DXIL OPCode | LLVM Operator | Notes |
+|-----------|--------------|----------|-----------|
+| WaveActiveAllEqual | WaveActiveAllEqual | |
+| WaveMatch          | WaveMatch | |
+| asdouble           | MakeDouble | |
+| asfloat            |  | CreateBitCast |
+| asfloat16          |  | CreateBitCast |
+| asint              |  | CreateBitCast |
+| asint16            |  | CreateBitCast |
+| asuint             | SplitDouble | |
+| asuint16           | | CreateBitCast |
