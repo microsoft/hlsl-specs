@@ -1325,7 +1325,7 @@ Validation errors:
 #### HitObject_FromRayQueryWithAttrs
 
 ```DXIL
-declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery.AttrT(
+declare %dx.types.HitObject @dx.op.hitObject_FromRayQueryWithAttrs.AttrT(
     i32,                           ; opcode
     i32,                           ; ray query
     i32,                           ; hit kind
