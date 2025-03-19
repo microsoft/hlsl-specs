@@ -144,15 +144,16 @@ The base address of **Buffer** and the **StartOffset** must be 64 byte aligned.
 that vector will be interpreted as.
 
 ```c++ 
-namespace dx { 
+namespace dx {
 namespace linalg {
 
-template<typename T, uint N, TypeInterpretation Interpretation> 
-    class InterpretedVector { 
-        vector<T, N> vec; }
+template <typename T, uint N, TypeInterpretation Interpretation>
+class InterpretedVector {
+  vector<T, N> vec;
+}
 
-} 
-} 
+} // namespace linalg
+} // namespace dx
 ```
 
 #### Arguments
