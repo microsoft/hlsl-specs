@@ -783,7 +783,9 @@ These types include:
 \p If they do not fit the remaining space of the row, they will placed at the
 start a new 16-byte aligned row.
 
-\p Vectors are aligned by the size of a single vector element type.
+\p Vectors are aligned by the size of a single vector element type unless that
+alignment results in crossing the 16-byte row boundary, in which case it is
+aligned to the next row.
 
 \p Aggregate types like arrays and structures are always 16-byte row-aligned. If
 the aggregate ends with an element that does not completely fill a row, the
@@ -804,6 +806,8 @@ structure is independent of the particular structure instance location.
 
 \p Shader constants declared in \texttt{cbuffer} declaration group can have an
 optional \texttt{packoffset} annotation added before their \texttt{;} terminal.
+If this annotation is added to one shader constant in a declaration group then
+it must be added to all shader constants in that group.
 
 \begin{grammar}
   \define{packoffset-annotation}\br
@@ -892,7 +896,7 @@ intrepreted by a built-in function:
   bool CheckAccessFullyMapped(in uint status);
 \end{HLSL}
 
-This function returns true is the value was accessed from a fully committed
+This function returns true if the value was accessed from a fully committed
 resource, or from fully mapped pages of a sparse resource. If any part of the
 return value was from unmapped memory, false is returned.
 
