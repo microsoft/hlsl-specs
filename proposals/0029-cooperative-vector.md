@@ -734,6 +734,10 @@ still reported out via the `ConfigurationSupported` field mentioned above
 > that might become interesting.  Then the D3D caps check just confirms
 > the interesting new config is available as expected on the device/driver.
 
+> If `TransposeSupported` is false and the configuration is in the minimum
+> supported set, D3D will answer the support query without asking the driver,
+> so the driver only needs to report configurations beyond the baseline.
+
 >Note about emulation: For example E4M3 and E5M2 might not be supported natively
  on certain implementations, but since these are in the minimum support set,
  they need to be emulated, possibly using FP16. Emulation versus native support
