@@ -687,28 +687,52 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
     D3D12_LINEAR_ALGEBRA_DATATYPE AccumulationType;
 };
 
-// CheckFeatureSupport data struct used with type D3D12_FEATURE_COOPERATIVE_VECTOR:
+typedef enum D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE
+{
+    D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE_MATRIX_VECTOR_MUL_ADD,
+    D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE_OUTER_PRODUCT_ACCUMULATE,
+    D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE_VECTOR_ACCUMULATE,
+} D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE;
+
 typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
-{    
-    InOut UINT                                         MatrixVectorMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
-    InOut UINT                                         VectorAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
-};
+{
+    [annotation("_Out_")] BOOL ConfigurationSupported;
+    D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE PropertiesType;
+    union
+    {
+        D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE MatrixVectorMulAddProperties;
+        D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING OuterProductAccumulateProperties;
+        D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING VectorAccumulateProoperties;
+    };
+} D3D12_FEATURE_DATA_COOPERATIVE_VECTOR;
 
 ```
 
 Support for the Cooperative Vector feature is queried through
-`CooperativeVectorTier`. User can also query properties supported for each
-intrinsic in `D3D12_FEATURE_DATA_COOPERATIVE_VECTOR`. If pProperties is NULL
-for any intrinsic, the count of available properties will be returned in
-PropCount. Otherwise, PropCount must represent the size of the pProperties
-array, which will be updated with the number of structures written to
-pProperties upon return. If pProperties is non-NULL for any intrinsic but its
-PropCount is less than the number of properties available for that intrinsic,
-the operation fails and `E_INVALIDARG` is returned.
+`CooperativeVectorTier`. 
+
+The app can also query properties supported for each intrinsic via 
+`D3D12_FEATURE_COOPERATIVE_VECTOR` / `D3D12_FEATURE_DATA_COOPERATIVE_VECTOR`. 
+The `PropertiesType` field selects which corresponding union entry applies 
+for the user to set up a configuration it wants to ask the driver about.
+The driver will set the `ConfigurationSupported` field in the struct on return
+from the all.
+
+`D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE` has a `BOOL TransposeSupported`
+field - if the app sets this to `TRUE` they are specifically asking for 
+the specified inference configuration with transpose.  The driver support is
+still reported out via the `ConfigurationSupported` field mentioned above 
+(as opposed to treating `TransposeSupported` as an output field).
+
+> To avoid apps having to guess any feature combination that might work,
+> a minimum required set is listed below (though `TransposeSupported` would
+> still need to be checked if needed).  For combinations other than the
+> minimum supported set, the app can just query combinations it is 
+> interested in using if available.  Since the number of theoretical
+> configuration permutations is huge, it likely makes sense for developers
+> to pay attention to separate vendor documentation around new configurations
+> that might become interesting.  Then the D3D caps check just confirms
+> the interesting new config is available as expected on the device/driver.
 
 >Note about emulation: For example E4M3 and E5M2 might not be supported natively
  on certain implementations, but since these are in the minimum support set,
@@ -772,26 +796,28 @@ d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport,
 
 if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
-    D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
+    D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CVProps = {};
 
-    // CheckFeatureSupport returns the number of input combinations for inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
-                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
-
-    // Use MatrixVectorMulAddPropCount returned from the above
-
-    // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
-    UINT MatrixVectorMulAddPropCount = CoopVecProperties.MatrixVectorMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
-    CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
+    CVProps.PropertiesType = D3D12_COOPERATIVE_VECTOR_PROPERTIES_TYPE_MATRIX_VECTOR_MUL_ADD;
+    CVProps.MatrixVectorMulAddProperties.InputType = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16;
+    CVProps.MatrixVectorMulAddProperties.InputInterpretation = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16;
+    CVProps.MatrixVectorMulAddProperties.MatrixInterpretation = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16;
+    CVProps.MatrixVectorMulAddProperties.BiasInterpretation = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16;
+    CVProps.MatrixVectorMulAddProperties.OutputType = D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16;
+    CVProps.MatrixVectorMulAddProperties.TransposeSupported = TRUE; // Checking for transpose support on a 
+                                                                    // config that is otherwise in the required set
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CVProps, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
-    // Use MatrixVectorMulAdd shader with datatype and interpretation
-    // combination matching one of those returned.
-    
+    if(CVProps.ConfigurationSupported)
+    {
+        // Can use MatrixVectorMulAdd with the specified types, including transpose
+    } else {
+        // See if other combinations app could use are supported, otherwise
+        // don't use Cooperative Vector ops
+    }    
 } else {
     // Don't use Cooperative Vector ops
 }
