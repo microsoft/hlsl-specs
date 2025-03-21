@@ -108,47 +108,49 @@ a flavor of how these work together:
 ```c++
 ByteAddressBuffer model;
 
-vector<float, 3> ApplyNeuralMaterial(vector<float, 8> inputVector) {
-    using namespace dx::linalg;
+vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
+  using namespace dx::linalg;
 
-    MatrixRef<
-        DATA_TYPE_E4M3, 8, 32, 
-        MATRIX_LAYOUT_INFERENCING_OPTIMAL> matrix0 = { model, 0 };
+  MatrixRef<
+      DATA_TYPE_E4M3, 32, 8,
+      MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix0 = {model, 0, 0};
 
-    VectorRef<DATA_TYPE_E4M3> biasVector0 = { model, 1024 };
+  VectorRef<DATA_TYPE_FLOAT16> biasVector0 = {model, 1024};
 
-    MatrixRef<
-        DATA_TYPE_E4M3, 
-        32, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL> matrix1 = { model, 2048 };
-    
-    VectorRef<DATA_TYPE_E4M3> biasVector1 = { model, 3072 };
+  MatrixRef<
+      DATA_TYPE_E4M3,
+      32, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix1 = {model, 2048, 0};
 
-    MatrixRef<
-        DATA_TYPE_E4M3, 
-        32, 3, MATRIX_LAYOUT_INFERENCING_OPTIMAL> matrix2 = { model, 4096 };
+  VectorRef<DATA_TYPE_FLOAT16> biasVector1 = {model, 3072};
 
-    VectorRef<DATA_TYPE_E4M3> biasVector2 = { model, 5120 };
+  MatrixRef<
+      DATA_TYPE_E4M3,
+      3, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix2 = {model, 4096, 0};
 
+  VectorRef<DATA_TYPE_FLOAT16> biasVector2 = {model, 5120};
 
-    vector<float, 32> layer0 = MulAdd(
-        InterpretedVector<DATA_TYPE_FLOAT16>(inputVector), 
-        matrix0, 
-        biasVector0);
-    layer0 = max(layer0, 0);
+  vector<half, 32> layer0 = MulAdd<half>(
+      matrix0,
+      InterpretedVector<DATA_TYPE_E4M3>(inputVector),
+      biasVector0);
+  layer0 = max(layer0, 0);
 
-    vector<half, 32> layer1 = MulAdd(
-        InterpretedVector<DATA_TYPE_E4M3>(layer0), 
-        matrix1, 
-        biasVector1);
-    layer1 = max(layer1, 0);
+  vector<half, 32> layer1 = MulAdd<half>(
+      matrix1,
+      InterpretedVector<DATA_TYPE_E4M3>(layer0),
+      biasVector1);
+  layer1 = max(layer1, 0);
 
-    vector<float, 3> output = MulAdd(
-        InterpretedVector<DATA_TYPE_E4M3>(layer1), 
-        matrix2, 
-        biasVector2);
-    output = exp(output);
+  vector<float, 3> output = MulAdd<float>(
+      matrix2,
+      InterpretedVector<DATA_TYPE_E4M3>(layer1),
+      biasVector2);
+  output = exp(output);
 
-    return output;
+  return output;
 }
 ```
 
