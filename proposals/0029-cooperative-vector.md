@@ -928,6 +928,19 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
 * If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
 
+*CommandList interactions:*
+
+- Synchronization around `ConvertLinearAlgebraMatrix` calls:
+   - Legacy Barrier
+     - Source state: D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+     - Dest state: D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+     - UAV barrier synchronizes writes to the destination
+   - Enhanced Barrier:
+     - Source access: D3D12_BARRIER_ACCESS_SHADER_RESOURCE
+     - Dest access: D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
+     - Sync point: D3D12_BARRIER_SYNC_LINEAR_ALGEBRA_CONVERT_MATRIX
+ - Predication is supported
+ - Not available in Bundles
 
 *Usage Example:*
 
