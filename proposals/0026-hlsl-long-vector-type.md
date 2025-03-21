@@ -78,7 +78,7 @@ Long vectors are not permitted in:
 * A ray tracing `Parameter`, `Attributes`, or `Payload` parameter structures.
 * A work graph record.
 
-While this describes where long vecgtors can be used and later sections will describe how,
+While this describes where long vectors can be used and later sections will describe how,
 implementations may specify best practices in certain uses for optimal performance.
 
 #### Constructing vectors
