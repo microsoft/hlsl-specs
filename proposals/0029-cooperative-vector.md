@@ -932,8 +932,8 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 
 - Synchronization around `ConvertLinearAlgebraMatrix` calls:
    - Legacy Barrier
-     - Source state: D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
-     - Dest state: D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+     - Source: Must be in D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE state
+     - Dest: Must be in D3D12_RESOURCE_STATE_UNORDERED_ACCESS state
      - UAV barrier synchronizes writes to the destination
    - Enhanced Barrier:
      - Source access: D3D12_BARRIER_ACCESS_SHADER_RESOURCE
