@@ -120,9 +120,9 @@ are converted to \texttt{true}.
 
 \Sec{Elementwise conversion}{Conv.flat}
 
-\p There is a flattened order of subobjects for an aggregate, \texttt{A},
-\texttt{A$^\prime$}, as described in section \ref{Decl.Init.Agg}.  A prvalue of an aggregate,
-\texttt{A}, can be elementwise converted to a prvalue of an aggregate, \texttt{B}, whose flattened
+\p For a given aggregate \texttt{A}, there is a flattened order of subojects, \texttt{A$^\prime$},
+as described in section \ref{Decl.Init.Agg}.  A prvalue of \texttt{A}, can be
+elementwise converted to a prvalue of an aggregate \texttt{B}, whose flattened
 form is \texttt{B$^\prime$}, if the following conditions are true: 
 \begin{itemize}
 \item The length of \texttt{A$^\prime$}, \texttt{N}, is greater than or equal to the
