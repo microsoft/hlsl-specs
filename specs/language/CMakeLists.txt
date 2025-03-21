@@ -43,6 +43,9 @@ add_custom_target(pdf
                   COMMAND ${PDFLATEX_COMPILER}
                           -output-directory ${CMAKE_BINARY_DIR}
                           ${main_file}
+                  # It is not a mistake that this is repeated. TeX compilers are
+                  # dumb. The first run generates the ToC and the second run is
+                  # required to ensure the references are all correct.
                   COMMAND ${PDFLATEX_COMPILER}
                           -output-directory ${CMAKE_BINARY_DIR}
                           ${main_file}
