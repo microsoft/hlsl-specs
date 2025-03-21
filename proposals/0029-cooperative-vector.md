@@ -645,14 +645,14 @@ typedef enum D3D12_LINEAR_ALGEBRA_DATATYPE {
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT16          =  3, // ComponentType::U16
   D3D12_LINEAR_ALGEBRA_DATATYPE_SINT32          =  4, // ComponentType::I32
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32          =  5, // ComponentType::U32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  7, // ComponentType::F16
-  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  8, // ComponentType::F32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED = 16, // ComponentType::PackedS8x32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 18, // ComponentType::U8
-  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 19, // ComponentType::I8
-  D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3            = 20, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
-  D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  8, // ComponentType::F16
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  9, // ComponentType::F32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED = 17, // ComponentType::PackedS8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 18, // ComponentType::PackedU8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 19, // ComponentType::U8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 20, // ComponentType::I8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3            = 21, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 22, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
 };
 
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
