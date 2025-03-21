@@ -43,6 +43,12 @@ add_custom_target(pdf
                   COMMAND ${PDFLATEX_COMPILER}
                           -output-directory ${CMAKE_BINARY_DIR}
                           ${main_file}
+                  # It is not a mistake that this is repeated. TeX compilers are
+                  # dumb. The first run generates the ToC and the second run is
+                  # required to ensure the references are all correct.
+                  COMMAND ${PDFLATEX_COMPILER}
+                          -output-directory ${CMAKE_BINARY_DIR}
+                          ${main_file}
                   COMMENT "Assembling ${PROJECT_NAME}.pdf"
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries)
