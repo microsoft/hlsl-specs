@@ -938,7 +938,7 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
    - Enhanced Barrier:
      - Source access: D3D12_BARRIER_ACCESS_SHADER_RESOURCE
      - Dest access: D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
-     - Sync point: D3D12_BARRIER_SYNC_LINEAR_ALGEBRA_CONVERT_MATRIX
+     - Sync point: D3D12_BARRIER_SYNC_CONVERT_LINEAR_ALGEBRA_MATRIX
  - Predication is supported
  - Not available in Bundles
 
