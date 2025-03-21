@@ -391,8 +391,8 @@ enum class ComponentType : uint32_t {
   U32, // = 5
   I64,
   U64,
-  F16, // = 7
-  F32, // = 8
+  F16, // = 8
+  F32, // = 9
   F64,
   SNormF16,
   UNormF16,
@@ -400,14 +400,14 @@ enum class ComponentType : uint32_t {
   UNormF32,
   SNormF64,
   UNormF64,
-  PackedS8x32, // = 16
-  PackedU8x32, // = 17
+  PackedS8x32, // = 17
+  PackedU8x32, // = 18
 
   // BEGIN NEW FOR SM 6.9
-  U8,      // = 18
-  I8,      // = 19
-  F8_E4M3, // = 20  
-  F8_E5M2, // = 21
+  U8,      // = 19
+  I8,      // = 20
+  F8_E4M3, // = 21  
+  F8_E5M2, // = 22
   // END     
 
   LastEntry
