@@ -940,7 +940,8 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
      - Dest access: D3D12_BARRIER_ACCESS_UNORDERED_ACCESS
      - Sync point: D3D12_BARRIER_SYNC_CONVERT_LINEAR_ALGEBRA_MATRIX
  - Predication is supported
- - Not available in Bundles
+ - Avaiable in Compute or Graphics CommandLists
+ - Not supported in Bundles
 
 *Usage Example:*
 
