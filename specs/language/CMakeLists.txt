@@ -43,6 +43,9 @@ add_custom_target(pdf
                   COMMAND ${PDFLATEX_COMPILER}
                           -output-directory ${CMAKE_BINARY_DIR}
                           ${main_file}
+                  COMMAND ${PDFLATEX_COMPILER}
+                          -output-directory ${CMAKE_BINARY_DIR}
+                          ${main_file}
                   COMMENT "Assembling ${PROJECT_NAME}.pdf"
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries)
