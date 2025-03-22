@@ -24,68 +24,141 @@ vector/matrix operations described in [0029].
 
 ## Motivation
 
-See [0029] for general background around the need for these new operations.
+Modern GPUs have dedicated silicon to accelerate matrix operations, but HLSL
+doesn't provide a mechanism to easily utilize these units. Evaluation of
+matrix-vector operations (multiply, muladd, accumulation) in HLSL was previously
+scalarized at the DXIL level making it hard to employ these specialized units.
+This proposal builds on the "Long vectors" feature described in [0026],
+providing a mechanism to express matrix-vector ops in HLSL that can be lowered
+to the DXIL ops described [0029], these primitives provide the right level of
+abstraction for hardware acceleration.
 
 An HLSL API needs to be defined to expose these new operations in a way that:
-* work well with existing HLSL APIs
+* works well with existing HLSL APIs
 * is expected to work well with future HLSL APIs in the same problem space
 * can be implemented reasonably in DXC and cleanly in clang
-
-This design builds on the "long vectors" feature described in [0026].
 
 [0026]: 0026-hlsl-long-vector-type.md
 
 ## Proposed solution
 
-First strawman:
+This API will be implemented using HLSL code.  The exact mechanism for getting
+this code into a developer's shader is TBD, but implementations have a few
+possible options, including:
+
+* Developers must explicitly #include a header file
+* The compiler force-includes the header file
+* The compiler force-includes a precompiled version of the header file
+
+The header-implementation accesses the DXIL operations described in [0029] by
+calling low-level builtins. These builtins should be considered implementation
+details and users should not call them directly. However, since they are a part
+of the implementation plan for the first implementation of this API they are
+described [below](#builtins).
+
+Since this API is currently only supported by DirectX, all the new types /
+methods described in it are placed in the `dx` namespace. Within this namespace,
+a `linalg` namespace is also added to group together types and methods related
+to linear algebra.
+
+Throughout this API, template parameters are used to store values that must be
+known at compile time, while member variables or function arguments are used to
+store values that may only be determined at runtime.
+
+This API defines the following supporting types:
+
+* `struct dx::linalg::MatrixRef`
+  * Reference to a matrix stored in a ByteAddressBuffer.   
+* `struct dx::linalg::RWMatrixRef`
+  * Reference to a matrix stored in a RWByteAddressBuffer.
+* `struct dx::linalg::VectorRef`
+  * Reference to a vector stored in a ByteAddressBuffer.
+* `struct dx::linalg::RWVectorRef`
+  * Reference to a vector stored in a RWByteAddressBuffer.
+* `struct dx::linalg::Vector`
+  * Wrapper around a vector, allowing the elements of the vector to be
+    reinterpreted in various ways.
+* `enum dx::linalg::DataType`
+  * Enum describing various data types that can be used to applied to matrices
+    and vectors.
+* `enum dx::linalg::MatrixLayout`
+  * Enum describing the possible layouts for a matrix in memory.
+
+This API defines the following functions:
+
+* `dx::linalg::Mul`
+  * Multiply a matrix in memory by a vector parameter.
+* `dx::linalg::MulAdd`
+  * Multiply a matrix in memory by a vector parameter, and add a vector from
+    memory.
+* `dx::linalg::OuterProductAccumulate`
+  * Compute the outer product of two vectors and accumulate the result matrix
+    atomically-elementwise in memory.
+* `dx::linalg::VectorAccumulate`
+  * Accumulate elements of a vector atomically-elementwise to corresponding
+    elements in memory.
+* `dx::linalg::InterpretedVector`
+  * Convenience function to construct a `Vector` inline while inferring various
+    template parameters.
+
+
+These are all described in more detail below, but the follow code example gives
+a flavor of how these work together:
 
 ```c++
-ByteAddressBuffer inputMatrix0; 
-ByteAddressBuffer inputMatrix1; 
-ByteAddressBuffer biasVector0; 
-ByteAddressBuffer biasVector1;
+ByteAddressBuffer model;
 
-void ps_main(args) // args: texture, normal, position
-{   
-    PreProcessing(args);
-    // Neural Network computes the output vector
-    // using the same input args and trained data
-    // in the form of matrices and bias vectors.
+vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
+  using namespace dx::linalg;
 
-    // The input vector is computed from the shader input
-    vector<uint32_t, M> inputVector = SomeFunction(args);
+  MatrixRef<
+      DATA_TYPE_E4M3, 32, 8,
+      MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix0 = {model, 0, 0};
 
-    // Below the physical calculations are replaced by NN evaluation
-    // the Matrix and Bias are trained offline and loaded to memory.
+  VectorRef<DATA_TYPE_FLOAT16> biasVector0 = {model, 1024};
 
-    // layer0 = inputVector*inputMatrix + biasVector0
-    // The matrix and bias are loaded from memory at offsets : moffset0 and boffset0
+  MatrixRef<
+      DATA_TYPE_E4M3,
+      32, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix1 = {model, 2048, 0};
 
-    dx::linalg::MatrixRef inMat0 = {inputMatrix0, moffset0};
-    dx::linalg::VectorRef biasV0 = {biasVector0, boffset0};
-    vector<uint32_t, K> layer0 = dx::linalg::MulAdd(inputVector, inMat0, biasV0);
-    layer0 = max(layer0,0); // Apply activation function
+  VectorRef<DATA_TYPE_FLOAT16> biasVector1 = {model, 3072};
 
-    // layer0 = inputVector*inputMatrix0 + biasVector0
-    // The matrix and bias are loaded from memory at offsets : moffset1 and boffset1
+  MatrixRef<
+      DATA_TYPE_E4M3,
+      3, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      matrix2 = {model, 4096, 0};
 
-    dx::linalg::MatrixRef inMat1 = {inputMatrix1, moffset1};
-    dx::linalg::VectorRef biasV1 = {biasVector1, boffset1};
-    vector<uint32_t, K> layer1 = dx::linalg::MulAdd(layer0, inMat1, biasV1);
-    layer1 = max(layer1,0); // Apply activation function
+  VectorRef<DATA_TYPE_FLOAT16> biasVector2 = {model, 5120};
 
-    // output = layer1*inputMatrix1 + biasVector1 
-    vector<uint32_t, N> output = dx::linalg::MulAdd(layer1, inMat1, biasV1);
+  vector<half, 32> layer0 = MulAdd<half>(
+      matrix0,
+      InterpretedVector<DATA_TYPE_E4M3>(inputVector),
+      biasVector0);
+  layer0 = max(layer0, 0);
 
-    output = exp(output); 
+  vector<half, 32> layer1 = MulAdd<half>(
+      matrix1,
+      InterpretedVector<DATA_TYPE_E4M3>(layer0),
+      biasVector1);
+  layer1 = max(layer1, 0);
 
-    color.r = output[0] * args.lightcolor; 
-    color.g = output[1] * args.lightcolor; 
-    color.b = output[2] * args.lightcolor; 
+  vector<float, 3> output = MulAdd<float>(
+      matrix2,
+      InterpretedVector<DATA_TYPE_E4M3>(layer1),
+      biasVector2);
+  output = exp(output);
+
+  return output;
 }
 ```
 
 ## Detailed design
+
+TBD
+
+### Builtins
 
 TBD
 
@@ -95,6 +168,6 @@ TBD
 
 ## Acknowledgments (Optional)
 
-TBD
+We would like to thank Jeff Bolz for his contribution to this spec.
 
 <!-- {% endraw %} -->
