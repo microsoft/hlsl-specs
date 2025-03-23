@@ -113,21 +113,21 @@ vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
 
   MatrixRef<
       DATA_TYPE_E4M3, 32, 8,
-      MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      MATRIX_LAYOUT_MUL_OPTIMAL>
       matrix0 = {model, 0, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector0 = {model, 1024};
 
   MatrixRef<
       DATA_TYPE_E4M3,
-      32, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      32, 32, MATRIX_LAYOUT_MUL_OPTIMAL>
       matrix1 = {model, 2048, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector1 = {model, 3072};
 
   MatrixRef<
       DATA_TYPE_E4M3,
-      3, 32, MATRIX_LAYOUT_INFERENCING_OPTIMAL>
+      3, 32, MATRIX_LAYOUT_MUL_OPTIMAL>
       matrix2 = {model, 4096, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector2 = {model, 5120};
@@ -355,11 +355,11 @@ Example usage:
 using namespace dx::linalg;
 
 vector<float, 128> V = 0;
-vector<float, 128> Result = Mul(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V));
+vector<float, 128> Result = Mul<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V));
 
 // alternative:
 Vector<float, 128, DATA_TYPE_E4M3> IV = {V};
-vector<float, 128> Result = Mul(Matrix, IV);
+vector<float, 128> Result = Mul<float>(Matrix, IV);
 
 ```
 
@@ -452,6 +452,64 @@ Mul(MatrixRefImpl<M_RES, M_DT, M_M, M_K, M_LAYOUT, M_TRANSPOSE> Matrix,
 } // namespace dx
 ```
 
+## Function: MulAdd
+
+The `dx::linalg::MulAdd` function behaves as `dx::linalg::Mul`, but also adds a
+bias vector (loaded from memory) to the result.
+
+Example:
+
+```c++
+ByteAddressBuffer Buffer;
+
+using namespace dx::linalg;
+
+MatrixRef<
+    DATA_TYPE_E4M3, 32, 8,
+    MATRIX_LAYOUT_MUL_OPTIMAL>
+    Matrix = {Buffer, 0, 0};
+
+VectorRef<DATA_TYPE_FLOAT16> BiasVector = {Buffer, 1024};
+
+vector<float, 8> V = 0;
+vector<float, 32> Result = MulAdd<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V), BiasVector);
+
+```
+
+Conceptual API:
+
+```c++
+template<typename TYo>
+vector<TYo, M_M> Mul(MatrixRefImpl<...> Matrix, Vector<...> InputVector, VectorRefImpl<...> BiasVector);
+```
+
+See [0029] for details of this operation.
+
+> TODO: details of what this function does really belong in here as well, but
+> for now the source-of-truth is [0029].
+
+Implementation:
+
+```c++
+template <typename TYo, typename TYi, int NUMi, typename M_RES, DataType IV_DT,
+          DataType M_DT, uint M_M, uint M_K, MatrixLayout M_LAYOUT,
+          bool M_TRANSPOSE, typename BV_RES, DataType BV_DT>
+vector<TYo, M_M>
+MulAdd(MatrixRefImpl<M_RES, M_DT, M_M, M_K, M_LAYOUT, M_TRANSPOSE> Matrix,
+       Vector<TYi, NUMi, IV_DT> InputVector,
+       VectorRefImpl<BV_RES, BV_DT> BiasVector) {
+
+  vector<TYo, M_M> OutputVector;
+
+  details::__builtin_MatVecMulAdd(
+      InputVector.Data, IV_DT, BUFFER_HANDLE(Matrix.Buffer), Matrix.StartOffset,
+      M_DT, M_M, M_K, M_LAYOUT, M_TRANSPOSE, Matrix.Stride,
+      BUFFER_HANDLE(BiasVector.Buffer), BiasVector.StartOffset, BV_DT,
+      /*out*/ OutputVector);
+
+  return OutputVector;
+}
+```
 
 
 ## Alternatives considered (Optional)
