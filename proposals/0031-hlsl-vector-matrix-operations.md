@@ -5,8 +5,8 @@
 ## Instructions
 
 - Proposal: [0031](0031-hlsl-vector-matrix-operations.md)
-- Author(s): [Damyan Pepper][damyanp], [Chris Bieneman][llvm-beanz], 
-             [Anupama Chandrasekhar][anupamachandra]
+- Author(s): [Damyan Pepper][damyanp], [Chris Bieneman][llvm-beanz],
+  [Anupama Chandrasekhar][anupamachandra]
 - Sponsor: [Damyan Pepper][damyanp]
 - Status: **Under Consideration**
 - Planned Version: Shader Model 6.9
@@ -34,21 +34,22 @@ to the DXIL ops described [0029], these primitives provide the right level of
 abstraction for hardware acceleration.
 
 An HLSL API needs to be defined to expose these new operations in a way that:
-* works well with existing HLSL APIs
-* is expected to work well with future HLSL APIs in the same problem space
-* can be implemented reasonably in DXC and cleanly in clang
+
+- works well with existing HLSL APIs
+- is expected to work well with future HLSL APIs in the same problem space
+- can be implemented reasonably in DXC and cleanly in clang
 
 [0026]: 0026-hlsl-long-vector-type.md
 
 ## Proposed solution
 
-This API will be implemented using HLSL code.  The exact mechanism for getting
+This API will be implemented using HLSL code. The exact mechanism for getting
 this code into a developer's shader is TBD, but implementations have a few
 possible options, including:
 
-* Developers must explicitly #include a header file
-* The compiler force-includes the header file
-* The compiler force-includes a precompiled version of the header file
+- Developers must explicitly #include a header file
+- The compiler force-includes the header file
+- The compiler force-includes a precompiled version of the header file
 
 The header-implementation accesses the DXIL operations described in [0029] by
 calling low-level builtins. These builtins should be considered implementation
@@ -67,40 +68,39 @@ store values that may only be determined at runtime.
 
 This API defines the following supporting types:
 
-* `struct dx::linalg::MatrixRef`
-  * Reference to a matrix stored in a ByteAddressBuffer.   
-* `struct dx::linalg::RWMatrixRef`
-  * Reference to a matrix stored in a RWByteAddressBuffer.
-* `struct dx::linalg::VectorRef`
-  * Reference to a vector stored in a ByteAddressBuffer.
-* `struct dx::linalg::RWVectorRef`
-  * Reference to a vector stored in a RWByteAddressBuffer.
-* `struct dx::linalg::Vector`
-  * Wrapper around a vector, allowing the elements of the vector to be
+- `struct dx::linalg::MatrixRef`
+  - Reference to a matrix stored in a ByteAddressBuffer.
+- `struct dx::linalg::RWMatrixRef`
+  - Reference to a matrix stored in a RWByteAddressBuffer.
+- `struct dx::linalg::VectorRef`
+  - Reference to a vector stored in a ByteAddressBuffer.
+- `struct dx::linalg::RWVectorRef`
+  - Reference to a vector stored in a RWByteAddressBuffer.
+- `struct dx::linalg::Vector`
+  - Wrapper around a vector, allowing the elements of the vector to be
     reinterpreted in various ways.
-* `enum dx::linalg::DataType`
-  * Enum describing various data types that can be used to applied to matrices
+- `enum dx::linalg::DataType`
+  - Enum describing various data types that can be used to applied to matrices
     and vectors.
-* `enum dx::linalg::MatrixLayout`
-  * Enum describing the possible layouts for a matrix in memory.
+- `enum dx::linalg::MatrixLayout`
+  - Enum describing the possible layouts for a matrix in memory.
 
 This API defines the following functions:
 
-* `dx::linalg::Mul`
-  * Multiply a matrix in memory by a vector parameter.
-* `dx::linalg::MulAdd`
-  * Multiply a matrix in memory by a vector parameter, and add a vector from
+- `dx::linalg::Mul`
+  - Multiply a matrix in memory by a vector parameter.
+- `dx::linalg::MulAdd`
+  - Multiply a matrix in memory by a vector parameter, and add a vector from
     memory.
-* `dx::linalg::OuterProductAccumulate`
-  * Compute the outer product of two vectors and accumulate the result matrix
+- `dx::linalg::OuterProductAccumulate`
+  - Compute the outer product of two vectors and accumulate the result matrix
     atomically-elementwise in memory.
-* `dx::linalg::VectorAccumulate`
-  * Accumulate elements of a vector atomically-elementwise to corresponding
+- `dx::linalg::VectorAccumulate`
+  - Accumulate elements of a vector atomically-elementwise to corresponding
     elements in memory.
-* `dx::linalg::InterpretedVector`
-  * Convenience function to construct a `Vector` inline while inferring various
+- `dx::linalg::InterpretedVector`
+  - Convenience function to construct a `Vector` inline while inferring various
     template parameters.
-
 
 These are all described in more detail below, but the follow code example gives
 a flavor of how these work together:
@@ -245,20 +245,20 @@ RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
 
 Template parameters:
 
-- _DT_ - the type used to store elements of the matrix in memory
-- _M_ - the 'M' dimension of the matrix
-- _K_ - the 'K" dimension of the matrix
-- _ML_ - the layout of the matrix in memory
-- _TRANPOSE_ - whether or not this matrix should be transposed before any operations
+- `DT` - the type used to store elements of the matrix in memory
+- `M` - the 'M' dimension of the matrix
+- `K` - the 'K" dimension of the matrix
+- `ML` - the layout of the matrix in memory
+- `TRANPOSE` - whether or not this matrix should be transposed before any operations
 
 Members:
 
-- _Buffer_ - the buffer that the matrix is stored in
+- `Buffer` - the buffer that the matrix is stored in
   - For `MatrixRef` this is a `ByteAddressBuffer`
   - For `RWMatrixRef` this is a `RWByteAddresssBuffer`
-- _StartOffset_ - the offset, in bytes, from the beginning of the buffer where
+- `StartOffset` - the offset, in bytes, from the beginning of the buffer where
   the matrix is located.
-- _Stride_ - the stride, in bytes, between rows/columns of the matrix. This
+- `Stride` - the stride, in bytes, between rows/columns of the matrix. This
   value is ignored if the matrix layout is `MATRIX_LAYOUT_MUL_OPTIMAL` or
   `MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
@@ -309,11 +309,13 @@ RWVectorRef<DATA_TYPE_SINT16> VectorC = {RWBuffer, /*offset=*/64};
 ```
 
 Template parameter:
-* **DT** - the data type of each element stored in the buffer
+
+- `DT` - the data type of each element stored in the buffer
 
 Members:
-* **Buffer** - the buffer that the vector is stored in
-* **StartOffset** - the offset, in bytes, from the beginning of the buffer to
+
+- `Buffer` - the buffer that the vector is stored in
+- `StartOffset` - the offset, in bytes, from the beginning of the buffer to
   where the vector is located.
 
 Implementation:
@@ -401,7 +403,7 @@ export float4 Example(float4 Input) {
   MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true>
       Matrix = {Buf, 0, 0};
 
-  return Mul<float>(    
+  return Mul<float>(
       Matrix, InterpretedVector<DATA_TYPE_FLOAT16>(Input));
 }
 ```
@@ -514,13 +516,14 @@ MulAdd(MatrixRefImpl<M_RES, M_DT, M_M, M_K, M_LAYOUT, M_TRANSPOSE> Matrix,
 ## Function: OuterProductAccumulate
 
 Computes the outer product between column vectors and an **M**x**N** matrix is
-accumulated component-wise atomically (with device scope) in memory. 
+accumulated component-wise atomically (with device scope) in memory.
 
 The operation is equivalent to:
 
-> ResultMatrix = InputVector1 * Transpose(InputVector2);
+> ResultMatrix = InputVector1 \* Transpose(InputVector2);
 
 Example:
+
 ```c++
 RWByteAddressBuffer RWBuf;
 
@@ -540,7 +543,7 @@ Conceptual API:
 namespace dx {
 namespace linalg {
 
-void OuterProductAccumulate(vector<T, M> InputVector1, 
+void OuterProductAccumulate(vector<T, M> InputVector1,
                             vector<T, N> InputVector2,
                             RWMatrixRef<...> Matrix);
 
@@ -549,11 +552,12 @@ void OuterProductAccumulate(vector<T, M> InputVector1,
 ```
 
 Parameters:
-* **InputVector1** - the first vector, containing M elements. Element type must
+
+- `InputVector1` - the first vector, containing M elements. Element type must
   be the same as InputVector2's.
-* **InputVector2** - the second vector, containing N elements. Element type must
+- `InputVector2` - the second vector, containing N elements. Element type must
   be the same as InputVector1's.
-* **Matrix** - the destination matrix.  The matrix dimensions must be MxN. The
+- `Matrix` - the destination matrix. The matrix dimensions must be MxN. The
   `TRANSPOSE` parameter for the matrix must be `false`.
 
 Implementation:
@@ -578,7 +582,7 @@ void OuterProductAccumulate(vector<T, M> InputVector1,
 ## Function: VectorAccumulate
 
 Accumulates the components of a vector component-wise atomically (with device
-scope) to the corresponding elements of an array in memory. 
+scope) to the corresponding elements of an array in memory.
 
 Example:
 
@@ -588,7 +592,7 @@ RWByteAddressBuffer RWBuf;
 vector<half, 128> Input = 0;
 
 using namespace dx::linalg;
-VectorAccumulate(Input, RWBuf, 0);  
+VectorAccumulate(Input, RWBuf, 0);
 ```
 
 Conceptual API:
@@ -604,9 +608,10 @@ void VectorAccumulate(vector<...> InputVector, RWByteAddressBuffer Buffer, uint 
 ```
 
 Parameters:
-* **InputVector** - the input vector
-* **Buffer** - the buffer containing the output array
-* **Offset** - the offset in bytes from the start of the buffer to the start of
+
+- `InputVector` - the input vector
+- `Buffer` - the buffer containing the output array
+- `Offset` - the offset in bytes from the start of the buffer to the start of
   output array
 
 Implementation:
