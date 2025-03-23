@@ -511,6 +511,120 @@ MulAdd(MatrixRefImpl<M_RES, M_DT, M_M, M_K, M_LAYOUT, M_TRANSPOSE> Matrix,
 }
 ```
 
+## Function: OuterProductAccumulate
+
+Computes the outer product between column vectors and an **M**x**N** matrix is
+accumulated component-wise atomically (with device scope) in memory. 
+
+The operation is equivalent to:
+
+> ResultMatrix = InputVector1 * Transpose(InputVector2);
+
+Example:
+```c++
+RWByteAddressBuffer RWBuf;
+
+export void Test4(vector<half, 128> Input1, vector<half, 256> Input2) {
+  using namespace dx::linalg;
+
+  RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
+      matrix = {RWBuf, 0, 0};
+
+  OuterProductAccumulate(Input1, Input2, matrix);
+}
+```
+
+Conceptual API:
+
+```c++
+namespace dx {
+namespace linalg {
+
+void OuterProductAccumulate(vector<T, M> InputVector1, 
+                            vector<T, N> InputVector2,
+                            RWMatrixRef<...> Matrix);
+
+} // namespace linalg
+} // namespace dx
+```
+
+Parameters:
+* **InputVector1** - the first vector, containing M elements. Element type must
+  be the same as InputVector2's.
+* **InputVector2** - the second vector, containing N elements. Element type must
+  be the same as InputVector1's.
+* **Matrix** - the destination matrix.  The matrix dimensions must be MxN. The
+  `TRANSPOSE` parameter for the matrix must be `false`.
+
+Implementation:
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <typename T, int M, int N, DataType M_DT, MatrixLayout M_LAYOUT>
+void OuterProductAccumulate(vector<T, M> InputVector1,
+                            vector<T, N> InputVector2,
+                            RWMatrixRef<M_DT, M, N, M_LAYOUT, false> Matrix) {
+  details::__builtin_OuterProductAccumulate(InputVector1, InputVector2,
+                                            BUFFER_HANDLE(Matrix.Buffer),
+                                            Matrix.StartOffset, M_DT, M_LAYOUT);
+}
+
+} // namespace linalg
+} // namespace dx
+```
+
+## Function: VectorAccumulate
+
+Accumulates the components of a vector component-wise atomically (with device
+scope) to the corresponding elements of an array in memory. 
+
+Example:
+
+```c++
+RWByteAddressBuffer RWBuf;
+
+vector<half, 128> Input = 0;
+
+using namespace dx::linalg;
+VectorAccumulate(Input, RWBuf, 0);  
+```
+
+Conceptual API:
+
+```c++
+namespace dx {
+namespace linalg {
+
+void VectorAccumulate(vector<...> InputVector, RWByteAddressBuffer Buffer, uint Offset);
+
+} // namespace linalg
+} // namespace dx
+```
+
+Parameters:
+* **InputVector** - the input vector
+* **Buffer** - the buffer containing the output array
+* **Offset** - the offset in bytes from the start of the buffer to the start of
+  output array
+
+Implementation:
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <typename T, int N>
+void VectorAccumulate(vector<T, N> InputVector, RWByteAddressBuffer Buffer,
+                      uint Offset) {
+  details::__builtin_VectorAccumulate(InputVector, BUFFER_HANDLE(Buffer),
+                                      Offset);
+}
+
+} // namespace linalg
+} // namespace dx
+```
 
 ## Alternatives considered (Optional)
 
