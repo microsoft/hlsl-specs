@@ -156,7 +156,7 @@ vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
 
 ## Detailed design
 
-The API is implemented using the C++11 style templates supported in HLSL 2021.
+The API is implemented using the C++03 style templates supported in HLSL 2021.
 Therefore HLSL 2021 is required to use this API.
 
 Developers are expected to rely on template argument deduction for calls to the
