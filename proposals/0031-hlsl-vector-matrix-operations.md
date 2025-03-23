@@ -212,11 +212,11 @@ See the Matrix Layouts section of [0029] for more information.
 
 ### struct MatrixRef / RWMatrixRef
 
-`MatrixRef` and `RWMatrixRef` are use to specify a reference to a matrix in
-memory, including information about the dimensions, layout and numerical format
-of the matrix. Some of this information must be known at compile time - these
-are captured in template parameters - while others can be determined at runtime,
-and are therefore members of the struct.
+`MatrixRef` and `RWMatrixRef` specify a reference to a matrix in memory,
+including information about the dimensions, layout and numerical format of the
+matrix. Some of this information must be known at compile time - these are
+captured in template parameters - while others can be determined at runtime, and
+are therefore members of the struct.
 
 Since the `ByteAddressBuffer` and `RWByteAddressBuffer` are not convertable to
 each other, use use different named types for the matrix references. A base
@@ -240,7 +240,7 @@ MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_ROW_MAJOR, true>
       MatrixB = {ROBuffer, /*offset=*/128, /*stride=*/16};
 
 RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
-      matrixC = {RWBuf, /*offset=*/64, /*stride=*/0};
+      MatrixC = {RWBuffer, /*offset=*/64, /*stride=*/0};
 ```
 
 Template parameters:
@@ -284,6 +284,59 @@ using RWMatrixRef = MatrixRefImpl<RWByteAddressBuffer, DT, M, K, ML, TRANSPOSE>;
 
 } // namespace linalg
 } // namespace dx
+```
+
+### struct VectorRef
+
+`VectorRef` and `RWVectorRef` specify a reference to a vector in memory along
+with the format of each element.
+
+As with `MatrixRef`, two versions are provided - one for vectors stored in
+`ByteAddressBuffer` and another for `RWByteAddressBuffer`. A base class,
+`VectorRefImpl`, covers both of them.
+
+Example usage:
+
+```c++
+ByteAddressBuffer ROBuffer;
+RWByteAddressBuffer RWBuffer;
+
+using namesace dx::linalg;
+
+VectorRef<DATA_TYPE_FLOAT16> VectorA = {ROBuffer, /*offset=*/128};
+VectorRef<DATA_TYPE_FLOAT32> VectorB = {ROBuffer, /*offset=*/128};
+RWVectorRef<DATA_TYPE_SINT16> VectorC = {RWBuffer, /*offset=*/64};
+```
+
+Template parameter:
+* **DT** - the data type of each element stored in the buffer
+
+Members:
+* **Buffer** - the buffer that the vector is stored in
+* **StartOffset** - the offset, in bytes, from the beginning of the buffer to
+  where the vector is located.
+
+Implementation:
+
+```c++
+namespace dx {
+namespace linalg {
+
+template <typename BUFFER, DataType DT>
+struct VectorRefImpl {
+  BUFFER Buffer;
+  uint StartOffset;
+};
+
+template <DataType DT>
+using VectorRef = VectorRefImpl<ByteAddressBuffer, DT>;
+
+template <DataType DT>
+using RWVectorRef = VectorRefImpl<RWByteAddressBuffer, DT>;
+
+} // namespace linalg
+} // namespace dx
+
 ```
 
 ### struct Vector
