@@ -111,43 +111,31 @@ ByteAddressBuffer model;
 vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
   using namespace dx::linalg;
 
-  MatrixRef<
-      DATA_TYPE_E4M3, 32, 8,
-      MATRIX_LAYOUT_MUL_OPTIMAL>
-      matrix0 = {model, 0, 0};
+  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> matrix0 = {model,
+                                                                         0, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector0 = {model, 1024};
 
-  MatrixRef<
-      DATA_TYPE_E4M3,
-      32, 32, MATRIX_LAYOUT_MUL_OPTIMAL>
-      matrix1 = {model, 2048, 0};
+  MatrixRef<DATA_TYPE_E4M3, 32, 32, MATRIX_LAYOUT_MUL_OPTIMAL> matrix1 = {
+      model, 2048, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector1 = {model, 3072};
 
-  MatrixRef<
-      DATA_TYPE_E4M3,
-      3, 32, MATRIX_LAYOUT_MUL_OPTIMAL>
-      matrix2 = {model, 4096, 0};
+  MatrixRef<DATA_TYPE_E4M3, 3, 32, MATRIX_LAYOUT_MUL_OPTIMAL> matrix2 = {
+      model, 4096, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> biasVector2 = {model, 5120};
 
   vector<half, 32> layer0 = MulAdd<half>(
-      matrix0,
-      InterpretedVector<DATA_TYPE_E4M3>(inputVector),
-      biasVector0);
+      matrix0, InterpretedVector<DATA_TYPE_E4M3>(inputVector), biasVector0);
   layer0 = max(layer0, 0);
 
   vector<half, 32> layer1 = MulAdd<half>(
-      matrix1,
-      InterpretedVector<DATA_TYPE_E4M3>(layer0),
-      biasVector1);
+      matrix1, InterpretedVector<DATA_TYPE_E4M3>(layer0), biasVector1);
   layer1 = max(layer1, 0);
 
   vector<float, 3> output = MulAdd<float>(
-      matrix2,
-      InterpretedVector<DATA_TYPE_E4M3>(layer1),
-      biasVector2);
+      matrix2, InterpretedVector<DATA_TYPE_E4M3>(layer1), biasVector2);
   output = exp(output);
 
   return output;
@@ -231,16 +219,18 @@ Example usage:
 ByteAddressBuffer ROBuffer;
 RWByteAddressBuffer RWBuffer;
 
-using namesace dx::linalg;
+void Example() {
+  using namespace dx::linalg;
 
-MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true>
-      MatrixA = {ROBuffer, /*offset=*/128, /*stride=*/0};
+  MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true> MatrixA =
+      {ROBuffer, /*offset=*/128, /*stride=*/0};
 
-MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_ROW_MAJOR, true>
+  MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_ROW_MAJOR, true>
       MatrixB = {ROBuffer, /*offset=*/128, /*stride=*/16};
 
-RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
+  RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
       MatrixC = {RWBuffer, /*offset=*/64, /*stride=*/0};
+}
 ```
 
 Template parameters:
@@ -301,11 +291,13 @@ Example usage:
 ByteAddressBuffer ROBuffer;
 RWByteAddressBuffer RWBuffer;
 
-using namesace dx::linalg;
+void Example() {
+  using namespace dx::linalg;
 
-VectorRef<DATA_TYPE_FLOAT16> VectorA = {ROBuffer, /*offset=*/128};
-VectorRef<DATA_TYPE_FLOAT32> VectorB = {ROBuffer, /*offset=*/128};
-RWVectorRef<DATA_TYPE_SINT16> VectorC = {RWBuffer, /*offset=*/64};
+  VectorRef<DATA_TYPE_FLOAT16> VectorA = {ROBuffer, /*offset=*/128};
+  VectorRef<DATA_TYPE_FLOAT32> VectorB = {ROBuffer, /*offset=*/128};
+  RWVectorRef<DATA_TYPE_SINT16> VectorC = {RWBuffer, /*offset=*/64};
+}
 ```
 
 Template parameter:
@@ -354,15 +346,21 @@ struct can be used directly, it is likely more ergonomic to use the
 Example usage:
 
 ```c++
-using namespace dx::linalg;
+ByteAddressBuffer Buffer;
+void Example() {
+  using namespace dx::linalg;
 
-vector<float, 128> V = 0;
-vector<float, 128> Result = Mul<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V));
+  MatrixRef<DATA_TYPE_FLOAT16, 128, 128, MATRIX_LAYOUT_MUL_OPTIMAL, true>
+      Matrix = {Buffer, 0, 0};
 
-// alternative:
-Vector<float, 128, DATA_TYPE_E4M3> IV = {V};
-vector<float, 128> Result = Mul<float>(Matrix, IV);
+  vector<float, 128> V = 0;
+  vector<float, 128> Result =
+      Mul<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V));
 
+  // alternative:
+  Vector<float, 128, DATA_TYPE_E4M3> IV = {V};
+  vector<float, 128> Result2 = Mul<float>(Matrix, IV);
+}
 ```
 
 Implementation:
@@ -397,14 +395,14 @@ in memory, while the vector comes from a variable.
 Example:
 
 ```c++
-export float4 Example(float4 Input) {
+ByteAddressBuffer Buffer;
+float4 Example(float4 Input) {
   using namespace dx::linalg;
 
-  MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true>
-      Matrix = {Buf, 0, 0};
+  MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true> Matrix = {
+      Buffer, 0, 0};
 
-  return Mul<float>(
-      Matrix, InterpretedVector<DATA_TYPE_FLOAT16>(Input));
+  return Mul<float>(Matrix, InterpretedVector<DATA_TYPE_FLOAT16>(Input));
 }
 ```
 
@@ -464,18 +462,18 @@ Example:
 ```c++
 ByteAddressBuffer Buffer;
 
-using namespace dx::linalg;
+void Example() {
+  using namespace dx::linalg;
 
-MatrixRef<
-    DATA_TYPE_E4M3, 32, 8,
-    MATRIX_LAYOUT_MUL_OPTIMAL>
-    Matrix = {Buffer, 0, 0};
+  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix = {Buffer,
+                                                                        0, 0};
 
-VectorRef<DATA_TYPE_FLOAT16> BiasVector = {Buffer, 1024};
+  VectorRef<DATA_TYPE_FLOAT16> BiasVector = {Buffer, 1024};
 
-vector<float, 8> V = 0;
-vector<float, 32> Result = MulAdd<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V), BiasVector);
-
+  vector<float, 8> V = 0;
+  vector<float, 32> Result =
+      MulAdd<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V), BiasVector);
+}
 ```
 
 Conceptual API:
@@ -527,7 +525,7 @@ Example:
 ```c++
 RWByteAddressBuffer RWBuf;
 
-export void Test4(vector<half, 128> Input1, vector<half, 256> Input2) {
+void Example(vector<half, 128> Input1, vector<half, 256> Input2) {
   using namespace dx::linalg;
 
   RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
@@ -589,10 +587,10 @@ Example:
 ```c++
 RWByteAddressBuffer RWBuf;
 
-vector<half, 128> Input = 0;
-
-using namespace dx::linalg;
-VectorAccumulate(Input, RWBuf, 0);
+void Test(vector<half, 128> Input) {
+  using namespace dx::linalg;
+  VectorAccumulate(Input, RWBuf, 0);
+}
 ```
 
 Conceptual API:
