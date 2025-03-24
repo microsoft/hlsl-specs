@@ -164,8 +164,8 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    immarg i32,       ; input interpretation
     immarg i1,        ; input signed op kind
+    immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
     immarg i32,       ; matrix interpretation
