@@ -194,9 +194,12 @@ void __builtin_MatVecMulAdd(vector<TYi, NUMi> InputVector,
 
 // dx.op.outerproductaccumulate
 template <typename TY, int M, int N, typename RES>
-void __builtin_OuterProductAccumulate(
-    vector<TY, M> InputVector1, vector<TY, N> InputVector2, RES MatrixResource,
-    uint MatrixStartOffset, DataType MatrixInterpretation, MatrixLayout Layout);
+void __builtin_OuterProductAccumulate(vector<TY, M> InputVector1,
+                                      vector<TY, N> InputVector2,
+                                      RES MatrixResource,
+                                      uint MatrixStartOffset,
+                                      DataType MatrixInterpretation,
+                                      MatrixLayout Layout, uint MatrixStride);
 
 // dx.op.vectoraccumulate
 template <typename TY, int NUM, typename RES>
