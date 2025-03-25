@@ -1543,6 +1543,32 @@ Validation errors:
 - Validate that `hit object` is not undef.
 - Validate that `index`, `row`, and `col` are constant and in a valid range.
 
+### Encoding of `reordercoherent`
+
+[Memory Coherence And Visibility](#memory-coherence-and-visibility) introduces the `reordercoherent` HLSL attribute for UAVs.
+This new resource attribute is encoded in DXIL in the following way:
+
+A new tag is added to the resource extended property tags:
+```cpp
+   static const unsigned kDxilAtomic64UseTag = 3;
++  static const unsigned kDxilReorderCoherentTag = 4;
+```
+The tag carries an `i1` value that indicates whether the resource is reordercoherent. The resource is not reordercoherent when the tag is absent.
+
+A flag is added to the Dxil Library Runtime Data (RDAT):
+```cpp
+   RDAT_ENUM_VALUE(Atomics64Use,             1 << 4)
++  RDAT_ENUM_VALUE(UAVReorderCoherent,       1 << 5)
+```
+
+A new field is added to `DxilResourceProperties`:
+```cpp
+   // BYTE 2
+-  uint8_t Reserved2;
++  uint8_t ReorderCoherent : 1;
++  uint8_t Reserved2 : 7;
+```
+
 ## Device Support
 
 Devices that support Shader Model 6.9 and raytracing must support the 
