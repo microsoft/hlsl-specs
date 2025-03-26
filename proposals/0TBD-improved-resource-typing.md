@@ -17,9 +17,9 @@ record data, fully removing the need to use descriptor tables.
 
 ## Motivation
 
-The `ResourceHeap` added in Shader Model 6.6 exposed a typeless, unsized heap
-to shader authors which could be used to access any descriptor placed in the
-heap through the client API.
+The `ResourceDescriptorHeap` added in Shader Model 6.6 exposed a typeless,
+unsized heap to shader authors which could be used to access any descriptor
+placed in the heap through the client API.
 
 While useful, without type information, it is incredibly difficult to
 validate whether an application is doing what it's supposed to be doing, both
