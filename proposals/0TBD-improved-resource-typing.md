@@ -57,16 +57,14 @@ arbitrary nesting of resource declarations.
 Example declarations:
 
 ```hlsl
-// A constant buffer containing other resource indices, including a buffer that points to further resources.
+// A constant buffer containing other resource indices
+// including a buffer that points to further resources.
 struct SomeResources {
-	Texture2D	texture;
-	RWBuffer<Texture2D> buffer;
+	Texture2D                       texture;
+	RWStructuredBuffer<Texture2D>   bufferOfTextures;   // Can be written!
 };
 
 ConstantBuffer<SomeResources> someResources;
-
-// RW Buffer; resource offsets can be written out too!
-RWBuffer<Texture2D> buffer;
 ```
 
 Declaring these is equivalent to declaring integer values and passing those
@@ -157,14 +155,14 @@ For example:
 
 ```hlsl
 struct SomeResources {
-	Texture2D	texture;
-	RWBuffer<Texture2D> buffer;
+	Texture2D	                    texture;
+	RWStructuredBuffer<Texture2D>   bufferOfTextures;
 };
 
 SomeResources someResources = ResourceEntry(16);
 ```
 
-In DirectX 12, this would be equivalent to:
+This would be equivalent to:
 
 ```hlsl
 SomeResources someResources;
@@ -175,6 +173,7 @@ someResources.buffer = ResourceDescriptorHeap[17];
 `offset` is the same index that would be provided to
 `ResourceDescriptorHeap`, and each subsequent resource in `T` simply
 increments the offset by 1.
+
 In future, if non-homogenous descriptor sizes are advertised, as with
 [VK_EXT_descriptor_buffer](https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_descriptor_buffer.html),
 `offset` could instead become a byte offset, enabling resources to be packed
@@ -232,7 +231,7 @@ DirectX, `SV_LocalConstants` is read as-is.
 Example usage of SV_Constants with resources:
 
 ```hlsl
-struct DescriptorTable0 {
+struct DescriptorTableData {
     Texture2D<float4> a;
     Texture2D<float4> b;
     ConstantBuffer<Something> c;
@@ -241,14 +240,14 @@ struct DescriptorTable0 {
 };
 
 struct RootData {
-	uint descriptorTable0Offset;
+	uint descriptorTableOffset;
     uint4 constants;
     RawConstantBuffer<...> buffer;
 };
 
 void main(RootData root : SV_Constants)
 {
-    DescriptorTable0 descriptorTable0 = ResourceEntry(root.descriptorTable0);
+    DescriptorTableData descriptorTable = ResourceEntry(root.descriptorTableOffset);
 }
 ```
 
@@ -276,11 +275,14 @@ Something like the following might be desirable:
 
 ```hlsl
 struct RootData {
-	ResourceEntry<DescriptorTable0> descriptorTable0;
+	DescriptorTable<DescriptorTableData> descriptorTable;
     uint4 constants;
     RawConstantBuffer<...> buffer;
 };
 ```
+
+This would also allow applications to load/store descriptor table handles
+directly in the same way as individual resource types.
 
 
 #### Open Issue: Allow explicit offsets?
@@ -294,7 +296,7 @@ indicating this same functionality for compatibility reasons if nothing else.
 For example:
 
 ```hlsl
-struct DescriptorTable0 {
+struct DescriptorTableData {
     Texture2D<float4> a;
     Texture2D<float4> b;
     [[resourceoffset(16)]]
@@ -308,6 +310,9 @@ In this example the offset for `c` would be equal to 16, and `d` would take
 an offset as the sum of 16 and the size of `c`.
 It may also be beneficial to have a rolling offset variant, where the value
 is added to the otherwise calculated offset.
+
+Potentially this could be applicable to POD in regular structs as well, to
+enable more control over struct padding.
 
 
 ### Raw Buffer types
