@@ -174,23 +174,26 @@ namespace details {
 
 // dx.op.matvecmul
 template <typename TYo, int NUMo, typename TYi, int NUMi, typename RES>
-void __builtin_MatVecMul(vector<TYi, NUMi> InputVector,
-                         uint InputVectorInterpretation, RES MatrixResource,
-                         uint MatrixStartOffset, uint MatrixInterpretation,
-                         uint M, uint K, uint Layout, bool MatrixTranspose,
-                         uint MatrixStride, out vector<TYo, NUMo> OutputVector);
+void __builtin_MatVecMul(out vector<TYo, NUMo> OutputVector,
+                         bool IsOutputUnsigned, vector<TYi, NUMi> InputVector,
+                         bool IsInputUnsigned, uint InputVectorInterpretation,
+                         RES MatrixResource, uint MatrixStartOffset,
+                         uint MatrixInterpretation, uint M, uint K,
+                         uint MatrixLayout, bool MatrixTranspose,
+                         uint MatrixStride);
 
 // dx.op.matvecmuladd
 template <typename TYo, int NUMo, typename TYi, int NUMi, typename RESm,
           typename RESv>
-void __builtin_MatVecMulAdd(vector<TYi, NUMi> InputVector,
+void __builtin_MatVecMulAdd(out vector<TYo, NUMo> OutputVector,
+                            bool IsOutputUnsigned,
+                            vector<TYi, NUMi> InputVector, bool IsInputUnsigned,
                             uint InputVectorInterpretation, RESm MatrixResource,
                             uint MatrixStartOffset, uint MatrixInterpretation,
-                            uint M, uint K, uint Layout, bool MatrixTranspose,
-                            uint MatrixStride, RESv BiasVectorResource,
-                            uint BiasVectorOffset,
-                            uint BiasVectorInterpretation,
-                            out vector<TYo, NUMo> OutputVector);
+                            uint M, uint K, uint MatrixLayout,
+                            bool MatrixTranspose, uint MatrixStride,
+                            RESv BiasVectorResource, uint BiasVectorOffset,
+                            uint BiasVectorInterpretation);
 
 // dx.op.outerproductaccumulate
 template <typename TY, int M, int N, typename RES>
