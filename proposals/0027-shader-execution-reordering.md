@@ -186,10 +186,10 @@ If no hit is committed in the RayQuery,
 the HitObject returned is a NOP-HitObject. A shader table record can be assigned
 separately, which in turn allows invoking a shader.
 
-An overload takes custom attributes associated with
-COMMITTED_PROCEDURAL_PRIMITIVE_HIT. It is ok to always use the overload, even
-for COMMITTED_TRIANGLE_HIT. For anything other than a procedural hit, the
-specified attributes are ignored.
+An overload takes a user-defined hit kind and custom attributes associated with
+COMMITTED_PROCEDURAL_PRIMITIVE_HIT.
+It is ok to always use the overload, even for COMMITTED_TRIANGLE_HIT. For anything
+other than a procedural hit, the specified hit kind and attributes are ignored.
 
 ```C++
 static HitObject HitObject::FromRayQuery(
@@ -198,6 +198,7 @@ static HitObject HitObject::FromRayQuery(
 template<attr_t>
 static HitObject HitObject::FromRayQuery(
     RayQuery Query,
+    uint CommittedCustomHitKind,
     attr_t CommittedCustomAttribs);
 ```
 
@@ -205,6 +206,7 @@ Parameter                           | Definition
 ---------                           | ----------
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `RayQuery Query` | RayQuery from which the hit is created.
+`uint CommittedCustomHitKind` | See the `HitKind` parameter of `ReportHit` for definition.
 `attr_t CommittedCustomAttribs` | See the `Attributes` parameter of `ReportHit` for definition. If a closesthit shader is invoked from this `HitObject`, `attr_t` must match the attribute type of the closesthit shader.
 
 The size of `attr_t` must not exceed `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
@@ -1332,13 +1334,14 @@ Validation errors:
 #### HitObject_FromRayQueryWithAttrs
 
 ```DXIL
-declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery.AttrT(
+declare %dx.types.HitObject @dx.op.hitObject_FromRayQueryWithAttrs.AttrT(
     i32,                           ; opcode
     i32,                           ; ray query
+    i32,                           ; hit kind
     AttrT*)                        ; attributes
     nounwind argmemonly
 ```
-This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQuery` and the user-defined `Attribute` struct.
+This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQuery`, a user-defined hit kind, and `Attribute` struct.
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
 
 Validation errors:
@@ -1346,6 +1349,9 @@ Validation errors:
 - Validate that `ray query` is a valid ray query handle.
 - Validate the compatibility of type `AttrT`.
 - Validate that `attributes` is a valid pointer.
+
+Validation warnings:
+- Validate that `hit kind` is in the range of 0-127.
 
 #### HitObject_MakeMiss
 
@@ -1536,6 +1542,32 @@ Validation errors:
 - Validate that `opcode` is one of the supported opcodes in the table above.
 - Validate that `hit object` is not undef.
 - Validate that `index`, `row`, and `col` are constant and in a valid range.
+
+### Encoding of `reordercoherent`
+
+[Memory Coherence And Visibility](#memory-coherence-and-visibility) introduces the `reordercoherent` HLSL attribute for UAVs.
+This new resource attribute is encoded in DXIL in the following way:
+
+A new tag is added to the resource extended property tags:
+```cpp
+   static const unsigned kDxilAtomic64UseTag = 3;
++  static const unsigned kDxilReorderCoherentTag = 4;
+```
+The tag carries an `i1` value that indicates whether the resource is reordercoherent. The resource is not reordercoherent when the tag is absent.
+
+A flag is added to the Dxil Library Runtime Data (RDAT):
+```cpp
+   RDAT_ENUM_VALUE(Atomics64Use,             1 << 4)
++  RDAT_ENUM_VALUE(UAVReorderCoherent,       1 << 5)
+```
+
+A new field is added to `DxilResourceProperties`:
+```cpp
+   // BYTE 2
+-  uint8_t Reserved2;
++  uint8_t ReorderCoherent : 1;
++  uint8_t Reserved2 : 7;
+```
 
 ## Device Support
 

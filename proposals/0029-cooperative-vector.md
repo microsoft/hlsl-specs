@@ -231,12 +231,12 @@ For optimal layouts, **matrix stride** is ignored.
 
 Only non-packed interpretations are valid for matrices.
 
-The base address of **matrix resource** and **matrix offset** must be 128 byte
+The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
 row/column of the matrix is valid memory. 
 
-The **matrix stride** is 16 byte aligned.
+The **matrix stride** is 16-byte aligned.
 
 This operation doesn't perform bounds checking for matrix loads. If any part of
 the matrix load is out of bounds then the entire operation is undefined.
@@ -252,7 +252,7 @@ conversion is performed.
 Only non-packed interpretations are valid for bias vectors.
 
 The base address of **bias vector resource** and **bias vector offset** must be
-64 byte aligned.
+64-byte aligned.
 
 This operation doesn't perform bounds checking for bias loads. If any part of
 the vector load is out of bounds then the entire operation is undefined.
@@ -315,14 +315,14 @@ resource**, with **matrix offset**, **matrix stride**, **matrix
 interpretation** and **matrix layout** behaving as described [above]
 (#matrix-vector-multiply-and-multiply-add-operations).
 
-The base address of **matrix resource** and **matrix offset** must be 128 byte
+The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
 row/column of the matrix is valid memory. Implementations may write to the
 contents of the padding between the end of the matrix and the 16-byte boundary,
 so developers should not use this padding space for anything else.
 
-The **matrix stride** is 16 byte aligned.
+The **matrix stride** is 16-byte aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
@@ -398,8 +398,8 @@ enum class ComponentType : uint32_t {
   U32, // = 5
   I64,
   U64,
-  F16, // = 7
-  F32, // = 8
+  F16, // = 8
+  F32, // = 9
   F64,
   SNormF16,
   UNormF16,
@@ -407,14 +407,14 @@ enum class ComponentType : uint32_t {
   UNormF32,
   SNormF64,
   UNormF64,
-  PackedS8x32, // = 16
-  PackedU8x32, // = 17
+  PackedS8x32, // = 17
+  PackedU8x32, // = 18
 
   // BEGIN NEW FOR SM 6.9
-  U8,      // = 18
-  I8,      // = 19
-  F8_E4M3, // = 20  
-  F8_E5M2, // = 21
+  U8,      // = 19
+  I8,      // = 20
+  F8_E4M3, // = 21  
+  F8_E5M2, // = 22
   // END     
 
   LastEntry
@@ -652,14 +652,14 @@ typedef enum D3D12_LINEAR_ALGEBRA_DATATYPE {
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT16          =  3, // ComponentType::U16
   D3D12_LINEAR_ALGEBRA_DATATYPE_SINT32          =  4, // ComponentType::I32
   D3D12_LINEAR_ALGEBRA_DATATYPE_UINT32          =  5, // ComponentType::U32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  7, // ComponentType::F16
-  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  8, // ComponentType::F32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_INT8_T4_PACKED  = 16, // ComponentType::PackedS8x32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 17, // ComponentType::PackedU8x32
-  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 18, // ComponentType::U8
-  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 19, // ComponentType::I8
-  D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3            = 20, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
-  D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 21, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16         =  8, // ComponentType::F16
+  D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32         =  9, // ComponentType::F32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8_T4_PACKED = 17, // ComponentType::PackedS8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8_T4_PACKED = 18, // ComponentType::PackedU8x32
+  D3D12_LINEAR_ALGEBRA_DATATYPE_UINT8           = 19, // ComponentType::U8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_SINT8           = 20, // ComponentType::I8
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3            = 21, // ComponentType::F8_E4M3 (1 sign, 4 exp, 3 mantissa bits)
+  D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2            = 22, // ComponentType::F8_E5M2 (1 sign, 5 exp, 2 mantissa bits)
 };
 
 typedef enum D3D12_COOPERATIVE_VECTOR_TIER
@@ -699,8 +699,8 @@ typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
     InOut UINT                                         MatrixVectorMulAddPropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccProperties;
+    InOut UINT                                         OuterProductAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
     InOut UINT                                         VectorAccumulatePropCount;
     Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
 };
@@ -726,7 +726,7 @@ the operation fails and `E_INVALIDARG` is returned.
 #### Support Tiers
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_0**: Device supports *MatrixVectorMul*
-  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccPropCount` and
+  and *MatrixVectorMulAdd* intrinsics. `OuterProductAccumulatePropCount` and
   `VectorAccumulatePropCount` are 0 in this case.
 
 **D3D12_COOPERATIVE_VECTOR_TIER_1_1**: Device supports previous
@@ -783,7 +783,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
 
     // CheckFeatureSupport returns the number of input combinations for inference intrinsic
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
-                                     sizeof(D3D12_FEATURE_COOPERATIVE_VECTOR));
+                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
 
     // Use MatrixVectorMulAddPropCount returned from the above
 
@@ -793,7 +793,7 @@ if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
-    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_LINEAR_ALGEBRA_MATRIX_VECTOR, &CoopVecProperties, 
+    d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
     // Use MatrixVectorMulAdd shader with datatype and interpretation
@@ -834,7 +834,7 @@ updated with the calculated output size, is then passed to the conversion
 API. 
 
 The `DestSize` and `DestStride` must be a multiple of 16 bytes. The `DestVA`
-must be 128B aligned.
+must be 128-byte aligned.
 
 ```c++
 
@@ -935,6 +935,20 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
 * If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
 
+*CommandList interactions:*
+
+- Synchronization around `ConvertLinearAlgebraMatrix` calls:
+   - Legacy Barrier
+     - Source buffer: Must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE` state
+     - Dest buffer: Must be in `D3D12_RESOURCE_STATE_UNORDERED_ACCESS` state
+     - UAV barrier synchronizes writes to the destination
+   - Enhanced Barrier:
+     - Source buffer access: `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+     - Dest buffer access: `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+     - Sync point: `D3D12_BARRIER_SYNC_CONVERT_LINEAR_ALGEBRA_MATRIX`
+ - Predication is supported
+ - Available in Compute or Graphics CommandLists
+ - Not supported in Bundles
 
 *Usage Example:*
 
