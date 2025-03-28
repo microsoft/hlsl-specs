@@ -106,39 +106,39 @@ These are all described in more detail below, but the follow code example gives
 a flavor of how these work together:
 
 ```c++
-ByteAddressBuffer model;
+ByteAddressBuffer Model;
 
-vector<float, 3> ApplyNeuralMaterial(vector<half, 8> inputVector) {
+vector<float, 3> ApplyNeuralMaterial(vector<half, 8> InputVector) {
   using namespace dx::linalg;
 
-  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> matrix0 = {model,
+  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix0 = {Model,
                                                                          0, 0};
 
-  VectorRef<DATA_TYPE_FLOAT16> biasVector0 = {model, 1024};
+  VectorRef<DATA_TYPE_FLOAT16> BiasVector0 = {Model, 1024};
 
-  MatrixRef<DATA_TYPE_E4M3, 32, 32, MATRIX_LAYOUT_MUL_OPTIMAL> matrix1 = {
-      model, 2048, 0};
+  MatrixRef<DATA_TYPE_E4M3, 32, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix1 = {
+      Model, 2048, 0};
 
-  VectorRef<DATA_TYPE_FLOAT16> biasVector1 = {model, 3072};
+  VectorRef<DATA_TYPE_FLOAT16> BiasVector1 = {Model, 3072};
 
-  MatrixRef<DATA_TYPE_E4M3, 3, 32, MATRIX_LAYOUT_MUL_OPTIMAL> matrix2 = {
-      model, 4096, 0};
+  MatrixRef<DATA_TYPE_E4M3, 3, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix2 = {
+      Model, 4096, 0};
 
-  VectorRef<DATA_TYPE_FLOAT16> biasVector2 = {model, 5120};
+  VectorRef<DATA_TYPE_FLOAT16> BiasVector2 = {Model, 5120};
 
-  vector<half, 32> layer0 = MulAdd<half>(
-      matrix0, InterpretedVector<DATA_TYPE_E4M3>(inputVector), biasVector0);
-  layer0 = max(layer0, 0);
+  vector<half, 32> Layer0 = MulAdd<half>(
+      Matrix0, MakeInterpretedVector<DATA_TYPE_E4M3>(InputVector), BiasVector0);
+  Layer0 = max(Layer0, 0);
 
-  vector<half, 32> layer1 = MulAdd<half>(
-      matrix1, InterpretedVector<DATA_TYPE_E4M3>(layer0), biasVector1);
-  layer1 = max(layer1, 0);
+  vector<half, 32> Layer1 = MulAdd<half>(
+      Matrix1, MakeInterpretedVector<DATA_TYPE_E4M3>(Layer0), BiasVector1);
+  Layer1 = max(Layer1, 0);
 
-  vector<float, 3> output = MulAdd<float>(
-      matrix2, InterpretedVector<DATA_TYPE_E4M3>(layer1), biasVector2);
-  output = exp(output);
+  vector<float, 3> Output = MulAdd<float>(
+      Matrix2, MakeInterpretedVector<DATA_TYPE_E4M3>(Layer1), BiasVector2);
+  Output = exp(Output);
 
-  return output;
+  return Output;
 }
 ```
 
@@ -555,9 +555,9 @@ void Example(vector<half, 128> Input1, vector<half, 256> Input2) {
   using namespace dx::linalg;
 
   RWMatrixRef<DATA_TYPE_FLOAT16, 128, 256, MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL>
-      matrix = {RWBuf, 0, 0};
+      Matrix = {RWBuf, 0, 0};
 
-  OuterProductAccumulate(Input1, Input2, matrix);
+  OuterProductAccumulate(Input1, Input2, Matrix);
 }
 ```
 
