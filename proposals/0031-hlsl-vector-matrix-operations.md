@@ -207,11 +207,13 @@ captured in template parameters - while others can be determined at runtime, and
 are therefore members of the struct.
 
 Since the `ByteAddressBuffer` and `RWByteAddressBuffer` are not convertable to
-each other, use use different named types for the matrix references. A base
-class, `MatrixRefImpl` is used for the common code.
+each other, it is neccesary to use different named types for the matrix
+references. A base class, `MatrixRefImpl` is used for the common code.
 
-Other functions in the API are implemented in terms of `MatrixRefImpl`. This
-allows the compiler to generate more useful diagnostics if wrong types are used.
+Other functions in the API are implemented in terms of `MatrixRefImpl`. An
+option considered was to use a template parameter for the entire matrix type.
+However, this approach results in hard to understand error messages if a
+non-MatrixRef type is passed for that parameter.
 
 Example usage:
 
@@ -249,7 +251,7 @@ Members:
   - For `RWMatrixRef` this is a `RWByteAddresssBuffer`
 - `StartOffset` - the offset, in bytes, from the beginning of the buffer where
   the matrix is located.
-- `Stride` - the stride, in bytes, between rows/columns of the matrix. This
+- `Stride` - the stride, in bytes, between rows or columns of the matrix. This
   value is ignored if the matrix layout is `MATRIX_LAYOUT_MUL_OPTIMAL` or
   `MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
