@@ -18,9 +18,9 @@
 ## Introduction
 
 This proposes a set of HLSL APIs that enable the use of the hardware-accelerated
-vector/matrix operations described in [0029].
+vector/matrix operations described in [Proposal 0029].
 
-[0029]: 0029-cooperative-vector.md
+[Proposal 0029]: 0029-cooperative-vector.md
 
 ## Motivation
 
@@ -28,10 +28,10 @@ Modern GPUs have dedicated silicon to accelerate matrix operations, but HLSL
 doesn't provide a mechanism to easily utilize these units. Evaluation of
 matrix-vector operations (multiply, muladd, accumulation) in HLSL was previously
 scalarized at the DXIL level making it hard to employ these specialized units.
-This proposal builds on the "Long vectors" feature described in [0026],
+This proposal builds on the "Long vectors" feature described in [Proposal 0026],
 providing a mechanism to express matrix-vector ops in HLSL that can be lowered
-to the DXIL ops described [0029], these primitives provide the right level of
-abstraction for hardware acceleration.
+to the DXIL ops described [Proposal 0029], these primitives provide the right
+level of abstraction for hardware acceleration.
 
 An HLSL API needs to be defined to expose these new operations in a way that:
 
@@ -39,7 +39,7 @@ An HLSL API needs to be defined to expose these new operations in a way that:
 - is expected to work well with future HLSL APIs in the same problem space
 - can be implemented reasonably in DXC and cleanly in clang
 
-[0026]: 0026-hlsl-long-vector-type.md
+[Proposal 0026]: 0026-hlsl-long-vector-type.md
 
 ## Proposed solution
 
@@ -51,11 +51,11 @@ possible options, including:
 - The compiler force-includes the header file
 - The compiler force-includes a precompiled version of the header file
 
-The header-implementation accesses the DXIL operations described in [0029] by
-calling low-level builtins. These builtins should be considered implementation
-details and users should not call them directly. However, since they are a part
-of the implementation plan for the first implementation of this API they are
-described [below](#builtins).
+The header-implementation accesses the DXIL operations described in [Proposal
+0029] by calling low-level builtins. These builtins should be considered
+implementation details and users should not call them directly. However, since
+they are a part of the implementation plan for the first implementation of this
+API they are described [below](#builtins).
 
 Since this API is currently only supported by DirectX, all the new types /
 methods described in it are placed in the `dx` namespace. Within this namespace,
@@ -187,7 +187,7 @@ enum DataType {
 } // namespace dx
 ```
 
-See the Type Interpretations section of [0029] for more information.
+See the Type Interpretations section of [Proposal 0029] for more information.
 
 ### enum MatrixLayout
 
@@ -209,7 +209,7 @@ enum MatrixLayout {
 } // namespace dx
 ```
 
-See the Matrix Layouts section of [0029] for more information.
+See the Matrix Layouts section of [Proposal 0029] for more information.
 
 ### struct MatrixRef / RWMatrixRef
 
@@ -438,10 +438,10 @@ vector<TYo, M_M> Mul(MatrixRefImpl<...> Matrix, Vector<...> InputVector);
 } // namespace dx
 ```
 
-See [0029] for details of this operation.
+See [Proposal 0029] for details of this operation.
 
 > TODO: details of what this function does really belong in here as well, but
-> for now the source-of-truth is [0029].
+> for now the source-of-truth is [Proposal 0029].
 
 Implementation:
 
@@ -505,10 +505,10 @@ template<typename TYo>
 vector<TYo, M_M> Mul(MatrixRefImpl<...> Matrix, Vector<...> InputVector, VectorRefImpl<...> BiasVector);
 ```
 
-See [0029] for details of this operation.
+See [Proposal 0029] for details of this operation.
 
 > TODO: details of what this function does really belong in here as well, but
-> for now the source-of-truth is [0029].
+> for now the source-of-truth is [Proposal 0029].
 
 Implementation:
 
