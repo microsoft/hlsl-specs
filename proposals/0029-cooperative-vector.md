@@ -311,9 +311,9 @@ The two input vectors are specified via **input vector 1** and **input vector
 2**.
 
 The matrix is accumulated to the writeable raw-buffer specified by **matrix
-resource**, with **matrix offset**, **matrix stride**, **matrix
-interpretation** and **matrix layout** behaving as described [above]
-(#matrix-vector-multiply-and-multiply-add-operations).
+resource**, with **matrix offset**, **matrix stride**, **matrix interpretation**
+and **matrix layout** behaving as described
+[above](#matrix-vector-multiply-and-multiply-add-operations).
 
 The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
@@ -572,9 +572,9 @@ optimal layout. Row-Major and Column-Major layouts are also supported.
 ### Matrix Transpose
 
 The **matrix transpose** parameter indicates if the matrix is transposed before
-performing the multiply. In linear algebra, the[transpose]
-(https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator which
-flips a matrix over its diagonal; that is, it switches the row and column
+performing the multiply. In linear algebra, the
+[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator
+which flips a matrix over its diagonal; that is, it switches the row and column
 indices of the matrix. 
 
 Transposing is not supported for the RowMajor/ColumnMajor layouts. 
