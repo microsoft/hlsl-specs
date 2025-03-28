@@ -324,6 +324,8 @@ Template parameter:
 Members:
 
 - `Buffer` - the buffer that the vector is stored in
+  - For `VectorRef` this is a `ByteAddressBuffer`
+  - For `RWVectorRef` this is a `RWByteAddresssBuffer`
 - `StartOffset` - the offset, in bytes, from the beginning of the buffer to
   where the vector is located.
 
