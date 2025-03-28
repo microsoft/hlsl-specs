@@ -105,7 +105,7 @@ E.g.:
 ```hlsl
 struct RecursiveType;
 
-typedef LinkedList RawConstantBuffer<RecursiveType>;
+typedef LinkedList ConstantBuffer<RecursiveType>;
 
 struct RecursiveType {
     uint Data;
@@ -132,47 +132,64 @@ because the mapped resources would not map to heap indices.
 
 ### Resource Entries
 
-A new function is provided to quickly access multiple consecutive resources
+A new object is provided to quickly access multiple _consecutive_ resources
 in the resource heap by using composite types:
 
 ```hlsl
 template <typename T>
-T ResourceEntry(uint offset);
+class ResourceEntry<T>;
 ```
 
-* `T` must be or only include resource types.
-* `offset` is the base offset into the resource heap that resources should
-  be read from.
+This is treated in the same manner as resource types are in the prior
+section, in that they are handled as a single underlying 32-bit offset into
+the heap, and can be read and written as such.
 
-If `T` is a single resource type, it is retrieved from the resource heap at
-`offset`.
-If `T` is an array or struct, the first element or member will be retrieved
-from the resource heap at `offset`, and each subsequent element or member
-will be accessed at an offset equal to the sum of `offset` and the offset of
-all elements/members defined before it.
+However, unlike single resource types, `T` may be a composite object of
+_multiple_ resource types, with the first struct member or array element
+read from the underlying offset, and and each subsequent element or member
+will be accessed at an offset equal to the sum of the base offset and the
+relative offset of all elements/members defined before it.
+This works with nested types just as well, in the case of a struct being
+nested inside another struct or array, for example.
+
+The `ResourceEntry` itself can be read and written, though its contents are
+read-only, as the offsets are fixed from the base.
+The contents may be written freely to other locations however.
 
 For example:
 
 ```hlsl
-struct SomeResources {
-	Texture2D	                    texture;
-	RWStructuredBuffer<Texture2D>   bufferOfTextures;
+struct Resources {
+    Texture2D texture;
+    Texture2D anotherTexture;
 };
 
-SomeResources someResources = ResourceEntry(16);
+RWStructuredBuffer<ResourceEntry<Resources> >   resourceBuffer;
+
+void main(...) {
+    // Read a single index from the resource buffer;
+    ResourceEntry<Resources> resources0 = resourceBuffer[0];
+    
+    // Can be accessed as a const version of its target type
+    Resources someResources = resources0;
+    
+    // Can be stored as its own type
+    resourceBuffer[1] = resources0;
+        
+    // Can access sub-parts of the ResourceEntry's structs as independent resources
+    someResources.texture = resourceBuffer[1].anotherTexture;
+    
+    // **Cannot** store a variable of type T into a ResourceEntry with type T
+    /* resourceBuffer[2] = someResources; */
+    
+    // **Cannot** write members/elements of a ResourceEntry; contents are read-only as offsets are fixed
+    /* resourceBuffer[1].texture = resourceBuffer[1].anotherTexture; */
+}
 ```
 
-This would be equivalent to:
-
-```hlsl
-SomeResources someResources;
-someResources.texture = ResourceDescriptorHeap[16];
-someResources.buffer = ResourceDescriptorHeap[17];
-```
-
-`offset` is the same index that would be provided to
-`ResourceDescriptorHeap`, and each subsequent resource in `T` simply
-increments the offset by 1.
+For the current DirectX12 interface where `ResourceDescriptorHeap` is a
+homogenous array, the offset of every element/member of a ResourceEntry's
+type can be treated as 1.
 
 In future, if non-homogenous descriptor sizes are advertised, as with
 [VK_EXT_descriptor_buffer](https://docs.vulkan.org/features/latest/features/proposals/VK_EXT_descriptor_buffer.html),
@@ -180,19 +197,87 @@ In future, if non-homogenous descriptor sizes are advertised, as with
 much more tightly.
 
 
-#### Open Issue: Should this replace the ResourceDescriptorHeap built-in?
+#### Open Issue: Should there be a way to construct resource entries from integers?
+
+The proposed access method is that if you're passing in a resource index
+from outside the shader, then that should be declared as such in the shader;
+dynamic indices can be handled by specifying the base index as having an
+array type.
+For example:
+
+```hlsl
+ConstantBuffer<ResourceEntry<Texture2D[] > > textures;
+
+void main(...)
+{
+    ...
+    uint dynamicIndex = ...;
+    Texture2D myDynamicTexture = textures[dynamicIndex];
+}
+```
+
+A constructor function could be added roughly as:
+
+```hlsl
+ResourceEntry<T>(uint offset);
+```
+
+which would allow the construction of ResourceEntry objects from any
+arbitrary integer the shader generates.
+
+This would not drastically change the implementation complexity or expected
+usage patterns, so it'd be "ok" to have something like this from that
+perspective.
+
+However, it allows shader authors to pass around integers until the very last
+second, making debugging and interrogation of the shader code much more
+difficult.
+If this is deemed necessary to add, it should be done in a way that is
+clearly marked as unsafe.
+
+
+#### Open Issue: Could we avoid retyping all the resource handles by making use of ResourceEntry<T> instead?
+
+The first part of this proposal suggested throwing away the existing (very
+confusing) type handling of resource objects, and replacing it with
+consistent handling of these types as 32-bit heap offsets.
+
+This proposal still could work even if that overhaul does not occur, if
+`ResourceEntry<T>`, where `T` is a single resource type, still works as
+specified above.
+
+The disadvantage of this is primarily semantic overhead, as nested resource
+types would now need to be declared differently, with the extra
+`ResourceEntry<T>` annotation between each nesting level. For example:
+
+```hlsl
+struct Resources {
+    ResourceEntry<Texture2D> texture;
+    ResourceEntry<Texture2D> anotherTexture;
+};
+
+RWStructuredBuffer<ResourceEntry<Resources> >   resourceBuffer;
+```
+
+There may also be a cognitive burden with developers expected to understand
+two independent type systems, which will almost inevitably lead to errors.
+
+
+#### Open Issue: Should this deprecate the ResourceDescriptorHeap built-in?
 
 If non-homogenous resource sizes are exposed to shaders,
 `ResourceDescriptorHeap` poses a problem as it assumes uniform resource
 sizes.
-`ResourceEntry()` uses strong typing, so could seamlessly switch to byte
+`ResourceEntry<T>` uses strong typing, so could seamlessly switch to byte
 offsets on the user's behalf.
 Supporting both models in the same shader is likely to be very messy.
 
-As `ResourceEntry()` enables a superset of same functionality (the templated
-type can just be a single resource type), and to avoid future
-incompatibility, `ResourceDescriptorHeap` should be deprecated by this
-proposal.
+This also has similar problems with exposing a constructor for
+ResourceEntry<T> types from an integer, in that there is no indication
+of the meaning of the type until it is used.
+
+For these reasons, the use of `ResourceDescriptorHeap` should be deprecated
+as part of this proposal.
 
 
 ### Bindless Constants
@@ -240,15 +325,10 @@ struct DescriptorTableData {
 };
 
 struct RootData {
-	uint descriptorTableOffset;
+	ResourceEntry<DescriptorTableData> descriptorTable;
     uint4 constants;
     RawConstantBuffer<...> buffer;
 };
-
-void main(RootData root : SV_Constants)
-{
-    DescriptorTableData descriptorTable = ResourceEntry(root.descriptorTableOffset);
-}
 ```
 
 In DirectX, this could be specified in the root signature as:
@@ -259,30 +339,6 @@ In DirectX, this could be specified in the root signature as:
 
 In Vulkan this would map to push constants, where `buffer` maps to a
 `VkDeviceAddress` value from a buffer.
-
-
-#### Open Issue: Allow resource entries to be constructed in-place?
-
-The above example shows the specification of a descriptor table from an index
-in `SV_Constants`.
-The manual step of construction is somewhat awkward, and it might make sense
-to have a way to define those directly in storage.
-Just specifying a structure would not be enough, as it would be treated as a
-structure of multiple offsets, rather than a single offset to a contiguous
-set of resources.
-
-Something like the following might be desirable:
-
-```hlsl
-struct RootData {
-	DescriptorTable<DescriptorTableData> descriptorTable;
-    uint4 constants;
-    RawConstantBuffer<...> buffer;
-};
-```
-
-This would also allow applications to load/store descriptor table handles
-directly in the same way as individual resource types.
 
 
 #### Open Issue: Allow explicit offsets?
