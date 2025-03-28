@@ -433,6 +433,37 @@ NOTE: This usage outside of root constants may require driver changes in
 DirectX. Vulkan works out of the box with device addresses.
 
 
+#### Open Issue: Should VA types with indeterminate size have a user-defined size?
+
+Yes, no, and also maybe.
+
+For code that has to go fast (which is usually every part of a shader), not
+having bounds checks can be a performance win, so it's plausible that it
+should be disabled for actual deployment.
+
+For debugging, having a size is actually quite useful - because it lets the
+debugger alert users to any OOB conditions that arise, which may cause errors
+in the applications.
+
+Having a size defined seems useful, but it might be beneficial to be able to
+switch actual bounds checking on or off based on a build switch.
+This shouldn't be something that necessarily has to be done when compiling
+from HLSL, so needs some thought.
+Having it fully dynamic likely wouldn't save much however, so it may be
+desirable to ultimately have it under API control.
+
+
+#### Open Issue: Should VA sizes be specified statically?
+
+It's likely that at least some applications would want to provide the size
+dynamically as an argument to the shader, so supplying this should absolutely
+be possible.
+However, this doesn't lend itself to being part of a static declaration in
+constants or other memory.
+The proposed slice API below would be one way to solve this, but if there's a
+more reasonable way to set the initial size that would be useful.
+
+
 #### Open Issue: Why are VA buffer types separate from their counterparts?
 
 Standard buffer types by this proposal are resources which live in the heap,
