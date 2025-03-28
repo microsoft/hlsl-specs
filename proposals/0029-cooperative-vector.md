@@ -777,7 +777,7 @@ D3D12_FEATURE_DATA_D3D12_OPTIONSNN TierSupport = {};
 d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport, 
                                  sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
 
-if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
+if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
     D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
