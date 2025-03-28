@@ -301,7 +301,7 @@ Computes the outer product between column vectors and an **M**x**N** matrix is
 accumulated component-wise atomically (with device scope) in memory. 
 
 ``` 
-ResultMatrix = InputVector1 * Transpose(InputVector2); 
+ResultMatrix += InputVector1 * Transpose(InputVector2); 
 ```
 
 
