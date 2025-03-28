@@ -158,11 +158,14 @@ TBD
 
 ### enum DataType
 
-This enum defines the various data types that can be applied to matrices and
-vectors. The numeric values of these enum entries are picked to match those used
-in the underlying DXIL.
+The `dx::linalg::DataType` enum defines the various data types that can be
+applied to matrices and vectors. The numeric values of these enum entries are
+picked to match those used in the underlying DXIL.
 
 ```c++
+namespace dx {
+namespace linalg {
+
 enum DataType {
   DATA_TYPE_SINT16 = 2,           // ComponentType::I16
   DATA_TYPE_UINT16 = 3,           // ComponentType::U16
@@ -179,41 +182,52 @@ enum DataType {
   DATA_TYPE_E5M2 = 22,            // ComponentType::F8_E5M2
                                   // (1 sign, 5 exp, 2 mantissa bits)
 };
+
+} // namespace linalg
+} // namespace dx
 ```
 
 See the Type Interpretations section of [0029] for more information.
 
 ### enum MatrixLayout
 
-This enum defines the different possible layouts of a matrix in memory.
+The `dx::linalg::MatrixLayout` enum defines the different possible layouts of a
+matrix in memory.
 
 ```c++
+namespace dx {
+namespace linalg {
+
 enum MatrixLayout {
   MATRIX_LAYOUT_ROW_MAJOR = 0,
   MATRIX_LAYOUT_COLUMN_MAJOR = 1,
   MATRIX_LAYOUT_MUL_OPTIMAL = 2,
   MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL = 3
 };
+
+} // namespace linalg
+} // namespace dx
 ```
 
 See the Matrix Layouts section of [0029] for more information.
 
 ### struct MatrixRef / RWMatrixRef
 
-`MatrixRef` and `RWMatrixRef` specify a reference to a matrix in memory,
-including information about the dimensions, layout and numerical format of the
-matrix. Some of this information must be known at compile time - these are
-captured in template parameters - while others can be determined at runtime, and
-are therefore members of the struct.
+`dx::linalg::MatrixRef` and `dx::linalg::RWMatrixRef` specify a reference to a
+matrix in memory, including information about the dimensions, layout and
+numerical format of the matrix. Some of this information must be known at
+compile time - these are captured in template parameters - while others can be
+determined at runtime, and are therefore members of the struct.
 
 Since the `ByteAddressBuffer` and `RWByteAddressBuffer` are not convertable to
 each other, it is neccesary to use different named types for the matrix
-references. A base class, `MatrixRefImpl` is used for the common code.
+references. A base class, `dx::linalg::MatrixRefImpl` is used for the common
+code.
 
-Other functions in the API are implemented in terms of `MatrixRefImpl`. An
-option considered was to use a template parameter for the entire matrix type.
-However, this approach results in hard to understand error messages if a
-non-MatrixRef type is passed for that parameter.
+Other functions in the API are implemented in terms of
+`dx::linalg::MatrixRefImpl`. An option considered was to use a template
+parameter for the entire matrix type. However, this approach results in hard to
+understand error messages if a non-MatrixRef type is passed for that parameter.
 
 Example usage:
 
@@ -281,12 +295,12 @@ using RWMatrixRef = MatrixRefImpl<RWByteAddressBuffer, DT, M, K, ML, Transpose>;
 
 ### struct VectorRef
 
-`VectorRef` and `RWVectorRef` specify a reference to a vector in memory along
-with the format of each element.
+`dx::linalg::VectorRef` and `dx::linalg::RWVectorRef` specify a reference to a
+vector in memory along with the format of each element.
 
-As with `MatrixRef`, two versions are provided - one for vectors stored in
-`ByteAddressBuffer` and another for `RWByteAddressBuffer`. A base class,
-`VectorRefImpl`, covers both of them.
+As with `dx::linalg::MatrixRef`, two versions are provided - one for vectors
+stored in `ByteAddressBuffer` and another for `RWByteAddressBuffer`. A base
+class, `dx::linalg::VectorRefImpl`, covers both of them.
 
 Example usage:
 
@@ -339,10 +353,11 @@ using RWVectorRef = VectorRefImpl<RWByteAddressBuffer, DT>;
 > NOTE: it's possible that one resolution of [441] may remove the need for this
 > type entirely.
 
-The `Vector` struct is a wrapper around `vector`, adding an interpretation value
-that controls how the data in the vector should be interpreted. Although the
-struct can be used directly, it is likely more ergonomic to use the
-`InterpretedVector` function that's also described here.
+The `dx::linalg::Vector` struct is a wrapper around `vector`, adding an
+interpretation value that controls how the data in the vector should be
+interpreted. Although the struct can be used directly, it is likely more
+ergonomic to use the `dx::linalg::InterpretedVector` function that's also
+described here.
 
 Example usage:
 
@@ -388,8 +403,8 @@ Vector<T, N, DT> InterpretedVector(vector<T, N> Vec) {
 
 ### Function: Mul
 
-The `Mul` function performs a matrix-vector multiplication. The matrix is stored
-in memory, while the vector comes from a variable.
+The `dx::linalg::Mul` function performs a matrix-vector multiplication. The
+matrix is stored in memory, while the vector comes from a variable.
 
 > TODO: add an example for packed types, and make sure they work correctly
 
@@ -523,12 +538,13 @@ MulAdd(MatrixRefImpl<MatrixBufferTy, MatrixDT, MatrixM, MatrixK, MatrixLayout,
 
 ## Function: OuterProductAccumulate
 
-Computes the outer product between column vectors and an **M**x**N** matrix is
-accumulated component-wise atomically (with device scope) in memory.
+`dx::linalg::OuterProductAccumulate` computes the outer product between column
+vectors and an **M**x**N** matrix is accumulated component-wise atomically (with
+device scope) in memory.
 
 The operation is equivalent to:
 
-> ResultMatrix = InputVector1 \* Transpose(InputVector2);
+> ResultMatrix += InputVector1 \* Transpose(InputVector2);
 
 Example:
 
@@ -566,7 +582,7 @@ Parameters:
 - `InputVector2` - the second vector, containing N elements. Element type must
   be the same as InputVector1's.
 - `Matrix` - the destination matrix. The matrix dimensions must be MxN. The
-  `TRANSPOSE` parameter for the matrix must be `false`.
+  `Transpose` parameter for the matrix must be `false`.
 
 Implementation:
 
@@ -590,8 +606,9 @@ void OuterProductAccumulate(
 
 ## Function: VectorAccumulate
 
-Accumulates the components of a vector component-wise atomically (with device
-scope) to the corresponding elements of an array in memory.
+`dx::linalg::VectorAccumulate` accumulates the components of a vector
+component-wise atomically (with device scope) to the corresponding elements of
+an array in memory.
 
 Example:
 
