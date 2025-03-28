@@ -304,7 +304,7 @@ root parameter index order.
 Root constants appear exactly as the data set by the application, descriptor
 table entries become a 32-bit integer index into the resource heap, and
 root descriptors are the 64-bit data passed in by the application, which can
-be interpreted as a Raw Buffer to be used in the shader.
+be interpreted as a VA Buffer to be used in the shader.
 
 For Vulkan `SV_Constants` maps directly to push constants.
 
@@ -327,7 +327,7 @@ struct DescriptorTableData {
 struct RootData {
 	ResourceEntry<DescriptorTableData> descriptorTable;
     uint4 constants;
-    RawConstantBuffer<...> buffer;
+    VAConstantBuffer<...> buffer;
 };
 ```
 
@@ -371,7 +371,7 @@ Potentially this could be applicable to POD in regular structs as well, to
 enable more control over struct padding.
 
 
-### Raw Buffer types
+### VA Buffer types
 
 In the above example, a root descriptor (in that case a CBV) is passed in.
 When using a root descriptor in DirectX, these are mapped to buffers when
@@ -382,20 +382,20 @@ assumption of a 32-bit index into the heap, not a 64-bit root descriptor VA.
 New resource types are provided that can be declared to access a root
 descriptor VA:
 
- * `RawConstantBuffer<typename T>`
- * `RawStructuredBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
- * `RawRWStructuredBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
- * `RawByteAddressBuffer<uint64_t Size = UINT64_MAX>`
- * `RawRWByteAddressBuffer<uint64_t Size = UINT64_MAX>`
- * `RawRasterizerOrderedBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
- * `RawRasterizerOrderedByteAddressBuffer<uint64_t Size = UINT64_MAX>`
- * `RawRaytracingAccelerationStructure`
+ * `VAConstantBuffer<typename T>`
+ * `VAStructuredBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
+ * `VARWStructuredBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
+ * `VAByteAddressBuffer<uint64_t Size = UINT64_MAX>`
+ * `VARWByteAddressBuffer<uint64_t Size = UINT64_MAX>`
+ * `VARasterizerOrderedBuffer<typename T = float4, uint64_t Size = UINT64_MAX>`
+ * `VARasterizerOrderedByteAddressBuffer<uint64_t Size = UINT64_MAX>`
+ * `VARaytracingAccelerationStructure`
 
-These can be used in exactly the same way as their non-raw counterparts,
+These can be used in exactly the same way as their non-VA counterparts,
 except that when declared in memory they correspond to a 64-bit GPU VA,
 rather than a 32-bit heap index.
 
-Raw structured and byte address buffers have an extra optional `Size`
+VA structured and byte address buffers have an extra optional `Size`
 parameter to indicate the size of the buffer.
 If this value is provided, accesses will be bounds checked against it,
 providing zero values if the index is exceeded, and discarding writes.
@@ -414,13 +414,13 @@ struct Data {
 };
 
 struct MoreBuffers {
-    RawConstantBuffer<...> a;
-    RawConstantBuffer<...> b;
-    RawConstantBuffer<...> c;
+    VAConstantBuffer<...> a;
+    VAConstantBuffer<...> b;
+    VAConstantBuffer<...> c;
 };
 
 struct RootData {
-    RawConstantBuffer<MoreBuffers> buffer;
+    VAConstantBuffer<MoreBuffers> buffer;
 };
 
 void main(RootData root : SV_Constants)
@@ -433,25 +433,45 @@ NOTE: This usage outside of root constants may require driver changes in
 DirectX. Vulkan works out of the box with device addresses.
 
 
-#### Open Issue: Why are raw buffer types separate from their counterparts?
+#### Open Issue: Why are VA buffer types separate from their counterparts?
 
 Standard buffer types by this proposal are resources which live in the heap,
 and are thus represented as a 32-bit index when read or written to memory.
-Raw buffer types however, do not need to live in the heap, and are
+VA buffer types however, do not need to live in the heap, and are
 represented as 64-bit pointers when accessed in external memory.
 The only way to enable them to be the same type would impose heavy and
 awkward restrictions on when and how they could be accessed in external
 memory.
 Having separate types feels like a cleaner compromise.
 
-A future direction might be to deprecate non-raw buffers, but this proposal
+A future direction might be to deprecate non-VA buffers, but this proposal
 aims to remain compatible with the existing DirectX API and, to a degree,
 with existing shaders.
 
 
-#### Open Issue: Raw resource construction
+#### Open Issue: Slices
 
-It would be useful to enable raw resources to be constructed from existing
+It would be useful to enable developers to get slices of an existing VA
+resource for at least arrayed resources, such that subsets of the original
+resource can be more tightly bounds checked at least during debugging.
+
+That could look like the following additional members for arrayed resource
+types:
+
+```hlsl
+T GetSlice(uint offset);
+T GetSlice(uint offset, uint size);
+```
+
+The sum of `offset` and `size` must be less than or equal to the original
+buffer's size.
+The returned VA buffer would be identical to the original VA buffer resource,
+except that it would be a smaller range of data.
+
+
+#### Open Issue: VA resource construction
+
+It would be useful to enable VA resources to be constructed from existing
 heap resources of a matching type, possibly with an offset and reduced size
 for non-constant buffer types.
 This is not currently possible in any API, but if we could make it work it
@@ -459,30 +479,25 @@ would be one way to solve the "slice" problem, particularly if we enforce
 that slices must be subsets of the original buffer.
 
 That might look, for example, something like a new member functions for
-buffers:
+non-VA buffer types:
 
 ```hlsl
-GetRaw();
-GetRawSlice(uint offset);
-GetRawSlice(uint offset, uint size);
+T GetVAResource();
 ```
 
-The sum of `offset` and `size` must be less than or equal to the original
-buffer's size.
-The returned raw buffer would be identical to the original buffer resource,
+The returned VA buffer would be identical to the original buffer resource,
 except that it would now behave as a 64-bit pointer when accessed (including
-OOB semantics), would be a potentially smaller range of data, and would no
-longer be associated with the heap.
+OOB semantics), and would no longer be associated with the heap.
 
 
 #### Open Issue: Pointer math
 
 Currently there's no way to directly adjust the value of a pointer in a
-shader legally, as aliasing is disallowed, and casting/construction of raw
+shader legally, as aliasing is disallowed, and casting/construction of VA
 resources is not supported.
 
 It's unlikely we want this to change, but it might be useful considering that
-an API to get subsets of raw buffers would solve this "safely".
+an API to get subsets of VA buffers would solve this "safely".
 The previous issue suggests one such option.
 
 
