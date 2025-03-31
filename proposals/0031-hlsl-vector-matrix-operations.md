@@ -201,8 +201,8 @@ void __builtin_OuterProductAccumulate(vector<TY, M> InputVector1,
                                       vector<TY, N> InputVector2,
                                       RES MatrixResource,
                                       uint MatrixStartOffset,
-                                      DataType MatrixInterpretation,
-                                      MatrixLayout Layout, uint MatrixStride);
+                                      uint MatrixInterpretation,
+                                      uint Layout, uint MatrixStride);
 
 // dx.op.vectoraccumulate
 template <typename TY, int NUM, typename RES>
