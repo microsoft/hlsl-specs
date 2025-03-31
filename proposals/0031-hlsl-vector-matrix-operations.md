@@ -179,7 +179,7 @@ void __builtin_MatVecMul(out vector<TYo, NUMo> OutputVector,
                          bool IsInputUnsigned, uint InputVectorInterpretation,
                          RES MatrixResource, uint MatrixStartOffset,
                          uint MatrixInterpretation, uint M, uint K,
-                         uint MatrixLayout, bool MatrixTranspose,
+                         uint MatrixLayout, bool IsMatrixTransposed,
                          uint MatrixStride);
 
 // dx.op.matvecmuladd
@@ -191,7 +191,7 @@ void __builtin_MatVecMulAdd(out vector<TYo, NUMo> OutputVector,
                             uint InputVectorInterpretation, RESm MatrixResource,
                             uint MatrixStartOffset, uint MatrixInterpretation,
                             uint M, uint K, uint MatrixLayout,
-                            bool MatrixTranspose, uint MatrixStride,
+                            bool IsMatrixTransposed, uint MatrixStride,
                             RESv BiasVectorResource, uint BiasVectorOffset,
                             uint BiasVectorInterpretation);
 
