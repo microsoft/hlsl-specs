@@ -108,34 +108,39 @@ a flavor of how these work together:
 ```c++
 ByteAddressBuffer Model;
 
+ByteAddressBuffer Model;
+
 vector<float, 3> ApplyNeuralMaterial(vector<half, 8> InputVector) {
   using namespace dx::linalg;
 
-  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix0 = {Model,
-                                                                         0, 0};
+  MatrixRef<DATA_TYPE_FLOAT8_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix0 = {
+      Model, 0, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> BiasVector0 = {Model, 1024};
 
-  MatrixRef<DATA_TYPE_E4M3, 32, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix1 = {
-      Model, 2048, 0};
+  MatrixRef<DATA_TYPE_FLOAT8_E4M3, 32, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix1 =
+      {Model, 2048, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> BiasVector1 = {Model, 3072};
 
-  MatrixRef<DATA_TYPE_E4M3, 3, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix2 = {
+  MatrixRef<DATA_TYPE_FLOAT8_E4M3, 3, 32, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix2 = {
       Model, 4096, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> BiasVector2 = {Model, 5120};
 
   vector<half, 32> Layer0 = MulAdd<half>(
-      Matrix0, MakeInterpretedVector<DATA_TYPE_E4M3>(InputVector), BiasVector0);
+      Matrix0, MakeInterpretedVector<DATA_TYPE_FLOAT8_E4M3>(InputVector),
+      BiasVector0);
   Layer0 = max(Layer0, 0);
 
   vector<half, 32> Layer1 = MulAdd<half>(
-      Matrix1, MakeInterpretedVector<DATA_TYPE_E4M3>(Layer0), BiasVector1);
+      Matrix1, MakeInterpretedVector<DATA_TYPE_FLOAT8_E4M3>(Layer0),
+      BiasVector1);
   Layer1 = max(Layer1, 0);
 
   vector<float, 3> Output = MulAdd<float>(
-      Matrix2, MakeInterpretedVector<DATA_TYPE_E4M3>(Layer1), BiasVector2);
+      Matrix2, MakeInterpretedVector<DATA_TYPE_FLOAT8_E4M3>(Layer1),
+      BiasVector2);
   Output = exp(Output);
 
   return Output;
@@ -177,9 +182,9 @@ enum DataType {
   DATA_TYPE_UINT8_T4_PACKED = 18, // ComponentType::PackedU8x32
   DATA_TYPE_UINT8 = 19,           // ComponentType::U8
   DATA_TYPE_SINT8 = 20,           // ComponentType::I8
-  DATA_TYPE_E4M3 = 21,            // ComponentType::F8_E4M3
+  DATA_TYPE_FLOAT8_E4M3 = 21,     // ComponentType::F8_E4M3
                                   // (1 sign, 4 exp, 3 mantissa bits)
-  DATA_TYPE_E5M2 = 22,            // ComponentType::F8_E5M2
+  DATA_TYPE_FLOAT8_E5M2 = 22,     // ComponentType::F8_E5M2
                                   // (1 sign, 5 exp, 2 mantissa bits)
 };
 
