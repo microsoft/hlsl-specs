@@ -323,6 +323,8 @@ See [Opacity Micromaps][dxr-omm] in the Raytracing spec for details.
   it through to appropriate DXIL operation arguments.
 - Test optional template argument to RayQuery generates appropriate DXIL
   opreation and that the optional flag makes it through to the argument list.
+- Test that the new flag value, `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`,
+  appears in the `RaytracingPipelineConfig1` subobject's `Flags` field.
 
 ### Diagnostics
 
@@ -379,7 +381,6 @@ reachable in the current compilation.
 ## Acknowledgments (Optional)
 
 * Amar Patel
-* Tex Riddell
 * Josh Batista
 
 <!-- External References -->
