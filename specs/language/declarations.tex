@@ -96,10 +96,14 @@ sequence} is constructed by a depth-first traversal over each
 assignment-expression in an initializer-list and performing a depth-first
 traversal accessing each subobject of the assignment-expression.
 
-\p An initializer-list is a valid initializer if for each element \(E_n\) in the
-target object's flattened ordering there is a corresponding initializer \(I_n\)
-in the flattened initializer sequence which can be implicitly converted to the
-element's type.
+\p If the target object is an array of unknown size, the object is assumed to
+have \(m\) possible elements during parsing, where \(m>0\).
+
+\p An initializer-list is a valid initializer if for each element \(E_n\mod{}m\)
+in the target object's flattened ordering there is a corresponding initializer
+\(I_n\) in the flattened initializer sequence which can be implicitly converted
+to the element's type. For arrays of unknown size the total number of
+initializers must be a multiple of the array's base element type.
 
 \p An initializer-list is invalid if the flattened initializer sequence contains
 more or fewer elements than the target object's flattened ordering, or if any
