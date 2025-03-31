@@ -173,11 +173,11 @@ namespace linalg {
 namespace details {
 
 // dx.op.matvecmul
-template <typename TYo, int NUMo, typename TYi, int NUMi, typename RES>
+template <typename TYo, int NUMo, typename TYi, int NUMi, typename RESm>
 void __builtin_MatVecMul(out vector<TYo, NUMo> OutputVector,
                          bool IsOutputUnsigned, vector<TYi, NUMi> InputVector,
                          bool IsInputUnsigned, uint InputVectorInterpretation,
-                         RES MatrixResource, uint MatrixStartOffset,
+                         RESm MatrixResource, uint MatrixStartOffset,
                          uint MatrixInterpretation, uint M, uint K,
                          uint MatrixLayout, bool IsMatrixTransposed,
                          uint MatrixStride);
