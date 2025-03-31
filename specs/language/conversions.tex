@@ -218,14 +218,14 @@ row matrix, a vector of type \texttt{vector<T,x>}, or a scalar of type
 
 \Sec{Component-wise conversions}{Conv.cwise}
 
-\p A glvalue of type \texttt{vector<T,x>} can be converted to a prvalue of type
+\p A glvalue of type \texttt{vector<T,x>} can be converted to a cxvalue of type
 \texttt{vector<V,x>}, or a prvalue of type \texttt{vector<T,x>} can be converted
 to a prvalue of type \texttt{vector<V,x>}. The source value is converted by
 performing the appropriate conversion of each element of type \texttt{T} to an
 element of type \texttt{V} following the rules for standard conversions
 in chapter \ref{Conv}.
 
-\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a prvalue of
+\p A glvalue of type \texttt{matrix<T,x,y>} can be converted to a cxvalue of
 type \texttt{matrix<V,x,y>}, or a prvalue of type \texttt{matrix<T,x,y>} can be
 converted to a prvalue of type \texttt{matrix<V,x,y>}. The source value is
 converted by performing the appropriate conversion of each element of type
