@@ -78,7 +78,7 @@ independent of raytracing pipelines. For `RayQuery`, the template for
 instantiating the object includes a new optional `RAYQUERY_FLAGS` parameter:
 
 ```
-template<uint constRayFlags, uint constRayQueryFlags = RAYQUERY_FLAG_NONE>
+template<uint StaticRayFlags, uint RayQueryFlags = RAYQUERY_FLAG_NONE>
 class RayQuery;
 ```
 
