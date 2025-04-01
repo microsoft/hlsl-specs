@@ -4,7 +4,7 @@
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
-* Planned Version: 202x
+* Planned Version: 202y
 
 ## Introduction
 
@@ -41,7 +41,7 @@ References to any other address space will need explicit annotation.
 ### Expanded Operator Overloading
 
 Along with the introduction of references we can expand operator overloading to
-remove the restrictions introduced in HLSL 2021. 
+remove the restrictions introduced in HLSL 2021.
 
 Support for overloading operators that idiomatically returned references are
 prohibited in HLSL 2021. With the addition of limited reference support those
