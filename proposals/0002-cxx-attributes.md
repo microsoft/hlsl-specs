@@ -210,7 +210,8 @@ following grammar formulations are valid:
   \textit{simple-template-id}\br
 
   \define{class-specifier}\br
-  \textit{class-head} \terminal{\}} \opt{member-specification} \terminal{\}}\br
+  \textit{class-head} \terminal{\{} \opt{member-specification} \terminal{\}}\br
+
 
   \define{class-head}\br
   \textit{class-key} \opt{attribute-specifier-seq} \textit{class-head-name} \opt{base-clause}\br
