@@ -159,7 +159,61 @@ implementation.
 
 ### Builtins
 
-TBD
+Although these "builtins" are not intended to be part of the HLSL language, and
+no promises are made that these will continue to be available over time, this
+proposal describes an implementation in terms of builtins such as this. For
+this reason it is useful to have them described here as a reference point.
+
+Each builtin corresponds to one of the operations described in [0029].
+
+```c++
+namespace dx {
+namespace linalg {
+namespace details {
+
+// dx.op.matvecmul
+template <typename TYo, int NUMo, typename TYi, int NUMi, typename RESm>
+void __builtin_MatVecMul(out vector<TYo, NUMo> OutputVector,
+                         bool IsOutputUnsigned, vector<TYi, NUMi> InputVector,
+                         bool IsInputUnsigned, uint InputVectorInterpretation,
+                         RESm MatrixResource, uint MatrixStartOffset,
+                         uint MatrixInterpretation, uint M, uint K,
+                         uint MatrixLayout, bool IsMatrixTransposed,
+                         uint MatrixStride);
+
+// dx.op.matvecmuladd
+template <typename TYo, int NUMo, typename TYi, int NUMi, typename RESm,
+          typename RESv>
+void __builtin_MatVecMulAdd(out vector<TYo, NUMo> OutputVector,
+                            bool IsOutputUnsigned,
+                            vector<TYi, NUMi> InputVector, bool IsInputUnsigned,
+                            uint InputVectorInterpretation, RESm MatrixResource,
+                            uint MatrixStartOffset, uint MatrixInterpretation,
+                            uint M, uint K, uint MatrixLayout,
+                            bool IsMatrixTransposed, uint MatrixStride,
+                            RESv BiasVectorResource, uint BiasVectorOffset,
+                            uint BiasVectorInterpretation);
+
+// dx.op.outerproductaccumulate
+template <typename TY, int M, int N, typename RES>
+void __builtin_OuterProductAccumulate(vector<TY, M> InputVector1,
+                                      vector<TY, N> InputVector2,
+                                      RES MatrixResource,
+                                      uint MatrixStartOffset,
+                                      uint MatrixInterpretation,
+                                      uint Layout, uint MatrixStride);
+
+// dx.op.vectoraccumulate
+template <typename TY, int NUM, typename RES>
+void __builtin_VectorAccumulate(vector<TY, NUM> InputVector,
+                                RES OutputArrayResource,
+                                uint OutputArrayOffset);
+
+} // namespace details
+} // namespace linalg
+} // namespace dx
+
+```
 
 ### enum DataType
 

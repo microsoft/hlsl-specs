@@ -164,8 +164,8 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    immarg i32,       ; input interpretation
     immarg i1,        ; input signed op kind
+    immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
     immarg i32,       ; matrix interpretation
@@ -234,7 +234,7 @@ Only non-packed interpretations are valid for matrices.
 The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
-row/column of the matrix is valid memory.
+row/column of the matrix is valid memory. 
 
 The **matrix stride** is 16-byte aligned.
 
@@ -301,7 +301,7 @@ Computes the outer product between column vectors and an **M**x**N** matrix is
 accumulated component-wise atomically (with device scope) in memory. 
 
 ``` 
-ResultMatrix = InputVector1 * Transpose(InputVector2); 
+ResultMatrix += InputVector1 * Transpose(InputVector2); 
 ```
 
 
@@ -311,14 +311,16 @@ The two input vectors are specified via **input vector 1** and **input vector
 2**.
 
 The matrix is accumulated to the writeable raw-buffer specified by **matrix
-resource**, with **matrix offset**, **matrix stride**, **matrix
-interpretation** and **matrix layout** behaving as described [above]
-(#matrix-vector-multiply-and-multiply-add-operations).
+resource**, with **matrix offset**, **matrix stride**, **matrix interpretation**
+and **matrix layout** behaving as described
+[above](#matrix-vector-multiply-and-multiply-add-operations).
 
 The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
 be a multiple of 16 bytes ensuring that the 16 bytes access of the last
-row/column of the matrix is valid memory
+row/column of the matrix is valid memory. Implementations may write to the
+contents of the padding between the end of the matrix and the 16-byte boundary,
+so developers should not use this padding space for anything else.
 
 The **matrix stride** is 16-byte aligned.
 
@@ -359,8 +361,13 @@ The input vector is specified by **input vector**, and has `NUM` elements of
 type `TY`.
 
 The output array is accumulated to the writeable raw-buffer resource specified
-by **output array resource** and **output array offset**.  The base address
-and **output array offset** must be 64-byte aligned.
+by **output array resource** and **output array offset**.  The base address and
+**output array offset** must be 64-byte aligned.  Also note that the size of the
+underlying allocation is guaranteed to be a multiple of 16 bytes, ensuring that
+there is valid memory between the end of the array and the 16-byte bounadry.
+Implementations may write to the contents of the padding between the end of the
+matrix and the 16-byte boundary, so developers should not use this padding space
+for anything else.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -572,9 +579,9 @@ optimal layout. Row-Major and Column-Major layouts are also supported.
 ### Matrix Transpose
 
 The **matrix transpose** parameter indicates if the matrix is transposed before
-performing the multiply. In linear algebra, the[transpose]
-(https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator which
-flips a matrix over its diagonal; that is, it switches the row and column
+performing the multiply. In linear algebra, the
+[transpose](https://en.wikipedia.org/wiki/Transpose) of a matrix is an operator
+which flips a matrix over its diagonal; that is, it switches the row and column
 indices of the matrix. 
 
 Transposing is not supported for the RowMajor/ColumnMajor layouts. 
@@ -770,7 +777,7 @@ D3D12_FEATURE_DATA_D3D12_OPTIONSNN TierSupport = {};
 d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport, 
                                  sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
 
-if (TierSupport.CooperativeVectorTier == D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
+if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
     D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
@@ -920,7 +927,7 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If SrcLayout is row-major or column-major, then SrcStride should be greater than the length of a row/column, and a
   multiple of the element size.
 * If DestLayout is row-major or column-major, then DestStride should be greater than the length of a row/column, and a
-  multiple of the element size.
+  multiple of 16.
 * If SrcComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
   SrcComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
 * If DestComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
@@ -928,6 +935,20 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
 * If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
 
+*CommandList interactions:*
+
+- Synchronization around `ConvertLinearAlgebraMatrix` calls:
+   - Legacy Barrier
+     - Source buffer: Must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE` state
+     - Dest buffer: Must be in `D3D12_RESOURCE_STATE_UNORDERED_ACCESS` state
+     - UAV barrier synchronizes writes to the destination
+   - Enhanced Barrier:
+     - Source buffer access: `D3D12_BARRIER_ACCESS_SHADER_RESOURCE`
+     - Dest buffer access: `D3D12_BARRIER_ACCESS_UNORDERED_ACCESS`
+     - Sync point: `D3D12_BARRIER_SYNC_CONVERT_LINEAR_ALGEBRA_MATRIX`
+ - Predication is supported
+ - Available in Compute or Graphics CommandLists
+ - Not supported in Bundles
 
 *Usage Example:*
 

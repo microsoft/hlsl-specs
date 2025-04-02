@@ -4,7 +4,7 @@
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
-* Planned Version: 202x
+* Planned Version: 202y
 * Dependencies: [0002 C++ Attributes](0002-cxx-attributes.md)
 
 ## Introduction
@@ -66,7 +66,7 @@ For example:
   }
 
   float fma2(float x, float y, float z) {
-    return [hlsl::math_mode(strict)] x * y + z; 
+    return [hlsl::math_mode(strict)] x * y + z;
   }
 ```
 

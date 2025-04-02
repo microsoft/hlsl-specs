@@ -5,7 +5,7 @@
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
-* Planned Version: 202x
+* Planned Version: 202y
 
 ## Introduction
 
@@ -98,8 +98,7 @@ statements, declarations and expressions.
 Below are a few more examples of C++ attributes that we could support:
 
 ```c++
-  [[hlsl::layout_attribute]] // applies to the struct type
-  struct {
+  struct [[hlsl::layout_attribute]] { // applies to the struct type
     int x;
     int y;
   };
@@ -124,4 +123,112 @@ Below are a few more examples of C++ attributes that we could support:
     }
   }
 ```
+
+## Detailed design
+
+The simplest explanation of this feature is supporting C++11 attribute syntax on
+all shared grammar elements between HLSL and C++. This spec attempts to detail
+some of the grammar and parsing implications and will specify the process by
+which existing attributes will convert to C++ attributes.
+
+### Attribute Parsing
+
+This proposal introduces grammar formulations for parsing attributes matching
+some formulations from C++ `dcl.attr.grammar`. Specifically:
+
+```latex
+\begin{grammar}
+  \define{attribute-specifier-seq}\br
+  \opt{attribute-specifier-seq} \textit{attribute-specifier}\br
+
+  \define{attribute-specifier}\br
+  \terminal{[ [} \textit{attribute-list} \terminal{] ]}\br
+
+  \define{attribute-list}\br
+  \opt{attribute}\br
+  \textit{attribute-list} \terminal{,} \opt{attribute}\br
+
+  \define{attribute}\br
+  \textit{attribute-token} \opt{attribute-argument-clause}\br
+
+  \define{attribute-token}\br
+  \textit{identifier}\br
+  \textit{attribute-scoped-token}\br
+
+  \define{attribute-scoped-token}\br
+  \textit{attribute-namespace} \terminal{::} \textit{identifier}\br
+
+  \define{attribute-namespace}\br
+  \textit{identifier}\br
+
+  \define{attribute-argument-clause}\br
+  \terminal{(} \textit{balanced-token-seq} \terminal{)}\br
+
+  \define{balanced-token-seq}\br
+  \opt{balanced-token}\br
+  \textit{balanced-token-seq} \textit{balanced-token}\br
+
+  \define{balanced-token}\br
+  \terminal{(} \textit{balanced-token-seq} \terminal{)}\br
+  \terminal{[} \textit{balanced-token-seq} \terminal{]}\br
+  \terminal{\{} \textit{balanced-token-seq} \terminal{\}}\br
+  any token other than a parenthesis, bracket or brace\br
+\end{grammar}
+```
+![Latex Rendering](0002-assets/AttributeGrammarRender.png)
+
+In contrast to existing HLSL annotations and Microsoft-style attributes, these
+formulations use case-sensitive identifier tokens
+
+
+#### Statements
+
+> Note: This is already reflected in the language specification.
+
+```latex
+\begin{grammar}
+    \define{statement}\br
+    labeled-statement\br
+    \opt{attribute-specifier-sequence} expression-statement\br
+    \opt{attribute-specifier-sequence} compound-statement\br
+    \opt{attribute-specifier-sequence} iteration-statement\br
+    \opt{attribute-specifier-sequence} selection-statement\br
+    declaration-statement
+\end{grammar}
+```
+![Latex Rendering](0002-assets/StatementGrammarRender.png)
+
+#### Declarations
+
+The `attribute-specifier-seq` element supports annotating type declarations. The
+following grammar formulations are valid:
+
+```latex
+\begin{grammar}
+  \define{class-name}\br
+  \textit{identifier}\br
+  \textit{simple-template-id}\br
+
+  \define{class-specifier}\br
+  \textit{class-head} \terminal{\{} \opt{member-specification} \terminal{\}}\br
+
+
+  \define{class-head}\br
+  \textit{class-key} \opt{attribute-specifier-seq} \textit{class-head-name} \opt{base-clause}\br
+  \textit{class-key} \opt{attribute-specifier-seq} \opt{base-clause}\br
+
+  \define{class-head-name}\br
+  \opt{nested-name-specifier} \textit{class-name}\br
+
+  \define{class-key}\br
+  \terminal{class}\br
+  \terminal{struct}\br
+
+  \define{alias-declaration}\br
+  \terminal{using} \textit{identifier} \opt{attribute-specifier-seq} \terminal{=} \textit{type-id} \terminal{;}\br
+\end{grammar}
+```
+
+![Latex Rendering](0002-assets/ClassGrammarRender.png)
+
 <!-- {% endraw %} -->
