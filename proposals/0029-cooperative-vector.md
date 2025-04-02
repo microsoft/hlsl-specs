@@ -89,6 +89,8 @@ ByteAddressBuffer biasVector1;
 
 void ps_main(args) // args: texture, normal, position
 {   
+    using namespace dx::linalg;
+
     PreProcessing(args);
     // Neural Network computes the output vector
     // using the same input args and trained data
@@ -102,16 +104,23 @@ void ps_main(args) // args: texture, normal, position
 
     // layer0 = inputVector*inputMatrix + biasVector0
     // The matrix and bias are loaded from memory at offsets : moffset0 and boffset0
-    vector<uint32_t, K> layer0 = MatrixVectorMulAdd(inputVector, inputMatrix0, moffset0, biasVector0, boffset0);
+    MatrixRef<DATA_TYPE_UINT32, K, M, MATRIX_LAYOUT_MUL_OPTIMAL> M0 = { inputMatrix0, moffset0, 0 }; 
+    VectorRef<DATA_TYPE_UINT32> B0 = { biasVector0, boffset0 };
+
+    vector<uint32_t, K> layer0 = MulAdd<uint32_t>(M0, MakeInterpretedVector<DATA_TYPE_UINT32>(inputVector), B0);
     layer0 = max(layer0,0); // Apply activation function
 
     // layer0 = inputVector*inputMatrix0 + biasVector0
     // The matrix and bias are loaded from memory at offsets : moffset1 and boffset1
-    vector<uint32_t, K> layer1 = MatrixVectorMulAdd(layer0, inputMatrix0, moffset1, biasVector0, boffset1);
+    MatrixRef<DATA_TYPE_UINT32, K, K, MATRIX_LAYOUT_MUL_OPTIMAL> M1 = { inputMatrix0, moffset1, 0 };
+    VectorRef<DATA_TYPE_UINT32> B1 = { biasVector0, boffset1 };
+    vector<uint32_t, K> layer1 = MulAdd<uint32_t>(M1, MakeInterpretedVector<DATA_TYPE_UINT32>(layer0), B1);
     layer1 = max(layer1,0); // Apply activation function
 
     // output = layer1*inputMatrix1 + biasVector1 
-    vector<uint32_t, N> output = MatrixVectorMulAdd(layer1, inputMatrix1, biasVector1);
+    MatrixRef<DATA_TYPE_UINT32, N, K, MATRIX_LAYOUT_MUL_OPTIMAL> M2 = { inputMatrix1, 0, 0 };
+    VectorRef<DATA_TYPE_UIN32> B2 = { biasVector1, 0 };
+    vector<uint32_t, N> output = MulAdd<uint32_t>(M2, MakeInterpretedVector<DATA_TYPE_UINT32>(layer1), B2);
 
     output = exp(output); 
     
