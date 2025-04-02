@@ -290,9 +290,9 @@ declare void @dx.op.outerproductaccumulate.v[M][TY].v[N][TY](
     <[N] x [TY]>,     ; input vector 2
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset 
-    i32,              ; matrix stride 
     immarg i32,       ; matrix interpretation 
-    immarg i32)       ; matrix layout 
+    immarg i32,       ; matrix layout 
+    i32)              ; matrix stride 
 ```
 
 #### Overview
@@ -311,8 +311,8 @@ The two input vectors are specified via **input vector 1** and **input vector
 2**.
 
 The matrix is accumulated to the writeable raw-buffer specified by **matrix
-resource**, with **matrix offset**, **matrix stride**, **matrix interpretation**
-and **matrix layout** behaving as described
+resource**, with **matrix offset**, **matrix interpretation**, **matrix
+layout**, and **matrix stride** behaving as described
 [above](#matrix-vector-multiply-and-multiply-add-operations).
 
 The base address of **matrix resource** and **matrix offset** must be 128-byte
