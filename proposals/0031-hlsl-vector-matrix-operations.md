@@ -76,7 +76,7 @@ This API defines the following supporting types:
   - Reference to a vector stored in a ByteAddressBuffer.
 - `struct dx::linalg::RWVectorRef`
   - Reference to a vector stored in a RWByteAddressBuffer.
-- `struct dx::linalg::Vector`
+- `struct dx::linalg::InterpretedVector`
   - Wrapper around a vector, allowing the elements of the vector to be
     reinterpreted in various ways.
 - `enum dx::linalg::DataType`
@@ -98,16 +98,14 @@ This API defines the following functions:
 - `dx::linalg::VectorAccumulate`
   - Accumulate elements of a vector atomically-elementwise to corresponding
     elements in memory.
-- `dx::linalg::InterpretedVector`
-  - Convenience function to construct a `Vector` inline while inferring various
-    template parameters.
+- `dx::linalg::MakeInterpretedVector`
+  - Convenience function to construct an `InterpretedVector` inline while
+    inferring various template parameters.
 
 These are all described in more detail below, but the follow code example gives
 a flavor of how these work together:
 
 ```c++
-ByteAddressBuffer Model;
-
 ByteAddressBuffer Model;
 
 vector<float, 3> ApplyNeuralMaterial(vector<half, 8> InputVector) {
@@ -168,8 +166,6 @@ Each builtin corresponds to one of the operations described in [0029].
 
 ```c++
 namespace dx {
-namespace linalg {
-namespace details {
 
 // dx.op.matvecmul
 template <typename TYo, int NUMo, typename TYi, int NUMi, typename RESm>
@@ -209,8 +205,6 @@ void __builtin_VectorAccumulate(vector<TY, NUM> InputVector,
                                 RES OutputArrayResource,
                                 uint OutputArrayOffset);
 
-} // namespace details
-} // namespace linalg
 } // namespace dx
 
 ```
@@ -409,15 +403,15 @@ using RWVectorRef = VectorRefImpl<RWByteAddressBuffer, DT>;
 
 ```
 
-### struct Vector
+### struct InterpretedVector
 
 > NOTE: it's possible that one resolution of [441] may remove the need for this
 > type entirely.
 
-The `dx::linalg::Vector` struct is a wrapper around `vector`, adding an
-interpretation value that controls how the data in the vector should be
+The `dx::linalg::InterpretedVector` struct is a wrapper around `vector`, adding
+an interpretation value that controls how the data in the vector should be
 interpreted. Although the struct can be used directly, it is likely more
-ergonomic to use the `dx::linalg::InterpretedVector` function that's also
+ergonomic to use the `dx::linalg::MakeInterpretedVector` function that's also
 described here.
 
 Example usage:
@@ -432,10 +426,10 @@ void Example() {
 
   vector<float, 128> V = 0;
   vector<float, 128> Result =
-      Mul<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V));
+      Mul<float>(Matrix, MakeInterpretedVector<DATA_TYPE_FLOAT8_E4M3>(V));
 
   // alternative:
-  Vector<float, 128, DATA_TYPE_E4M3> IV = {V};
+  InterpretedVector<float, 128, DATA_TYPE_FLOAT8_E4M3> IV = {V};
   vector<float, 128> Result2 = Mul<float>(Matrix, IV);
 }
 ```
@@ -446,13 +440,13 @@ Implementation:
 namespace dx {
 namespace linalg {
 
-template <typename T, int N, DataType DT> struct Vector {
+template <typename T, int N, DataType DT> struct InterpretedVector {
   vector<T, N> Data;
 };
 
 template <DataType DT, typename T, int N>
-Vector<T, N, DT> InterpretedVector(vector<T, N> Vec) {
-  Vector<T, N, DT> IV = {Vec};
+InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
+  InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
@@ -479,7 +473,7 @@ float4 Example(float4 Input) {
   MatrixRef<DATA_TYPE_FLOAT16, 4, 4, MATRIX_LAYOUT_MUL_OPTIMAL, true> Matrix = {
       Buffer, 0, 0};
 
-  return Mul<float>(Matrix, InterpretedVector<DATA_TYPE_FLOAT16>(Input));
+  return Mul<float>(Matrix, MakeInterpretedVector<DATA_TYPE_FLOAT16>(Input));
 }
 ```
 
@@ -516,13 +510,13 @@ vector<OutputElTy, MatrixM>
 Mul(MatrixRefImpl<MatrixBufferTy, MatrixDT, MatrixM, MatrixK, MatrixLayout,
                   MatrixTranspose>
         Matrix,
-    Vector<InputElTy, InputElCount, InputDT> InputVector) {
+    InterpretedVector<InputElTy, InputElCount, InputDT> InputVector) {
 
   vector<OutputElTy, MatrixM> OutputVector;
 
-  details::__builtin_MatVecMul(
+  __builtin_MatVecMul(
       /*out*/ OutputVector, details::IsUnsigned<OutputElTy>(), InputVector.Data,
-      details::IsUnsigned<InputElTy>(), InputDT, BUFFER_HANDLE(Matrix.Buffer),
+      details::IsUnsigned<InputElTy>(), InputDT, Matrix.Buffer,
       Matrix.StartOffset, MatrixDT, MatrixM, MatrixK, MatrixLayout,
       MatrixTranspose, Matrix.Stride);
 
@@ -546,14 +540,14 @@ ByteAddressBuffer Buffer;
 void Example() {
   using namespace dx::linalg;
 
-  MatrixRef<DATA_TYPE_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix = {Buffer,
-                                                                        0, 0};
+  MatrixRef<DATA_TYPE_FLOAT8_E4M3, 32, 8, MATRIX_LAYOUT_MUL_OPTIMAL> Matrix = {
+      Buffer, 0, 0};
 
   VectorRef<DATA_TYPE_FLOAT16> BiasVector = {Buffer, 1024};
 
   vector<float, 8> V = 0;
-  vector<float, 32> Result =
-      MulAdd<float>(Matrix, InterpretedVector<DATA_TYPE_E4M3>(V), BiasVector);
+  vector<float, 32> Result = MulAdd<float>(
+      Matrix, MakeInterpretedVector<DATA_TYPE_FLOAT8_E4M3>(V), BiasVector);
 }
 ```
 
@@ -572,6 +566,9 @@ See [Proposal 0029] for details of this operation.
 Implementation:
 
 ```c++
+namespace dx {
+namespace linalg {
+
 template <typename OutputElTy, typename InputElTy, int InputElCount,
           typename MatrixBufferTy, DataType InputDT, DataType MatrixDT,
           uint MatrixM, uint MatrixK, MatrixLayout MatrixLayout,
@@ -581,20 +578,23 @@ vector<OutputElTy, MatrixM>
 MulAdd(MatrixRefImpl<MatrixBufferTy, MatrixDT, MatrixM, MatrixK, MatrixLayout,
                      MatrixTranspose>
            Matrix,
-       Vector<InputElTy, InputElCount, InputDT> InputVector,
+       InterpretedVector<InputElTy, InputElCount, InputDT> InputVector,
        VectorRefImpl<BiasVectorBufferTy, BiasVectorDT> BiasVector) {
 
   vector<OutputElTy, MatrixM> OutputVector;
 
-  details::__builtin_MatVecMulAdd(
+  __builtin_MatVecMulAdd(
       /*out*/ OutputVector, details::IsUnsigned<OutputElTy>(), InputVector.Data,
-      details::IsUnsigned<InputElTy>(), InputDT, BUFFER_HANDLE(Matrix.Buffer),
+      details::IsUnsigned<InputElTy>(), InputDT, Matrix.Buffer,
       Matrix.StartOffset, MatrixDT, MatrixM, MatrixK, MatrixLayout,
-      MatrixTranspose, Matrix.Stride, BUFFER_HANDLE(BiasVector.Buffer),
-      BiasVector.StartOffset, BiasVectorDT);
+      MatrixTranspose, Matrix.Stride, BiasVector.Buffer, BiasVector.StartOffset,
+      BiasVectorDT);
 
   return OutputVector;
 }
+
+} // namespace linalg
+} // namespace dx
 ```
 
 ## Function: OuterProductAccumulate
@@ -656,9 +656,9 @@ template <typename ElTy, int MatrixM, int MatrixN, DataType MatrixDT,
 void OuterProductAccumulate(
     vector<ElTy, MatrixM> InputVector1, vector<ElTy, MatrixN> InputVector2,
     RWMatrixRef<MatrixDT, MatrixM, MatrixN, MatrixLayout, false> Matrix) {
-  details::__builtin_OuterProductAccumulate(
-      InputVector1, InputVector2, BUFFER_HANDLE(Matrix.Buffer),
-      Matrix.StartOffset, MatrixDT, MatrixLayout, Matrix.Stride);
+  __builtin_OuterProductAccumulate(InputVector1, InputVector2, Matrix.Buffer,
+                                   Matrix.StartOffset, MatrixDT, MatrixLayout,
+                                   Matrix.Stride);
 }
 
 } // namespace linalg
@@ -710,8 +710,7 @@ namespace linalg {
 template <typename ElTy, int ElCount>
 void VectorAccumulate(vector<ElTy, ElCount> InputVector,
                       RWByteAddressBuffer Buffer, uint Offset) {
-  details::__builtin_VectorAccumulate(InputVector, BUFFER_HANDLE(Buffer),
-                                      Offset);
+  __builtin_VectorAccumulate(InputVector, Buffer, Offset);
 }
 
 } // namespace linalg
