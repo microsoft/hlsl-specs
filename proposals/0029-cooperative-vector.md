@@ -677,7 +677,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
 // Used for MatrixVectorMulAdd intrinsic
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;
     D3D12_LINEAR_ALGEBRA_DATATYPE InputInterpretation;
@@ -688,7 +688,7 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 };
 
 // Used for OuterProductAccumulate and VectorAccumulate intrinsics
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;  
     D3D12_LINEAR_ALGEBRA_DATATYPE AccumulationType;
@@ -697,12 +697,12 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 // CheckFeatureSupport data struct used with type D3D12_FEATURE_COOPERATIVE_VECTOR:
 typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
-    InOut UINT                                         MatrixVectorMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
-    InOut UINT                                         VectorAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
+    InOut UINT                                          MatrixVectorMulAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL*        pMatrixVectorMulAddProperties;
+    InOut UINT                                          OuterProductAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE* pOuterProductAccumulateProperties;
+    InOut UINT                                          VectorAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE* pVectorAccumulateProperties;
 };
 
 ```
@@ -789,7 +789,7 @@ if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
 
     // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
     UINT MatrixVectorMulAddPropCount = CoopVecProperties.MatrixVectorMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL> properties(MatrixVectorMulAddPropCount);
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
     // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
