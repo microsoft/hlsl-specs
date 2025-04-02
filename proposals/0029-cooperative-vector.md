@@ -781,7 +781,7 @@ if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
     D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
-    // CheckFeatureSupport returns the number of input combinations for inference intrinsic
+    // CheckFeatureSupport returns the number of input combinations for intrinsics
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                      sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
 
@@ -792,7 +792,7 @@ if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL> properties(MatrixVectorMulAddPropCount);
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
-    // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
+    // CheckFeatureSupport returns the supported input combinations for the mul intrinsics
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
