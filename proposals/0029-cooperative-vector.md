@@ -525,7 +525,7 @@ Packed Case:
      19,              ; matrix interpretation - ComponentType::I8
      32,              ; matrix M dimension
      32,              ; matrix K dimension
-     2,               ; matrix layout - InferencingOptimal
+     2,               ; matrix layout - MulOptimal
      0,               ; matrix transpose - false
      0,               ; matrix stride
      0);              ; output signed op kind = 0 = signed
@@ -548,7 +548,7 @@ Non-Packed Case:
     5,               ; matrix interpretation - ComponentType::I8
     64,              ; matrix M dimension
     32,              ; matrix K dimension
-    2,               ; matrix layout - InferencingOptimal
+    2,               ; matrix layout - MulOptimal
     0,               ; matrix transpose - false
     0,               ; matrix stride
     0)               ; output signed op kind = 0 = signed
@@ -566,8 +566,8 @@ The **matrix layout** argument specifies a value from the following enum:
 enum class DXILMatrixLayout : uint {
   RowMajor              = 0,
   ColumnMajor           = 1,
-  InferencingOptimal    = 2,
-  TrainingOptimal       = 3,
+  MulOptimal            = 2,
+  OuterProductOptimal   = 3,
 };
 ```
 
@@ -677,7 +677,7 @@ typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
 } D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
 
 // Used for MatrixVectorMulAdd intrinsic
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;
     D3D12_LINEAR_ALGEBRA_DATATYPE InputInterpretation;
@@ -688,7 +688,7 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE
 };
 
 // Used for OuterProductAccumulate and VectorAccumulate intrinsics
-typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
+typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE
 {
     D3D12_LINEAR_ALGEBRA_DATATYPE InputType;  
     D3D12_LINEAR_ALGEBRA_DATATYPE AccumulationType;
@@ -697,12 +697,12 @@ typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING
 // CheckFeatureSupport data struct used with type D3D12_FEATURE_COOPERATIVE_VECTOR:
 typedef struct D3D12_FEATURE_DATA_COOPERATIVE_VECTOR
 {    
-    InOut UINT                                         MatrixVectorMulAddPropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE* pMatrixVectorMulAddProperties;
-    InOut UINT                                         OuterProductAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pOuterProductAccumulateProperties;
-    InOut UINT                                         VectorAccumulatePropCount;
-    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_TRAINING*  pVectorAccumulateProperties;
+    InOut UINT                                          MatrixVectorMulAddPropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL*        pMatrixVectorMulAddProperties;
+    InOut UINT                                          OuterProductAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE* pOuterProductAccumulateProperties;
+    InOut UINT                                          VectorAccumulatePropCount;
+    Out D3D12_COOPERATIVE_VECTOR_PROPERTIES_ACCUMULATE* pVectorAccumulateProperties;
 };
 
 ```
@@ -781,7 +781,7 @@ if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
     D3D12_FEATURE_DATA_COOPERATIVE_VECTOR CoopVecProperties = {0, NULL, 0, NULL, 0, NULL};
 
-    // CheckFeatureSupport returns the number of input combinations for inference intrinsic
+    // CheckFeatureSupport returns the number of input combinations for intrinsics
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                      sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
 
@@ -789,10 +789,10 @@ if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
 
     // Use CheckFeatureSupport call to query only MatrixVectorMulAddProperties
     UINT MatrixVectorMulAddPropCount = CoopVecProperties.MatrixVectorMulAddPropCount;
-    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_INFERENCE> properties(MatrixVectorMulAddPropCount);
+    std::vector<D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL> properties(MatrixVectorMulAddPropCount);
     CoopVecProperties.pMatrixVectorMulAddProperties = properties.data();
 
-    // CheckFeatureSupport returns the supported input combinations for the inference intrinsic
+    // CheckFeatureSupport returns the supported input combinations for the mul intrinsics
     d3d12Device->CheckFeatureSupport(D3D12_FEATURE_COOPERATIVE_VECTOR, &CoopVecProperties, 
                                     sizeof(D3D12_FEATURE_DATA_COOPERATIVE_VECTOR));
                                                                 
@@ -817,8 +817,8 @@ layout and dataype of the weight matrix from and to any of the layouts in
 enum D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT {
     D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_ROW_MAJOR,
     D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_COLUMN_MAJOR,
-    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL,
-    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL,
+    D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL
 }
 ```
 
@@ -933,7 +933,7 @@ void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_C
 * If DestComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
   DestComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
 * If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
-* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_TRAINING_OPTIMAL`.
+* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 *CommandList interactions:*
 
@@ -960,7 +960,7 @@ D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO infoDesc =
     {
         0,                                                              // DestSize to be populated by 
                                                                         // driver implementation
-        D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_INFERENCING_OPTIMAL,         // convert to inferencng optimal layout
+        D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL,                 // convert to mul optimal layout
         0,                                                              // stride is ignored since optimal layout 
                                                                         // is implementation dependent
         numRows,                                                        // number of rows in weight matrix to be 
