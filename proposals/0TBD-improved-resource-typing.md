@@ -230,6 +230,25 @@ usage patterns; however shader authors are advised to avoid using this unless
 they have a clear need to, as the added context of a resource handle is
 useful for debugging and validation.
 
+#### Open Issue: Non-uniform indexing
+
+In the past, when indexing into resources with a non-uniform value, the index
+needed to be decorated with the `NonUniformResourceIndex` attribute.
+
+As a language feature this is clunky - instead, this could be swapped around,
+with indexing being non-uniform by default (unless the compiler can prove
+otherwise).
+
+In such a world, it would be useful for shader authors to be able to provide
+a hint indicating that a value is uniform at a given scope, enabling
+compilers to generate more optimal code with minimal input.
+
+Something like what is outlined in
+https://github.com/microsoft/hlsl-specs/pull/405 would be a good fit for
+this, with the proposed uniformity qualifiers acting as a clear indicator to
+the compiler about the uniformity of the index.
+
+This proposal would be a good place to make such a switch.
 
 
 #### Open Issue: Could we avoid retyping all the resource handles by making use of ResourceEntry<T> instead?
