@@ -196,13 +196,10 @@ In future, if non-homogenous descriptor sizes are advertised, as with
 `offset` could instead become a byte offset, enabling resources to be packed
 much more tightly.
 
-
-#### Open Issue: Should there be a way to construct resource entries from integers?
-
-The proposed access method is that if you're passing in a resource index
-from outside the shader, then that should be declared as such in the shader;
-dynamic indices can be handled by specifying the base index as having an
-array type.
+When passing in a resource index from outside the shader, then that should
+generally be declared as such in the shader; dynamic indices generated inside
+the shader can be handled by specifying the base index as having an array
+type.
 For example:
 
 ```hlsl
@@ -216,24 +213,23 @@ void main(...)
 }
 ```
 
-A constructor function could be added roughly as:
+However, there are cases where a developer may wish to pack the resource
+index into other data, rather than consuming a full 32-bits for it.
+Rather than having to fabricate an empty type and index into it in this case,
+a constructor function is included:
 
 ```hlsl
 ResourceEntry<T>(uint offset);
 ```
 
-which would allow the construction of ResourceEntry objects from any
-arbitrary integer the shader generates.
+This allows the construction of `ResourceEntry` object from any arbitrary
+integer the shader generates.
 
 This would not drastically change the implementation complexity or expected
-usage patterns, so it'd be "ok" to have something like this from that
-perspective.
+usage patterns; however shader authors are advised to avoid using this unless
+they have a clear need to, as the added context of a resource handle is
+useful for debugging and validation.
 
-However, it allows shader authors to pass around integers until the very last
-second, making debugging and interrogation of the shader code much more
-difficult.
-If this is deemed necessary to add, it should be done in a way that is
-clearly marked as unsafe.
 
 
 #### Open Issue: Could we avoid retyping all the resource handles by making use of ResourceEntry<T> instead?
