@@ -1267,18 +1267,16 @@ XXX + 14 | HitObject_WorldRayDirection | Returns the ray direction in world spac
 XXX + 15 | HitObject_ObjectRayOrigin | Returns the ray origin in object space.
 XXX + 16 | HitObject_ObjectRayDirection | Returns the ray direction in object space.
 XXX + 17 | HitObject_ObjectToWorld3x4 | Returns the object to world space transformation matrix in 3x4 form.
-XXX + 18 | HitObject_ObjectToWorld4x3 | Returns the object to world space transformation matrix in 4x3 form.
-XXX + 19 | HitObject_WorldToObject3x4 | Returns the world to object space transformation matrix in 3x4 form.
-XXX + 20 | HitObject_WorldToObject4x3 | Returns the world to object space transformation matrix in 4x3 form.
-XXX + 21 | HitObject_GeometryIndex | Returns the geometry index committed on hit.
-XXX + 22 | HitObject_InstanceIndex | Returns the instance index committed on hit.
-XXX + 23 | HitObject_InstanceID | Returns the instance id committed on hit.
-XXX + 24 | HitObject_PrimitiveIndex | Returns the primitive index committed on hit.
-XXX + 25 | HitObject_HitKind | Returns the HitKind of the hit.
-XXX + 26 | HitObject_ShaderTableIndex | Returns the shader table index set for this HitObject.
-XXX + 27 | HitObject_SetShaderTableIndex | Returns a HitObject with updated shader table index.
-XXX + 28 | HitObject_LoadLocalRootTableConstant | Returns the root table constant for this HitObject and offset.
-XXX + 29 | HitObject_Attributes | Returns the attributes set for this HitObject.
+XXX + 18 | HitObject_WorldToObject3x4 | Returns the world to object space transformation matrix in 3x4 form.
+XXX + 19 | HitObject_GeometryIndex | Returns the geometry index committed on hit.
+XXX + 20 | HitObject_InstanceIndex | Returns the instance index committed on hit.
+XXX + 21 | HitObject_InstanceID | Returns the instance id committed on hit.
+XXX + 22 | HitObject_PrimitiveIndex | Returns the primitive index committed on hit.
+XXX + 23 | HitObject_HitKind | Returns the HitKind of the hit.
+XXX + 24 | HitObject_ShaderTableIndex | Returns the shader table index set for this HitObject.
+XXX + 25 | HitObject_SetShaderTableIndex | Returns a HitObject with updated shader table index.
+XXX + 26 | HitObject_LoadLocalRootTableConstant | Returns the root table constant for this HitObject and offset.
+XXX + 27 | HitObject_Attributes | Returns the attributes set for this HitObject.
 
 #### HitObject_TraceRay
 
@@ -1503,9 +1501,7 @@ Matrix getters use the `hitobject_StateMatrix` dxil intrinsic and the return typ
  HitObject_ObjectRayOrigin   | `float` | vector | Returns the ray origin in object space.
  HitObject_ObjectRayDirection| `float` | vector | Returns the ray direction in object space.
  HitObject_ObjectToWorld3x4  | `float` | matrix | Returns the object to world space transformation matrix in 3x4 form.
- HitObject_ObjectToWorld4x3  | `float` | matrix | Returns the object to world space transformation matrix in 4x3 form.
  HitObject_WorldToObject3x4  | `float` | matrix | Returns the world to object space transformation matrix in 3x4 form.
- HitObject_WorldToObject4x3  | `float` | matrix | Returns the world to object space transformation matrix in 4x3 form.
  HitObject_GeometryIndex     | `i32`   | scalar | Returns the geometry index committed on hit.
  HitObject_InstanceIndex     | `i32`   | scalar | Returns the instance index committed on hit.
  HitObject_InstanceID        | `i32`   | scalar | Returns the instance id committed on hit.
