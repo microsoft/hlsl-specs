@@ -75,6 +75,14 @@ strategies are likely able to reuse existing mechanisms to implement support
 for SER. No DXR runtime changes are necessary, since the proposed extension to
 the programming model is limited to HLSL and DXIL.
 
+Note that all new SER types and intrinsics are added to `namespace dx` in
+accordance with the [Fast-Track Process for HLSL
+Extensions](https://github.com/microsoft/hlsl-specs/blob/main/docs/Process.md#fast-track-for-extensions).
+For the sake of legibility, this document only qualifies the namespace
+explicitly in [HitObject HLSL Additions](#hitobject-hlsl-additions) when SER
+additions are formally specified. An implicit `using namespace dx` is assumed
+in the rest of this specification.
+
 ## Detailed Design
 
 This section describes the HLSL additions for `HitObject` and `MaybeReorderThread`
@@ -110,7 +118,9 @@ essentially a new capability to skip final shading not available before.
 ### HitObject HLSL Additions
 
 ```C++
-HitObject
+namespace dx {
+  HitObject
+}
 ```
 
 The `HitObject` type encapsulates information about a hit or a miss. A
@@ -154,7 +164,7 @@ for details.
 
 ```C++
 template<payload_t>
-static HitObject HitObject::TraceRay(
+static dx::HitObject dx::HitObject::TraceRay(
     RaytracingAccelerationStructure AccelerationStructure,
     uint RayFlags,
     uint InstanceInclusionMask,
@@ -192,11 +202,11 @@ It is ok to always use the overload, even for COMMITTED_TRIANGLE_HIT. For anythi
 other than a procedural hit, the specified hit kind and attributes are ignored.
 
 ```C++
-static HitObject HitObject::FromRayQuery(
+static dx::HitObject dx::HitObject::FromRayQuery(
     RayQuery Query);
 
 template<attr_t>
-static HitObject HitObject::FromRayQuery(
+static dx::HitObject dx::HitObject::FromRayQuery(
     RayQuery Query,
     uint CommittedCustomHitKind,
     attr_t CommittedCustomAttribs);
@@ -222,7 +232,7 @@ constructing a miss for a ray that would have hit some geometry if it were
 traced.
 
 ```C++
-static HitObject HitObject::MakeMiss(
+static dx::HitObject dx::HitObject::MakeMiss(
     uint RayFlags,
     uint MissShaderIndex,
     RayDesc Ray);
@@ -245,7 +255,7 @@ wants to participate in reordering without executing a closesthit or miss
 shader.
 
 ```C++
-static HitObject HitObject::MakeNop();
+static dx::HitObject dx::HitObject::MakeNop();
 ```
 
 Parameter                           | Definition
@@ -273,8 +283,8 @@ where no shader is invoked.
 
 ```C++
 template<payload_t>
-static void HitObject::Invoke(
-    HitObject Hit,
+static void dx::HitObject::Invoke(
+    dx::HitObject Hit,
     inout payload_t Payload);
 ```
 
@@ -305,7 +315,7 @@ Parameter                           | Definition
 #### HitObject::IsMiss
 
 ```C++
-bool HitObject::IsMiss();
+bool dx::HitObject::IsMiss();
 ```
 
 Returns `true` if the `HitObject` encodes a miss. If the `HitObject` encodes a
@@ -316,7 +326,7 @@ hit or is a NOP-HitObject, returns `false`.
 #### HitObject::IsHit
 
 ```C++
-bool HitObject::IsHit();
+bool dx::HitObject::IsHit();
 ```
 
 Returns `true` if the `HitObject` encodes a hit. If the `HitObject` encodes a
@@ -327,7 +337,7 @@ miss or is a NOP-HitObject, returns `false`.
 #### HitObject::IsNop
 
 ```C++
-bool HitObject::IsNop();
+bool dx::HitObject::IsNop();
 ```
 
 Returns `true` if the `HitObject` is a NOP-HitObject, otherwise returns
@@ -338,7 +348,7 @@ Returns `true` if the `HitObject` is a NOP-HitObject, otherwise returns
 #### HitObject::GetRayFlags
 
 ```C++
-uint HitObject::GetRayFlags();
+uint dx::HitObject::GetRayFlags();
 ```
 
 Returns the ray flags associated with the hit object.
@@ -350,7 +360,7 @@ Returns 0 if the `HitObject` is a NOP-HitObject.
 #### HitObject::GetRayTMin
 
 ```C++
-float HitObject::GetRayTMin();
+float dx::HitObject::GetRayTMin();
 ```
 
 Returns the parametric starting point for the ray associated with the hit
@@ -363,7 +373,7 @@ Returns 0 if the `HitObject` is a NOP-HitObject.
 #### HitObject::GetRayTCurrent
 
 ```C++
-float HitObject::GetRayTCurrent();
+float dx::HitObject::GetRayTCurrent();
 ```
 
 Returns the parametric ending point for the ray associated with the hit
@@ -376,7 +386,7 @@ Returns 0 if the `HitObject` is a NOP-HitObject.
 #### HitObject::GetWorldRayOrigin
 
 ```C++
-float3 HitObject::GetWorldRayOrigin();
+float3 dx::HitObject::GetWorldRayOrigin();
 ```
 
 Returns the world-space origin for the ray associated with the hit object.
@@ -389,7 +399,7 @@ will be zero.
 #### HitObject::GetWorldRayDirection
 
 ```C++
-float3 HitObject::GetWorldRayDirection();
+float3 dx::HitObject::GetWorldRayDirection();
 ```
 
 Returns the world-space direction for the ray associated with the hit object.
@@ -402,7 +412,7 @@ will be zero.
 #### HitObject::GetObjectRayOrigin
 
 ```C++
-float3 HitObject::GetObjectRayOrigin();
+float3 dx::HitObject::GetObjectRayOrigin();
 ```
 
 Returns the object-space origin for the ray associated with the hit object.
@@ -417,7 +427,7 @@ will be zero.
 #### HitObject::GetObjectRayDirection
 
 ```C++
-float3 HitObject::GetObjectRayDirection();
+float3 dx::HitObject::GetObjectRayDirection();
 ```
 
 Returns the object-space direction for the ray associated with the hit object.
@@ -432,7 +442,7 @@ will be zero.
 #### HitObject::GetObjectToWorld3x4
 
 ```C++
-float3x4 HitObject::GetObjectToWorld3x4();
+float3x4 dx::HitObject::GetObjectToWorld3x4();
 ```
 
 Returns a matrix for transforming from object-space to world-space.
@@ -447,7 +457,7 @@ matrix is transposed – use whichever is convenient.
 #### HitObject::GetObjectToWorld4x3
 
 ```C++
-float4x3 HitObject::GetObjectToWorld4x3();
+float4x3 dx::HitObject::GetObjectToWorld4x3();
 ```
 
 Returns a matrix for transforming from object-space to world-space.
@@ -462,7 +472,7 @@ the matrix is transposed – use whichever is convenient.
 #### HitObject::GetWorldToObject3x4
 
 ```C++
-float3x4 HitObject::GetWorldToObject3x4();
+float3x4 dx::HitObject::GetWorldToObject3x4();
 ```
 
 Returns a matrix for transforming from world-space to object-space.
@@ -477,7 +487,7 @@ the matrix is transposed – use whichever is convenient.
 #### HitObject::GetWorldToObject4x3
 
 ```C++
-float4x3 HitObject::GetWorldToObject4x3();
+float4x3 dx::HitObject::GetWorldToObject4x3();
 ```
 
 Returns a matrix for transforming from world-space to object-space.
@@ -492,7 +502,7 @@ the matrix is transposed – use whichever is convenient.
 #### HitObject::GetInstanceIndex
 
 ```C++
-uint HitObject::GetInstanceIndex();
+uint dx::HitObject::GetInstanceIndex();
 ```
 
 Returns the instance index of a hit.
@@ -504,7 +514,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 #### HitObject::GetInstanceID
 
 ```C++
-uint HitObject::GetInstanceID();
+uint dx::HitObject::GetInstanceID();
 ```
 
 Returns the instance ID of a hit.
@@ -516,7 +526,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 #### HitObject::GetGeometryIndex
 
 ```C++
-uint HitObject::GetGeometryIndex();
+uint dx::HitObject::GetGeometryIndex();
 ```
 
 Returns the geometry index of a hit.
@@ -528,7 +538,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 #### HitObject::GetPrimitiveIndex
 
 ```C++
-uint HitObject::GetPrimitiveIndex();
+uint dx::HitObject::GetPrimitiveIndex();
 ```
 
 Returns the primitive index of a hit.
@@ -540,7 +550,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 #### HitObject::GetHitKind
 
 ```C++
-uint HitObject::GetHitKind();
+uint dx::HitObject::GetHitKind();
 ```
 
 Returns the hit kind of a hit. See `HitKind` for definition of possible values.
@@ -553,7 +563,7 @@ Returns 0 if the `HitObject` does not encode a hit.
 
 ```C++
 template<attr_t>
-attr_t HitObject::GetAttributes();
+attr_t dx::HitObject::GetAttributes();
 ```
 
 Returns the attributes of a hit. `attr_t` must match the committed
@@ -569,7 +579,7 @@ zero-initialized. The size of `attr_t` must not exceed
 #### HitObject::GetShaderTableIndex
 
 ```C++
-uint HitObject::GetShaderTableIndex()
+uint dx::HitObject::GetShaderTableIndex()
 ```
 
 Returns the index used for shader table lookups. If the `HitObject` encodes a
@@ -583,7 +593,7 @@ a shader table index, the return value is zero.
 #### HitObject::SetShaderTableIndex
 
 ```C++
-void HitObject::SetShaderTableIndex(uint RecordIndex)
+void dx::HitObject::SetShaderTableIndex(uint RecordIndex)
 ```
 
 Sets the index used for shader table lookups.
@@ -615,7 +625,7 @@ MissRecordAddress =
 #### HitObject::LoadLocalRootTableConstant
 
 ```C++
-uint HitObject::LoadLocalRootTableConstant(uint RootConstantOffsetInBytes)
+uint dx::HitObject::LoadLocalRootTableConstant(uint RootConstantOffsetInBytes)
 ```
 
 Load a local root table constant from the shader table. The offset is
@@ -722,7 +732,7 @@ or a miss, but are still legal inputs to `MaybeReorderThread`. Similarly, a
 index is exempt from having a valid shader table record.
 
 ```C++
-void MaybeReorderThread( HitObject Hit );
+void dx::MaybeReorderThread(dx::HitObject Hit);
 ```
 
 Parameter                           | Definition
@@ -745,7 +755,7 @@ significant bits. The thread ordering resulting from this call may be
 approximate.
 
 ```C++
-void MaybeReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB );
+void dx::MaybeReorderThread(uint CoherenceHint, uint NumCoherenceHintBitsFromLSB);
 ```
 
 Parameter                           | Definition
@@ -780,9 +790,10 @@ described in
 [MaybeReorderThread with coherence hint](#MaybeReorderThread-with-coherence-hint).
 
 ```C++
-void MaybeReorderThread( HitObject Hit,
-                    uint CoherenceHint,
-                    uint NumCoherenceHintBitsFromLSB );
+void dx::MaybeReorderThread(
+    dx::HitObject Hit,
+    uint CoherenceHint,
+    uint NumCoherenceHintBitsFromLSB);
 ```
 
 Parameter                           | Definition
