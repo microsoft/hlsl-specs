@@ -277,6 +277,13 @@ RWStructuredBuffer<ResourceEntry<Resources> >   resourceBuffer;
 There may also be a cognitive burden with developers expected to understand
 two independent type systems, which will almost inevitably lead to errors.
 
+The advantage of this method however would be avoiding the need for separate
+"VA" Buffer types, as both resource entries and VAs could be handled as
+wrapper types, and it might be possible (if desired) to continue supporting
+conversion to shading languages with legacy style bindings, as Slang has
+chosen to do with their
+[DescriptorHandle\<T> type](https://shader-slang.org/slang/user-guide/convenience-features.html#descriptorhandle-for-bindless-descriptor-access).
+
 
 #### Open Issue: Should this deprecate the ResourceDescriptorHeap built-in?
 
