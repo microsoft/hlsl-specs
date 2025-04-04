@@ -1306,7 +1306,6 @@ declare %dx.types.HitObject @dx.op.hitObject_TraceRay.PayloadT(
 Validation errors:
 - Validate the resource for `acceleration structure handle`.
 - Validate the compatibility of type `PayloadT`.
-- Validate that `payload` is a valid pointer.
 
 #### HitObject_FromRayQuery
 
@@ -1318,9 +1317,6 @@ declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery(
 
 ```
 This is used for the HLSL overload of `HitObject::FromRayQuery` that only takes `RayQuery`.
-
-Validation errors:
-- Validate that `ray query` is a valid ray query handle.
 
 #### HitObject_FromRayQueryWithAttrs
 
@@ -1336,9 +1332,7 @@ This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQ
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
 
 Validation errors:
-- Validate that `ray query` is a valid ray query handle.
 - Validate the compatibility of type `AttrT`.
-- Validate that `attributes` is a valid pointer.
 
 #### HitObject_MakeMiss
 
@@ -1379,7 +1373,6 @@ declare void @dx.op.hitObject_Invoke.PayloadT(
 Validation errors:
 - Validate that `hit object` is not undef.
 - Validate the compatibility of type `PayloadT`.
-- Validate that `payload` is a valid pointer.
 
 #### MaybeReorderThread
 
@@ -1450,7 +1443,6 @@ declare void @dx.op.hitObject_Attributes.AttrT(
 Validation errors:
 - Validate that `hit object` is not undef.
 - Validate the compatibility of type `AttrT`.
-- Validate that `attributes` is a valid pointer.
 
 #### Generic State Value getters
 
