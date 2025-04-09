@@ -100,6 +100,7 @@ Previously usage of `extractelement` and `insertelement` in DXIL didn't allow dy
 #### Elementwise intrinsics
 
 A selection of elementwise intrinsics are given additional native vector forms.
+The full list of intrinsics with elementwise overloads is listed in [Appendix 1](#appendix-1-new-elementwise-overloads).
 Elementwise intrinsics are those that perform their calculations irrespective of the location of the element
  in the vector or matrix arguments except insofar as that position corresponds to those of the other elements
  that might be used in the individual element calculations.
@@ -182,6 +183,46 @@ Full runtime execution should be tested by using the native vector intrinsics us
 Calculations should produce the correct results in all cases for a range of vector sizes.
 In practice, this testing will largely represent verifying correct intrinsic output
  with the new shader model.
+
+## Appendix 1: New Elementwise Overloads
+
+| Opcode |  Name          | Class    |
+| ------ | -------------- | -------- |
+| 6      | FAbs           | Unary    |
+| 7      | Saturate       | Unary    |
+| 12     | Cos            | Unary    |
+| 13     | Sin            | Unary    |
+| 14     | Tan            | Unary    |
+| 15     | Acos           | Unary    |
+| 16     | Asin           | Unary    |
+| 17     | Atan           | Unary    |
+| 18     | Hcos           | Unary    |
+| 19     | Hsin           | Unary    |
+| 20     | Htan           | Unary    |
+| 21     | Exp            | Unary    |
+| 22     | Frc            | Unary    |
+| 23     | Log            | Unary    |
+| 24     | Sqrt           | Unary    |
+| 25     | Rsqrt          | Unary    |
+| 26     | Round_ne       | Unary    |
+| 27     | Round_ni       | Unary    |
+| 28     | Round_pi       | Unary    |
+| 29     | Round_z        | Unary    |
+| 30     | Bfrev          | Unary    |
+| 35     | FMax           | Binary   |
+| 36     | FMin           | Binary   |
+| 37     | IMax           | Binary   |
+| 38     | IMin           | Binary   |
+| 39     | UMax           | Binary   |
+| 40     | UMin           | Binary   |
+| 46     | FMad           | Tertiary |
+| 47     | Fma            | Tertiary |
+| 48     | IMad           | Tertiary |
+| 49     | UMad           | Tertiary |
+| 83     | DerivCoarseX   | Unary    |
+| 84     | DerivCoarseY   | Unary    |
+| 85     | DerivFineX     | Unary    |
+| 86     | DerivFineY     | Unary    |
 
 ## Acknowledgments
 
