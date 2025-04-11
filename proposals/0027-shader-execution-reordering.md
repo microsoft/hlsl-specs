@@ -1313,17 +1313,9 @@ declare %dx.types.HitObject @dx.op.hitObject_TraceRay.PayloadT(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_TraceRay`.
 - Validate the resource for `acceleration structure handle`.
 - Validate the compatibility of type `PayloadT`.
 - Validate that `payload` is a valid pointer.
-
-Validation warnings:
-- If `ray flags` is constant, validate the combination.
-- If `instance inclusion mask` is constant, validate that no more than the 8 least significant bits are set.
-- If `ray contribution to hit group index` is constant, validate that no more than the 4 least significant bits are set.
-- If `multiplier for geometry contribution to hit group index` is constant, validate that no more than the 4 least significant bits are set.
-- If `miss shader index` is constant, validate that no more than the 16 least significant bits are set.
 
 #### HitObject_FromRayQuery
 
@@ -1337,7 +1329,6 @@ declare %dx.types.HitObject @dx.op.hitObject_FromRayQuery(
 This is used for the HLSL overload of `HitObject::FromRayQuery` that only takes `RayQuery`.
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_FromRayQuery`.
 - Validate that `ray query` is a valid ray query handle.
 
 #### HitObject_FromRayQueryWithAttrs
@@ -1354,13 +1345,9 @@ This is used for the HLSL overload of `HitObject::FromRayQuery` that takes `RayQ
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_FromRayQueryWithAttrs`.
 - Validate that `ray query` is a valid ray query handle.
 - Validate the compatibility of type `AttrT`.
 - Validate that `attributes` is a valid pointer.
-
-Validation warnings:
-- Validate that `hit kind` is in the range of 0-127.
 
 #### HitObject_MakeMiss
 
@@ -1380,13 +1367,6 @@ declare %dx.types.HitObject @dx.op.hitObject_MakeMiss(
     nounwind readnone
 ```
 
-Validation errors:
-- Validate that `opcode` equals `HitObject_MakeMiss`.
-
-Validation warnings:
-- If `ray flags` is constant, validate the combination.
-- If `miss shader index` is constant, validate that no more than the 16 least significant bits are set.
-
 #### HitObject_MakeNop
 
 ```DXIL
@@ -1394,9 +1374,6 @@ declare %dx.types.HitObject @dx.op.hitObject_MakeNop(
     i32)                           ; opcode
     nounwind readnone
 ```
-
-Validation errors:
-- Validate that `opcode` equals `HitObject_MakeNop`.
 
 #### HitObject_Invoke
 
@@ -1409,7 +1386,6 @@ declare void @dx.op.hitObject_Invoke.PayloadT(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_Invoke`.
 - Validate that `hit object` is not undef.
 - Validate the compatibility of type `PayloadT`.
 - Validate that `payload` is a valid pointer.
@@ -1431,12 +1407,8 @@ declare void @dx.op.MaybeReorderThread(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `MaybeReorderThread`.
 - Validate that `coherence hint` is not undef.
 - Validate that `num coherence hint bits from LSB` is not undef.
-
-Validation warnings:
-- If `num coherence hint bits from LSB` is constant, validate that it is less than or equal to 32.
 
 #### HitObject_SetShaderTableIndex
 
@@ -1451,7 +1423,6 @@ declare %dx.types.HitObject @dx.op.hitObject_SetShaderTableIndex(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_SetShaderTableIndex`.
 - Validate that `hit object` is not undef.
 - Validate that `record index` is not undef.
 
@@ -1468,7 +1439,6 @@ declare i32 @dx.op.hitObject_LoadLocalRootTableConstant(
 ```
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_LoadLocalRootTableConstant`.
 - Validate that `hit object` is not undef.
 - Validate that `offset` is not undef.
 
@@ -1487,7 +1457,6 @@ declare void @dx.op.hitObject_Attributes.AttrT(
 `AttrT` is the user-defined intersection attribute struct type. See `ReportHit` for definition.
 
 Validation errors:
-- Validate that `opcode` equals `HitObject_Attributes`.
 - Validate that `hit object` is not undef.
 - Validate the compatibility of type `AttrT`.
 - Validate that `attributes` is a valid pointer.
@@ -1546,7 +1515,6 @@ declare float @dx.op.hitObject_StateMatrix.f32(
 ```
 
 Validation errors:
-- Validate that `opcode` is one of the supported opcodes in the table above.
 - Validate that `hit object` is not undef.
 - Validate that `index`, `row`, and `col` are constant and in a valid range.
 
