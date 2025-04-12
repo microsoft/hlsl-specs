@@ -77,9 +77,11 @@ void ps_main(args) // args: texture, normal, position
 
 **Neural Network based shader**
 
-Below shader is in HLSL-like psuedocode, to highlight the idea of what replacing physical computations with a neural network based evaluation looks like. The exact syntax for the new intrinsics is intentionally skipped to keep it simple, later sections contain examples with the correct syntax and sample descriptors.
+The shader below shows the idea of what replacing physical computations with a
+neural network based evaluation looks like. Some details have been omitted, but
+this should give a sense of how these new operations can be used.
 
-> NOTE: see proposal [0031] for the latest on the HLSL API.
+> NOTE: see proposal [0031] for full details on the HLSL API.
 
 ```c++
 ByteAddressBuffer inputMatrix0; 
@@ -97,30 +99,30 @@ void ps_main(args) // args: texture, normal, position
     // in the form of matrices and bias vectors.
 
     // The input vector is computed from the shader input
-    vector<uint32_t, M> inputVector = SomeFunction(args);
+    vector<uint32_t, INPUT_SIZE> inputVector = SomeFunction(args);
 
     // Below the physical calculations are replaced by NN evaluation
     // the Matrix and Bias are trained offline and loaded to memory
 
     // layer0 = inputVector*inputMatrix + biasVector0
     // The matrix and bias are loaded from memory at offsets : moffset0 and boffset0
-    MatrixRef<DATA_TYPE_UINT32, K, M, MATRIX_LAYOUT_MUL_OPTIMAL> M0 = { inputMatrix0, moffset0, 0 }; 
+    MatrixRef<DATA_TYPE_UINT32, N, INPUT_SIZE, MATRIX_LAYOUT_MUL_OPTIMAL> M0 = { inputMatrix0, moffset0, 0 }; 
     VectorRef<DATA_TYPE_UINT32> B0 = { biasVector0, boffset0 };
 
-    vector<uint32_t, K> layer0 = MulAdd<uint32_t>(M0, MakeInterpretedVector<DATA_TYPE_UINT32>(inputVector), B0);
+    vector<uint32_t, N> layer0 = MulAdd<uint32_t>(M0, MakeInterpretedVector<DATA_TYPE_UINT32>(inputVector), B0);
     layer0 = max(layer0,0); // Apply activation function
 
-    // layer0 = inputVector*inputMatrix0 + biasVector0
+    // layer1 = inputVector*inputMatrix0 + biasVector0
     // The matrix and bias are loaded from memory at offsets : moffset1 and boffset1
-    MatrixRef<DATA_TYPE_UINT32, K, K, MATRIX_LAYOUT_MUL_OPTIMAL> M1 = { inputMatrix0, moffset1, 0 };
+    MatrixRef<DATA_TYPE_UINT32, N, N, MATRIX_LAYOUT_MUL_OPTIMAL> M1 = { inputMatrix0, moffset1, 0 };
     VectorRef<DATA_TYPE_UINT32> B1 = { biasVector0, boffset1 };
     vector<uint32_t, K> layer1 = MulAdd<uint32_t>(M1, MakeInterpretedVector<DATA_TYPE_UINT32>(layer0), B1);
     layer1 = max(layer1,0); // Apply activation function
 
     // output = layer1*inputMatrix1 + biasVector1 
-    MatrixRef<DATA_TYPE_UINT32, N, K, MATRIX_LAYOUT_MUL_OPTIMAL> M2 = { inputMatrix1, 0, 0 };
+    MatrixRef<DATA_TYPE_UINT32, OUTPUT_SIZE, N, MATRIX_LAYOUT_MUL_OPTIMAL> M2 = { inputMatrix1, 0, 0 };
     VectorRef<DATA_TYPE_UIN32> B2 = { biasVector1, 0 };
-    vector<uint32_t, N> output = MulAdd<uint32_t>(M2, MakeInterpretedVector<DATA_TYPE_UINT32>(layer1), B2);
+    vector<uint32_t, OUTPUT_SIZE> output = MulAdd<uint32_t>(M2, MakeInterpretedVector<DATA_TYPE_UINT32>(layer1), B2);
 
     output = exp(output); 
     
