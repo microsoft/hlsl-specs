@@ -643,7 +643,9 @@ Parameters:
 - `InputVector2` - the second vector, containing N elements. Element type must
   be the same as InputVector1's.
 - `Matrix` - the destination matrix. The matrix dimensions must be MxN. The
-  `Transpose` parameter for the matrix must be `false`.
+  `Transpose` parameter for the matrix must be `false`. The matrix layout
+  parameter `ML` for the matrix must be
+  `dx::linalg::MatrixLayout::MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 Implementation:
 
@@ -664,6 +666,11 @@ void OuterProductAccumulate(
 } // namespace linalg
 } // namespace dx
 ```
+
+Validation:
+
+- Emit Diagnostic if MatrixLayout is not
+  `dx::linalg::MatrixLayout::MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 ## Function: VectorAccumulate
 
