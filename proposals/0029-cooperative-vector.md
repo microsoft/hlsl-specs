@@ -279,7 +279,7 @@ that the input vector is an unsigned integer.
   following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
   `I8`, `F8_E4M3`, `F8_E5M2`, 
 
-### Vector Outer Product
+### Vector-Vector Outer Product and Accumulate
 
 #### Syntax
 
@@ -312,8 +312,9 @@ The two input vectors are specified via **input vector 1** and **input vector
 
 The matrix is accumulated to the writeable raw-buffer specified by **matrix
 resource**, with **matrix offset**, **matrix interpretation**, **matrix
-layout**, and **matrix stride** behaving as described
-[above](#matrix-vector-multiply-and-multiply-add-operations).
+layout**, and **matrix stride** behaving as described 
+[above](#matrix-vector-multiply-and-multiply-add-operations), with the constraint
+that **matrix layout** must be `DXILMatrixLayout::OuterProductOptimal`.
 
 The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
@@ -335,6 +336,8 @@ guaranteed to be supported on all implementations can be found in
 * **matrix interpretation** must be a value corresponding to one of the
   following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
   `I8`, `F8_E4M3`, `F8_E5M2`, 
+
+* **matrix layout** must be `DXILMatrixLayout::OuterProductOptimal`
 
 
 ### Vector Accumulate
