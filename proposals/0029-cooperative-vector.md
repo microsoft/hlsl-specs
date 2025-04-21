@@ -222,12 +222,12 @@ The matrix is loaded from a raw-buffer, **matrix resource**,  starting at
 **matrix offset**. The **matrix interpretation** argument specifies the element
 type of the matrix (see [Type Interpretations]), no conversion is performed.
 The **matrix M dimension** and **matrix K dimension** arguments specify the
-dimensions of the matrix. The**matrix layout** argument specifies the layout
+dimensions of the matrix. The **matrix layout** argument specifies the layout
 of the matrix (see [Matrix Layouts]). If the **matrix transpose** is non-zero
 then the matrix is transposed before performing the multiply (see
 [Matrix Transpose]). For row-major and column-major layouts, **matrix
 stride** specifies the number of bytes to go from one row/column to the next.
-For optimal layouts, **matrix stride** is ignored. 
+For optimal layouts, **matrix stride** must be zero. 
 
 Only non-packed interpretations are valid for matrices.
 
@@ -279,7 +279,7 @@ that the input vector is an unsigned integer.
   following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
   `I8`, `F8_E4M3`, `F8_E5M2`, 
 
-### Vector Outer Product
+### Vector-Vector Outer Product and Accumulate
 
 #### Syntax
 
@@ -312,8 +312,11 @@ The two input vectors are specified via **input vector 1** and **input vector
 
 The matrix is accumulated to the writeable raw-buffer specified by **matrix
 resource**, with **matrix offset**, **matrix interpretation**, **matrix
-layout**, and **matrix stride** behaving as described
-[above](#matrix-vector-multiply-and-multiply-add-operations).
+layout**, and **matrix stride** behaving as described 
+[above](#matrix-vector-multiply-and-multiply-add-operations). 
+
+Note that **matrix layout** must be `DXILMatrixLayout::OuterProductOptimal` for
+this operation. **matrix stride** must be 0 (for optimal layouts).
 
 The base address of **matrix resource** and **matrix offset** must be 128-byte
 aligned. Also note that the size of the underlying allocation is guaranteed to
@@ -321,8 +324,6 @@ be a multiple of 16 bytes ensuring that the 16 bytes access of the last
 row/column of the matrix is valid memory. Implementations may write to the
 contents of the padding between the end of the matrix and the 16-byte boundary,
 so developers should not use this padding space for anything else.
-
-The **matrix stride** is 16-byte aligned.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
@@ -335,6 +336,8 @@ guaranteed to be supported on all implementations can be found in
 * **matrix interpretation** must be a value corresponding to one of the
   following `ComponentType`s: `I16`, `U16`, `I32`, `U32`, `F16`, `F32`, `U8`,
   `I8`, `F8_E4M3`, `F8_E5M2`, 
+
+* **matrix layout** must be `DXILMatrixLayout::OuterProductOptimal`
 
 
 ### Vector Accumulate
@@ -572,8 +575,9 @@ enum class DXILMatrixLayout : uint {
 ```
 
 Optimal layouts are opaque implementation specific layouts, the D3D call
-`ConvertLinearAlgebraMatrix` can be used to convert the *Matrix* to an
-optimal layout. Row-Major and Column-Major layouts are also supported.
+`ConvertLinearAlgebraMatrix` can be used to convert the *Matrix* to an optimal
+layout. Row-Major and Column-Major layouts are also supported. **matrix
+stride** must be zero for optimal layouts.
 
  
 ### Matrix Transpose
