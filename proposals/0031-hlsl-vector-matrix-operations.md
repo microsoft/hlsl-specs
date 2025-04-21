@@ -319,7 +319,7 @@ Members:
 - `StartOffset` - the offset, in bytes, from the beginning of the buffer where
   the matrix is located.
 - `Stride` - the stride, in bytes, between rows or columns of the matrix. This
-  value is ignored if the matrix layout is `MATRIX_LAYOUT_MUL_OPTIMAL` or
+  value must be zero if the matrix layout is `MATRIX_LAYOUT_MUL_OPTIMAL` or
   `MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 Implementation:
@@ -643,9 +643,10 @@ Parameters:
 - `InputVector2` - the second vector, containing N elements. Element type must
   be the same as InputVector1's.
 - `Matrix` - the destination matrix. The matrix dimensions must be MxN. The
-  `Transpose` parameter for the matrix must be `false`. The matrix layout
-  parameter `ML` for the matrix must be
-  `dx::linalg::MatrixLayout::MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
+  `Transpose` parameter for the matrix must be `false`. The `ML`  parameter
+  (matrix layout) for the matrix must be
+  `dx::linalg::MatrixLayout::MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`. The `stride`
+  parameter must be zero (for optimal layouts).
 
 Implementation:
 
@@ -667,7 +668,7 @@ void OuterProductAccumulate(
 } // namespace dx
 ```
 
-Validation:
+Diagnostics:
 
 - Emit Diagnostic if MatrixLayout is not
   `dx::linalg::MatrixLayout::MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
