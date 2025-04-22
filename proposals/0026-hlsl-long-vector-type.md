@@ -31,7 +31,7 @@ Enable vectors of length between 5 and 1024 inclusive in HLSL using existing tem
 Such vectors will hereafter be referred to as "long vectors".
 These will be supported for all elementwise intrinsics that take variable-length vector parameters.
 For certain operations, these vectors will be represented as native vectors using
- [Dxil vectors](NNNN-dxil-vectors.md) and equivalent SPIR-V representations.
+ [Dxil vectors](0030-dxil-vectors.md) and equivalent SPIR-V representations.
 
 ## Detailed design
 
@@ -74,11 +74,11 @@ Long vectors are not permitted in:
 * Resource types other than ByteAddressBuffer or StructuredBuffer.
 * Any part of the shader's signature including entry function parameters and return types or
   user-defined struct parameters.
-* Cbuffers or tbuffers.
+* Cbuffers or Tbuffers.
 * A ray tracing `Parameter`, `Attributes`, or `Payload` parameter structures.
 * A work graph record.
 
-While this describes where long vecgtors can be used and later sections will describe how,
+While this describes where long vectors can be used and later sections will describe how,
 implementations may specify best practices in certain uses for optimal performance.
 
 #### Constructing vectors
@@ -94,12 +94,13 @@ Examples:
 vector<uint, 5> InitList = {1, 2, 3, 4, 5};
 vector<uint, 6> Construct = vector<uint, 6>(6, 7, 8, 9, 0, 0);
 uint4 initval = {0, 0, 0, 0};
-vector<uint, 8> VecVec = {uint2(coord.xy), vecB};
-vector<uint, 6> Assigned = vecB;
-float arr[5];
-vector<float, 5> CastArr = (vector<float, 5>)arr;
-vector<float, 6> ArrScal = {arr, 7.9};
-vector<float, 10> ArrArr = {arr, arr};
+vector<uint, 6> VecB = {1, 2, 3, 4, 5, 6};
+vector<uint, 8> VecVec = {uint2(coord.xy), VecB};
+vector<uint, 6> Assigned = VecB;
+float Arr[5];
+vector<float, 5> CastArr = (vector<float, 5>)Arr;
+vector<float, 6> ArrScal = {Arr, 7.9};
+vector<float, 10> ArrArr = {Arr, Arr};
 vector<float, 15> Scal = 4.2;
 ```
 
@@ -136,7 +137,7 @@ They do not support any swizzle operations.
 
 #### Operations on long vectors
 
-Support all HLSL intrinsics that perform [elementwise calculations](NNNN-dxil-vectors.md#elementwise-intrinsics)
+Support all HLSL intrinsics that perform [elementwise calculations](0030-dxil-vectors.md#elementwise-intrinsics)
  that take parameters that could be long vectors and whose function doesn't limit them to shorter vectors.
 These are operations that perform the same operation on an element regardless of its position in the vector
  except that the position indicates which element(s) of other vector parameters might be used in that calculation.
@@ -164,7 +165,7 @@ Refer to the HLSL spec for an exhaustive list of [Operators](https://learn.micro
 ### Interchange Format Additions
 
 Long vectors can be represented in DXIL, SPIR-V or other interchange formats as scalarized elements or native vectors.
-Representation of native vectors in DXIL depends on [dxil vectors](NNNN-dxil-vectors.md).
+Representation of native vectors in DXIL depends on [dxil vectors](0030-dxil-vectors.md).
 
 ### Debug Support
 
@@ -196,7 +197,7 @@ Declaring vectors of length longer than 1024 should produce an error.
 Validation should produce errors when a long vector is found in:
 
 * The shader signature.
-* A cbuffer/tbuffer.
+* A Cbuffer/Tbuffer.
 * Work graph records.
 * `Payload`, `Parameter`, and `Attributes` parameter user-defined structs used in
   `TraceRay()`, `CallShader()`, and `ReportHit()` ray tracing intrinsics.
@@ -227,7 +228,7 @@ Verify that long vectors can be declared in all appropriate contexts:
 * Templated Load/Store methods on ByteAddressBuffers.
 * As members of arrays and structs in any of the above contexts.
 
-Verify that long vectors can be correctly initialized in all the forms listed in [Constructing vectors](constructing-vectors).
+Verify that long vectors can be correctly initialized in all the forms listed in [Constructing vectors](#constructing-vectors).
 
 Verify that long vectors in supported intrinsics produce appropriate outputs.
 Supported intrinsic functions listed in [Allowed elementwise vector intrinsics](#allowed-elementwise-vector-intrinsics)
@@ -240,7 +241,7 @@ Verify that long vectors of different sizes will reference different overloads o
 Verify that template instantiation using long vectors correctly creates variants for the right sizes.
 
 Verification of correct interchange format output depends on the implementation and representation.
-Native vector DXIL intrinsics might be checked for as described in [Dxil vectors](NNNN-dxil-vectors.md)
+Native vector DXIL intrinsics might be checked for as described in [Dxil vectors](0030-dxil-vectors.md)
  if native DXIL vector output is supported.
 SPIR-V equivalent output should be checked as well.
 Scalarized representations are also possible depending on the compilation implementation.
@@ -249,10 +250,10 @@ Scalarized representations are also possible depending on the compilation implem
 
 Verify that long vectors produce compilation errors when:
 
-* Declared in interfaces listed in [Diagnostic changes](diagnostic-changes).
+* Declared in interfaces listed in [Diagnostic changes](#diagnostic-changes).
 * Passed as parameters to any intrinsic functions listed in [Disallowed vector intrinsics](#disallowed-vector-intrinsics)
 * All swizzle operations (e.g. `lvec.x`, `lvec.rg`, `lvec.wzyx`)
-* Declaring a vector over the maximum size in any of the allowed contexts listed in [Allowed usage](allowed-usage).
+* Declaring a vector over the maximum size in any of the allowed contexts listed in [Allowed usage](#allowed-usage).
 
 ### Validation Testing
 

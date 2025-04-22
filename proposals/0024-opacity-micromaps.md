@@ -60,7 +60,6 @@ A new `RAY_FLAG` is proposed that allows ray tracing in shaders to force OMM
 
 Add a built-in `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` to the
 `RAYTRACING_PIPELINE_FLAG` flags in HLSL to enable OMM.
-Add built-in `RAY_FLAG_FORCE_OMM_2_STATE` to `RAY_FLAG` flags in HLSL.
 
 `RAYTRACING_PIPELINE_FLAG` flags are used in the
 [Raytracing pipeline config1][pipeline-config]
@@ -75,10 +74,13 @@ overall.  See the D3D12 flag definition for more details:
 `RayQuery` objects, used with [RayQuery::TraceRayInline()][rq-trace], 
 also need to be aware that OMMs may be in use.  The above `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS` 
 doesn't apply for inline raytracing however. `RayQuery` objects are 
-independent of raytracing pipelines. For `RayQuery` the template for 
+independent of raytracing pipelines. For `RayQuery`, the template for 
 instantiating the object includes a new optional `RAYQUERY_FLAGS` parameter:
 
-`RayQuery<RAY_FLAGS, RAYQUERY_FLAGS>`
+```
+template<uint StaticRayFlags, uint RayQueryFlags = RAYQUERY_FLAG_NONE>
+class RayQuery;
+```
 
 ```hlsl
 enum RAYQUERY_FLAG : uint
@@ -112,15 +114,30 @@ In HLSL under DXC, these are defined as static const uint values:
 ```hlsl
 static const uint RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS = 0x400;
 static const uint RAY_FLAG_FORCE_OMM_2_STATE = 0x400;
+static const uint RAYQUERY_FLAG_NONE = 0;
+static const uint RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS = 0x1;
 ```
+
+Each of the above flag value definitions except `RAYQUERY_FLAG_NONE` will 
+have an availability attribute applied, restricting their use to
+shader model 6.9 and above.
 
 > Note: the fact that these flags have the same value is only a coincidence.
 
 ### Interchange Format Additions
 
-This adds no DXIL operations or metadata, it only adds a new flag value that
-may be used with existing DXIL operation parameters, returned by a DXIL
-operation.
+This adds a new DXIL operation, `AllocateRayQuery2`, to Shader Model 6.9.
+This is a new version of `AllocateRayQuery` that has a `RayQueryFlags`
+parameter corresponding to the new template argument in HLSL.
+When the `RayQueryFlags` template argument is non-zero, this new
+`AllocateRayQuery2` DXIL op is used, otherwise the current `AllocateRayQuery`
+DXIL op is used.
+
+The new DXIL Op, `AllocateRayQuery2`, will have this signature:
+```DXIL
+; Function Attrs: nounwind 
+declare i32 @dx.op.allocateRayQuery2(i32 OpCode, i32 constRayFlags, i32 RayQueryFlags)
+```
 
 The DXIL operations which either accept or return `RayFlags`, and therefore may
 accept or return the new `RAY_FLAG_FORCE_OMM_2_STATE` are the following (along
@@ -131,21 +148,21 @@ with brief descriptions):
 - `RayQuery_TraceRayInline` - Trace a ray (with ray flags OR'd with the
   RayQuery's constant ray flags)
 
-When lowering to DXIL intrinsics, we will mask the flags using the legal mask
-for the shader target.  This will prevent undefined behavior if invalid flags
-were specified and either warnings were ignored, or the flags were not a known
-constant value during semantic analysis.
-
-In `DxilConstants.h`, the `RayFlag::ForceOMM2State` flag is added.
-Propose adding ValidMask values for diagnostics and validation.
+In `DxilConstants.h`, the `RayFlag::ForceOMM2State` flag is added, and a new 
+`RayQueryFlag` enum is added, mirroring the `RAYQUERY_FLAG` enum 
+defined in HLSL.
 
 ```cpp
 // Corresponds to RAY_FLAG_* in HLSL
 enum class RayFlag : uint32_t {
   ...
-  ForceOMM2State = 0x400, // Force 2-state in Opacity Micromaps
-  ValidMask_1_8 = 0x3ff, // valid mask up through DXIL 1.8
-  ValidMask = 0x7ff, // current valid mask
+  ForceOMM2State = 0x400 // Force 2-state in Opacity Micromaps
+};
+
+// Corresponds to RAYQUERY_FLAG_* in HLSL
+enum class RayQueryFlag : uint32_t {
+  None = 0,
+  AllowOpacityMicromaps = 1
 };
 ```
 
@@ -164,20 +181,19 @@ a reachable use of one of the new flags is encountered.
 A reachable use is one that is found by traversing AST from active entry and
 export functions, or from subobject declarations when compiling a library.
 Traversal will follow local function calls, as well as traversing referenced
-decls and initializers.
+decls (`DeclRef`s and `DeclRefExpr`s) and initializers.
 
-As an implementation detail, an attribute may be used on the new flag
-definitions, such as an existing Clang availability attribute or a new custom
-HLSL-specific attribute.
-
-AST traversal from entry points will traverse DeclRefs and initializers to
-detect the use of the new ray flag.  AST traversal will be added for subobject
-declarations on library targets to detect any use of the new pipeline flag.
+As an implementation detail, a new custom HLSL-specific availability 
+attribute will be used on the new flag definitions. Specifically, of the new 
+flags introduced, `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`, 
+`RAY_FLAG_FORCE_OMM_2_STATE`, and `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS`
+will have an availability attribute, which restricts their usage to
+shader model 6.9. `RAYQUERY_FLAG_NONE` will be left unrestricted.
 
 This will have implications for uses of these flags outside of the intended
 targets.  Since they are just uint values, it's technically legal to refer to
-them elsewhere, so we will use a warning which defaults to warning rather than
-using DefaultError like we would for calls to unsupported intrinsic functions.
+them elsewhere, so we will use a DefaultError warning, since this will be the
+only diagnostic used to catch use of these flags in an earlier shader model.
 
 Proposed warning diagnostic:
 
@@ -185,60 +201,61 @@ Proposed warning diagnostic:
   This new warning will have a new warning group to allow it to be targeted
   easily for command-line override, such as `hlsl-availability-constant`.
 
-When compiling a library with the
-`RaytracingPipelineFlags::AllowOpacityMicromaps` flag set in a
-[Raytracing pipeline config1][pipeline-config] subobject,
-a new DefaultError warning diagnostic will be added if the shader model is less
-than 6.9. This will detect the case where the flag is not spelled out and
-caught by AST traversal.
-
-Current HLSL diagnostics in DXC do not verify `RayFlags` values in any context.
-`TraceRay()` and `RayQuery::TraceRayInline()` accept non-immediate values, but
-the `RayFlags` provided as a template argument to `RayQuery` must be immediate.
-
-In addition to the AST traversal detecting any explicit use of the new flag,
-the same DefaultError warning diagnostic will be added to detect when the
-new ray flag is used at the `RayQuery` template argument, `TraceRay()`, or
-`RayQuery::TraceRayInline()` (when it is immediate).
-This can make use of the new `ValidMask*` values.
+A check will be added on the declaration of a RayQuery object 
+(when not dependent), so that when the RayQueryFlags template argument is
+non-zero, it requires shader model 6.9 or above.
 
 Proposed DefaultError warning diagnostic:
+- `"A non-zero value for the RayQueryFlags template argument requires shader model 6.9 or above."`.
 
-- `"%select{RaytracingPipelineFlags|RayFlags}0 (0x%1) includes unsupported bits for shader model %2; valid mask: 0x%3"`.
-  This new warning will have a different warning group, such as
-  `hlsl-availability`.
+A check will be added on the declaration of a RayQuery object 
+(when not dependent), so that when `RAY_FLAG_FORCE_OMM_2_STATE` is set on
+the RayFlags template argument, and `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS`
+is not set on the RayQueryFlags template argument, a DefaultError warning 
+is emitted.
 
-> See Issue [RayQuery Template Diagnostics](#rayquery-template-diagnostics).
+Proposed DefaultError warning diagnostic:
+- `"When using 'RAY_FLAG_FORCE_OMM_2_STATE' in RayFlags, RayQueryFlags must have RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS set."`.
+
+A check will be added at the call site of `RayQuery::TraceRayInline` that will
+emit a DefaultError warning when a constant `RayFlags` parameter has the
+`RAY_FLAG_FORCE_OMM_2_STATE` flag set, and the RayQuery object's
+`RayQueryFlags` template argument does not have the
+`RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag set.
+The same warning message is emitted, but a diagnostic note should also
+point to the RayQuery object declaration, where this RayQueryFlag needs to be
+specified.
 
 #### Validation Changes
+Four DXIL operations accept `RayFlags` as input, but only two require these
+flags' input to be immediate: `AllocateRayQuery` and `AllocateRayQuery2`.
 
-Validation will be added to ensure that the shader model is at least 6.9 when
-the `RaytracingPipelineFlags::AllowOpacityMicromaps` is used in a
-[Raytracing pipeline config1][pipeline-config] subobject.
+Validation will be added to ensure the flags are constant on input to
+the `AllocateRayQuery` and `AllocateRayQuery2` DXIL operation.
 
-Proposed validation error diagnostic:
+Proposed validation error diagnostics:
 
-- `"RaytracingPipelineFlags in RaytracingPipelineConfig1 subobject '%0' specifies unknown flags (0x%1) for shader model %2; valid mask: 0x%3"`
+- `"constRayFlags argument of AllocateRayQuery '%0' must be constant"`
+- `"constRayFlags and RayQueryFlags arguments of AllocateRayQuery2 '%0' must be constant"`
 
-Three DXIL operations accept `RayFlags` as input, but only one requires this
-input to be immediate: `AllocateRayQuery`.
-
-Validation will be added to check the `RayFlags` parameters for each applicable
-DXIL operation, with an error emitted if the flags are constant, the new flag
-is used, and the shader model is less than 6.9.
-
-Proposed validation error diagnostic:
-
-- `"RayFlags used in '%0' specifies unknown flags (0x%1) for shader model %2; valid mask: 0x%3"`
-
-Validation will also be added to ensure the flags are constant on input to
-the `AllocateRayQuery` DXIL operation.
+Finally, validation will be added for the `AllocateRayQuery2` DXIL operation
+to ensure that when `RAY_FLAG_FORCE_OMM_2_STATE` is set on the constRayFlags
+argument, the `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` is also set on the
+RayQueryFlags argument.
 
 Proposed validation error diagnostic:
 
-- `"ConstRayFlags argument of AllocateRayQuery '%0' must be constant"`
+- `"RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS must be set for RayQueryFlags when RAY_FLAG_FORCE_OMM_2_STATE is set for constRayFlags on AllocateRayQuery2 operation %0."`.
+
 
 ### Runtime Additions
+
+The new `AllocateRayQuery2` DXIL op is a required part of shader model 6.9.
+Drivers that do not support OMM must ignore the new flags:
+`RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`,
+`RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS`, and `RAY_FLAG_FORCE_OMM_2_STATE`.
+This is equivalent to a driver that does support OMM traversing a BVH built
+without OMM data.
 
 #### Runtime information
 
@@ -304,32 +321,32 @@ See [Opacity Micromaps][dxr-omm] in the Raytracing spec for details.
 - Test use and value of new flags using ast-dump
 - Test that new flag values in intrinsics and RayQuery template argument make
   it through to appropriate DXIL operation arguments.
-- Use D3DReflect test to verify new flag value in `RaytracingPipelineConfig1`
-  subobject `Flags` field.
-- Use D3DReflect test to verify min shader model of 6.9 when new ray flag has
-  constant usage.
-- Check for `and` instruction masking of non-constant values, and for masking
-  off of a constant invalid flag when turning off the associated warnings.
-  These also verify that you can disable all the warning diagnostics.
+- Test optional template argument to RayQuery generates appropriate DXIL
+  opreation and that the optional flag makes it through to the argument list.
+- Test that the new flag value, `RAYTRACING_PIPELINE_FLAG_ALLOW_OPACITY_MICROMAPS`,
+  appears in the `RaytracingPipelineConfig1` subobject's `Flags` field.
 
 ### Diagnostics
 
 - Check availability-based diagnostics for each flag, including recursing
-  through DeclRefs and their initializers.
+  through DeclRefExprs to Decls and their initializers.
   - Check both DXR entry scenarios and non-library RayQuery scenarios.
+- Check that any RayQuery object with the `RayFlag::ForceOMM2State` flag
+  in its first template argument also has an accompanying 
+  `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` flag.
 - Check diagnostics for subobject, and lack of diagnostics for non-library
   target, where subobjects are ignored.
-- Check diagnostics for constant flag values used without the explicit
-  spelling of the new flags (like using `0x400`) in each applicable scenario.
-- Check diagnostics for constant flag scenarios with unknown bits set.
+- Test the custom HLSL availability attribute, that it correctly locates
+  values declared in unintuitive ways, through function calls, namespaces,
+  etc.
 
 ### Validation
 
-- Check constant flag validation for shader models 6.9 and for an earlier
-  shader model, for each applicable intrinsic.
-  - Also check validation for when unknown flag bits are set.
-- Check subobject flag validation for a shader model less than 6.9.
-  - Compile with the flag to 6.9 and change the target for manual assembly.
+- Check constant value validation on `AllocateRayQuery` and `AllocateRayQuery2`
+  DXIL ops.
+- Check `AllocateRayQuery2` DXIL op validation for
+  `RAYQUERY_FLAG_ALLOW_OPACITY_MICROMAPS` requirement when
+  `RAY_FLAG_FORCE_OMM_2_STATE` is used.
 
 ### Execution
 
@@ -347,17 +364,13 @@ subobject when the shader model is less than 6.9.
 
 We will add diagnostics and validation for RayFlag cases where they must be
 constant (RayQuery template and `AllocateRayQuery` DXIL op), or where they
-happen to be constant.  We will only check them against a mask for the shader
-model, rather than checking for invalid combinations of valid flags.
-
-We will add masking for generated DXIL in the compiler, but will not check that
-unknown values are masked in the DXIL validator.
+happen to be constant.
 
 ### Shader Model Predicated Flag Definitions
 
-We will not gate definitions of the flag by shader model, but will use a
-mechanism, such as availability attributes, to mark definitions as only being
-available in shader model 6.9.
+We will not gate definitions of the flag by shader model, but will use 
+availability attributes to mark definitions as only being available in 
+shader model 6.9.
 These diagnostics will be a warning by default, since it is legal to use the
 flag values in other contexts, but might indicate a mistaken usage.
 Diagnostics based on these will only be triggered when these definitions are
@@ -365,31 +378,10 @@ reachable in the current compilation.
 
 ## Open Issues
 
-### Availability Diagnostics
-
-Some investigation is required to determine the approach for DXC to emit
-availability diagnostics for use of the new flag definitions themselves.
-We might use the built-in availability attribute, or use a new attribute,
-depending on practicalities in DXC.
-
-Use of availability attributes for diagnostics will introduce changes in our
-current AST traversal that checks a few existing intrinsics.  It will also
-require that we traverse subobject declarations when compiling a library.
-There may be an opportunity to replace some existing custom diagnostics in
-this path with the use of an availability attribute approach.
-
-### RayQuery Template Diagnostics
-
-How should the `RayQuery` `ConstRayFlag` template argument be checked against
-the valid mask in the compiler?  We have a custom check for arguments such as
-the dimensions passed to `vector` and `matrix` templates.  It was suggested
-that we might be able to implement this with some sort of static assert
-instead.  However, I'm concerned that this approach may unintentionally impact
-unreachable uses of `RayQuery`.
-
 ## Acknowledgments (Optional)
 
 * Amar Patel
+* Josh Batista
 
 <!-- External References -->
 
