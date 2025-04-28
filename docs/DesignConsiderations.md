@@ -3,13 +3,79 @@
 When designing and proposing a feature for HLSL there are some design
 considerations that should be taken into account.
 
+## Goal Statement
+
+HLSL seeks to be a powerful portable GPU programming language that enables high
+performance applications to target GPUs across a wide variety of end user
+devices. HLSL is explicitly not limited to Microsoft hardware and software
+environments.
+
+## Core Priorities
+
+The HLSL design process has a set of core priorities.
+
+### Portability and safety by default
+
+HLSL language features should be portable and safe by default. Non-portable
+features should be explicitly marked as such in the source representations (e.g.
+in an API-specific namespace, or otherwise explicitly denoted).
+
+### Public and open-source by default
+
+HLSL depends on industry collaboration, and must prioritize open and equitable
+collaboration. We must continue evolving our process and designs to be fully
+open and to treat all participants equitably.
+
+### Principle of least astonishment
+
+Most HLSL users are C++ users. While aspects of C++ don't map efficiently to
+GPUs (looking at you `virtual`, RTTI, and exceptions), most of our users are C++
+users. As such, we should strive for alignment with C++ wherever possible and
+follow the [principle of least
+astonishment](https://en.wikipedia.org/wiki/Principle_of_least_astonishment).
+
+### We do not exist in a vacuum
+
+Many of the problems we're solving are not unique to HLSL. We should always look
+to other languages, tools, and ecosystems as we consider how to evolve our own.
+
+### The Zen of Python is pretty great
+
+While not all of Python's design decisions are applicable to HLSL many of their
+design principles apply broadly to programming language design.
+
+[PEP 20 - The Zen of Python](https://peps.python.org/pep-0020/) has a bunch of
+deeply relevant pithy sayings which are a great set of guidelines to help shape
+programming language design, and we should embrace the wisdom of others.
+
+> Beautiful is better than ugly.
+> Explicit is better than implicit.
+> Simple is better than complex.
+> Complex is better than complicated.
+> Flat is better than nested.
+> Sparse is better than dense.
+> Readability counts.
+> Special cases aren't special enough to break the rules.
+> Although practicality beats purity.
+> Errors should never pass silently.
+> Unless explicitly silenced.
+> In the face of ambiguity, refuse the temptation to guess.
+> There should be one-- and preferably only one --obvious way to do it.
+> Although that way may not be obvious at first unless you're Dutch.
+> Now is better than never.
+> Although never is often better than *right* now.
+> If the implementation is hard to explain, it's a bad idea.
+> If the implementation is easy to explain, it may be a good idea.
+> Namespaces are one honking great idea -- let's do more of those!
+
 ## Style Conventions
 
 HLSL's built-in types and methods should conform to a consistent coding style.
 
 * Data types, methods and built-in functions should all be `CamelCase`.
 * Namespaces and keywords are lowercase, `_` separated.
-* Vulkan-specific functionality should be added to the `vk` namespace.
+* API-specific functionality should be added to an API namespace (e.g. `dx`,
+  `vk`, etc.)
 * Microsoft-style attributes interchangably use `CamelCase` and `_` separation,
   but should prefer `CamelCase`
 * System Value semantics are case insensitive, should be specified `CamelCase`
