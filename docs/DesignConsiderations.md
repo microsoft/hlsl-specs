@@ -12,13 +12,16 @@ environments.
 
 ## Core Priorities
 
-The HLSL design process has a set of core priorities.
+The following set of core priorities guides the HLSL design process.
 
 ### Portability and safety by default
 
 HLSL language features should be portable and safe by default. Non-portable
 features should be explicitly marked as such in the source representations (e.g.
 in an API-specific namespace, or otherwise explicitly denoted).
+
+Enhancing portability and safety also means curbing undefined behavior and not
+sacrificing portability or safety features for performance.
 
 ### Public and open-source by default
 
@@ -28,16 +31,21 @@ open and to treat all participants equitably.
 
 ### Principle of least astonishment
 
-Most HLSL users are C++ users. While aspects of C++ don't map efficiently to
-GPUs (looking at you `virtual`, RTTI, and exceptions), most of our users are C++
-users. As such, we should strive for alignment with C++ wherever possible and
-follow the [principle of least
+Most HLSL users are C++ users. Acknowledging that aspects of C++ don't map
+efficiently to GPUs (looking at you `virtual`, RTTI, and exceptions), we should
+strive for alignment with C++ wherever possible and follow the [principle of least
 astonishment](https://en.wikipedia.org/wiki/Principle_of_least_astonishment).
 
 ### We do not exist in a vacuum
 
 Many of the problems we're solving are not unique to HLSL. We should always look
 to other languages, tools, and ecosystems as we consider how to evolve our own.
+
+### Design for users
+
+HLSL exists to serve users. Consider the experience of users and all the ways
+HLSL can empower them to be more productive and creative. HLSL inherits a lot of
+sharp edges both from its history and C++; we strive to reduce those cases.
 
 ### The Zen of Python is pretty great
 
