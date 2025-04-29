@@ -34,6 +34,36 @@ warnings and does not provide any behavior associated with the effects syntax.
 In HLSL 202x we should disable effects parsing support and allow those parsing
 failures to generate errors as would otherwise occur in HLSL.
 
+#### Examples of effects syntax
+
+```hlsl
+< int foo=1; >
+<
+  string Name = "texa";
+  int ArraySize = 3;
+>;
+
+sampler S : register(s1) = sampler_state {texture=tex;};
+Texture2D l_tex { state=foo; };
+
+int foobar2 {blah=foo;} = 5;
+
+texture tex1 < int foo=1; > { state=foo; };
+
+
+technique T0
+{
+  pass {}
+}
+Technique
+{
+  pass {}
+}
+
+int foobar5[] {1, 2, 3};
+int foobar6[4] {1, 2, 3, 4};
+```
+
 ### Removal of `interface` Keyword
 
 DXC supports `interface` declarations, however the semantic utility of
