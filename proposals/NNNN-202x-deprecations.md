@@ -50,15 +50,11 @@ used for and should be the supported path going forward.
 In DXC the `uniform` keyword is parsed and ignored. This may lead users to
 believing it has some impact when it does not. We should remove it.
 
-## Stricter restrictions on cbuffer Members
+## Disallow `cbuffer` initializers
 
-DXC's implementation of `cbuffer` declarations allows all sorts of declarations
-inside the scope of a `cbuffer`, and does not interoperate well with C++
-namespaces.
-
-In HLSL 202x we should disallow any declaration that isn't a variable
-declaration to be a member of a cbuffer, and we should seek to clearly define
-the relationship between cbuffer declarations and their enclosing scope (i.e.
-namespace).
+DXC allows variables within a `cbuffer` to have initializer clauses. The
+initializer clauses are ignored, and DXC does not issue a diagnostic. In HLSL
+202x initializer clauses on declarations placed into an implicit or explicit
+`cbuffer` declaration are illegal and will produce an error.
 
 <!-- {% endraw %} -->
