@@ -16,7 +16,8 @@ The following set of core priorities guides the HLSL design process.
 
 ### Portability and safety by default
 
-HLSL language features should be portable and safe by default. Non-portable
+HLSL language features should be portable and safe by default. HLSL strives to
+be portable across APIs, hardware vendors, and hardware versions. Non-portable
 features should be explicitly marked as such in the source representations (e.g.
 in an API-specific namespace, or otherwise explicitly denoted).
 
