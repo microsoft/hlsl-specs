@@ -665,11 +665,12 @@ Removes and returns a value of the template parameter types from the end of the 
 
 \Sec{Constant Buffers}{Resources.cnbuf}
 
-Constant buffer represent a resource that contains read-only constant data in a specific memory layout.
+Constant buffers represent resources that contain read-only constant data in a
+well-defined memory layout.
 
 \Sub{Constant Buffer Declaration Block}{Resources.cnbuf.cb}
 
-\p Constant buffer can be declared using the \texttt{cbuffer} specifier.
+\p A constant buffer can be declared using the \texttt{cbuffer} specifier.
 
 \begin{grammar}
   \define{cbuffer-declaration-group}\br
@@ -762,7 +763,7 @@ another. This means that local \texttt{ConstantBuffer} can only be assigned from
 
 \Sub{Constant Buffer Layout}{Resources.cnbuf.lay}
 
-\p Constant buffer is arranged like an array of 16-byte rows, or 4-component
+\p A constant buffer is arranged like an array of 16-byte rows, or 4-component
 vectors of 32-bit elements. Shader constants are arranged into the buffer in the
 order they were declared based on following rules.
 
@@ -852,8 +853,8 @@ the constant buffer \texttt{MyConstants}.
 
 \Sub{Default Constant Buffer}{Resources.cnbuf.defcb}
 
-\p All variables declaration in the global scope are implicitly added to default
-constant buffer called \texttt{\$Globals}, unless they are marked
+\p All variables declarations in the global scope are implicitly added to
+default constant buffer called \texttt{\$Globals}, unless they are marked
 \texttt{static}, \texttt{groupshared}, or declare a resource or array of
 resources.
 
