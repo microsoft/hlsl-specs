@@ -763,6 +763,9 @@ another. This means that local \texttt{ConstantBuffer} can only be assigned from
 
 \Sub{Constant Buffer Layout}{Resources.cnbuf.lay}
 
+\p Layout of the constant buffer is implementation dependent. This section
+describes the layout that is used by DirectX.
+
 \p A constant buffer is arranged like an array of 16-byte rows, or 4-component
 vectors of 32-bit elements. Shader constants are arranged into the buffer in the
 order they were declared based on following rules.
