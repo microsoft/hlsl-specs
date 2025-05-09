@@ -1393,9 +1393,9 @@ Validation errors:
 #### MaybeReorderThread
 
 Operation that reorders the current thread based on the supplied hints and
-`HitObject`. The canonical lowering of the
-HLSL intrinsic `MaybeReorderThread( uint CoherenceHint, uint NumCoherenceHintBitsFromLSB )`
-uses `undef` for the `HitObject` parameter.
+`HitObject`. The HLSL overload without `HitObject` is lowered to the same intrinsic
+with a NOP-HitObject (`HitObject_MakeNop`). The HLSL overload without coherence
+hints is lowered by specifying `0` for `number of coherence hint bits from LSB`.
 
 ```DXIL
 declare void @dx.op.MaybeReorderThread(
@@ -1407,8 +1407,9 @@ declare void @dx.op.MaybeReorderThread(
 ```
 
 Validation errors:
-- Validate that `coherence hint` is not undef.
-- Validate that `num coherence hint bits from LSB` is not undef.
+- Validate that `coherence hint` is not `undef` if `num coherence hint bits from LSB` is nonzero.
+- Validate that `hit object` is not `undef`.
+- Validate that `num coherence hint bits from LSB` is not `undef`.
 
 #### HitObject_SetShaderTableIndex
 
