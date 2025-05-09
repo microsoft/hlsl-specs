@@ -87,12 +87,14 @@ Setting the path to an empty string forces the internal validator to be used.
 If a dll path is specified and isn't found then the compiler will fail with an
 error.
 
-When invoked via dxc.exe (ie not through the compiler API), DXC will check for a
-new environment variable, `DXC_DXIL_DLL_PATH`, that  specifies the full path to
-the dll. The command-line option takes precedance over the environment variable.
+When invoked via dxc.exe, DXC will check for a new environment variable,
+`DXC_DXIL_DLL_PATH`, that specifies the full path to the dll. The command-line
+option takes precedance over the environment variable. This environment variable
+is not used when invoking the compile via the API since this could be abused to
+inject arbitrary DLLs into unsuspecting processes.
 
 When an external validator is used a warning diagnostic is emitted. Since the
-only expected users of this option is the backcompat tests having this always
+only expected use of this option is the backcompat tests, having this always
 appear in the test logs should be helpful when diagnosing issues.  
 
 
