@@ -2,7 +2,7 @@
 
 # Vulkan Sampled Textures
 
-* Proposal: [NNNN](NNNN-vk-sampled-texture.md)
+* Proposal: [0034](0034-vk-sampled-texture.md)
 * Author(s): [Cassandra Beckley](https://github.com/cassiebeckley)
 * Sponsor: [Steven Perron](https://github.com/s-perron) and TBD
 * Status: **Under Consideration**
