@@ -4,7 +4,7 @@
 
 ## Instructions
 
-* Proposal: [INF-NNNN](INF-NNNN-validator-backcompat-testing.md)
+* Proposal: [INF-0005](INF-0005-validator-backcompat-testing.md)
 * Author(s): [Damyan Pepper](https://github.com/damyanp)
 * Sponsor: [Damyan Pepper](https://github.com/damyanp)
 * Status: **Under Consideration**
