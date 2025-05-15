@@ -160,7 +160,7 @@ specification we add four operations:
 declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    immarg i1,        ; input signed op kind
+    immarg i1,        ; is input unsigned
     immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
@@ -170,12 +170,12 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32,       ; matrix layout
     immarg i1,        ; matrix transpose
     i32,              ; matrix stride
-    immarg i1)        ; output signed op kind
+    immarg i1)        ; is output unsigned
 
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     immarg i32        ; opcode
     <[NUMi] x [TYi]>, ; input vector
-    immarg i1,        ; input signed op kind
+    immarg i1,        ; is input unsigned
     immarg i32,       ; input interpretation
     %dx.types.Handle, ; matrix resource
     i32,              ; matrix offset
@@ -188,7 +188,7 @@ declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
     %dx.types.Handle, ; bias vector resource
     i32,              ; bias vector offset
     immarg i32,       ; bias vector interpretation
-    immarg i1)        ; output signed op kind
+    immarg i1)        ; is output unsigned
 ```
 
 #### Overview
@@ -222,9 +222,9 @@ types are types such as **SignedInt8x4Packed** where each 32-bit element of the
 vector corresponds to four 8-bit signed integers. See [Type Interpretations]
 for details.
 
-The **input signed op kind** is a value from the existing `SignedOpKind` enum.
-`0` indicates that the input vector is a float or signed integer, `1` indicates
-that the input vector is an unsigned integer.
+The **is input unsigned** is a boolean value; `false` indicates that the input
+vector is a float or signed integer, `true` indicates that the input vector is
+an unsigned integer.
 
 
 ##### Matrix
@@ -274,9 +274,9 @@ This operation returns a vector of size `NUMo` and contains elements of type
 `TYo`. The result vector does not have an interpretation parameter, its type is
 the declared type.
 
-The **output signed op kind** is a value from the existing `SignedOpKind` enum.
-`0` indicates that the output vector is a float or signed integer, `1` indicates
-that the input vector is an unsigned integer.
+The **is output unsigned** is a boolean value; `false` indicates that the input
+vector is a float or signed integer, `true` indicates that the input vector is
+an unsigned integer.
 
 #### Validation
 
@@ -533,7 +533,7 @@ Packed Case:
      OPCODE,
      %inputVector,
      16,              ; input interpretation - ComponentType::PackedS8x32
-     0,               ; input signed op kind = 0 = signed
+     false,           ; is input unsigned = false = signed
      %matrixResource,
      0,               ; matrix offset
      19,              ; matrix interpretation - ComponentType::I8
@@ -542,7 +542,7 @@ Packed Case:
      2,               ; matrix layout - MulOptimal
      0,               ; matrix transpose - false
      0,               ; matrix stride
-     0);              ; output signed op kind = 0 = signed
+     0);              ; is output unsigned = false = signed
 ```
 
 Non-Packed Case:
@@ -556,7 +556,7 @@ Non-Packed Case:
     OPCODE,
     %inputVector,
     19,              ; input interpretation - ComponentType::I8
-    0,               ; input signed op kind = 0 = signed
+    0,               ; is input unsigned = false = signed
     %matrixResource,
     0,               ; matrix offset
     5,               ; matrix interpretation - ComponentType::I8
@@ -565,7 +565,7 @@ Non-Packed Case:
     2,               ; matrix layout - MulOptimal
     0,               ; matrix transpose - false
     0,               ; matrix stride
-    0)               ; output signed op kind = 0 = signed
+    0)               ; is output unsigned = false = signed
 ```
 
 #### Precision Requirements
