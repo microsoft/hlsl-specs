@@ -274,7 +274,8 @@ Verify that long vectors produce validation errors in:
 Correct behavior for all of the intrinsics listed in [allowed elementwise vector intrinsics](#allowed-elementwise-vector-intrinsics)
  will be verified with execution tests that perform the operations on long vectors and confirm correct results
  for the given test values.
-Where possible, these tests will be variations on existing tests for these intrinsics.
+Where possible, these tests will be variations on existing tests for these
+intrinsics. [Long-Vector-ExecutionTest-Plan](.\infra\INF-0005-Long-Vector-ExecutionTest-Plan.md)
 
 ## Alternatives considered
 
