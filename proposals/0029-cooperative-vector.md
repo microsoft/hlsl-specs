@@ -763,7 +763,8 @@ explicitly checked for the combinations below.
 | F16         | F16                 | F16                  | F16                | F16        |
 | F16         | F8_E4M3             | F8_E4M3              | F16                | F16        |
 | F16         | F8_E5M2             | F8_E5M2              | F16                | F16        |
-| PackedS8x32 | I8                  | I8                   | I32                | I32        |
+| PackedS8x32 | PackedS8x32         | I8                   | I32                | I32        |
+| U32         | PackedS8x32         | I8                   | I32                | I32        |
 | F32         | I8                  | I8                   | I32                | I32        |
 
 >Note: Only Optimal layouts can be used with for Float8(E4M3 and E5M2)
