@@ -85,37 +85,29 @@ initializers regardless of the context.
 
 \Sub{Aggregate Initialization}{Decl.Init.Agg}
 
-\p An \textit{aggregate} is a vector, matrix, array, or class.
-
-\p The subobjects of an aggregate have a defined order. For vectors and arrays
-the order is increasing subscript order. For matrices it is increasing subscript
-order with the subscript nesting such that in the notation
-\texttt{Mat[M][N]}, the ordering is \(Mat[0][0]...Mat[0][N]...
-Mat[M][0]...Mat[M][N]\). For classes the order is base class, followed by member
-subobjects in declaration order.
-
-\p A \textit{flattened ordering} of subobjects can be produced by performing a
-depth-first traversal of the subobjects of an object following the defined
-subobject ordering.
+\p An \textit{aggregate} is a vector, matrix, array, or class that does not have
+explicit constructors (\ref{Classes.Special}) or non-public data members
+(\ref{Classes.Access}). An aggregate may contain non-aggregate members as long
+as the non-aggregate members have default constructors and copy constructors
+defined.
 
 \p Each \textit{braced initializer list} is comprised of zero or more
 \textit{initializer-clause} expressions, which is either another braced
 initializer list or an expression which generates a value that either is or can
 be implicitly converted to an rvalue. Each assignment-expression is an object,
-which may be a scalar or aggregate type. A \textit{flattened initializer
-sequence} is constructed by a depth-first traversal over each
-assignment-expression in an initializer-list and performing a depth-first
-traversal accessing each subobject of the assignment-expression.
+which may be a scalar or aggregate type. A \textit{element-wise initializer
+sequence} is constructed by concatenating the scalar element ordering
+(\ref{Intro.Object.SubOrdering}) of each initializer-clause.
 
 \p An initializer-list is a valid initializer if for each element \(E_n\) in the
-target object's flattened ordering there is a corresponding initializer \(I_n\)
-in the flattened initializer sequence which can be implicitly converted to the
-element's type.
+target object's scalar element ordering there is a corresponding initializer
+\(I_n\) in the element-wise initializer sequence which can be implicitly
+converted to the element's type.
 
-\p An initializer-list is invalid if the flattened initializer sequence contains
-more or fewer elements than the target object's flattened ordering, or if any
-initializer \(I_n\) cannot be implicitly converted to the corresponding element
-\(E_n\)'s type.
+\p An initializer-list is invalid if the element-wise initializer sequence
+contains more or fewer elements than the target object's scalar element
+ordering, or if any initializer \(I_n\) cannot be implicitly converted to the
+corresponding element \(E_n\)'s type.
 
 \Sec{Function Definitions}{Decl.Function}
 \Sec{Attributes}{Decl.Attr}
