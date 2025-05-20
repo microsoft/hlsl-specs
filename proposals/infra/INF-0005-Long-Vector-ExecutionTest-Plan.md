@@ -239,7 +239,7 @@ Unary Operators | !, -, + |
 | sqrt      | Sqrt | |
 | step      | | FCmpOLT, Select ||
 | trunc     | Round_z | |
-| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | Not required. Covered by ceil and floor. |
+| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | Not required. Covered by min and max. |
 
 ## Float Ops
 
