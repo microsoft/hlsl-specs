@@ -193,19 +193,19 @@ Unary Operators | !, -, + |
 
 | Intrinsic | DXIL OpCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| acos      | Acos | | |
-| asin      | Asin | | |
-| atan      | Atan | | |
+| acos      | Acos | | range: -1 to 1 |
+| asin      | Asin | | range: -pi/2 to pi/2. Floating point types only. |
+| atan      | Atan | | range: -pi/2 to pi/2. |
+| cos       | Cos | | no range requirements. |
+| cosh      | Hcos | | no range requirements. |
+| sin       | Sin | | no range requirements. |
+| sinh      | Hsin | | no range requirements. |
+| tan       | Tan | | no range requirements. |
+| tanh      | Htan | | no range requirements. |
 | atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT,
-||| FCpmOEQ, FCmpOGE, FCmpOLT, And, Select | |
-| cos       | Cos | | |
-| cosh      | Hcos | | |
-| degrees   | | FMul ||
-| radians   | | FMul ||
-| sin       | Sin | | |
-| sinh      | Hsin | | |
-| tan       | Tan | | |
-| tanh      | Htan | | |
+||| FCpmOEQ, FCmpOGE, FCmpOLT, And, Select | Not required. Covered by other ops. |
+| degrees   | | FMul | Not needed. Covered by FMul. |
+| radians   | | FMul | Not needed. Covered by FMul. |
 
 ## Math
 
@@ -213,7 +213,6 @@ Unary Operators | !, -, + |
 |-----------|--------------|----------|-----------|
 | abs       | [Imax], [Fabs] |
 | ceil      | Round_pi ||
-| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | |
 | exp       | Exp | |
 | exp2      | Exp | |
 | floor     | Round_ni ||
@@ -240,6 +239,7 @@ Unary Operators | !, -, + |
 | sqrt      | Sqrt | |
 | step      | | FCmpOLT, Select ||
 | trunc     | Round_z | |
+| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | Not required. Covered by ceil and floor. |
 
 ## Float Ops
 
@@ -316,11 +316,6 @@ Unary Operators | !, -, + |
 | WavePrefixProduct     | WavePrefixOp | |
 | WaveReadLaneAt        | WaveReadLaneAt | |
 | WaveReadLaneFirst     | WaveReadLaneFirst | |
-
-## Wave Reductions
-
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
 | WaveActiveAllEqual | WaveActiveAllEqual | |
 | WaveMatch          | WaveMatch | |
 
@@ -328,8 +323,6 @@ Unary Operators | !, -, + |
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| WaveActiveAllEqual | WaveActiveAllEqual | |
-| WaveMatch          | WaveMatch | |
 | asdouble           | MakeDouble | |
 | asfloat            |  | BitCast |
 | asfloat16          |  | BitCast |
