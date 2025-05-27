@@ -48,7 +48,9 @@ namespace ns {
 [DXC @ Compiler Explorer](https://godbolt.org/z/WYK7jvvfP)
 
 In DXC, `a` and `b` are referenced directly with no namespace qualifications,
-while in FXC they are `ns::a` and `ns::ns2::b` respectively.
+while in FXC they are `ns::a` and `ns::ns2::b` respectively (unless the
+namespace contains other variable declarations, which is clearly a bug:
+https://godbolt.org/z/Ph57WYexr).
 
 In FXC, `cbuffer` declarations behave more like a source range declaration that
 groups global declarations into a single constant buffer rather than a semantic
@@ -87,7 +89,18 @@ This simplified grammar disallows members of `cbuffer` declarations that do not
 have semantic meaning, and allows a simplification of `cbuffer` scoping rules.
 
 A `cbuffer` may only be declared at translation unit or namespace scope. A
-`cbuffer` may only contain variable (or empty) declarations. All declarations
-within a `cbuffer` declare names in the immediate enclosing scope.
+`cbuffer` may only contain non-static non-constexpr variable (or empty)
+declarations. All declarations within a `cbuffer` declare names in the immediate
+enclosing scope.
+
+A `cbuffer` is a colection of constant values provided to a shader at runtime.
+As such, it should only contain constant variable declarations backed by
+read-only storage in device memory that persists across the life of the
+dispatch.
+
+Notably a `cbuffer` cannot contain function declarations, type declarations
+(classes, enumerations, typedefs), namespace declarations, constexpr or static
+variable declarations, `cbuffer` declarations, or any other declaration type not
+explicitly listed as allowed.
 
 <!-- {% endraw %} -->
