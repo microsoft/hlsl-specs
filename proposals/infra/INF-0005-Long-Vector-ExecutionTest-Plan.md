@@ -4,6 +4,11 @@ This test plan covers testing all HLSL intrinsics that can take long vectors as
 parameters. And more specifically, it only covers testing scenarios which will
 get coverage from a graphics driver supporting DXIL.
 
+These tests will verify that all DXIL opcodes and LLVM instructions which can be
+reached using valid HLSL in SM 6.9 can compile, run, and produce correct output
+when given long and native vector inputs. They will not verify that the
+generated DXIL is vectorized.
+
 All tests are to be included in the HLK test binary which ships with the OS.
 This test binary is only built in the OS repo and based off of the
 ExecutionTests source code in the DXC repo. There is a script in the WinTools
@@ -91,6 +96,25 @@ Some noteable alignment cases:
   alignment?
 * Additional interesting cases TBD.
 
+# High level test design
+1. The test will leverage the existing XML infrastructure currently used by the
+   existing execution tests. There are two XML files. This general design
+   pattern exists today in the execution tests.
+   First XML: Used to define shader source code and metadata about that shader
+   code. This XML file is parsed using a private class. This private class helps
+   faciliate creation of D3D resources and execution of the shader.
+   Second XML: Describes metadata about the specific test cases. Used by the
+   TAEF infrastructe for [TAEF Data Driven
+   Testing](https://learn.microsoft.com/en-us/windows-hardware/drivers/taef/data-driven-testing)
+2. Test inputs will be hard coded in a c++ header file. This was chosen over
+   definining inputs in the second XML as this is cleaner and easier to parse
+   for different data types. This c++ header method also avoids needing to
+   repeat the data set in the XML for each individual test cast. Inputs will use
+   'value sets' which will typically be much smaller than the desired vector
+   test size. Values will be repeated until the vector is full.
+3. Expected outputs are computed for each test case at run time.
+4. All new long vector test code is factored out into its own files.
+
 # Implementation phases
 Do the test work in two simple phases.
 
@@ -100,21 +124,6 @@ Do the test work in two simple phases.
   * Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
   with HLK GUIDS and requirements
   * Add new tests to HLK playlist
-
-# Test Case Implementation Priorities
-The following cases have been identified as the most important to validate
-first.
-
-* The following tests will be implemented first:
-* Initializing a vector with another.
-* Multiply all components of a vector with a scalar value
-* Add all components of a vector with a scalar value
-* Clamp all components of a vector to the range [c, t]
-* Component wise minimum between 2 vectors
-* Component wise maximum between 2 vectors
-* Component wise multiply between 2 vectors
-* Component wise add between 2 vectors
-* Subscript access, vec[i] = c
 
 # Shipping
 Note that because DXC and the Agility SDK are both undocked from Windows it is
@@ -151,18 +160,6 @@ considered completed.
 * Tests will be annoated to show which DXIL OpCode, LLVM Instructions, and HLSL
   operators they are intended to get coverage for.
 
-# Requirements
-* Greg's long vector changes:
-  [HLSL Long Vector
-  Spec](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0026-hlsl-long-vector-type.md#allowed-elementwise-vector-intrinsics)
-
-* WARP long vector support (D3D, Jesse Natalie). Needs Greg's Long Vector work.
-   ETA of ~1 week to implement. This item is a bit of a chicken and egg in that
-   in order to fully validate the new test cases we will need WARP support. But
-   at the same time in order to fully validate the WARP implementation Jesse
-   will need our tests. We will need to work with Jesse to share our tests to
-   help validate his implementation work.
-
 # Notes
 * Private test binaries/collateral will be shared with IHVs for validation
    purposes. This will enable IHVs to verify long vector functionality without
@@ -170,11 +167,14 @@ considered completed.
 
 ### HLSL-Operators
 # HLSL Operators
-These operators should generate LLVM instructions which use vectors.
+These operators generate LLVM instructions which use vectors.
 
 Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-operators)
 | Operator Name | Operator | Notes |
 |-----------|--------------|----------|
+| Addition | + | blah |
+| Subtraction | - | blah |
+| Multiplication | * |
 Additive and Multiplicative Operators | +, -, *, /, % |
 Array Operator | [i] | llvm:ExtractElementInst
 Assignment Operators | =, +=, -=, *=, /=, %= |
@@ -214,19 +214,14 @@ Unary Operators | !, -, + |
 | abs       | [Imax], [Fabs] |
 | ceil      | Round_pi ||
 | exp       | Exp | |
-| exp2      | Exp | |
 | floor     | Round_ni ||
 | fma       | Fma | |
-| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE,
-||| Select, FMul | |
 | frac      | rc | |
 | frexp     | | FCmpUNE, SExt, BitCast, And, Add,
 ||| AShr, SIToFP, Store, And, Or | |
 | ldexp     | Exp | FMul |  |
 | lerp      | | FSub, FMul, FAdd | |
 | log       | Log | FMul | |
-| log10     | Log | FMul | |
-| log2      | Log | |
 | mad       | IMad | |
 | max       | IMax | |
 | min       | IMin | |
@@ -239,7 +234,10 @@ Unary Operators | !, -, + |
 | sqrt      | Sqrt | |
 | step      | | FCmpOLT, Select ||
 | trunc     | Round_z | |
-| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | Not required. Covered by min and max. |
+| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Not required. Covered by min and max. |
+| exp2      | Exp | | Not needed. Covered by exp. | 
+| log10     | Log | FMul | Not required. Covered by log.|
+| log2      | Log | | Not Required. Covered by log.|
 
 ## Float Ops
 
@@ -251,6 +249,8 @@ Unary Operators | !, -, + |
 | isinf     | IsInf | |
 | isnan     | IsNan | |
 | modf      | Round_z | FSub, Store | |
+| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE,
+||| Select, FMul | |
 
 ## Bitwise Ops
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
@@ -265,9 +265,9 @@ Unary Operators | !, -, + |
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| and       | | And, [ExtractElement, InsertElement] | |
-| or        | | Or, [ExtractElement, InsertElement] | |
 | select    | | Select, [ExtractElement, InsertElement] | |
+| and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. |
+| or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. |
 
 ## Reductions
 
@@ -277,7 +277,6 @@ Unary Operators | !, -, + |
 ||| [ExtractElement, And] |
 | any       | | [FCmpUNE], [ICmpNE] ,
 ||| [ExtractElement, Or] | |
-| clamp     | [UMax, UMin], [IMax, IMin] | |
 | dot       | | ExtractElement, Mul | |
 
 
@@ -286,15 +285,15 @@ Unary Operators | !, -, + |
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
 | ddx       | DerivCoarseX | |
-| ddx_coarse| DerivCoarseX | |
 | ddx_fine  | DerivFineX | |
 | ddy       | DerivCoarseY | |
-| ddy_coarse| DerivCoarseY | |
 | ddy_fine  | DerivFineY | |
 | fwidth    | QuadReadLaneAt | |
 | QuadReadLaneAcrossX | QuadOp | |
-| QuadReadLaneAcrossY | QuadOp | |
-| QuadReadLaneAcrossDiagonal | QuadOp | |
+| QuadReadLaneAcrossY | QuadOp | | Not requied. Covered by QuadReadLaneAcrossX |
+| QuadReadLaneAcrossDiagonal | QuadOp | Not required. Covered by QuadReadLaneAcrossX |
+| ddx_coarse| DerivCoarseX | | Not required. Covered by ddx |
+| ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy |
 
 ## WaveOps
 
@@ -320,6 +319,7 @@ Unary Operators | !, -, + |
 | WaveMatch          | WaveMatch | |
 
 ## Type Casting Operations
+Note: 
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
