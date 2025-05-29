@@ -459,7 +459,10 @@ InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
 ### Function: Mul
 
 The `dx::linalg::Mul` function performs a matrix-vector multiplication. The
-matrix is stored in memory, while the vector comes from a variable.
+matrix is stored in memory, while the vector comes from a variable. The Mul
+function expects the memory backing the matrix object to be read-only
+(for efficient loads and hardware optimizations) and, therefore, the matrix
+must be of MatrixRef type (and not RWMatrixRef type).
 
 > TODO: add an example for packed types, and make sure they work correctly
 
@@ -530,7 +533,9 @@ Mul(MatrixRefImpl<MatrixBufferTy, MatrixDT, MatrixM, MatrixK, MatrixLayout,
 ## Function: MulAdd
 
 The `dx::linalg::MulAdd` function behaves as `dx::linalg::Mul`, but also adds a
-bias vector (loaded from memory) to the result.
+bias vector (loaded from memory) to the result. Similar to the the matrix
+operand, the memory backing the bias vector must be read-only, and therefore an
+object of `VectorRef` type (and not `RWVectorRef` type).
 
 Example:
 
