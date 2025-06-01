@@ -652,8 +652,7 @@ interpretation combinations supported by new vector-matrix intrinsics.
 typedef enum D3D12_FEATURE {
     ...
     // Contains Cooperative Vector tier.
-    // NN tbd when implemented
-    D3D12_FEATURE_D3D12_OPTIONSNN;
+    D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL;
     D3D12_FEATURE_COOPERATIVE_VECTOR;
 };
 
@@ -686,10 +685,10 @@ typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 
 // This struct may be augmented with more capability bits
 // as the feature develops
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL
 {
     Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
-} D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL;
 
 // Used for MatrixVectorMulAdd intrinsic
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL
@@ -788,10 +787,10 @@ explicitly checked for the combinations below.
 
 ```c++
 // Check for matrix vector support and query properties for MatrixVectorMulAdd
-D3D12_FEATURE_DATA_D3D12_OPTIONSNN TierSupport = {};
+D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL TierSupport = {};
 
-d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport, 
-                                 sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
+d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL, &TierSupport, 
+                                 sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL));
 
 if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
@@ -873,8 +872,8 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO {
 // the destination layout information and does not depend on the source layout
 // information.
 
-void ID3D12Device::GetLinearAlgebraMatrixConversionDestinationInfo(
-                        D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
+void ID3D12DevicePreview::GetLinearAlgebraMatrixConversionDestinationInfo(
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
 
 ```
 
@@ -933,8 +932,9 @@ number of bytes returned in call to
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
-                                                   UINT DescCount);
+void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrix(
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
+    UINT DescCount);
 
 ```
 
