@@ -136,14 +136,14 @@ void ps_main(args) // args: texture, normal, position
 
 ## Proposed solution
 
-Introduce new DXIL operations to accelarate matrix-vector operations. In this
+Introduce new DXIL operations to accelerate matrix-vector operations. In this
 specification we add four operations:
 
 * **Matrix-Vector Multiply:** Multiply a matrix in memory and a vector
     parameter.
 * **Matrix-Vector Multiply-Add:** Multiply a matrix in memory and a vector
     parameter and add a vector from memory.
-* **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
+* **Vector-Vector Outer Product and Accumulate:** Compute the outer product of
     two vectors and accumulate the result matrix atomically-elementwise in
     memory.
 * **Vector Accumulate:** Accumulate elements of a vector
@@ -378,7 +378,7 @@ The output array is accumulated to the writeable raw-buffer resource specified
 by **output array resource** and **output array offset**.  The base address and
 **output array offset** must be 64-byte aligned.  Also note that the size of the
 underlying allocation is guaranteed to be a multiple of 16 bytes, ensuring that
-there is valid memory between the end of the array and the 16-byte bounadry.
+there is valid memory between the end of the array and the 16-byte boundary.
 Implementations may write to the contents of the padding between the end of the
 matrix and the 16-byte boundary, so developers should not use this padding space
 for anything else.
