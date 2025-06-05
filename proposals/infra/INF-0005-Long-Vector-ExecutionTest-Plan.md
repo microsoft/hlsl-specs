@@ -324,9 +324,9 @@ Note:
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
 | asdouble           | MakeDouble | |
-| asfloat            |  | BitCast |
-| asfloat16          |  | BitCast |
-| asint              |  | BitCast |
-| asint16            |  | BitCast |
+| asfloat            |  | BitCast | |
+| asfloat16          |  | BitCast | |
+| asint              |  | BitCast | |
+| asint16            |  | BitCast | |
 | asuint             | SplitDouble | |
-| asuint16           | | BitCast |
+| asuint16           | | BitCast | |
