@@ -14,17 +14,26 @@ This test binary is only built in the OS repo and based off of the
 ExecutionTests source code in the DXC repo. There is a script in the WinTools
 repo which generates and annotates the HLK tests.
 
-We break coverage down into five test OpCode catOpCode egories:
+We break coverage down into five test categories.
 
 1. Implement DXIL OpCode tests:
-    * At the bottom of this document there is a table of all HLSL intrinsics and
-    their mapped DXIL OpCodes as well as LLVM Instructions. For this first
-    category we are concerned with getting coverage of each DXIL OpCode. In some
-    cases there are multiple DXIL OpCodes listed. '[]' brackets are used to
-    signify that the operator is only used in specific paths. Operators sharing
-    the same brackets are in the same logic path. If an operator is not in
-    brackets then it is used in all cases. Additonal opcodes are logic based,
-    for example there may be an int and float specific opcode.
+    * At the bottom of this document there are [tables](#hlsl-operators)
+      containing all HLSL operators and HLSL intrinsics that can be used with
+      long vectors. The HLSL intrinsics tables have a DXIL OpCode and LLVM
+      instruction columns. These columns contain the the intrinsics mapped DXIL
+      OpCodes as well as there LLVM instructions. All intrinsics have at least
+      one DXIL OpCode or one LLVM instruction.
+
+      Many instrinsics have trivial mappings. [Atan](#trigonometry) is an
+      example of an intrinsic with a trivial mapping. Other intrinsics have
+      multiple DXIL OpCodes. Some intrinsics will use all listed DXIL OpCodes
+      and/or LLVM instruvtions, while others will have additonal logic which
+      determines which OpCodes/Instructions are used. If an intrinsic relies on
+      additional logic to determine which OpCodes/Instructions are used then the
+      OpCode/Instructions will be enclosed in '[]' brackets. The [sign](#math)
+      intrinsic is an example of an intrinsic with addtional logic. If an
+      OpCode/Instruction is not enclosed in '[]' then it is used in all paths
+      for that intrinsic.
 
 2. Implement LLVM Instruction tests:
     * These are the test cases for the LLVM Instructions listed in the in table
