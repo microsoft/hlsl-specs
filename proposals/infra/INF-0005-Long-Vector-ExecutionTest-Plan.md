@@ -54,22 +54,25 @@ We break coverage down into five test categories:
      element data types to test](#vector-element-data-types-to-test).
 
 5. 'Creative' test cases:
-  * Sizes around alignments and boundaries (details in [Vector Sizes to
-    Test])[#vector-sizes-to-test].
-  * Odd number of elements in vector
-  * Anything else that comes up? TBD here.
+    * Sizes around alignments and boundaries (details in [Vector Sizes to
+      Test])[#vector-sizes-to-test].
+    * Odd number of elements in vector
+    * Anything else that comes up? TBD here.
 
-# Buffer types to test
+## Buffer types to test
+
 * Raw Buffers (ByteAddressBuffer)
 * Structured Buffers (StructuredBuffer)
 * Typed Buffers (Buffer\<T>)
 
-# Vector element data types to test
+## Vector element data types to test
+
 Testing will cover the following vector element data types:
+
 * bool, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float16_t,
 float32_t, float64_t, packed_int16_t, and packed_uint16_t.
 
-# Vector sizes and alignments to test
+## Vector sizes and alignments to test
 
 General sizes to test are in the range [5, 1024]. It is worth noting that the
 [new form of rawBufferLoad](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0030-dxil-vectors.md#changes-to-dxil-intrinsics)
@@ -90,13 +93,15 @@ as well.
 * These sizes will be tested across [Vector element data types to test](#vector-element-data-types-to-test)
 
 Some noteable alignment cases:
+
 * Most GPUs operate on at least 32-bits at once, so waht happens if you use
   16-bit values and an odd number of elements. Could accesssing the last element
   expose issues where we could overwrite the next variable is it is assuming
   alignment?
 * Additional interesting cases TBD.
 
-# High level test design
+## High level test design
+
 1. The test will leverage the existing XML infrastructure currently used by the
    existing execution tests. There are two XML files. This general design
    pattern exists today in the execution tests.
@@ -115,17 +120,20 @@ Some noteable alignment cases:
 3. Expected outputs are computed for each test case at run time.
 4. All new long vector test code is factored out into its own files.
 
-# Implementation phases
+## Implementation phases
+
 Do the test work in two simple phases.
 
 1. Implement and validate (locally against WARP) for all test categories.
 2. HLK related work:
-  * Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
-  * Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
-  with HLK GUIDS and requirements
-  * Add new tests to HLK playlist
 
-# Shipping
+* Add a SM 6.9 HLK requirement. Includes updating the HLK requirements doc.
+* Update mm_annotate_shader_op_arith_table.py to annotate the new test cases
+  with HLK GUIDS and requirements
+* Add new tests to HLK playlist
+
+## Shipping
+
 Note that because DXC and the Agility SDK are both undocked from Windows it is
 our normal operating behavior for the HLK tests to become available with a later
 TBD OS release. The good news is that this doesn't prevent the tests from being
@@ -140,7 +148,8 @@ share further instructions when the tests are available.
 
 2. The tests will ship with the HLK at a TBD date in a later OS release.
 
-# New HLK Tests
+## New HLK Tests
+
 All of the scripts and yaml files mentioned are part of the Microsoft WinTools
 repo. mm_annotate_shader_op_arith_table.py will need to be updated to recognize
 any new tests (not test cases) added. And additional GUIDs added for new tests.
@@ -148,9 +157,11 @@ mm_annotate_shader_op_arith_table.py is called by mm-hlk-update.py when
 converting from ExecutionTests to the HLK 'DxilConf' tests. The aforementioned
 *table.py script is run by Integration.HLKTestsUpdate.yaml
 
-# Test Validation Requirements
+## Test Validation Requirements
+
 The following statements must be true and validated for this work to be
 considered completed.
+
 * All new test cases pass when run locally against a WARP device
 * All new test cases must verify applicable outputs for correctness.
 * All new test cases are confirmed to be present in HLK Studio and selectable to
@@ -160,36 +171,40 @@ considered completed.
 * Tests will be annoated to show which DXIL OpCode, LLVM Instructions, and HLSL
   operators they are intended to get coverage for.
 
-# Notes
+## Notes
+
 * Private test binaries/collateral will be shared with IHVs for validation
    purposes. This will enable IHVs to verify long vector functionality without
    waiting for an OS/HLK release.
 
-### HLSL-Operators
-# HLSL Operators
+## HLSL-Operators
+
+### HLSL Operators
+
 These operators generate LLVM instructions which use vectors.
 
 Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-operators)
+
 | Operator Name | Operator | Notes |
 |-----------|--------------|----------|
-| Addition | + | blah |
-| Subtraction | - | blah |
-| Multiplication | * |
-Additive and Multiplicative Operators | +, -, *, /, % |
-Array Operator | [i] | llvm:ExtractElementInst
-Assignment Operators | =, +=, -=, *=, /=, %= |
-Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on
-||| int and uint vectors
-Boolean Math Operators | & &, ||, ?: |
-Cast Operator | (type) | No direct operator, difference in GetElementPointer 
-||| or load type
-Comparison Operators| <, >, ==, !=, <=, >= |
-Prefix or Postfix Operators| ++, -- |
-Unary Operators | !, -, + |
+| Addition | + | |
+| Subtraction | - | |
+| Multiplication | * | |
+| Additive and Multiplicative Operators | +, -, *, /, % | |
+| Array Operator | [i] | llvm:ExtractElementInst |
+| Assignment Operators | =, +=, -=, *=, /=, %= |
+| Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on |
+||| int and uint vectors |
+| Boolean Math Operators | & &, \|\| , ?: | |
+| Cast Operator | (type) | No direct operator, difference in GetElementPointer |
+||| or load type |
+| Comparison Operators | <, >, ==, !=, <=, >= | |
+| Prefix or Postfix Operators | ++, -- | |
+| Unary Operators | !, -, + | |
 
-# Mappings of HLSL Intrinsics to DXIL OpCodes or LLVM Instructions
+## Mappings of HLSL Intrinsics to DXIL OpCodes or LLVM Instructions
 
-## Trigonometry
+### Trigonometry
 
 | Intrinsic | DXIL OpCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
@@ -202,66 +217,67 @@ Unary Operators | !, -, + |
 | sinh      | Hsin | | no range requirements. |
 | tan       | Tan | | no range requirements. |
 | tanh      | Htan | | no range requirements. |
-| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT,
+| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, | |
 ||| FCpmOEQ, FCmpOGE, FCmpOLT, And, Select | Not required. Covered by other ops. |
 | degrees   | | FMul | Not needed. Covered by FMul. |
 | radians   | | FMul | Not needed. Covered by FMul. |
 
-## Math
+### Math
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| abs       | [Imax], [Fabs] |
-| ceil      | Round_pi ||
-| exp       | Exp | |
-| floor     | Round_ni ||
-| fma       | Fma | |
-| frac      | rc | |
-| frexp     | | FCmpUNE, SExt, BitCast, And, Add,
+| abs       | [Imax], [Fabs] | | |
+| ceil      | Round_pi | | |
+| exp       | Exp | | |
+| floor     | Round_ni | | |
+| fma       | Fma | | |
+| frac      | rc | | |
+| frexp     | | FCmpUNE, SExt, BitCast, And, Add, | |
 ||| AShr, SIToFP, Store, And, Or | |
 | ldexp     | Exp | FMul |  |
 | lerp      | | FSub, FMul, FAdd | |
 | log       | Log | FMul | |
-| mad       | IMad | |
-| max       | IMax | |
-| min       | IMin | |
+| mad       | IMad | | |
+| max       | IMax | | |
+| min       | IMin | | |
 | pow       | [Log, Exp] | [FMul] , [FDiv] ||
 | rcp       | | FDiv | |
-| round     | Round_ne ||
-| rsqrt     | Rsqrt | |
+| round     | Round_ne | | |
+| rsqrt     | Rsqrt | | |
 | sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | |
 | smoothstep| Saturate | FMul, FSub, FDiv ||
-| sqrt      | Sqrt | |
+| sqrt      | Sqrt | | |
 | step      | | FCmpOLT, Select ||
-| trunc     | Round_z | |
+| trunc     | Round_z | | |
 | clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Not required. Covered by min and max. |
-| exp2      | Exp | | Not needed. Covered by exp. | 
+| exp2      | Exp | | Not needed. Covered by exp. |
 | log10     | Log | FMul | Not required. Covered by log.|
 | log2      | Log | | Not Required. Covered by log.|
 
-## Float Ops
+### Float Ops
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| f16tof32  | LegacyF16ToF32 | |
-| f32tof16  | LegacyF32ToF16 | |
-| isfinite  | IsFinite | |
-| isinf     | IsInf | |
-| isnan     | IsNan | |
+| f16tof32  | LegacyF16ToF32 | | |
+| f32tof16  | LegacyF32ToF16 | | |
+| isfinite  | IsFinite | | |
+| isinf     | IsInf | | |
+| isnan     | IsNan | | |
 | modf      | Round_z | FSub, Store | |
-| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE,
+| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, | |
 ||| Select, FMul | |
 
-## Bitwise Ops
+### Bitwise Ops
+
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| saturate  | Saturate | |
-| reversebits| Bfrev | |
-| countbits | Countbits | |
-| firstbithigh| FirstbitSHi | |
-| firstbitlow| FirstbitLo | |
+| saturate  | Saturate | | |
+| reversebits| Bfrev | | |
+| countbits | Countbits | | |
+| firstbithigh| FirstbitSHi | | |
+| firstbitlow| FirstbitLo | | |
 
-## Logic Ops
+### Logic Ops
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
@@ -269,64 +285,62 @@ Unary Operators | !, -, + |
 | and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. |
 | or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. |
 
-## Reductions
+### Reductions
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| all       | | [FCmpUNE], [ICmpNE] ,
-||| [ExtractElement, And] |
-| any       | | [FCmpUNE], [ICmpNE] ,
+| all       | | [FCmpUNE], [ICmpNE] , | |
+||| [ExtractElement, And] | |
+| any       | | [FCmpUNE], [ICmpNE] , | |
 ||| [ExtractElement, Or] | |
 | dot       | | ExtractElement, Mul | |
 
-
-## Derivative and Quad Operations
+### Derivative and Quad Operations
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| ddx       | DerivCoarseX | |
-| ddx_fine  | DerivFineX | |
-| ddy       | DerivCoarseY | |
-| ddy_fine  | DerivFineY | |
-| fwidth    | QuadReadLaneAt | |
-| QuadReadLaneAcrossX | QuadOp | |
+| ddx       | DerivCoarseX | | |
+| ddx_fine  | DerivFineX | | |
+| ddy       | DerivCoarseY | | |
+| ddy_fine  | DerivFineY | | |
+| fwidth    | QuadReadLaneAt | | |
+| QuadReadLaneAcrossX | QuadOp | | |
 | QuadReadLaneAcrossY | QuadOp | | Not requied. Covered by QuadReadLaneAcrossX |
-| QuadReadLaneAcrossDiagonal | QuadOp | Not required. Covered by QuadReadLaneAcrossX |
+| QuadReadLaneAcrossDiagonal | QuadOp | Not required. Covered by QuadReadLaneAcrossX | |
 | ddx_coarse| DerivCoarseX | | Not required. Covered by ddx |
 | ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy |
 
-## WaveOps
+### WaveOps
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| WaveActiveBitAnd | WaveActiveBit | |
-| WaveActiveBitOr  | WaveActiveBit | |
-| WaveActiveBitXor | WaveActiveBit | |
-| WaveActiveProduct| WaveActiveOp | |
-| WaveActiveSum    | WaveActiveOp | |
-| WaveActiveMin    | WaveActiveOp | |
-| WaveActiveMax    | WaveActiveOp | |
-| WaveMultiPrefixBitAnd | WaveMultiPrefixOp | |
-| WaveMultiPrefixBitOr  | WaveMultiPrefixOp | |
-| WaveMultiPrefixBitXor | WaveMultiPrefixOp | |
-| WaveMultiPrefixProduct| WaveMultiPrefixOp | |
-| WaveMultiPrefixSum    | WaveMultiPrefixOp | |
-| WavePrefixSum         | WavePrefixOp | |
-| WavePrefixProduct     | WavePrefixOp | |
-| WaveReadLaneAt        | WaveReadLaneAt | |
-| WaveReadLaneFirst     | WaveReadLaneFirst | |
-| WaveActiveAllEqual | WaveActiveAllEqual | |
-| WaveMatch          | WaveMatch | |
+| WaveActiveBitAnd      | WaveActiveBit | | |
+| WaveActiveBitOr       | WaveActiveBit | | |
+| WaveActiveBitXor      | WaveActiveBit | | |
+| WaveActiveProduct     | WaveActiveOp | | |
+| WaveActiveSum         | WaveActiveOp | | |
+| WaveActiveMin         | WaveActiveOp | | |
+| WaveActiveMax         | WaveActiveOp | | |
+| WaveMultiPrefixBitAnd | WaveMultiPrefixOp | | |
+| WaveMultiPrefixBitOr  | WaveMultiPrefixOp | | |
+| WaveMultiPrefixBitXor | WaveMultiPrefixOp | | |
+| WaveMultiPrefixProduct| WaveMultiPrefixOp | | |
+| WaveMultiPrefixSum    | WaveMultiPrefixOp | | |
+| WavePrefixSum         | WavePrefixOp | | |
+| WavePrefixProduct     | WavePrefixOp | | |
+| WaveReadLaneAt        | WaveReadLaneAt | | |
+| WaveReadLaneFirst     | WaveReadLaneFirst | | |
+| WaveActiveAllEqual    | WaveActiveAllEqual | | |
+| WaveMatch             | WaveMatch | | |
 
-## Type Casting Operations
-Note: 
+### Type Casting Operations
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| asdouble           | MakeDouble | |
-| asfloat            |  | BitCast | |
-| asfloat16          |  | BitCast | |
-| asint              |  | BitCast | |
-| asint16            |  | BitCast | |
-| asuint             | SplitDouble | |
-| asuint16           | | BitCast | |
+| asdouble           | MakeDouble  |         | |
+| asfloat            |             | BitCast | |
+| asfloat16          |             | BitCast | |
+| asint              |             | BitCast | |
+| asint16            |             | BitCast | |
+| asuint             | SplitDouble |         | |
+| asuint16           |             | BitCast | |
