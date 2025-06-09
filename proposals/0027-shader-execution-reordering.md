@@ -243,6 +243,7 @@ Parameter                           | Definition
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `uint RayFlags` | Valid combination of Ray flags as specified by `TraceRay`. Only defined ray flags are propagated by the system.
 `uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
+`RayDesc Ray` | Ray for the miss.
 
 ---
 
