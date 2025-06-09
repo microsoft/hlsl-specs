@@ -14,7 +14,7 @@ This test binary is only built in the OS repo and based off of the
 ExecutionTests source code in the DXC repo. There is a script in the WinTools
 repo which generates and annotates the HLK tests.
 
-We break coverage down into five test categories:
+We break coverage down into five test OpCode catOpCode egories:
 
 1. Implement DXIL OpCode tests:
     * At the bottom of this document there is a table of all HLSL intrinsics and
@@ -34,7 +34,7 @@ We break coverage down into five test categories:
        LLVM Instruction tests. After implementing the DXIL OpCode tests we
        should be able to do a coverage audit and ammend test cases, or write
        simple additional ones, as needed.
-    * Just as in '1. Implement DXIL Intrinsic Tests' some cases have multiple
+    * Just as in '1. Implement DXIL OpCode Tests' some cases have multiple
        instructions listed. '[]' brackets are used in the same manner. And there
        may also be multiple instructions.
     additional OpCodes/Instructions are logic based (i.e float or int specific).
@@ -56,14 +56,12 @@ We break coverage down into five test categories:
 5. 'Creative' test cases:
     * Sizes around alignments and boundaries (details in [Vector Sizes to
       Test])[#vector-sizes-to-test].
-    * Odd number of elements in vector
-    * Anything else that comes up? TBD here.
+    * Odd (non even) number of elements in vector. See [Test Sizes](#test-sizes)
 
 ## Buffer types to test
 
-* Raw Buffers (ByteAddressBuffer)
-* Structured Buffers (StructuredBuffer)
-* Typed Buffers (Buffer\<T>)
+* Raw Buffers (Byte Address Buffers)
+* Structured Buffers (StructuredBuffer\<T>)
 
 ## Vector element data types to test
 
@@ -74,41 +72,47 @@ float32_t, float64_t, packed_int16_t, and packed_uint16_t.
 
 ## Vector sizes and alignments to test
 
-General sizes to test are in the range [5, 1024]. It is worth noting that the
+General sizes to test are in the range [3, 1024]. It is worth noting that the
 [new form of rawBufferLoad](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0030-dxil-vectors.md#changes-to-dxil-intrinsics)
-will be updated to vectorize sizes < 5. Sizes < 5 are assumed to be covered by
-existing test collateral.  As part of this work we verify that assumption.
+will be updated to vectorize sizes < 5.
 
-Some noteable test sizes:
+## Test sizes
+
+* vector<TYPE, 3> : Testing one below previous vector limit. Early testing found
+  some issues here so it was added.
+* vector<TYPE, 4> : Previous limit.
+* vector<TYPE, 5> : Testing one above previous vector limit.
+* vector<TYPE, 16> : This size of 'vector' previously only appeared as matrices.
+* vector<TYPE, 17> : Larger than any vector previously possible.
+* vector<TYPE, 35> : Arbitrarily picked.
+* vector<TYPE, 100> : Arbitrarily picked.
+* vector<TYPE, 256> : Arbitrarily picked.
+* vector<TYPE, 1024> : The new max size of a vector. 
+* These sizes will be tested across [Vector element data types to test](#vector-element-data-types-to-test)
+
+## Some noteable alignment cases
 
 * 128 bit boundaries : Memory access for Shader Model 5.0 and earlier operate on
 128-bit slots aligned on 128-bit boundaries. An example is vector<half, 7>,
 vector<half, 8> and vector<half, 9>. 112 bits, 128 bits, and 144 bits
 respectively. This boundary will tested for with 32-bit and 64-bit sized values
 as well.
-* vector<TYPE, 5> : Testing one above previous vector limit.
-* vector<TYPE, 16> : This size of 'vector' previously only appeared as matrices.
-* vector<TYPE, 17> : Larger than any vector previously possible.
-* vector<TYPE, 1024> : The new max size of a vector. 
-* These sizes will be tested across [Vector element data types to test](#vector-element-data-types-to-test)
 
-Some noteable alignment cases:
-
-* Most GPUs operate on at least 32-bits at once, so waht happens if you use
+* Most GPUs operate on at least 32-bits at once, so what happens if you use
   16-bit values and an odd number of elements. Could accesssing the last element
   expose issues where we could overwrite the next variable is it is assuming
   alignment?
-* Additional interesting cases TBD.
 
 ## High level test design
 
 1. The test will leverage the existing XML infrastructure currently used by the
    existing execution tests. There are two XML files. This general design
    pattern exists today in the execution tests.
-   First XML: Used to define shader source code and metadata about that shader
+
+   * 1st XML: Used to define shader source code and metadata about that shader
    code. This XML file is parsed using a private class. This private class helps
    faciliate creation of D3D resources and execution of the shader.
-   Second XML: Describes metadata about the specific test cases. Used by the
+   * 2nd XML: Describes metadata about the specific test cases. Used by the
    TAEF infrastructe for [TAEF Data Driven
    Testing](https://learn.microsoft.com/en-us/windows-hardware/drivers/taef/data-driven-testing)
 2. Test inputs will be hard coded in a c++ header file. This was chosen over
@@ -141,7 +145,7 @@ available much earlier in the DXC repo. It just means that they are simply TAEF
 tests in the DXC repo. An HLK test includes an extra level of infrastructure for
 test gating, selection, and result submission for WHQL signing of drivers.
 
-1. Tests will be shared privately with IHV's along with the latest DXC and
+1. Tests will be shared privately with IHVs along with the latest DXC and
 latest Agility SDK for tesing and validation. IHVs will also be able to build
 and run the tests from the public DXC repo themselves. If needed Microsoft can
 share further instructions when the tests are available.
@@ -165,9 +169,9 @@ considered completed.
 * All new test cases pass when run locally against a WARP device
 * All new test cases must verify applicable outputs for correctness.
 * All new test cases are confirmed to be present in HLK Studio and selectable to
-* be run when a target device satisfies the HLK ShaderModel 6.9 requirement.
+  be run when a target device satisfies the HLK ShaderModel 6.9 requirement.
 * All new tests/test cases are added to the official WHQL HLK playlist for the
-* OS release that the HLK tests will ship with.
+  OS release that the HLK tests will ship with.
 * Tests will be annoated to show which DXIL OpCode, LLVM Instructions, and HLSL
   operators they are intended to get coverage for.
 
@@ -191,13 +195,11 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | Subtraction | - | |
 | Multiplication | * | |
 | Additive and Multiplicative Operators | +, -, *, /, % | |
-| Array Operator | [i] | llvm:ExtractElementInst |
+| Array Operator | [i] | llvm:ExtractElementInst OR llvm:InsertElemtInst |
 | Assignment Operators | =, +=, -=, *=, /=, %= |
-| Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on |
-||| int and uint vectors |
+| Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors |
 | Boolean Math Operators | & &, \|\| , ?: | |
-| Cast Operator | (type) | No direct operator, difference in GetElementPointer |
-||| or load type |
+| Cast Operator | (type) | No direct operator, difference in GetElementPointer  or load type |
 | Comparison Operators | <, >, ==, !=, <=, >= | |
 | Prefix or Postfix Operators | ++, -- | |
 | Unary Operators | !, -, + | |
@@ -217,8 +219,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | sinh      | Hsin | | no range requirements. |
 | tan       | Tan | | no range requirements. |
 | tanh      | Htan | | no range requirements. |
-| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, | |
-||| FCpmOEQ, FCmpOGE, FCmpOLT, And, Select | Not required. Covered by other ops. |
+| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, FCmpOEQ, FCmpOGE, FCmpOLT, And, Select | Not required. Covered by other ops. |
 | degrees   | | FMul | Not needed. Covered by FMul. |
 | radians   | | FMul | Not needed. Covered by FMul. |
 
@@ -232,8 +233,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | floor     | Round_ni | | |
 | fma       | Fma | | |
 | frac      | rc | | |
-| frexp     | | FCmpUNE, SExt, BitCast, And, Add, | |
-||| AShr, SIToFP, Store, And, Or | |
+| frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | |
 | ldexp     | Exp | FMul |  |
 | lerp      | | FSub, FMul, FAdd | |
 | log       | Log | FMul | |
@@ -264,8 +264,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | isinf     | IsInf | | |
 | isnan     | IsNan | | |
 | modf      | Round_z | FSub, Store | |
-| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, | |
-||| Select, FMul | |
+| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, Select, FMul | |
 
 ### Bitwise Ops
 
@@ -289,10 +288,8 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| all       | | [FCmpUNE], [ICmpNE] , | |
-||| [ExtractElement, And] | |
-| any       | | [FCmpUNE], [ICmpNE] , | |
-||| [ExtractElement, Or] | |
+| all       | | [FCmpUNE], [ICmpNE] , [ExtractElement, And] | |
+| any       | | [FCmpUNE], [ICmpNE] , [ExtractElement, Or] | |
 | dot       | | ExtractElement, Mul | |
 
 ### Derivative and Quad Operations
@@ -305,8 +302,8 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | ddy_fine  | DerivFineY | | |
 | fwidth    | QuadReadLaneAt | | |
 | QuadReadLaneAcrossX | QuadOp | | |
-| QuadReadLaneAcrossY | QuadOp | | Not requied. Covered by QuadReadLaneAcrossX |
-| QuadReadLaneAcrossDiagonal | QuadOp | Not required. Covered by QuadReadLaneAcrossX | |
+| QuadReadLaneAcrossY | QuadOp | | Uses different QuadOp parameters leading to different behavior. |
+| QuadReadLaneAcrossDiagonal | QuadOp | | Uses different QuadOp parameters leading to different behavior. |
 | ddx_coarse| DerivCoarseX | | Not required. Covered by ddx |
 | ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy |
 
