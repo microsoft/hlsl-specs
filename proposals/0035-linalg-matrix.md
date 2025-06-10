@@ -2,7 +2,7 @@
 
 # Linear Algebra Matrix
 
-* Proposal: [NNNN](NNNN-linalg-matrix.md)
+* Proposal: [0035](0035-linalg-matrix.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
 * Status: **Under Consideration**
