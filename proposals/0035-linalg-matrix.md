@@ -30,6 +30,9 @@ SM 6.8 called [Wave Matrix](https://github.com/microsoft/hlsl-specs/pull/61).
 This proposal is aimed at merging the two into a unified language feature that
 can be supported on all platforms (with some platform-specific limitations).
 
+This proposal is similar but not directly aligned with [0031 - HLSL Vector
+Matrix Operations](/proposals/0031-hlsl-vector-matrix-operations.md).
+
 ## Proposed solution
 
 Below is a proposed pseudo-HLSL API. The proposal uses C++20 concepts to
@@ -106,5 +109,7 @@ Matrix<T, M, N> Multiply(const ref Matrix<T, M, K>, const ref Matrix<T, K, N>);
   element manipulations, but this has been identified as an important feature?
 * What will the DXIL representation look like?
   * This will be addressed in a separate proposal.
+* Support for packed types?
+* Support for other number formats that aren't natively supported by HLSL?
 
 <!-- {% endraw %} -->
