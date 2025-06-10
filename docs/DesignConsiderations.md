@@ -42,7 +42,7 @@ behavior with C++ user expectations.
 
 ### We do not exist in a vacuum
 
-Many of the problems we're solving are not unique to HLSL. We should always look
+Many of the problems we're solving are not unique to HLSL. We will look
 to other languages, tools, and ecosystems as we consider how to evolve our own.
 
 ### Design for users
