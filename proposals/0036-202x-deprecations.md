@@ -2,7 +2,7 @@
 
 # 202x Feature Deprecations
 
-* Proposal: [NNNN](NNNN-202x-deprecations.md)
+* Proposal: [0036](0036-202x-deprecations.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
 * Status: **Under Consideration**
