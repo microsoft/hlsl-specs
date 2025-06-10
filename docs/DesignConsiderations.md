@@ -32,8 +32,8 @@ open and to treat all participants equitably.
 
 ### Principle of least astonishment
 
-Most HLSL users are C++ users. Acknowledging that aspects of C++ don't map
-efficiently to GPUs (looking at you `virtual`, RTTI, and exceptions), we should
+Most HLSL users are C++ users. Acknowledging that certain aspects of C++ don't
+map efficiently to GPUs (such as `virtual`, RTTI, and exceptions), we should
 strive for alignment with C++ wherever possible and follow the [principle of
 least astonishment](https://en.wikipedia.org/wiki/Principle_of_least_astonishment).
 
