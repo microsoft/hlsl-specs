@@ -49,7 +49,7 @@ to other languages, tools, and ecosystems as we consider how to evolve our own.
 
 HLSL exists to serve users. Consider the experience of users and all the ways
 HLSL can empower them to be more productive and creative. HLSL inherits a lot of
-sharp edges both from its history and C++; we strive to reduce those cases.
+sharp edges both from its history and from C++; we strive to reduce those cases.
 
 ### The Zen of Python is pretty great
 
