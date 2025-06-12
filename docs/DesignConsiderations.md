@@ -32,6 +32,10 @@ open and to treat all participants equitably.
 
 ### Principle of least astonishment
 
+We should aim to not surprise our users with unexpected behaviors. This means
+recognizing our place in larger tooling ecosystems and considering that as we
+adopt changes to HLSL.
+
 Most HLSL users are C++ users. Acknowledging that certain aspects of C++ don't
 map efficiently to GPUs (such as `virtual`, RTTI, and exceptions), we should
 strive for alignment with C++ wherever possible and follow the [principle of
@@ -40,45 +44,29 @@ least astonishment](https://en.wikipedia.org/wiki/Principle_of_least_astonishmen
 For example, adopting C++'s best-match algorithm for overload resolution aligns
 behavior with C++ user expectations.
 
+Similarly, most HLSL users aren't new to the language. We should avoid changing
+the meaning of existing valid HLSL code, unless the benefits outweigh the costs
+and we can support the transition with adequate tooling. An example of when we
+didn't do as well as we could have here is HLSL 2021's short-circuiting
+operators. While we did make some decisions to avoid changing the meaning of
+syntax (removing boolean operators for non-scalar types), we didn't provide
+diagnostics to catch behavior changes or performance impacting changes.
+
 ### We do not exist in a vacuum
 
 Many of the problems we're solving are not unique to HLSL. We will look
 to other languages, tools, and ecosystems as we consider how to evolve our own.
+
+Consider python's ["The Zen of Python"](https://peps.python.org/pep-0020/) -
+while Python's particular design decisions aren't always applicable to HLSL
+many of their principles apply broadly to programming language design. We
+should embrace their wisdom where it applies to us.
 
 ### Design for users
 
 HLSL exists to serve users. Consider the experience of users and all the ways
 HLSL can empower them to be more productive and creative. HLSL inherits a lot of
 sharp edges both from its history and from C++; we strive to reduce those cases.
-
-### The Zen of Python is pretty great
-
-While not all of Python's design decisions are applicable to HLSL many of their
-design principles apply broadly to programming language design.
-
-[PEP 20 - The Zen of Python](https://peps.python.org/pep-0020/) has a bunch of
-deeply relevant pithy sayings which are a great set of guidelines to help shape
-programming language design, and we should embrace the wisdom of others.
-
-> Beautiful is better than ugly.
-> Explicit is better than implicit.
-> Simple is better than complex.
-> Complex is better than complicated.
-> Flat is better than nested.
-> Sparse is better than dense.
-> Readability counts.
-> Special cases aren't special enough to break the rules.
-> Although practicality beats purity.
-> Errors should never pass silently.
-> Unless explicitly silenced.
-> In the face of ambiguity, refuse the temptation to guess.
-> There should be one-- and preferably only one --obvious way to do it.
-> Although that way may not be obvious at first unless you're Dutch.
-> Now is better than never.
-> Although never is often better than *right* now.
-> If the implementation is hard to explain, it's a bad idea.
-> If the implementation is easy to explain, it may be a good idea.
-> Namespaces are one honking great idea -- let's do more of those!
 
 ## Style Conventions
 
