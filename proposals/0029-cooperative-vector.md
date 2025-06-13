@@ -586,7 +586,7 @@ enum class DXILMatrixLayout : uint {
 ```
 
 Optimal layouts are opaque implementation specific layouts, the D3D call
-`ConvertLinearAlgebraMatrix` can be used to convert the *Matrix* to an optimal
+`ConvertLinearAlgebraMatrices` can be used to convert the Matrices to an optimal
 layout. Row-Major and Column-Major layouts are also supported. **matrix
 stride** must be zero for optimal layouts.
 
@@ -932,7 +932,7 @@ number of bytes returned in call to
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrix(
+void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrices(
     D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
     UINT DescCount);
 
@@ -940,20 +940,22 @@ void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrix(
 
 *Valid Usage:* 
 
-* If SrcLayout is row-major or column-major, then SrcStride should be greater than the length of a row/column, and a
-  multiple of the element size.
-* If DestLayout is row-major or column-major, then DestStride should be greater than the length of a row/column, and a
-  multiple of 16.
-* If SrcComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
-  SrcComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
-* If DestComponentType is not a supported MatrixInterpretation value as reported by CheckFeatureSupport() then
-  DestComponentType should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
-* If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other should be a lower-precision floating-point type. 
-* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout should be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
+* If SrcLayout is row-major or column-major, then SrcStride must be greater
+  than the length of a row/column, and a multiple of the element size.
+* If DestLayout is row-major or column-major, then DestStride must be greater
+  than the length of a row/column, and a multiple of 16.
+* If SrcComponentType is not a supported MatrixInterpretation value as reported
+  by CheckFeatureSupport() then SrcComponentType must be
+  `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
+* If DestComponentType is not a supported MatrixInterpretation value as reported
+  by CheckFeatureSupport() then DestComponentType must be
+  `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
+* If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other must be a lower-precision floating-point type. 
+* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout must be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 *CommandList interactions:*
 
-- Synchronization around `ConvertLinearAlgebraMatrix` calls:
+- Synchronization around `ConvertLinearAlgebraMatrices` calls:
    - Legacy Barrier
      - Source buffer: Must be in `D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE` state
      - Dest buffer: Must be in `D3D12_RESOURCE_STATE_UNORDERED_ACCESS` state
@@ -1012,7 +1014,7 @@ pD3D12Device->GetLinearAlgebraMatrixConversionDestinationInfo(&infoDesc.DestInfo
 infoDesc.DataDesc.DestVA = srcVA + infoDesc.DestInfo.DestSize;
 
 // Perform the conversion
-pD3D12CommandList->ConvertLinearAlgebraMatrix(&infoDesc, 0);
+pD3D12CommandList->ConvertLinearAlgebraMatrices(&infoDesc, 0);
 
 ```
 ### D3D12 DDI Additions
