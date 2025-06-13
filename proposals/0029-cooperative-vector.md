@@ -586,7 +586,7 @@ enum class DXILMatrixLayout : uint {
 ```
 
 Optimal layouts are opaque implementation specific layouts, the D3D call
-`ConvertLinearAlgebraMatrices` can be used to convert the Matrices to an optimal
+`ConvertLinearAlgebraMatrices` can be used to convert the matrices to an optimal
 layout. Row-Major and Column-Major layouts are also supported. **matrix
 stride** must be zero for optimal layouts.
 
@@ -950,8 +950,14 @@ void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrices(
 * If DestComponentType is not a supported MatrixInterpretation value as reported
   by CheckFeatureSupport() then DestComponentType must be
   `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`.
-* If SrcComponentType and DestComponentType are not equal, then one should be `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other must be a lower-precision floating-point type. 
-* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout must be `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL` or `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
+* If SrcComponentType and DestComponentType are not equal, then one must be
+  `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT32`  or
+  `D3D12_LINEAR_ALGEBRA_DATATYPE_FLOAT16` and the other must be a
+  lower-precision floating-point type. 
+* If DestComponentType is `D3D12_LINEAR_ALGEBRA_DATATYPE_E4M3` or
+  `D3D12_LINEAR_ALGEBRA_DATATYPE_E5M2`, then DestLayout must be
+  `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_MUL_OPTIMAL` or
+  `D3D12_LINEAR_ALGEBRA_MATRIX_LAYOUT_OUTER_PRODUCT_OPTIMAL`.
 
 *CommandList interactions:*
 
