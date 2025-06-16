@@ -61,6 +61,8 @@ We break coverage down into five test categories.
     * Ensure we have some basic tests doing standard loading/storing of long
      vectors across [Buffer types to test](#buffer-types-to-test) and [Vector
      element data types to test](#vector-element-data-types-to-test).
+    * Additionally, the above buffer types and data types should be tested by
+      loading from a [ResourceDescriptorHeap](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_DynamicResources.html)
 
 5. 'Creative' test cases:
     * Sizes around alignments and boundaries (details in [Vector Sizes to
