@@ -238,7 +238,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 
 | Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
 |-----------|--------------|----------|-----------|
-| abs       | [Imax], [Fabs] | | |
+| abs       | [Imax], [Fabs] | | Imax for ints. Fabs for floats. |
 | ceil      | Round_pi | | |
 | exp       | Exp | | |
 | floor     | Round_ni | | |
