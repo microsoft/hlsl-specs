@@ -251,7 +251,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | mad       | IMad | | |
 | max       | IMax | | |
 | min       | IMin | | |
-| pow       | [Log, Exp] | [FMul] , [FDiv] ||
+| pow       | [Log, Exp] | [FMul] , [FDiv] | See [This comment](https://github.com/microsoft/DirectXShaderCompiler/blob/50f53c6c200fd6b53f65268912e6f9e444ce9242/lib/HLSL/HLOperationLower.cpp#L761-L785)|
 | rcp       | | FDiv | |
 | round     | Round_ne | | |
 | rsqrt     | Rsqrt | | |
