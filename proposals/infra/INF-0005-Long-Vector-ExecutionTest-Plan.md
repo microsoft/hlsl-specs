@@ -1,4 +1,12 @@
-# Test Plan
+# Long Vectore Execution Test Plan
+
+* Proposal: [0005](INF-0005-Long-Vector-ExecutionTest-Plan.md)
+* Author(s): [Alex Sepkowski](https://github.com/alsepkow)
+* Sponsor: [Alex Sepkowski](https://github.com/alsepkow)
+* Status: **Accepted**
+* Impacted Projects: DXC
+
+## Introduction
 
 This test plan covers testing all HLSL intrinsics that can take long vectors as
 parameters. And more specifically, it only covers testing scenarios which will
