@@ -26,11 +26,12 @@ We break coverage down into five test categories.
 
 1. Implement DXIL OpCode tests:
     * At the bottom of this document there are [tables](#hlsl-operators)
-      containing all HLSL operators (more on those in '3. HLSL Operator Tests') and HLSL intrinsics that can be used with
-      long vectors. The HLSL intrinsics tables have a DXIL OpCode and LLVM
-      instruction columns. These columns contain the the intrinsics mapped DXIL
-      OpCodes as well as there LLVM instructions. All intrinsics have at least
-      one DXIL OpCode or one LLVM instruction.
+      containing all HLSL operators (more on those in '3. HLSL Operator Tests')
+      and HLSL intrinsics that can be used with long vectors. The HLSL
+      intrinsics tables have a DXIL OpCode and LLVM instruction columns. These
+      columns contain the the intrinsics mapped DXIL OpCodes as well as there
+      LLVM instructions. All intrinsics have at least one DXIL OpCode or one
+      LLVM instruction.
 
       Many instrinsics have trivial mappings. [Atan](#trigonometry) is an
       example of an intrinsic with a trivial mapping. Other intrinsics have
