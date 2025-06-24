@@ -1,4 +1,4 @@
-# Long Vectore Execution Test Plan
+# Long Vector Execution Test Plan
 
 * Proposal: [0005](INF-0005-Long-Vector-ExecutionTest-Plan.md)
 * Author(s): [Alex Sepkowski](https://github.com/alsepkow)
@@ -29,23 +29,23 @@ We break coverage down into five test categories.
       containing all HLSL operators (more on those in '3. HLSL Operator Tests')
       and HLSL intrinsics that can be used with long vectors. The HLSL
       intrinsics tables have a DXIL OpCode and LLVM instruction columns. These
-      columns contain the the intrinsics mapped DXIL OpCodes as well as there
+      columns contain the intrinsic's mapped DXIL OpCodes as well as their
       LLVM instructions. All intrinsics have at least one DXIL OpCode or one
       LLVM instruction.
 
-      Many instrinsics have trivial mappings. [Atan](#trigonometry) is an
+      Many intrinsics have trivial mappings. [Atan](#trigonometry) is an
       example of an intrinsic with a trivial mapping. Other intrinsics have
       multiple DXIL OpCodes. Some intrinsics will use all listed DXIL OpCodes
-      and/or LLVM instruvtions, while others will have additonal logic which
+      and/or LLVM instructions, while others will have additional logic which
       determines which OpCodes/Instructions are used. If an intrinsic relies on
       additional logic to determine which OpCodes/Instructions are used then the
       OpCode/Instructions will be enclosed in '[]' brackets. The [sign](#math)
-      intrinsic is an example of an intrinsic with addtional logic. If an
+      intrinsic is an example of an intrinsic with additional logic. If an
       OpCode/Instruction is not enclosed in '[]' then it is used in all paths
       for that intrinsic.
 
 2. Implement LLVM Instruction tests:
-    * These are the test cases for the LLVM Instructions listed in the in table
+    * These are the test cases for the LLVM Instructions listed in the table
      at the bottom of this document.
     * Because we will use HLSL intrinsics to get coverage for the DXIL OpCode
        tests we speculate that we will get most of the coverage needed for the
@@ -55,7 +55,7 @@ We break coverage down into five test categories.
     * Just as in '1. Implement DXIL OpCode Tests' some cases have multiple
        instructions listed. '[]' brackets are used in the same manner. And there
        may also be multiple instructions.
-    additional OpCodes/Instructions are logic based (i.e float or int specific).
+    * Additional OpCodes/Instructions are logic based (i.e float or int specific).
 
 3. HLSL Operator tests:
     * [HLSL Operators Table](#hlsl-operators) in this document lists the HLSL
@@ -107,7 +107,7 @@ will be updated to vectorize sizes < 5.
 * vector<TYPE, 35> : Arbitrarily picked.
 * vector<TYPE, 100> : Arbitrarily picked.
 * vector<TYPE, 256> : Arbitrarily picked.
-* vector<TYPE, 1024> : The new max size of a vector. 
+* vector<TYPE, 1024> : The new max size of a vector.
 * These sizes will be tested across [Vector element data types to test](#vector-element-data-types-to-test)
 
 ## Some noteable alignment cases
@@ -119,8 +119,8 @@ respectively. This boundary will tested for with 32-bit and 64-bit sized values
 as well.
 
 * Most GPUs operate on at least 32-bits at once, so what happens if you use
-  16-bit values and an odd number of elements. Could accesssing the last element
-  expose issues where we could overwrite the next variable is it is assuming
+  16-bit values and an odd number of elements. Could accessing the last element
+  expose issues where we could overwrite the next variable if it is assuming
   alignment?
 
 ## High level test design
@@ -131,16 +131,20 @@ as well.
 
    * 1st XML: Used to define shader source code and metadata about that shader
    code. This XML file is parsed using a private class. This private class helps
-   faciliate creation of D3D resources and execution of the shader.
+   facilitate creation of D3D resources and execution of the shader.
    * 2nd XML: Describes metadata about the specific test cases. Used by the
-   TAEF infrastructe for [TAEF Data Driven
+   TAEF infrastructure for [TAEF Data Driven
    Testing](https://learn.microsoft.com/en-us/windows-hardware/drivers/taef/data-driven-testing)
 2. Test inputs will be hard coded in a c++ header file. This was chosen over
    definining inputs in the second XML as this is cleaner and easier to parse
    for different data types. This c++ header method also avoids needing to
    repeat the data set in the XML for each individual test cast. Inputs will use
    'value sets' which will typically be much smaller than the desired vector
-   test size. Values will be repeated until the vector is full.
+   test size. Values will be repeated cyclically until the vector is full. For
+   example, a value set `{1, 2, 3}` used to populate a `vector<int, 1024>` will
+   produce the pattern `<1, 2, 3, 1, 2, 3, 1, 2, 3, ..., 1, 2, 3>`, repeating
+   the sequence until all 1024 elements are filled. This approach provides
+   predictable test data while keeping input definitions manageable.
 3. Expected outputs are computed for each test case at run time.
 4. All new long vector test code is factored out into its own files.
 
@@ -166,20 +170,11 @@ tests in the DXC repo. An HLK test includes an extra level of infrastructure for
 test gating, selection, and result submission for WHQL signing of drivers.
 
 1. Tests will be shared privately with IHVs along with the latest DXC and
-latest Agility SDK for tesing and validation. IHVs will also be able to build
+latest Agility SDK for testing and validation. IHVs will also be able to build
 and run the tests from the public DXC repo themselves. If needed Microsoft can
 share further instructions when the tests are available.
 
 2. The tests will ship with the HLK at a TBD date in a later OS release.
-
-## New HLK Tests
-
-All of the scripts and yaml files mentioned are part of the Microsoft WinTools
-repo. mm_annotate_shader_op_arith_table.py will need to be updated to recognize
-any new tests (not test cases) added. And additional GUIDs added for new tests.
-mm_annotate_shader_op_arith_table.py is called by mm-hlk-update.py when
-converting from ExecutionTests to the HLK 'DxilConf' tests. The aforementioned
-*table.py script is run by Integration.HLKTestsUpdate.yaml
 
 ## Test Validation Requirements
 
@@ -216,7 +211,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | Multiplication | * | |
 | Additive and Multiplicative Operators | +, -, *, /, % | |
 | Array Operator | [i] | llvm:ExtractElementInst OR llvm:InsertElemtInst |
-| Assignment Operators | =, +=, -=, *=, /=, %= |
+| Assignment Operators | =, +=, -=, *=, /=, %= | |
 | Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors |
 | Boolean Math Operators | & &, \|\| , ?: | |
 | Cast Operator | (type) | No direct operator, difference in GetElementPointer  or load type |
