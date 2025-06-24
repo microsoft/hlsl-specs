@@ -142,9 +142,9 @@ as well.
    'value sets' which will typically be much smaller than the desired vector
    test size. Values will be repeated cyclically until the vector is full. For
    example, a value set `{1, 2, 3}` used to populate a `vector<int, 1024>` will
-   produce the pattern `<1, 2, 3, 1, 2, 3, 1, 2, 3, ..., 1, 2, 3>`, repeating
-   the sequence until all 1024 elements are filled. This approach provides
-   predictable test data while keeping input definitions manageable.
+   produce the pattern `<1, 2, 3, 1, 2, 3, ...>`, repeating the sequence until
+   all 1024 elements are filled. This approach provides predictable test data
+   while keeping input definitions manageable.
 3. Expected outputs are computed for each test case at run time.
 4. All new long vector test code is factored out into its own files.
 
@@ -175,6 +175,7 @@ and run the tests from the public DXC repo themselves. If needed Microsoft can
 share further instructions when the tests are available.
 
 2. The tests will ship with the HLK at a TBD date in a later OS release.
+
 
 ## Test Validation Requirements
 
