@@ -74,8 +74,7 @@ We break coverage down into five test categories.
       loading from a [ResourceDescriptorHeap](https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_DynamicResources.html)
 
 5. 'Creative' test cases:
-    * Sizes around alignments and boundaries (details in [Vector Sizes to
-      Test])[#vector-sizes-to-test].
+    * Sizes around alignments and boundaries. See [Vector sizes and alignments](#vector-sizes-and-alignments-to-test)
     * Odd (non even) number of elements in vector. See [Test Sizes](#test-sizes)
 
 ## Buffer types to test
