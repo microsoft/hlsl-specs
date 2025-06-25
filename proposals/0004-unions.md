@@ -99,6 +99,8 @@ non-static data member begins when the member is initialized, and ends either
 when the value is destroyed via an explicit destructor call, a different
 non-static data member is initialized, or the union's lifetime ends.
 
+A union may not contain any non-static data members of intangible type.
+
 If a union contains more than one standard-layout structures which share a
 common initial sequence of non-static members, the common initial sequence may
 be accessed through any non-static union member containing the sequence.
