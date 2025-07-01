@@ -83,7 +83,7 @@ grammar formation is adopted for cbuffers:
   empty-declaration\br
 \end{grammar}
 ```
-![Latex Rendering](NNNN-assets/cbuffer-grammar.png)
+![Latex Rendering](0037-assets/cbuffer-grammar.png)
 
 This simplified grammar disallows members of `cbuffer` declarations that do not
 have semantic meaning, and allows a simplification of `cbuffer` scoping rules.
