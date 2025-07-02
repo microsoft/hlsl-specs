@@ -49,6 +49,8 @@ jobs:
           cmake --build build --target pdf
           cp build/hlsl.pdf ${{github.workspace}}/specs/
           cp build/html/* ${{github.workspace}}/specs/
+      - name: Update proposal front matter
+        run: python3 .github/update_proposal_front_matter.py
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
