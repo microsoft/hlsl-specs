@@ -1,15 +1,13 @@
 <!-- {% raw %} -->
 
-# Refined `cbuffer` Contexts
-
-## Instructions
+# 8-bit integer support
 
 * Proposal: [0099](0099-8-bit-types.md)
 * Author(s): [Matthäus Chajdas](https://github.com/anteru)
-* Sponsor: TBD
-* Status: TBD
+* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
+* Status: **Under Consideration**
 * Planned Version: 202x
-* Issues: [HLSL 334](https://github.com/microsoft/hlsl-specs/issues/337)
+* Issues: [HLSL 337](https://github.com/microsoft/hlsl-specs/issues/337)
 
 ## Introduction
 
