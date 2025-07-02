@@ -44,6 +44,53 @@ under HLSL 2021 as an extension. Using the feature in HLSL 2021 mode as an
 extension will produce warnings so that users can be aware of portability issues
 that may arise between compiler versions.
 
+## Detailed Design
+
+### **Overloaded Operators** Spec Language
+
+```latex
+\begin{grammar}
+  \define{operator-function-id}\br
+    \terminal{operator} operator\br
+
+  \define{operator} one of\br
+    \terminal{+} \terminal{-} \terminal{*} \terminal{/} \terminal{\%}
+    \terminal{\^{}} \terminal{\&} \terminal{|} \terminal{\~{}} \terminal{!}
+    \terminal{=} \terminal{<} \terminal{>}\br
+    \terminal{+=} \terminal{-=} \terminal{*=} \terminal{/=} \terminal{\%=}
+    \terminal{\^{}=} \terminal{\&=} \terminal{|=}\br
+    \terminal{<<} \terminal{>>} \terminal{>>=} \terminal{<<=}
+    \terminal{==} \terminal{!=} \terminal{<=} \terminal{>=} \terminal{\&\&}
+    \terminal{||}\br
+    \terminal{++} \terminal{--} \terminal{,} \terminal{()}
+    \terminal{\[\]}\br
+\end{grammar}
+```
+![Latex Rendering](0008-assets/OperatorGrammar.png)
+
+An _operator function_ is a function declared with an _operator-function-id_ as
+its name. An _operator function template_ is a function template
+operator-function-id as its name.
+
+Both the binary and unary forms of `+`, `-`, `*` and `&` may be overloaded.
+
+An operator function may be called explicitly by using the _operator-function_id
+as the name of the function.
+
+An operator function shall either be a non-static member function or a
+non-member function. If an operator is a non-member function it must have at
+least one parameter of class or enumeration type.
+
+No argument to an operator function shall have a default value. Operators cannot
+have more or fewer parameters than the number required for the corresponding
+operator.
+
+### Overload Resolution Language
+
+The HLSL draft specification already defines overload resolution to occur in all
+the relevant places required for non-member overload resolution (see:
+[[Overload.Res]](https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Overload.Res)).
+
 ## Alternatives considered
 
 Non-member operator overloading is a feature that is generally useful, an no
