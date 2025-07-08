@@ -36,7 +36,7 @@ def extract_metadata_from_content(content: str) -> Dict[str, str]:
     simple_patterns = {
         'proposal': r'^\*\s*Proposal:\s*\[([^\]]+)\]',
         'author': r'^\*\s*Author\(s\):\s*(.+)$',
-        'sponsor': r'^\*\s*Sponsor:\s*(.+)$', 
+        'sponsor': r'^\*\s*Sponsor(?:\(s\))?:\s*(.+)$', 
         'status': r'^\*\s*Status:\s*(.+)$',
         'planned_version': r'^\*\s*Planned\s+Version:\s*(.+)$'
     }
