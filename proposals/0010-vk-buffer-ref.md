@@ -7,9 +7,10 @@
 * Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz),
     [Steven Perron](https://github.com/s-perron),
     [Diego Novillo](https://github.com/dnovillo)
-* Status: **Accepted**
+* Status: **Completed**
 * Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3).
   Some language details require HLSL 202x
+* PRs: [#7163](https://github.com/microsoft/DirectXShaderCompiler/pull/7163)
 
 ## Introduction
 
