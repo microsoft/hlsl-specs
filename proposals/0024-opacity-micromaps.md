@@ -5,7 +5,7 @@
 * Proposal: [0024](0024-opacity-micromaps.md)
 * Author(s): [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Review**
+* Status: **Accepted**
 * Planned Version: SM 6.9
 
 > NOTE: some links in this document are to internal documents that are not
