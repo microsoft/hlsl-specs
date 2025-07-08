@@ -16,14 +16,14 @@
 # Cooperative Vectors
 
 Cooperative Vectors is the overall name for this feature, though it doesn't appear
-in code other that feature tier/capability queries.
+in code other than feature tier/capability queries.
 
 Many implementations implement matrix-matrix and matrix-vector operations by allowing
 threads in a wave to cooperate under the hood while accessing the specialized hardware 
 to achieve peak performance, hence these APIs that expose the acceleration hardware 
 to HLSL users were put under the moniker **Cooperative/Wave**. But since this is an 
 implementation detail below the level of abstraction of HLSL, the namespace 
-**Linear Algebra** was chosen to categorize these set of operations.
+**Linear Algebra** was chosen to categorize this set of operations.
 
 E.g. `dx::linalg::` MatVec operations in HLSL, 
 `D3D12_LINEAR_ALGEBRA_*` and `D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_*` in D3D API structs.
