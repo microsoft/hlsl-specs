@@ -26,6 +26,9 @@ Some Vendor drivers support the 16 bit IsSpecialFloat op, but some do not.
 ## Proposed solution
 
 Beginning with SM 6.9 we would like to have DXC be able to generate this operation, and not extend to 32-bit.
-For shader models before 6.9 we want to emulate the functionality using LLVM IR rather than DXIL op
+For shader models before 6.9 we want to emulate the functionality using LLVM IR rather than a DXIL op.
+
+We should also update the DXIL validator to disallow the 16 bit DXIL overloads for the 'isinf', 'isnan', 'isfinite',
+and 'isnormal' operations for SM 6.8 and below.
 
 <!-- {% endraw %} -->
