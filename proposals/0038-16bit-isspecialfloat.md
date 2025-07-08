@@ -2,7 +2,7 @@
 
 # 16 bit isSpecialFloat DXIL Op
 
-* Proposal: [NNNN](NNNN-16bit-isspecialfloat.md)
+* Proposal: [0038](0038-16bit-isspecialfloat.md)
 * Author(s): [Sarah Spall](https://github.com/spall)
 * Sponsor: [Sarah Spall](https://github.com/spall)
 * Status: **Under Consideration**
