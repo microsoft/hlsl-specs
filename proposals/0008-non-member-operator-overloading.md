@@ -74,7 +74,7 @@ operator-function-id as its name.
 
 Both the binary and unary forms of `+`, `-`, `*` and `&` can be overloaded.
 
-An operator function may be called explicitly by using the _operator-function_id
+An operator function can be called explicitly by using the _operator-function_id
 as the name of the function.
 
 An operator function shall either be a non-static member function or a
