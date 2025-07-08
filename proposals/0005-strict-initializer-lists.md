@@ -5,7 +5,7 @@
 * Proposal: [0005](0005-strict-initializer-lists.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: 202y
 
 ## Introduction

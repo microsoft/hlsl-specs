@@ -3,12 +3,10 @@
 # Work Graphs
 
 * Proposal: [0018](0018-work-graphs.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz),
-  [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex
-  Riddell](https://github.com/tex3d)
-* Status: Complete
-* Version: Shader Model 6.8
+* Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Greg Roth](https://github.com/pow2clk)
+* Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex Riddell](https://github.com/tex3d)
+* Status: Completed
+* Planned Version: SM 6.8
 
 ## Introduction
 

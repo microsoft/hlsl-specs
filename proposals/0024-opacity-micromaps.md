@@ -2,21 +2,11 @@
 
 # Opacity Micromaps
 
-## Instructions
-
 * Proposal: [0024](0024-opacity-micromaps.md)
 * Author(s): [Tex Riddell](https://github.com/tex3d)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Review**
-
-<!--
-*During the review process, add the following fields as needed:*
-
-* Planned Version: Shader Model X.Y
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues:
-  [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
-  -->
+* Status: **Accepted**
+* Planned Version: SM 6.9
 
 > NOTE: some links in this document are to internal documents that are not
 > currently publically available. This file will be updated once they are

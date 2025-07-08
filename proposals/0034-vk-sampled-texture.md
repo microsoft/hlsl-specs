@@ -5,7 +5,7 @@
 * Proposal: [0034](0034-vk-sampled-texture.md)
 * Author(s): [Cassandra Beckley](https://github.com/cassiebeckley)
 * Sponsor: [Steven Perron](https://github.com/s-perron) and TBD
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Required Version: HLSL 2021
 <!--
 * PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)

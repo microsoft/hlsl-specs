@@ -2,14 +2,12 @@
 
 # HLSL Vector Matrix Operations
 
-## Instructions
-
-- Proposal: [0031](0031-hlsl-vector-matrix-operations.md)
-- Author(s): [Damyan Pepper][damyanp], [Chris Bieneman][llvm-beanz],
+* Proposal: [0031](0031-hlsl-vector-matrix-operations.md)
+* Author(s): [Damyan Pepper][damyanp], [Chris Bieneman][llvm-beanz],
   [Anupama Chandrasekhar][anupamachandra]
-- Sponsor: [Damyan Pepper][damyanp]
-- Status: **Under Consideration**
-- Planned Version: Shader Model 6.9
+* Sponsor: [Damyan Pepper][damyanp]
+* Status: **Under Review**
+* Planned Version: SM 6.9
 
 [damyanp]: https://github.com/damyanp
 [llvm-beanz]: https://github.com/llvm-beanz

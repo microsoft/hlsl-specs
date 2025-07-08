@@ -3,7 +3,7 @@
 * Proposal: [0003](0003-numeric-constants.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: 202x
 
 ## Introduction

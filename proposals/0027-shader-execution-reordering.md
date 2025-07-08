@@ -5,8 +5,9 @@
 * Author(s): [Rasmus Barringer](https://github.com/rasmusnv), Robert Toth,
 Michael Haidl, Simon Moll, Martin Stich
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Consideration**
+* Status: **Accepted**
 * Impacted Projects: DXC
+* Planned Version: SM 6.9
 
 ## Introduction
 

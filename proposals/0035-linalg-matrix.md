@@ -5,7 +5,8 @@
 * Proposal: [0035](0035-linalg-matrix.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
-* Status: **Under Consideration**
+* Status: **Under Review**
+* Planned Version: SM 6.x
 
 ## Introduction
 

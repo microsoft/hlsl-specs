@@ -3,7 +3,7 @@
 * Proposal: [0009](0009-math-modes.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: 202y
 * Dependencies: [0002 C++ Attributes](0002-cxx-attributes.md)
 

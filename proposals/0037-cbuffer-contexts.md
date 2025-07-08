@@ -2,8 +2,6 @@
 
 # Refined `cbuffer` Contexts
 
-## Instructions
-
 * Proposal: [0037](0037-cbuffer-contexts.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Helena Kotas](https://github.com/hekota)
 * Sponsor: TBD
