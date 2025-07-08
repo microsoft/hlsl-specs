@@ -6,7 +6,7 @@
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex Riddell](https://github.com/tex3d)
 * Status: Completed
-* Version: Shader Model 6.8
+* Version: SM 6.8
 
 ## Introduction
 
