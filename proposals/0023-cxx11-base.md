@@ -2,7 +2,7 @@
 
 # Adopt C++11 Base
 
-* Proposal: [NNNN](NNNN-cxx11-base.md)
+* Proposal: [0023](0023-cxx11-base.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: TBD
 * Status: **Under Consideration**

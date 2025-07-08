@@ -2,13 +2,14 @@
 
 # Buffer Pointers in HLSL With vk::BufferPointer
 
-*   Author(s): [Greg Fischer](https://github.com/greg-lunarg)
-*   Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz),
+* Proposal: [0010](0010-vk-buffer-ref.md)
+* Author(s): [Greg Fischer](https://github.com/greg-lunarg)
+* Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz),
     [Steven Perron](https://github.com/s-perron),
     [Diego Novillo](https://github.com/dnovillo)
-*   Status: **Accepted**
-*   Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3.
-    Some language details require HLSL 202x
+* Status: **Accepted**
+* Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3).
+  Some language details require HLSL 202x
 
 ## Introduction
 

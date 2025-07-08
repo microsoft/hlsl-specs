@@ -31,7 +31,7 @@ and the one in DXC. While there is an expectation that the new compiler will
 not be fully compatible with the previous compilers, These compat breaks should
  be minimized when possible.
 
- ## Proposed solution
+## Proposed solution
 In [HLSL 202X](0020-hlsl-202x-202y.md) the DXC implementation of the loop
 unroll factor should no longer alter the  number of iteration executions.
 Ideally the loop unroll factor will also become a compiler hint for partial
