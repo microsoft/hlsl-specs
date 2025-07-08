@@ -3,7 +3,7 @@
 * Proposal: [0004](0004-unions.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: 202y
 
 ## Introduction

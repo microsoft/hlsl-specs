@@ -2,10 +2,11 @@
 
 # HLSL Long Vectors
 
-* Proposal: [0026-HLSL-Vectors](0026-hlsl-vector-type.md)
+* Proposal: [0026](0026-hlsl-vector-type.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: **Under Consideration**
+* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
+* Status: **Accepted**
+* Planned Version: SM 6.9
 
 ## Introduction
 

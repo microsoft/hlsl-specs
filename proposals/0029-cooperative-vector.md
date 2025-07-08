@@ -5,7 +5,7 @@
              [Shashank Wadhwa][shashankw]
 * Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
 * Status: **Under Review**
-* Planned Version: Shader Model 6.9
+* Planned Version: SM 6.9
 
 
 [anupamachandra]: https://github.com/anupamachandra

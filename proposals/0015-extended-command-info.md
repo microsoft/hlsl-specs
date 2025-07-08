@@ -3,8 +3,8 @@
 * Proposal: [0015](0015-extended-command-info.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: Complete
-* Version: Shader Model 6.8
+* Status: Completed
+* Version: SM 6.8
 
 ## Introduction
 

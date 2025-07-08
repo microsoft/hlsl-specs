@@ -1,11 +1,9 @@
 # Non-member Operator Overloading
 
-## Instructions
-
 * Proposal: [0008](0008-non-member-operator-overloading.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+* Status: **Under Review**
 * Planned Version: 202y
 * Related Proposal(s): [0006 Reference Types](0006-reference types.md)
 

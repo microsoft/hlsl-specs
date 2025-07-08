@@ -6,9 +6,9 @@
 
 * Proposal: [0030](0030-dxil-vectors.md)
 * Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: **Under Consideration**
-* Planned Version: Shader Model 6.9
+* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
+* Status: **Accepted**
+* Planned Version: SM 6.9
 
 ## Introduction
 

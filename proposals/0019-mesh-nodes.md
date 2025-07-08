@@ -4,7 +4,7 @@
 * Author(s): [Tex Riddell](https://github.com/tex3d), [Amar Patel](https://github.com/amarpMSFT)
 * Sponsor: [Tex Riddell](https://github.com/tex3d)
 * Status: **Under Consideration**
-* Proposed Version: SM 6.9 experimental
+* Planned Version: SM 6.x
 
 ## Introduction
 

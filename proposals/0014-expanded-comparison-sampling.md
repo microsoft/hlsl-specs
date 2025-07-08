@@ -4,8 +4,8 @@
 * Author(s): [Greg Roth](https://github.com/pow2clk),
              [Jesse Natalie](https://github.com/jenatali)
 * Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: Complete
-* Version: Shader Model 6.8
+* Status: Completed
+* Version: SM 6.8
 
 ## Introduction
 

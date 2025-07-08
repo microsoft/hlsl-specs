@@ -3,7 +3,8 @@
 * Proposal: [0025](0025-max-records-per-node.md)
 * Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Mike Apodaca](https://github.com/mapodaca-nv)
 * Sponsor: Damyan Pepper
-* Status: **Under Consideration**
+* Status: **Under Review**
+* Planned Version: SM 6.x
 
 # [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
 
