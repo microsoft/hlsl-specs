@@ -53,6 +53,8 @@ def extract_metadata_from_content(content: str) -> Dict[str, str]:
             if current_field == 'author' or current_field == 'sponsor':
                 # Remove markdown links: [Name](url) -> Name
                 value = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', value)
+                # Remove reference-style markdown links: [Name][ref] -> Name
+                value = re.sub(r'\[([^\]]+)\]\[[^\]]*\]', r'\1', value)
                 # Clean up any remaining formatting
                 value = re.sub(r'\s+', ' ', value)  # normalize whitespace
             elif current_field == 'status':
