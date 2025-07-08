@@ -72,7 +72,7 @@ An _operator function_ is a function declared with an _operator-function-id_ as
 its name. An _operator function template_ is a function template
 operator-function-id as its name.
 
-Both the binary and unary forms of `+`, `-`, `*` and `&` may be overloaded.
+Both the binary and unary forms of `+`, `-`, `*` and `&` can be overloaded.
 
 An operator function may be called explicitly by using the _operator-function_id
 as the name of the function.
