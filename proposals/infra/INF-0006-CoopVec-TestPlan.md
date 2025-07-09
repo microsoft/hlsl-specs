@@ -179,13 +179,17 @@ The vector-matrix tests should cover the following control flow patterns:
 
 ### 2.5 Shader Stages to Test
 
-- Tests must cover all supported shader stages.
+- Tests must cover all supported shader stages: 
+  - Compute: CS
+  - Graphics: PS, VS, GS, TS, HS
+  - Ray Tracing: Ray Generation, Miss, Closest Hit, Any Hit, Intersection Hit.
 - Test in compute shaders comprehensively with all type combinations and
   dimensions
 - For other shader stages, use a more limited set of tests with:
   - A subset of key types
   - A subset of key dimensions
   - Only basic functionality tests (no advanced or special cases)
+  - For PS include test with helper pixels.
 
 This approach ensures we cover all shader stages without combinatorial
 explosion of test cases.
