@@ -5,10 +5,12 @@ Script to update Jekyll front matter for HLSL proposal markdown files.
 This script processes .md files in the proposals directory and:
 1. Extracts metadata from bullet points (Proposal, Author, Sponsor, Status, Planned Version)
 2. Adds Jekyll front matter if it doesn't exist
-3. Warns if front matter already exists (and leaves it unchanged)
-4. Skips the templates subdirectory
+3. By default, preserves existing front matter values (warns about conflicts)
+4. With --overwrite flag, replaces existing front matter with extracted values
+5. Skips the templates subdirectory
 """
 
+import argparse
 import os
 import re
 import sys
@@ -34,7 +36,7 @@ def extract_metadata_from_content(content: str) -> Dict[str, str]:
     simple_patterns = {
         'proposal': r'^\*\s*Proposal:\s*\[([^\]]+)\]',
         'author': r'^\*\s*Author\(s\):\s*(.+)$',
-        'sponsor': r'^\*\s*Sponsor:\s*(.+)$', 
+        'sponsor': r'^\*\s*Sponsor(?:\(s\))?:\s*(.+)$', 
         'status': r'^\*\s*Status:\s*(.+)$',
         'planned_version': r'^\*\s*Planned\s+Version:\s*(.+)$'
     }
@@ -51,6 +53,8 @@ def extract_metadata_from_content(content: str) -> Dict[str, str]:
             if current_field == 'author' or current_field == 'sponsor':
                 # Remove markdown links: [Name](url) -> Name
                 value = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', value)
+                # Remove reference-style markdown links: [Name][ref] -> Name
+                value = re.sub(r'\[([^\]]+)\]\[[^\]]*\]', r'\1', value)
                 # Clean up any remaining formatting
                 value = re.sub(r'\s+', ' ', value)  # normalize whitespace
             elif current_field == 'status':
@@ -176,7 +180,7 @@ def parse_existing_front_matter(content: str) -> Tuple[Dict[str, str], str]:
     return front_matter_dict, remaining_content
 
 
-def create_front_matter(metadata: Dict[str, str], title: Optional[str], existing_front_matter: Dict[str, str] = None) -> str:
+def create_front_matter(metadata: Dict[str, str], title: Optional[str], existing_front_matter: Dict[str, str] = None, overwrite: bool = False) -> str:
     """Create Jekyll front matter from extracted metadata, merging with existing front matter."""
     if existing_front_matter is None:
         existing_front_matter = {}
@@ -184,24 +188,15 @@ def create_front_matter(metadata: Dict[str, str], title: Optional[str], existing
     # Start with existing front matter, then add/override with extracted metadata
     merged_front_matter = existing_front_matter.copy()
     
-    # Only add extracted values if they don't already exist in front matter
-    if title and 'title' not in merged_front_matter:
-        merged_front_matter['title'] = title
+    # Add extracted values based on overwrite mode
+    if title:
+        if overwrite or 'title' not in merged_front_matter:
+            merged_front_matter['title'] = title
     
-    if 'proposal' in metadata and 'proposal' not in merged_front_matter:
-        merged_front_matter['proposal'] = metadata['proposal']
-    
-    if 'author' in metadata and 'author' not in merged_front_matter:
-        merged_front_matter['author'] = metadata['author']
-    
-    if 'sponsor' in metadata and 'sponsor' not in merged_front_matter:
-        merged_front_matter['sponsor'] = metadata['sponsor']
-    
-    if 'status' in metadata and 'status' not in merged_front_matter:
-        merged_front_matter['status'] = metadata['status']
-    
-    if 'planned_version' in metadata and 'planned_version' not in merged_front_matter:
-        merged_front_matter['planned_version'] = metadata['planned_version']
+    for key in ['proposal', 'author', 'sponsor', 'status', 'planned_version']:
+        if key in metadata:
+            if overwrite or key not in merged_front_matter:
+                merged_front_matter[key] = metadata[key]
     
     # Convert to YAML format
     front_matter_lines = ['---']
@@ -228,7 +223,7 @@ def create_front_matter(metadata: Dict[str, str], title: Optional[str], existing
     return '\n'.join(front_matter_lines)
 
 
-def process_file(file_path: Path) -> bool:
+def process_file(file_path: Path, overwrite: bool = False) -> bool:
     """Process a single markdown file. Returns True if file was modified."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -260,28 +255,42 @@ def process_file(file_path: Path) -> bool:
         if key in metadata and key in existing_front_matter and existing_front_matter[key] != metadata[key]:
             conflicts.append(f"{key}: existing='{existing_front_matter[key]}' vs extracted='{metadata[key]}'")
     
-    # Log conflicts
+    # Log conflicts (and what will happen)
     for conflict in conflicts:
-        print(f"Warning: {file_path} has conflicting metadata - {conflict}", file=sys.stderr)
+        if overwrite:
+            print(f"Info: {file_path} - overwriting conflicting metadata - {conflict}", file=sys.stderr)
+        else:
+            print(f"Warning: {file_path} has conflicting metadata - {conflict}", file=sys.stderr)
     
-    # Check if we need to add any new fields
+    # Check if we need to add any new fields or overwrite existing ones
     needs_update = False
     added_fields = []
     
-    if title and 'title' not in existing_front_matter:
-        needs_update = True
-        added_fields.append('title')
-    
-    for key in ['proposal', 'author', 'sponsor', 'status', 'planned_version']:
-        if key in metadata and key not in existing_front_matter:
+    if overwrite:
+        # In overwrite mode, update if we have any metadata to write
+        if title or metadata:
             needs_update = True
-            added_fields.append(key)
+            if title:
+                added_fields.append('title')
+            for key in ['proposal', 'author', 'sponsor', 'status', 'planned_version']:
+                if key in metadata:
+                    added_fields.append(key)
+    else:
+        # In normal mode, only add fields that don't exist
+        if title and 'title' not in existing_front_matter:
+            needs_update = True
+            added_fields.append('title')
+        
+        for key in ['proposal', 'author', 'sponsor', 'status', 'planned_version']:
+            if key in metadata and key not in existing_front_matter:
+                needs_update = True
+                added_fields.append(key)
     
     if has_existing_front_matter and not needs_update:
         return False
     
     # Create merged front matter
-    front_matter = create_front_matter(metadata, title, existing_front_matter)
+    front_matter = create_front_matter(metadata, title, existing_front_matter, overwrite)
     
     # Combine front matter with content (without existing front matter)
     new_content = front_matter + '\n' + content_without_front_matter
@@ -297,6 +306,12 @@ def process_file(file_path: Path) -> bool:
 
 def main():
     """Main function to process all proposal markdown files."""
+    parser = argparse.ArgumentParser(description="Update Jekyll front matter for HLSL proposal markdown files")
+    parser.add_argument('--overwrite', action='store_true', 
+                       help="Overwrite existing front matter values with extracted metadata (default: only add missing fields)")
+    
+    args = parser.parse_args()
+    
     # Get the script directory and find the proposals directory
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -325,7 +340,7 @@ def main():
     
     modified_count = 0
     for file_path in sorted(md_files):
-        if process_file(file_path):
+        if process_file(file_path, args.overwrite):
             modified_count += 1
     
     if modified_count > 0:
