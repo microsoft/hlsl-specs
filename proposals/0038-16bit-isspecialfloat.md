@@ -20,8 +20,8 @@ operations were never generated for 16-bit types.
 
 ## Motivation
 
-The 'isinf', 'isnan', and 'isfinite' functions (there is no 'isnormal' function)
-, support fp16 but instead of generating a 16 bit IsSpecialFloat DXIL Op,
+The 'isinf', 'isnan', and 'isfinite' functions (there is no 'isnormal' function),
+support fp16 but instead of generating a 16 bit IsSpecialFloat DXIL Op,
 DXC extends to the 32 bit float op. See
 (https://github.com/microsoft/DirectXShaderCompiler/issues/7496).
 Some Vendor drivers support the 16 bit IsSpecialFloat op, but some do not. 
@@ -71,9 +71,8 @@ There are the following SPIRV Ops:
 OpIsInf, OpIsNan, OpIsFinite.
 
 Currently the 32 bit version of these Ops are being used, but they
-have 16 bit versions as well.  The open question is if we should always
-generate the 16 bit version of these ops, or if the generation should be
-gatekept behind some yet determined condition.
+have 16 bit versions as well.  A possible plan is to always generate these 16
+bit SPIRV ops.
 
 #### Validation Changes
 
@@ -101,11 +100,18 @@ emulating with LLVM IR.
 Unit tests will verify the correct codegen for both DXIL and SPIRV.
 
 * How will validation errors be tested?
-Unit tests will verify that the correct validation errors are produced by the
-validator in SM6.8 and earlier as well as if 16 bit types are not enabled.
+Filecheck based unit tests will verify that the correct validation errors are
+produced by the validator in SM6.8 and earlier as well as if 16 bit types are
+not enabled.
 
 * How will the execution results be tested?
 There are existing SM6.2 HLK tests for 16 bit float 'isinf', 'isnan',
 and 'isfinite'. The plan is to copy these tests for the SM6.9 HLK.
+
+## Open Questions
+
+An open question is if we should always
+generate the 16 bit version of the relevant SPIRV ops, or if their generation
+should be gatekept behind some not yet determined condition.
 
 <!-- {% endraw %} -->
