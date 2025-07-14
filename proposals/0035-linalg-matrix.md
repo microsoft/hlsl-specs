@@ -47,16 +47,34 @@ concept ArithmeticScalar = std::is_arithmetic<T>::value;
 
 namespace linalg {
 
-template <typename ComponentTy, uint M, uint N>
+enum class MatrixUse {
+  A = 0,
+  B = 1,
+  Accumulator = 2,
+};
+
+enum class MatrixScope {
+  Thread = 0,
+  Wave = 1,
+};
+
+enum class UnaryOperation {
+  negate,
+  abs,
+  sin,
+  cos,
+  tan,
+  // What elementwise unary operations make sense?
+};
+
+template <typename ComponentTy, uint M, uint N, MatrixUse Use,
+          MatrixScope Scope>
   requires ArithmeticScalar<ComponentTy>
 class Matrix {
-  template <typename NewCompTy> Matrix<NewCompTy, M, N> cast();
+  template <typename NewCompTy, MatrixUse NewUse = Use>
+  Matrix<NewCompTy, M, N, NewUse, Scope> cast();
 
-  Matrix operator+(Matrix);
-  Matrix operator-(Matrix);
-  Matrix operator*(Matrix);
-  Matrix operator/(Matrix);
-
+  // Element-wise arithmetic operations.
   template <typename T>
     requires ArithmeticScalar<T>
   Matrix operator+(T);
@@ -70,26 +88,87 @@ class Matrix {
     requires ArithmeticScalar<T>
   Matrix operator/(T);
 
-  static Matrix Splat(ElTy Val);
+  // Apply a unary operation to each element.
+  Matrix unaryOperation(UnaryOperation Op);
+
+  static Matrix Splat(ComponentTy Val);
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      bool ColMajor, uint Align = sizeof(ComponentTy));
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                      bool ColMajor, uint Align = sizeof(ComponentTy));
 
-  static Matrix Load(groupshared ElTy Arr[], uint StartIdx, uint Stride,
-                     bool ColMajor);
+  static Matrix Load(/*groupshared*/ ComponentTy Arr[], uint StartIdx,
+                     uint Stride, bool ColMajor);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              bool ColMajor, uint Align = sizeof(ComponentTy));
 
-  void Store(groupshared ElTy Arr[], uint StartIdx, uint Stride, bool ColMajor);
+  void Store(/*groupshared*/ ComponentTy Arr[], uint StartIdx, uint Stride,
+             bool ColMajor);
 
-  void MultiplyAccumulate(const ref Matrix<T, N, M>);
-  void SumAccumulate(const ref Matrix<T, N, M>);
+  template <typename T>
+    requires ArithmeticScalar<T>
+  std::enable_if_t<Use == MatrixUse::Accumulator, void>
+  MultiplyAccumulate(const Matrix<T, N, M, MatrixUse::A, Scope>,
+                     const Matrix<T, N, M, MatrixUse::B, Scope>);
+
+  template <typename T>
+    requires ArithmeticScalar<T>
+  std::enable_if_t<Use == MatrixUse::Accumulator, void>
+  SumAccumulate(const Matrix<T, N, M, MatrixUse::A, Scope>,
+                const Matrix<T, N, M, MatrixUse::B, Scope>);
+
+  // Cooperative Vector outer product accumulate.
+  template <typename T>
+  std::enable_if_t<Use == MatrixUse::Accumulator, void>
+  OuterProductAccumulate(const vector<T, M> &, const vector<T, N>);
 };
 
-template <typename T, uint M, uint N, uint K>
-Matrix<T, M, N> Multiply(const ref Matrix<T, M, K>, const ref Matrix<T, K, N>);
+template <typename T, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<T, M, N, MatrixUse::A, Scope>
+Multiply(const Matrix<T, M, K, MatrixUse::A, Scope>,
+         const Matrix<T, K, N, MatrixUse::B, Scope>);
+
+// HLSL 202y+ with global operator overloading these become viable.
+template <typename T, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<T, M, N, MatrixUse::Accumulator, Scope>
+operator+(const Matrix<T, M, K, MatrixUse::A, Scope>,
+          const Matrix<T, K, N, MatrixUse::B, Scope>);
+
+template <typename T, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<T, M, N, MatrixUse::Accumulator, Scope>
+operator-(const Matrix<T, M, K, MatrixUse::A, Scope>,
+          const Matrix<T, K, N, MatrixUse::B, Scope>);
+
+template <typename T, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<T, M, N, MatrixUse::Accumulator, Scope>
+operator*(const Matrix<T, M, K, MatrixUse::A, Scope>,
+          const Matrix<T, K, N, MatrixUse::B, Scope>);
+
+template <typename T, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<T, M, N, MatrixUse::Accumulator, Scope>
+operator/(const Matrix<T, M, K, MatrixUse::A, Scope>,
+          const Matrix<T, K, N, MatrixUse::B, Scope>);
+
+// Cooperative Vector Replacement API
+// Cooperative Vector operates on per-thread vectors multiplying against B
+// matrices.
+
+template <typename OutputElTy, typename InputElTy, uint M, uint N, uint K,
+          typename MatrixBufferTy, typename InputDT, typename MatrixDT,
+          uint MatrixM, uint MatrixK, MatrixScope Scope, bool MatrixTranspose>
+vector<OutputElTy, M>
+Multiply(vector<InputElTy, N> InputVector,
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
+
+template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
+          uint N, uint K, typename MatrixBufferTy, typename InputDT,
+          typename MatrixDT, uint MatrixM, uint MatrixK, MatrixScope Scope,
+          bool MatrixTranspose>
+vector<OutputElTy, M>
+MultiplyAdd(vector<InputElTy, N> InputVector,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix,
+            vector<BiasElTy, M> BiasVector);
 
 } // namespace linalg
 } // namespace hlsl
