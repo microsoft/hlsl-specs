@@ -872,10 +872,12 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO {
 // the destination layout information and does not depend on the source layout
 // information.
 
-void ID3D12DevicePreview::GetLinearAlgebraMatrixConversionDestinationInfo(
+void ID3D12DeviceNN::GetLinearAlgebraMatrixConversionDestinationInfo(
     D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
 
 ```
+
+> Note: NN will be replaced with the actual number suffix when implemented.
 
 #### Conversion descriptors
 
