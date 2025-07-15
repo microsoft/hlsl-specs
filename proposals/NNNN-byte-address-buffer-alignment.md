@@ -1,15 +1,13 @@
 # ByteAddressBuffer Alignment
 
----
-
 * Proposal: [NNNN](NNNN-byte-address-buffer-alignment.md)
 * Author(s): [Mike Apodaca](https://github.com/mapodaca-nv)
 * Sponsor: TBD
 * Status: **Under Consideration**
 * Required Version: Shader Model X.Y, Vulkan X.Y, and/or HLSL 20XY
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues: [#543](https://github.com/microsoft/DirectXShaderCompiler/issues/543),
-   [#258](https://github.com/microsoft/DirectXShaderCompiler/issues/258)
+* PRs: 
+* Issues: [#543](https://github.com/microsoft/hlsl-specs/issues/543),
+   [#258](https://github.com/microsoft/hlsl-specs/issues/258)
 
 ## Introduction
 
