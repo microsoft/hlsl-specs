@@ -932,11 +932,16 @@ number of bytes returned in call to
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrices(
+void ID3D12GraphicsCommandListNN::ConvertLinearAlgebraMatrices(
     D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
     UINT DescCount);
 
 ```
+
+> Note: NN will be replaced with the actual number suffix when implemented.
+> Also note the name change from `ConvertLinearAlgebraMatrix` to
+  `ConvertLinearAlgebraMatrices` to more accurately reflect that multiple
+  matrices maybe transformed in one call.
 
 *Valid Usage:* 
 
