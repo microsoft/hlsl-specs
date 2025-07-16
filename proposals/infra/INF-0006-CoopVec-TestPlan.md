@@ -41,7 +41,7 @@ Cooperative Vector feature through Microsoft's ExecTest/HLK framework.
   - [2.2 Functionality Testing for Matrix-Vector Operations](#22-functionality-testing-for-matrix-vector-operations)
     - [2.2.1 MatrixVectorMul/MulAdd Tests](#221-matrixvectormuladd-tests)
     - [2.2.2 OuterProductAccumulate Tests](#222-outerproductaccumulate-tests)
-    - [2.2.3 InterlockedAdd Tests](#223-interlockedadd-tests)
+    - [2.2.3 VectorAccumulate Tests](#223-VectorAccumulate-tests)
     - [2.2.4 Input Vector Interpretation Tests](#224-input-vector-interpretation-tests)
   - [2.3 Matrix Conversion Testing](#23-matrix-conversion-testing)
     - [2.3.1 GetCooperativeMatrixVectorConversionDestinationInfo](#231-getcooperativematrixvectorconversiondestinationinfo)
@@ -68,7 +68,7 @@ Cooperative Vector feature through Microsoft's ExecTest/HLK framework.
 
 **Mandatory Operations for `D3D12_COOPERATIVE_VECTOR_TIER_1_1`**
 - `OuterProductAccumulate` - Vector-Vector Outer Product and Accumulate
-- `InterlockedAdd` - Add all components of a vector component-wise atomically
+- `VectorAccumulate` - Add all components of a vector component-wise atomically
   to memory
 
 ### 1.2 Target Environment 
@@ -125,6 +125,8 @@ operations and type combinations in the minimum support set must be supported.
 - Test with all matrix layouts
 - Test matrices of different dimensions (small, ML common, non-power of 2)
 - Test different values for `MatrixOffset` and `MatrixStride` parameters
+- Test out-of-bounds `Matrix` loads
+- Test out-of-bounds `Bias` loads
 
 #### 2.2.2 OuterProductAccumulate Tests
 - Test mandatory type combination: `FP16`→`FP16`
@@ -134,13 +136,15 @@ operations and type combinations in the minimum support set must be supported.
 - Test different values for `ResultMatrixOffset` and `ResultMatrixStride`
   parameters
 - Test atomic accumulation behavior with multiple threads/waves
+- Test out-of-bounds `Matrix` accumulate
 
-#### 2.2.3 InterlockedAdd Tests
+#### 2.2.3 VectorAccumulate Tests
 - Test mandatory type combination: `FP16`→`FP16`
 - Test various optional type combinations if driver reports support
 - Test vectors of different lengths (small, ML common, non-power of 2)
 - Test different values for `ResultOffset` parameter
 - Test atomic accumulation behavior with multiple threads/waves
+- Test out-of-bounds `Vector` accumulate
 
 #### 2.2.4 Input Vector Interpretation Tests
 - The functionality tests should cover the conversion of input vector type
