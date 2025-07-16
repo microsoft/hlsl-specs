@@ -20,7 +20,8 @@ operations were never generated for 16-bit types.
 
 ## Motivation
 
-The 'isinf', 'isnan', and 'isfinite' functions (there is no 'isnormal' function),
+The 'isinf', 'isnan', and 'isfinite' functions (currently there is no 'isnormal'
+function in HLSL),
 support fp16 but instead of generating a 16 bit IsSpecialFloat DXIL Op,
 DXC extends to the 32 bit float op. See
 (https://github.com/microsoft/DirectXShaderCompiler/issues/7496).
@@ -34,17 +35,18 @@ emulate the functionality using LLVM IR rather than a DXIL op.
 
 We should also update the DXIL validator to disallow the 16 bit DXIL overloads
 for the 'isinf', 'isnan', and 'isfinite', operations for SM 6.8 and below.
-We do not plan to update the 'isnormal' operation because it is not reachable
-via HLSL.
 
 ## Detailed design
 
 ### HLSL Additions
 
-There are no HLSL Additions.  The implementations for 16 bit float 'isinf',
+Currently there is no 'isnormal' HLSL function, and the plan is to add 'isnormal'
+to HLSL.  The 16 bit version of the new 'isnormal' function will be emulated
+using LLVM IR for SM6.8 and earlier and will generate the appropriate 16 bit DXIL
+Op in SM6.9 and later.  The implementations for 16 bit float 'isinf',
 'isnan', and 'isfinite' will be updated to use emulation via LLVM IR for
 SM6.8 and earlier, and will generate the appropriate 16 bit DXIL Op in SM6.9
-and later.  For the min16float type, the implementation will remain unchanged,
+and later. For the min16float type, the implementations will remain unchanged,
 DXC will continue to use the 32 bit DXIL ops.
 
 ### Interchange Format Additions
@@ -58,6 +60,7 @@ These are the existing Opcodes for the isSpecialFloat DXIL OpClass.
 8        | IsNaN       | Returns true if x is NAN or WNAN, false otherwise.
 9        | IsInf       | Returns true if x is +INF or -INF, false otherwise.
 10       | IsFinite    | Returns true if x is finite, false otherwise.
+11       | IsNormal    | Returns IsNormal
 
 The following overload will be added:
 ```DXIL
@@ -69,7 +72,7 @@ declare i1 @dx.op.isSpecialFloat.f16(
 #### SPIRV changes
 
 There are the following SPIRV Ops:
-OpIsInf, OpIsNan, OpIsFinite.
+OpIsInf, OpIsNan, OpIsFinite, OpIsNormal.
 
 Currently the 32 bit version of these Ops are being used, but they
 have 16 bit versions as well.  A possible plan is to always generate these 16
@@ -108,6 +111,8 @@ not enabled.
 * How will the execution results be tested?
 There are existing SM6.2 HLK tests for 16 bit float 'isinf', 'isnan',
 and 'isfinite'. The plan is to copy these tests for the SM6.9 HLK.
+A new HLK test for 16 bit float 'isnormal' will need to be written and added
+to the SM6.9 HLK.
 
 ## Open Questions
 
