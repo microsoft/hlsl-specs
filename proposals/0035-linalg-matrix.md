@@ -78,16 +78,16 @@ class Matrix {
   // Element-wise operations
   template <typename T>
     requires ArithmeticScalar<T>
-  Matrix operator+(T);
+  Matrix operator+=(T);
   template <typename T>
     requires ArithmeticScalar<T>
-  Matrix operator-(T);
+  Matrix operator-=(T);
   template <typename T>
     requires ArithmeticScalar<T>
-  Matrix operator*(T);
+  Matrix operator*=(T);
   template <typename T>
     requires ArithmeticScalar<T>
-  Matrix operator/(T);
+  Matrix operator/=(T);
 
   // Apply a unary operation to each element.
   template<UnaryOperation Op>
@@ -129,19 +129,17 @@ class Matrix {
                    void>
   Set(ElementType V, uint2 Index);
 
-  template <typename T, uint K>
-    requires ArithmeticScalar<T>
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
   std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
                    void>
-  MultiplyAccumulate(const Matrix<T, M, K, MatrixUse::A, Scope> &,
-                     const Matrix<T, K, N, MatrixUse::B, Scope> &);
+  MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                     const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
-  template <typename T, unit K>
-    requires ArithmeticScalar<T>
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
   std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
                    void>
-  SumAccumulate(const Matrix<T, M, K, MatrixUse::A, Scope>,
-                const Matrix<T, K, N, MatrixUse::B, Scope>);
+  SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
   // Cooperative Vector outer product accumulate.
   template <typename T>
@@ -202,6 +200,15 @@ There are three matrix usages: `A`, `B`, and `Accumulator`.
   result from a binary arithmetic operation, or the third argument to a ternary
   algebraic operation.
 
+The matrix use type parameter enables implementations to optimize the storage
+and layout of the matrix prior to tensor operations. It may be expensive on some
+hardware to translate between matrix uses, for that reason we capture the use in
+the type and require explicit conversion in the HLSL API.
+
+Throughout this document a matrix may be described as a matrix of it's use (e.g.
+a matrix with `Use == Accumulator` is an _accumulator matrix_, while a matrix
+with use `A` is an _A matrix_.)
+
 #### Matrix Scope
 
 The `Scope` parameter of an instance of a `linalg::Matrix` denotes the
@@ -220,6 +227,10 @@ Some operations require `Wave` scope matrices, while others can operate on
 `Thread` scope matrices. All operations that can operate on `Thread` scope
 matrices can also operate on `Wave` scope matrices, and there may be significant
 performance benefit when using `Wave` scope matrices.
+
+Throughout this document a matrix may be described as having a scope as
+specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
+_matrix with thread scope_).
 
 ### HLSL API Documentation
 
@@ -354,16 +365,16 @@ The `Matrix::cast()` function supports casting component types and matrix `Use`.
 ```c++
 template <typename T>
   requires ArithmeticScalar<T>
-Matrix Matrix::operator+(T);
+Matrix Matrix::operator+=(T);
 template <typename T>
   requires ArithmeticScalar<T>
-Matrix Matrix::operator-(T);
+Matrix Matrix::operator-=(T);
 template <typename T>
   requires ArithmeticScalar<T>
-Matrix Matrix::operator*(T);
+Matrix Matrix::operator*=(T);
 template <typename T>
   requires ArithmeticScalar<T>
-Matrix Matrix::operator/(T);
+Matrix Matrix::operator/=(T);
 ```
 
 For any arithmetic scalar type the `+`, `-`, `*` and `/` binary operators
@@ -494,33 +505,32 @@ If the `Index` is out of range, this is a no-op.
 #### Matrix::MultiplyAccumuate(Matrix, Matrix)
 
 ```c++
-template <typename T, uint K>
-  requires ArithmeticScalar<T>
+template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
 std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
                  void>
-Matrix::MultiplyAccumulate(const Matrix<T, M, K, MatrixUse::A, Scope>,
-                           const Matrix<T, K, N, MatrixUse::B, Scope>);
+Matrix::MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                           const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
 
-A matrix with the `Accumulator` use and `Wave` scope has a method
-`MultiplyAccumulate` which takes as parameters an M x K `A` matrix and a K x N
-`B` matrix. The matrix arguments are multiplied against each other and added
-back into the implicit object `Accumulator` matrix.
+An accumulator matrix with wave scope has a method `MultiplyAccumulate` which
+takes as parameters an M x K A matrix with wave scope and a K x N B matrix with
+wave scope. The matrix arguments are multiplied against each other and added
+back into the implicit object accumulator matrix.
 
 #### Matrix::SumAccumulate(Matrix, Matrix)
 
 ```c++
-template <typename T>
-  requires ArithmeticScalar<T>
-std::enable_if_t<Use == MatrixUse::Accumulator, void>
-Matrix::SumAccumulate(const Matrix<T, N, M, MatrixUse::A, Scope>,
-              const Matrix<T, N, M, MatrixUse::B, Scope>);
+template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
+std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
+                 void>
+Matrix::SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
 
-A matrix with the `Accumulator` use and `Wave` scope has a method
-`SumAccumulate` which takes as parameters an M x K `A` matrix and a K x N
-`B` matrix. The matrix arguments are added together then added back into the
-implicit object `Accumulator` matrix.
+An accumulator matrix with wave scope has a method `SumAccumulate` which takes
+as parameters an M x K A matrix with wave scope and a K x N B matrix with wave
+scope. The matrix arguments are added together then added back into the implicit
+object accumulator matrix.
 
 #### Matrix::OuterProductAccumulate(vector, vector)
 
@@ -530,10 +540,11 @@ std::enable_if_t<Use == MatrixUse::Accumulator, void>
 Matrix::OuterProductAccumulate(const vector<T, M> &, const vector<T, N> &);
 ```
 
-A matrix with the `Accumulator` use has a method `OuterProductAccumulate` which
-takes an M-element vector and an N-element vector. The operation performs an
-outer product of the two vectors to produce an MxN matrix which is then added
-back into the implicit object `Accumulator` matrix.
+All accumulator matrix objects regardless of scope have a method
+`OuterProductAccumulate` which takes an M-element vector and an N-element
+vector. The operation performs an outer product of the two vectors to produce an
+MxN matrix which is then added back into the implicit object accumulator
+matrix.
 
 #### linalg::Multiply(Matrix, Matrix)
 
@@ -660,7 +671,8 @@ declare @dx.op.fillMatrix.[TY](
 ```
 
 Fills a matrix with a scalar value. The scalar's type does not need to match the
-matrix component's type.
+matrix component's type, a type conversion is applied following the rules
+documented in the [Conversions](#conversions) section.
 
 ```llvm
 declare void @dx.op.castMatrix(
@@ -671,7 +683,8 @@ declare void @dx.op.castMatrix(
 ```
 
 Converts the element and use type of the source matrix to the destination
-matrix. Validation shall enforce that both matrices have the same scope.
+matrix. The source matrix remains valid and unmodified after this operation is
+applied. Validation shall enforce that both matrices have the same scope.
 
 ```llvm
 declare void @dx.op.matrixElementwiseUnaryOp(
@@ -687,7 +700,7 @@ Applies a unary math function to each element of the provided matrix.
 ```llvm
 declare void @dx.op.matrixElementwiseBinaryOp.[TY](
   immarg i32,            ; opcode
-  immarg i32,            ; unary operation (DXILMatrixElementwiseOperation)
+  immarg i32,            ; binary operation (DXILMatrixElementwiseOperation)
   %dx.types.MatrixRef *, ; matrix
   [TY]                   ; Value to binary operation
   )
@@ -725,8 +738,8 @@ declare void @dx.op.matrixLoadFromMemory.p[Ty](
 ```
 
 Populates a matrix with data from a `groupshared` array. Data conversions
-between opaque matrices and groupshared memory are defined in the [Conversions
-on groupshared memory](#conversions-on-groupshared-memory) section below.
+between opaque matrices and groupshared memory are defined in the
+[Conversions](#conversions) section below.
 
 ```llvm
 declare void @dx.op.matrixStoreToDescriptor(
@@ -831,13 +844,14 @@ declare void @dx.op.matrixStoreRow.v[NUMi][Tyi](
 
 Stores a row-vector to a matrix. Out of bounds writes no-op.
 
-### Conversions on groupshared memory
+### Conversions
 
 ## Outstanding Questions
 
 * What is the exhaustive list of data types we need to support?
 * What data type conversions do we need to support?
 * Do we need load and store per-element accessors or is row enough?
+* Should we consider get/set column accessors?
 * Support for other number formats that aren't natively supported by HLSL?
 * Do we need to specify a source/destination format for the data in the load and
   store operations that operate on descriptors or should we assume
