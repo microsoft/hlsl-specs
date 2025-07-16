@@ -5,7 +5,7 @@
 ---
 
 * Proposal: [NNNN](NNNN-dxil-clustered-geometry.md)
-* Author(s): [Author 1](https://github.com/author_username)
+* Author(s): [Jan Schmid](https://github.com/jschmid-nvidia), [Simon Moll](https://github.com/simoll)
 * Sponsor: [Amar Patel](https://github.com/amarpMSFT)
 * Status: **Under Consideration**
 
