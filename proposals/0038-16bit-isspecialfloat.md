@@ -44,7 +44,8 @@ via HLSL.
 There are no HLSL Additions.  The implementations for 16 bit float 'isinf',
 'isnan', and 'isfinite' will be updated to use emulation via LLVM IR for
 SM6.8 and earlier, and will generate the appropriate 16 bit DXIL Op in SM6.9
-and later.
+and later.  For the min16float type, the implementation will remain unchanged,
+DXC will continue to use the 32 bit DXIL ops.
 
 ### Interchange Format Additions
 
