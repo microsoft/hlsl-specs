@@ -342,6 +342,8 @@ determine which combinations are supported. A list of combinations that are
 guaranteed to be supported on all implementations can be found in
 [Minimum Support Set].
 
+See [Conversion Rules] for rounding and denorm behavior.
+
 #### Validation
 
 * **matrix interpretation** must be a value corresponding to one of the
@@ -506,16 +508,11 @@ Non-"Packed" type interpretations are used to request arithmetic conversions.
 Input type must be a 32-bit or 16-bit scalar integer or a 32-bit or 16-bit
 float. Integer to integer conversion saturates, float to float conversion is
 implementation dependent and preserves the value as accurately as possible.
-Float to integer conversion is RTNE and saturating. Integer to float conversion
-is RTNE.
-
-> TODO: These rules make sense for NN applications but diverge from HLSL
-> conversion rules
-> [here](https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Conv).
+Float to integer conversion is RTNE (round to nearest even) and saturating.
+Integer to float conversion is RTNE. Given the diverse hardware used in
+accelerating these operations, denorm behavior is implementation defined.
 
 "Packed" type conversions are bitcasts to a smaller type. The declared input type must be 32-bit unsigned integer. 
-
-> /// XXX TODO: Error handling for illegal conversions. 
 
 Examples:
 
@@ -570,7 +567,10 @@ Non-Packed Case:
 
 #### Precision Requirements
 
-The precision for intermediate operations is implementation dependent.
+The precision for intermediate operations is implementation dependent. However,
+it is intended that operations take place at the precision specified by the
+interpretation parameters with the possible exception of older hardware where
+this might not be practical.
 
 ### Matrix Layouts
 
@@ -733,9 +733,13 @@ the operation fails and `E_INVALIDARG` is returned.
 
 >Note about emulation: For example E4M3 and E5M2 might not be supported natively
  on certain implementations, but since these are in the minimum support set,
- they need to be emulated, possibly using FP16. Emulation versus native support
- is an implementation detail specific to implementations and outside the scope
- of this specification document.
+ they need to be emulated, possibly using FP16.
+
+>Emulation versus native support is an implementation detail specific to
+ implementations and outside the scope of this specification document. The
+ flexibility to perform operations at a higher precision is allowed for older
+ hardware, but performing operations at the specified `interpretation`
+ precision is the desired behavior.
 
 #### Support Tiers
 
