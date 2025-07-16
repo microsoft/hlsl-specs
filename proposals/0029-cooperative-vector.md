@@ -253,6 +253,9 @@ When the **matrix resource** has bounds checking, bounds are only checked at
 matrix granularity. If any part of the matrix load is out of bounds then the
 entire matrix load will return zero.
 
+If the **matrix resource** does not have bounds checking, such as when it is
+supplied through a root descriptor, and any part of the matrix load is out of
+bounds, the operation is undefined.
 
 ##### Bias Vector
 
@@ -269,6 +272,10 @@ The base address of **bias vector resource** and **bias vector offset** must be
 When the **bias vector resource** has bounds checking, bounds are only checked
 at bias vector granularity. If any part of the bias vector load is out of bounds
 then the entire bias vector load will return zero.
+
+If the **bias vector resource** does not have bounds checking, such as when it
+is supplied through a root descriptor, and any part of the bias vector load is
+out of bounds, the operation is undefined.
 
 #### Return Type
 
@@ -341,6 +348,10 @@ so developers should not use this padding space for anything else.
 When the **matrix resource** has bounds checking, if any part of the matrix
 write is out-of-bounds, the whole operation is skipped.
 
+If the **matrix resource** does not have bounds checking, such as when it is
+supplied through a root descriptor, and any part of the matrix store is out of
+bounds, the operation is undefined.
+
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
 determine which combinations are supported. A list of combinations that are
@@ -390,6 +401,10 @@ for anything else.
 
 When the **output array resource** bas bounds checking, if any part of the
 output array write is out-of-bounds, the whole operation is skipped.
+
+If the **output array resource** does not have bounds checking, such as when it
+is supplied through a root descriptor, and any part of the bias vector store is
+out of bounds, the operation is undefined.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
