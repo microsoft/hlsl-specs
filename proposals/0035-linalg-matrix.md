@@ -148,7 +148,8 @@ class Matrix {
 };
 
 template <typename T, uint M, uint N, uint K>
-Matrix<T, M, N, MatrixUse::A, MatrixScope::Wave>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+
 Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
 
