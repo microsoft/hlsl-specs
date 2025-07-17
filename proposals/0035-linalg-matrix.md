@@ -551,7 +551,8 @@ matrix.
 
 ```c++
 template <typename T, uint M, uint N, uint K>
-Matrix<T, M, N, MatrixUse::A, MatrixScope::Wave>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+
 linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
 ```
