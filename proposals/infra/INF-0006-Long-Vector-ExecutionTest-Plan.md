@@ -1,6 +1,6 @@
 # Long Vector Execution Test Plan
 
-* Proposal: [0005](INF-0005-Long-Vector-ExecutionTest-Plan.md)
+* Proposal: [0006](INF-0006-Long-Vector-ExecutionTest-Plan.md)
 * Author(s): [Alex Sepkowski](https://github.com/alsepkow)
 * Sponsor: [Alex Sepkowski](https://github.com/alsepkow)
 * Status: **Accepted**
