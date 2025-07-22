@@ -72,7 +72,10 @@ An _operator function_ is a function declared with an _operator-function-id_ as
 its name. An _operator function template_ is a function template
 operator-function-id as its name.
 
-Both the binary and unary forms of `+`, `-`, `*` and `&` can be overloaded.
+Both the binary and unary forms of `+`, `-`, `*` and `&` cay be overloaded.
+Except in the case of the unary `++` operator (see below), binary and unary operators are
+differentiated by the sum of implicit and explicit parameters; two for a
+binary operator and one for a unary operator.
 
 An operator function can be called explicitly by using the _operator-function_id
 as the name of the function.
@@ -84,6 +87,18 @@ least one parameter of class or enumeration type.
 No argument to an operator function shall have a default value. Operators cannot
 have more or fewer parameters than the number required for the corresponding
 operator.
+
+#### Increment and Decrement Operators
+
+A user-defined function `operator++` or `operator--` implements the prefix and
+postfix operators. If the function has only one implicit or explicit parameter
+it defines a prefix operator for the type of the single parameter. Otherwise the
+function will have two parameters where the implicit object or first parameter
+are of class type, and the second parameter is of `int` type, and it will
+implement the postfix operator for the type of the first parameter.
+
+When a user-defined post-fix operator is called the value of the `int` parameter
+will be `0`.
 
 ### Overload Resolution Language
 
