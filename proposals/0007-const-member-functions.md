@@ -4,7 +4,7 @@
 * Proposal: [0007](0007-const-member-functions.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Review**
+* Status: **Accepted**
 * Planned Version: 202y
 
 ## Introduction
