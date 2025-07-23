@@ -242,12 +242,6 @@ In practice, this testing will largely represent verifying correct intrinsic out
 | 121    | WavePrefixOp            | WavePrefixOp            |
 | 122    | QuadReadLaneAt          | QuadReadLaneAt          |
 | 123    | QuadOp                  | QuadOp                  |
-| 124    | BitcastI16toF16         | BitcastI16toF16         |
-| 125    | BitcastF16toI16         | BitcastF16toI16         |
-| 126    | BitcastI32toF32         | BitcastI32toF32         |
-| 127    | BitcastF32toI32         | BitcastF32toI32         |
-| 128    | BitcastI64toF64         | BitcastI64toF64         |
-| 129    | BitcastF64toI64         | BitcastF64toI64         |
 | 135    | WaveAllBitCount         | WaveAllBitCount         |
 | 136    | WavePrefixBitCount      | WavePrefixBitCount      |
 | 165    | WaveMatch               | WaveMatch               |
