@@ -39,117 +39,97 @@ Matrix Operations](/proposals/0031-hlsl-vector-matrix-operations.md).
 Below is a proposed pseudo-HLSL API. The proposal uses C++20 concepts to
 represent template type constraints so as to avoid needing SFINAE complications.
 
+Some portion of this API surface is portable between DirectX and Vulkan using the [proposed
+DXIL](#dxil-operations) for DirectX and
+[SPV_KHR_cooperative_matrix](https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/KHR/SPV_KHR_cooperative_matrix.asciidoc)
+for Vulkan. Not all features proposed here are supported in Vulkan, so the API
+as described is in the `dx` namespace.
+
+A subsequent revision to HLSL's [0021 - Vulkan Cooperative
+Matrix](0021-vk-coop-matrix.md) support could be considered separately to align
+on a base set of functionality for inclusion in the `hlsl` namespace.
+
 ```c++
-namespace hlsl {
-
-template <class T>
-concept ArithmeticScalar = std::is_arithmetic<T>::value;
-
+namespace dx {
 namespace linalg {
-
-enum class MatrixUse {
-  A = 0,
-  B = 1,
-  Accumulator = 2,
-};
-
-enum class MatrixScope {
-  Thread = 0,
-  Wave = 1,
-};
-
-enum class UnaryOperation {
-  NOp = 0,
-  Negate = 1,
-  Abs = 2,
-  Sin = 3,
-  Cos = 4,
-  Tan = 5,
-};
 
 template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
-  using ElementType = __detail::ComponentTypeTraits<ComponentTy>::Type;
+  using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
   Matrix<NewCompTy, M, N, NewUse, Scope> cast();
 
   // Element-wise operations
   template <typename T>
-    requires ArithmeticScalar<T>
-  Matrix operator+=(T);
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator+=(T);
   template <typename T>
-    requires ArithmeticScalar<T>
-  Matrix operator-=(T);
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator-=(T);
   template <typename T>
-    requires ArithmeticScalar<T>
-  Matrix operator*=(T);
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator*=(T);
   template <typename T>
-    requires ArithmeticScalar<T>
-  Matrix operator/=(T);
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator/=(T);
 
   // Apply a unary operation to each element.
-  template<UnaryOperation Op>
-  Matrix ApplyUnaryOperation();
+  template <UnaryOperation Op> Matrix ApplyUnaryOperation();
 
   template <typename T>
-    requires ArithmeticScalar<T>
-  static Matrix Splat(T Val);
-  static Matrix
-  Load(ByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
-       uint Align = sizeof(ElementType));
-  static Matrix
-  Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
-       uint Align = sizeof(ElementType));
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  Splat(T Val);
+  static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
+                     bool ColMajor, uint Align = sizeof(ElementType));
+  static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+                     bool ColMajor, uint Align = sizeof(ElementType));
 
   template <typename T>
-    requires ArithmeticScalar<T>
-  static Matrix Load(groupshared T Arr[], uint StartIdx, uint Stride,
-                     bool ColMajor);
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
-  void
-  Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
-        uint Align = sizeof(ElementType));
+  void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+             bool ColMajor, uint Align = sizeof(ElementType));
 
   template <typename T>
-    requires ArithmeticScalar<T>
-  void Store(groupshared T Arr[], uint StartIdx, uint Stride,
-             bool ColMajor);
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, void>::type
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
   // Row accesses
   vector<ElementType, M> GetRow(uint Index);
   void SetRow(vector<ElementType, M> V, uint Index);
 
   // Element access
-  std::enable_if_t<__detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-                   ElementType>
+  typename hlsl::enable_if<
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
+      ElementType>::type
   Get(uint2 Index);
-  std::enable_if_t<__detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-                   void>
+  typename hlsl::enable_if<
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
   Set(ElementType V, uint2 Index);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
-  std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
-                   void>
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
+  typename hlsl::enable_if<
+      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
   MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
-  std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
-                   void>
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
+  typename hlsl::enable_if<
+      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
   SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                 const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
   // Cooperative Vector outer product accumulate.
   template <typename T>
-  std::enable_if_t<Use == MatrixUse::Accumulator, void>
-  OuterProductAccumulate(const vector<T, M> &, const vector<T, N> &);
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator, void>::type
+  OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
 
-template <typename T, uint M, uint N, uint K>
+template <MatrixComponentType T, uint M, uint N, uint K>
 Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-
 Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
 
@@ -157,8 +137,8 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 // Cooperative Vector operates on per-thread vectors multiplying against B
 // matrices.
 
-template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          MatrixComponentType MatrixDT, MatrixScope Scope, bool MatrixTranspose>
+template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
 Multiply(vector<InputElTy, M> InputVector,
          Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
@@ -172,7 +152,44 @@ MultiplyAdd(vector<InputElTy, M> InputVector,
             vector<BiasElTy, K> BiasVector);
 
 } // namespace linalg
-} // namespace hlsl
+} // namespace dx
+```
+
+### Example Usage: Wave Matrix
+
+```c++
+RWByteAddressBuffer B : register(u0);
+
+void WaveMatrixExample() {
+  using namespace dx::linalg;
+  using MatrixATy =
+      Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A, MatrixScope::Wave>;
+  using MatrixBTy =
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+  using MatrixAccumTy = Matrix<MatrixComponentType::F16, 8, 16,
+                               MatrixUse::Accumulator, MatrixScope::Wave>;
+
+  MatrixATy MatA = Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A,
+                          MatrixScope::Wave>::Load(B, 0, 8 * 4, false);
+  MatrixBTy MatB = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
+                          MatrixScope::Wave>::Load(B, 0, 32 * 4, false);
+  MatrixAccumTy Accum = Multiply(MatA, MatB);
+}
+```
+
+### Example Usage: Cooperative Vectors
+
+```c++
+void CoopVec() {
+  using namespace dx::linalg;
+  using MatrixBTy =
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+
+  vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  vector<float16_t, 16> Accum =
+      Multiply<float16_t, /*transpose*/ false>(Vec, MatB);
+}
 ```
 
 ## Detailed design
@@ -278,10 +295,57 @@ enum class UnaryOperation {
   Cos = 4,
   Tan = 5,
 };
-
 ```
 
-#### Helper type traits
+#### New `hlsl` enable_if
+
+```c++
+namespace hlsl {
+template <bool B, typename T> struct enable_if {};
+
+template <typename T> struct enable_if<true, T> {
+  using type = T;
+};
+
+} // namespace hlsl
+```
+
+This proposal depends on adding a new SFINAE construct `hlsl::enable_if` which
+works just like `std::enable_if` in C++.
+
+#### New hlsl type traits
+
+```c++
+namespace hlsl {
+
+template <typename T> struct is_arithmetic {
+  static const bool value = false;
+};
+
+#define __ARITHMETIC_TYPE(type)                                                \
+  template <> struct is_arithmetic<type> {                                     \
+    static const bool value = true;                                            \
+  };
+
+#if __HLSL_ENABLE_16_BIT
+__ARITHMETIC_TYPE(uint16_t)
+__ARITHMETIC_TYPE(int16_t)
+#endif
+__ARITHMETIC_TYPE(uint)
+__ARITHMETIC_TYPE(int)
+__ARITHMETIC_TYPE(uint64_t)
+__ARITHMETIC_TYPE(int64_t)
+__ARITHMETIC_TYPE(half)
+__ARITHMETIC_TYPE(float)
+__ARITHMETIC_TYPE(double)
+
+} // namespace hlsl
+```
+
+This proposal depends on a new `is_arithmetic` type trait added to the `hlsl`
+namespace.
+
+#### dx::linalg::__detail type traits
 
 ```c++
 namespace __detail {
@@ -848,7 +912,7 @@ Stores a row-vector to a matrix. Out of bounds writes no-op.
 
 ### Conversions
 
-## Outstanding Questions
+## Appendix 1: Outstanding Questions
 
 * What is the exhaustive list of data types we need to support?
 * What data type conversions do we need to support?
@@ -858,5 +922,217 @@ Stores a row-vector to a matrix. Out of bounds writes no-op.
 * Do we need to specify a source/destination format for the data in the load and
   store operations that operate on descriptors or should we assume
   DXILMatrixComponentType?
+
+## Appendix 2: HLSL Header
+
+[Compiler Explorer](https://godbolt.org/z/zTbfvPPqP)
+> Note: this mostly works with Clang, but has some issues to work out still.
+
+```cpp
+namespace hlsl {
+
+template <typename T> struct is_arithmetic {
+  static const bool value = false;
+};
+
+#define __ARITHMETIC_TYPE(type)                                                \
+  template <> struct is_arithmetic<type> {                                     \
+    static const bool value = true;                                            \
+  };
+
+#if __HLSL_ENABLE_16_BIT
+__ARITHMETIC_TYPE(uint16_t)
+__ARITHMETIC_TYPE(int16_t)
+#endif
+__ARITHMETIC_TYPE(uint)
+__ARITHMETIC_TYPE(int)
+__ARITHMETIC_TYPE(uint64_t)
+__ARITHMETIC_TYPE(int64_t)
+__ARITHMETIC_TYPE(half)
+__ARITHMETIC_TYPE(float)
+__ARITHMETIC_TYPE(double)
+
+template <bool B, typename T> struct enable_if {};
+
+template <typename T> struct enable_if<true, T> {
+  using type = T;
+};
+
+} // namespace hlsl
+
+namespace dx {
+
+namespace linalg {
+
+enum class MatrixComponentType {
+  Invalid = 0,
+  I1 = 1,
+  I16 = 2,
+  U16 = 3,
+  I32 = 4,
+  U32 = 5,
+  I64 = 6,
+  U64 = 7,
+  F16 = 8,
+  F32 = 9,
+  F64 = 10,
+  SNormF16 = 11,
+  UNormF16 = 12,
+  SNormF32 = 13,
+  UNormF32 = 14,
+  SNormF64 = 15,
+  UNormF64 = 16,
+  PackedS8x32 = 17,
+  PackedU8x32 = 18,
+};
+
+namespace __detail {
+template <MatrixComponentType T> struct ComponentTypeTraits {
+  using Type = uint;
+  static const bool IsNativeScalar = false;
+};
+
+#define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
+  template <> struct ComponentTypeTraits<enum_val> {                           \
+    using Type = type;                                                         \
+    static const bool IsNativeScalar = true;                                   \
+  };
+
+#if __HLSL_ENABLE_16_BIT
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::I16, int16_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::U16, uint16_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::F16, float16_t)
+#endif
+
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::I32, int32_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::U32, uint32_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::F32, float)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::I64, int64_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::U64, uint64_t)
+__MATRIX_SCALAR_COMPONENT_MAPPING(MatrixComponentType::F64, double)
+
+} // namespace __detail
+
+enum class MatrixUse {
+  A = 0,
+  B = 1,
+  Accumulator = 2,
+};
+
+enum class MatrixScope {
+  Thread = 0,
+  Wave = 1,
+};
+
+enum class UnaryOperation {
+  NOp = 0,
+  Negate = 1,
+  Abs = 2,
+  Sin = 3,
+  Cos = 4,
+  Tan = 5,
+};
+
+template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
+          MatrixScope Scope>
+class Matrix {
+  using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
+
+  template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
+  Matrix<NewCompTy, M, N, NewUse, Scope> cast();
+
+  // Element-wise operations
+  template <typename T>
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator+=(T);
+  template <typename T>
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator-=(T);
+  template <typename T>
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator*=(T);
+  template <typename T>
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  operator/=(T);
+
+  // Apply a unary operation to each element.
+  template <UnaryOperation Op> Matrix ApplyUnaryOperation();
+
+  template <typename T>
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  Splat(T Val);
+  static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
+                     bool ColMajor, uint Align = sizeof(ElementType));
+  static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+                     bool ColMajor, uint Align = sizeof(ElementType));
+
+  template <typename T>
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+
+  void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+             bool ColMajor, uint Align = sizeof(ElementType));
+
+  template <typename T>
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, void>::type
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+
+  // Row accesses
+  vector<ElementType, M> GetRow(uint Index);
+  void SetRow(vector<ElementType, M> V, uint Index);
+
+  // Element access
+  typename hlsl::enable_if<
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
+      ElementType>::type
+  Get(uint2 Index);
+  typename hlsl::enable_if<
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
+  Set(ElementType V, uint2 Index);
+
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
+  typename hlsl::enable_if<
+      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                     const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
+
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
+  typename hlsl::enable_if<
+      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
+                const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
+
+  // Cooperative Vector outer product accumulate.
+  template <typename T>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator, void>::type
+  OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
+};
+
+template <MatrixComponentType T, uint M, uint N, uint K>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
+         const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+
+// Cooperative Vector Replacement API
+// Cooperative Vector operates on per-thread vectors multiplying against B
+// matrices.
+
+template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+vector<OutputElTy, K>
+Multiply(vector<InputElTy, M> InputVector,
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
+
+template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
+          bool MatrixTranspose>
+vector<OutputElTy, K>
+MultiplyAdd(vector<InputElTy, M> InputVector,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix,
+            vector<BiasElTy, K> BiasVector);
+
+} // namespace linalg
+} // namespace dx
+```
 
 <!-- {% endraw %} -->
