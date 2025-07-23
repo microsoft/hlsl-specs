@@ -94,7 +94,7 @@ Here and hereafter, `NUM` is the number of elements in the loaded vector, `TYPE`
 #### Vector access
 
 Dynamic access to vectors were previously converted to array accesses.
-Native vectors can be dynamically accessed using `extractelement`, `insertelement`, or `getelementptr` operations.
+Native vectors can be dynamically accessed using `extractelement`, `insertelement`, `shufflevector` or `getelementptr` operations.
 Previously usage of `extractelement` and `insertelement` in DXIL didn't allow dynamic index parameters.
 
 #### Elementwise intrinsics
@@ -186,66 +186,74 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 ## Appendix 1: New Elementwise Overloads
 
-| Opcode |  Name              | Class              |
-| ------ | --------------     | --------           |
-| 6      | FAbs               | Unary              |
-| 7      | Saturate           | Unary              |
-| 8      | IsNaN              | IsSpecialFloat     |
-| 9      | IsInf              | IsSpecialFloat     |
-| 10     | IsFinite           | IsSpecialFloat     |
-| 11     | IsNormal           | IsSpecialFloat     |
-| 12     | Cos                | Unary              |
-| 13     | Sin                | Unary              |
-| 14     | Tan                | Unary              |
-| 15     | Acos               | Unary              |
-| 16     | Asin               | Unary              |
-| 17     | Atan               | Unary              |
-| 18     | Hcos               | Unary              |
-| 19     | Hsin               | Unary              |
-| 20     | Htan               | Unary              |
-| 21     | Exp                | Unary              |
-| 22     | Frc                | Unary              |
-| 23     | Log                | Unary              |
-| 24     | Sqrt               | Unary              |
-| 25     | Rsqrt              | Unary              |
-| 26     | Round_ne           | Unary              |
-| 27     | Round_ni           | Unary              |
-| 28     | Round_pi           | Unary              |
-| 29     | Round_z            | Unary              |
-| 30     | Bfrev              | Unary              |
-| 31     | Countbits          | UnaryBits          |
-| 32     | FirstBitLo         | UnaryBits          |
-| 33     | FirstBitHi         | UnaryBits          |
-| 34     | FirstBitSHi        | UnaryBits          |
-| 35     | FMax               | Binary             |
-| 36     | FMin               | Binary             |
-| 37     | IMax               | Binary             |
-| 38     | IMin               | Binary             |
-| 39     | UMax               | Binary             |
-| 40     | UMin               | Binary             |
-| 46     | FMad               | Tertiary           |
-| 47     | Fma                | Tertiary           |
-| 48     | IMad               | Tertiary           |
-| 49     | UMad               | Tertiary           |
-| 83     | DerivCoarseX       | Unary              |
-| 84     | DerivCoarseY       | Unary              |
-| 85     | DerivFineX         | Unary              |
-| 86     | DerivFineY         | Unary              |
-| 115    | WaveActiveAllEqual | WaveActiveAllEqual |
-| 117    | WaveReadLaneAt     | WaveReadLaneAt     |
-| 118    | WaveReadLaneFirst  | WaveReadLaneFirst  |
-| 119    | WaveActiveOp       | WaveActiveOp       |
-| 120    | WaveActiveBit      | WaveActiveBit      |
-| 121    | WavePrefixOp       | WavePrefixOp       |
-| 122    | QuadReadLaneAt     | QuadReadLaneAt     |
-| 123    | QuadOp             | QuadOp             |
-| 124    | BitcastI16toF16    | BitcastI16toF16    |
-| 125    | BitcastF16toI16    | BitcastF16toI16    |
-| 126    | BitcastI32toF32    | BitcastI32toF32    |
-| 127    | BitcastF32toI32    | BitcastF32toI32    |
-| 128    | BitcastI64toF64    | BitcastI64toF64    |
-| 129    | BitcastF64toI64    | BitcastF64toI64    |
-| 165    | WaveMatch          | WaveMatch          |
+| Opcode |  Name                   | Class                   |
+| ------ | --------------          | --------                |
+| 6      | FAbs                    | Unary                   |
+| 7      | Saturate                | Unary                   |
+| 8      | IsNaN                   | IsSpecialFloat          |
+| 9      | IsInf                   | IsSpecialFloat          |
+| 10     | IsFinite                | IsSpecialFloat          |
+| 11     | IsNormal                | IsSpecialFloat          |
+| 12     | Cos                     | Unary                   |
+| 13     | Sin                     | Unary                   |
+| 14     | Tan                     | Unary                   |
+| 15     | Acos                    | Unary                   |
+| 16     | Asin                    | Unary                   |
+| 17     | Atan                    | Unary                   |
+| 18     | Hcos                    | Unary                   |
+| 19     | Hsin                    | Unary                   |
+| 20     | Htan                    | Unary                   |
+| 21     | Exp                     | Unary                   |
+| 22     | Frc                     | Unary                   |
+| 23     | Log                     | Unary                   |
+| 24     | Sqrt                    | Unary                   |
+| 25     | Rsqrt                   | Unary                   |
+| 26     | Round_ne                | Unary                   |
+| 27     | Round_ni                | Unary                   |
+| 28     | Round_pi                | Unary                   |
+| 29     | Round_z                 | Unary                   |
+| 30     | Bfrev                   | Unary                   |
+| 31     | Countbits               | UnaryBits               |
+| 32     | FirstBitLo              | UnaryBits               |
+| 33     | FirstBitHi              | UnaryBits               |
+| 34     | FirstBitSHi             | UnaryBits               |
+| 35     | FMax                    | Binary                  |
+| 36     | FMin                    | Binary                  |
+| 37     | IMax                    | Binary                  |
+| 38     | IMin                    | Binary                  |
+| 39     | UMax                    | Binary                  |
+| 40     | UMin                    | Binary                  |
+| 46     | FMad                    | Tertiary                |
+| 47     | Fma                     | Tertiary                |
+| 48     | IMad                    | Tertiary                |
+| 49     | UMad                    | Tertiary                |
+| 83     | DerivCoarseX            | Unary                   |
+| 84     | DerivCoarseY            | Unary                   |
+| 85     | DerivFineX              | Unary                   |
+| 86     | DerivFineY              | Unary                   |
+| 113    | WaveAnyTrue             | WaveAnyTrue             |
+| 114    | WaveAllTrue             | WaveAllTrue             |
+| 115    | WaveActiveAllEqual      | WaveActiveAllEqual      |
+| 116    | WaveActiveBallot        | WaveActiveBallot        |
+| 117    | WaveReadLaneAt          | WaveReadLaneAt          |
+| 118    | WaveReadLaneFirst       | WaveReadLaneFirst       |
+| 119    | WaveActiveOp            | WaveActiveOp            |
+| 120    | WaveActiveBit           | WaveActiveBit           |
+| 121    | WavePrefixOp            | WavePrefixOp            |
+| 122    | QuadReadLaneAt          | QuadReadLaneAt          |
+| 123    | QuadOp                  | QuadOp                  |
+| 124    | BitcastI16toF16         | BitcastI16toF16         |
+| 125    | BitcastF16toI16         | BitcastF16toI16         |
+| 126    | BitcastI32toF32         | BitcastI32toF32         |
+| 127    | BitcastF32toI32         | BitcastF32toI32         |
+| 128    | BitcastI64toF64         | BitcastI64toF64         |
+| 129    | BitcastF64toI64         | BitcastF64toI64         |
+| 135    | WaveAllBitCount         | WaveAllBitCount         |
+| 136    | WavePrefixBitCount      | WavePrefixBitCount      |
+| 165    | WaveMatch               | WaveMatch               |
+| 166    | WaveMultiPrefixOp       | WaveMultiPrefixOp       |
+| 167    | WaveMultiPrefixBitCount | WaveMultiPrefixBitCount |
+| 222    | QuadVote                | QuadVote                |
 
 
 
