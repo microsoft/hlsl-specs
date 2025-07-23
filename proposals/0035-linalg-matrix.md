@@ -141,14 +141,14 @@ template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
 Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
           bool MatrixTranspose>
 vector<OutputElTy, K>
 MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
             vector<BiasElTy, K> BiasVector);
 
 } // namespace linalg
@@ -602,7 +602,7 @@ object accumulator matrix.
 ```c++
 template <typename T>
 std::enable_if_t<Use == MatrixUse::Accumulator, void>
-Matrix::OuterProductAccumulate(const vector<T, M> &, const vector<T, N> &);
+Matrix::OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 ```
 
 All accumulator matrix objects regardless of scope have a method
@@ -632,7 +632,7 @@ template <typename OutputElTy, typename InputElTy, uint M, uint K,
           MatrixComponentType MatrixDT, MatrixScope Scope, bool MatrixTranspose>
 vector<OutputElTy, K>
 linalg::Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
 ```
 
 The `linalg::Multiply` function has an overload that takes an `M`-element vector
@@ -646,7 +646,7 @@ template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           bool MatrixTranspose>
 vector<OutputElTy, K>
 linalg::MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
             vector<BiasElTy, K> BiasVector);
 ```
 
@@ -1121,14 +1121,14 @@ template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
 Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix);
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
           bool MatrixTranspose>
 vector<OutputElTy, K>
 MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> Matrix,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
             vector<BiasElTy, K> BiasVector);
 
 } // namespace linalg
