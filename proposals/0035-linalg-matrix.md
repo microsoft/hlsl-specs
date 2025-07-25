@@ -55,6 +55,8 @@ namespace linalg {
 
 template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
+template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
+          MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
 
@@ -110,23 +112,34 @@ class Matrix {
       __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
   Set(ElementType V, uint2 Index);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
-  typename hlsl::enable_if<
-      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+            MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                               Scope == MatrixScope::Wave && UseLocal == Use,
+                           void>::type
   MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
-  typename hlsl::enable_if<
-      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+            MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                               Scope == MatrixScope::Wave && UseLocal == Use,
+                           void>::type
   SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                 const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
   // Cooperative Vector outer product accumulate.
-  template <typename T>
-  typename hlsl::enable_if<Use == MatrixUse::Accumulator, void>::type
+  template <typename T, MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                           void>::type
   OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
+
+template <MatrixComponentType OutTy, MatrixComponentType ATy,
+          MatrixComponentType BTy, uint M, uint N, uint K>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
+         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
 template <MatrixComponentType T, uint M, uint N, uint K>
 Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
@@ -140,16 +153,16 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
-Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
+Multiply(vector<InputElTy, M>,
+         Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
           bool MatrixTranspose>
 vector<OutputElTy, K>
-MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
-            vector<BiasElTy, K> BiasVector);
+MultiplyAdd(vector<InputElTy, M>,
+            Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+            vector<BiasElTy, K>);
 
 } // namespace linalg
 } // namespace dx
@@ -168,18 +181,23 @@ void WaveMatrixExample() {
       Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
   using MatrixAccumTy = Matrix<MatrixComponentType::F16, 8, 16,
                                MatrixUse::Accumulator, MatrixScope::Wave>;
+  using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
+                               MatrixUse::Accumulator, MatrixScope::Wave>;
 
   MatrixATy MatA = Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A,
                           MatrixScope::Wave>::Load(B, 0, 8 * 4, false);
   MatrixBTy MatB = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
                           MatrixScope::Wave>::Load(B, 0, 32 * 4, false);
   MatrixAccumTy Accum = Multiply(MatA, MatB);
+  MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
 }
 ```
 
 ### Example Usage: Cooperative Vectors
 
 ```c++
+RWByteAddressBuffer B : register(u0);
+
 void CoopVec() {
   using namespace dx::linalg;
   using MatrixBTy =
@@ -480,7 +498,7 @@ Matrix::Splat(WaveReadLaneFirst(Val));
 ```c++
 static Matrix Matrix::Load(
     ByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
-    uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
+    uint Align = sizeof(__detail::ComponentTypeTraits<ComqponentTy>::Type));
 
 static Matrix Matrix::Load(
     RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
@@ -570,9 +588,11 @@ If the `Index` is out of range, this is a no-op.
 #### Matrix::MultiplyAccumuate(Matrix, Matrix)
 
 ```c++
-template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
-std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
-                 void>
+template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+          MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                             Scope == MatrixScope::Wave && UseLocal == Use,
+                         void>::type
 Matrix::MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                            const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
@@ -585,9 +605,11 @@ back into the implicit object accumulator matrix.
 #### Matrix::SumAccumulate(Matrix, Matrix)
 
 ```c++
-template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, unit K>
-std::enable_if_t<Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave,
-                 void>
+template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+          MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                             Scope == MatrixScope::Wave && UseLocal == Use,
+                         void>::type
 Matrix::SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                       const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
@@ -600,8 +622,9 @@ object accumulator matrix.
 #### Matrix::OuterProductAccumulate(vector, vector)
 
 ```c++
-template <typename T>
-std::enable_if_t<Use == MatrixUse::Accumulator, void>
+template <typename T, MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                         void>::type
 Matrix::OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 ```
 
@@ -614,16 +637,24 @@ matrix.
 #### linalg::Multiply(Matrix, Matrix)
 
 ```c++
-template <typename T, uint M, uint N, uint K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-
+template <MatrixComponentType OutTy, MatrixComponentType ATy,
+          MatrixComponentType BTy, uint M, uint N, uint K>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
-         const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+                 const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+
+template <MatrixComponentType T, uint M, uint N, uint K>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
+                 const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
 ```
 
-The `linalg::Multiply` function has an overload that takes an MxK `Wave`-scope
+The `linalg::Multiply` function has two overloads that take an MxK `Wave`-scope
 `A` matrix, and a KxN `Wave`-scope `B` matrix and yields an MxN `Wave`-scope
-`Accumlator` matrix initialized with the product of the two input matrices.
+`Accumlator` matrix initialized with the product of the two input matrices. One
+of the overloads infers the type of the output accumulator to match the input
+matrices, the other overload takes a template parameter for the output matrix
+type and takes arguments with potentially mismatched element types.
 
 #### linalg::Multiply(vector, Matrix)
 
@@ -925,7 +956,7 @@ Stores a row-vector to a matrix. Out of bounds writes no-op.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/zTbfvPPqP)
+[Compiler Explorer](https://godbolt.org/z/WE8W3cM6e)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1090,23 +1121,34 @@ class Matrix {
       __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
   Set(ElementType V, uint2 Index);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
-  typename hlsl::enable_if<
-      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+            MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                               Scope == MatrixScope::Wave && UseLocal == Use,
+                           void>::type
   MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
-  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K>
-  typename hlsl::enable_if<
-      Use == MatrixUse::Accumulator && Scope == MatrixScope::Wave, void>::type
+  template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
+            MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
+                               Scope == MatrixScope::Wave && UseLocal == Use,
+                           void>::type
   SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                 const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 
   // Cooperative Vector outer product accumulate.
-  template <typename T>
-  typename hlsl::enable_if<Use == MatrixUse::Accumulator, void>::type
+  template <typename T, MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                           void>::type
   OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
+
+template <MatrixComponentType OutTy, MatrixComponentType ATy,
+          MatrixComponentType BTy, uint M, uint N, uint K>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
+         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
 template <MatrixComponentType T, uint M, uint N, uint K>
 Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
@@ -1119,20 +1161,50 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 
 template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
-vector<OutputElTy, K>
-Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
+vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
+                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
           bool MatrixTranspose>
-vector<OutputElTy, K>
-MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
-            vector<BiasElTy, K> BiasVector);
+vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
+                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                                  vector<BiasElTy, K>);
 
 } // namespace linalg
 } // namespace dx
+
+RWByteAddressBuffer B : register(u0);
+
+void WaveMatrixExample() {
+  using namespace dx::linalg;
+  using MatrixATy =
+      Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A, MatrixScope::Wave>;
+  using MatrixBTy =
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+  using MatrixAccumTy = Matrix<MatrixComponentType::F16, 8, 16,
+                               MatrixUse::Accumulator, MatrixScope::Wave>;
+  using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
+                                 MatrixUse::Accumulator, MatrixScope::Wave>;
+
+  MatrixATy MatA = Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A,
+                          MatrixScope::Wave>::Load(B, 0, 8 * 4, false);
+  MatrixBTy MatB = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
+                          MatrixScope::Wave>::Load(B, 0, 32 * 4, false);
+  MatrixAccumTy Accum = Multiply(MatA, MatB);
+  MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
+}
+
+void CoopVec() {
+  using namespace dx::linalg;
+  using MatrixBTy =
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+
+  vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  vector<float16_t, 16> Accum =
+      Multiply<float16_t, /*transpose*/ false>(Vec, MatB);
+}
 ```
 
 <!-- {% endraw %} -->
