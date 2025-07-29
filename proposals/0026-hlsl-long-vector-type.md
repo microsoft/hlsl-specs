@@ -119,11 +119,12 @@ myBuffer.Store< vector<T, N> >(StartoffsetInBytes + 100, val);
 ```
 
 Long Vectors initialized from or dumped to a Raw Buffer must comply with the
-alignment rules of the underlying buffer. Therefore a vector `Load`ed or `Store`d
-to a `ByteAddressBuffer` must either naturally align to or be padded to 4 bytes.
-Misaligned offsets results in undefined behavior. APIs built on top of Long Vectors
-such as Cooperative Vectors or Cooperative Matrix may further restrict memory
-alignment requirements but that is not specified or mandated by this spec.
+alignment rules of the underlying buffer. Therefore the offset used to `Load`/`Store`
+a vector from/to a `ByteAddressBuffer` must be aligned to a multiple of the component
+type. (EX: half -> 2 bytes, uint -> 4 bytes, int64 -> 8 bytes). Misaligned offsets
+result in undefined behavior. APIs built on top of Long Vectors such as Cooperative
+Vectors or Cooperative Matrix may further restrict memory alignment requirements but
+that is not required by this spec.
 
 StructuredBuffers with N-element vectors are declared using the template syntax
  with a long vector type as the template parameter.
