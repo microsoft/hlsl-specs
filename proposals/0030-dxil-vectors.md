@@ -141,7 +141,7 @@ capabilities. The following reduction intrinsics are therefore backported as new
 
 **Vector Reduce And**
 
-Bitwise AND reduction  of the vector returning a scalar. Return type matches vector element type.
+Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
 Equivalent to [llvm.vector.reduce.and.*](https://llvm.org/docs/LangRef.html#llvm-vector-reduce-and-intrinsic)
 
 ```asm
