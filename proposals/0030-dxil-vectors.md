@@ -132,6 +132,31 @@ The scalar variants of these DXIL intrinsics will remain unchanged and can be us
 This means that the same language-level vector (of any length) could be used
  in scalarized operations and native vector operations even within the same shader.
 
+### New DXIL Intrinsics
+
+Modern LLVM IR natively supports vector reduction intrinsics but DXIL currently lacks similiar
+capabilities. The following reduction intrinsics are therefore backported as new DXIL Intrinsics.
+
+#### Boolean Vector Reduction Intrinsics
+
+**Vector Reduce And**
+
+Bitwise AND reduction  of the vector returning a scalar. Return type matches vector element type.
+Equivalent to [llvm.vector.reduce.and.*](https://llvm.org/docs/LangRef.html#llvm-vector-reduce-and-intrinsic)
+
+```asm
+ [TYPE] @dx.op.vector.reduce.and.v[NUM][TY](<[NUM] x [TYPE]> operand)
+```
+
+**Vector Reduce Or**
+
+Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
+Equivalent to [llvm.vector.reduce.or.*](https://llvm.org/docs/LangRef.html#llvm-vector-reduce-or-intrinsic)
+
+```asm
+ [TYPE] @dx.op.vector.reduce.or.v[NUM][TY](<[NUM] x [TYPE]> operand)
+```
+
 ### Validation Changes
 
 Blanket validation errors for use of native vectors DXIL are removed.
