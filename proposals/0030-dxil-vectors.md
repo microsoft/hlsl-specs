@@ -134,27 +134,30 @@ This means that the same language-level vector (of any length) could be used
 
 ### New DXIL Intrinsics
 
-Modern LLVM IR natively supports vector reduction intrinsics but DXIL currently lacks similiar
-capabilities. The following reduction intrinsics are therefore backported as new DXIL Intrinsics.
-
 #### Boolean Vector Reduction Intrinsics
 
-**Vector Reduce And**
+**VectorReduceAnd**
 
 Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
-Equivalent to [llvm.vector.reduce.and.*](https://llvm.org/docs/LangRef.html#llvm-vector-reduce-and-intrinsic)
 
-```asm
- [TYPE] @dx.op.vector.reduce.and.v[NUM][TY](<[NUM] x [TYPE]> operand)
+```C++
+DXIL::OpCode::VectorReduceAnd = 309
 ```
 
-**Vector Reduce Or**
+```asm
+ [TYPE] @dx.op.unary.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+```
+
+**VectorReduceOr**
 
 Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
-Equivalent to [llvm.vector.reduce.or.*](https://llvm.org/docs/LangRef.html#llvm-vector-reduce-or-intrinsic)
+
+```C++
+DXIL::OpCode::VectorReduceOr = 310
+```
 
 ```asm
- [TYPE] @dx.op.vector.reduce.or.v[NUM][TY](<[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
 ```
 
 ### Validation Changes
