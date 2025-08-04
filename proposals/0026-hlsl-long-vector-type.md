@@ -118,6 +118,12 @@ myBuffer.Store< vector<T, N> >(StartoffsetInBytes + 100, val);
 
 ```
 
+Long Vectors loaded from or stored to a Raw Buffer must comply with the alignment
+rules of the underlying buffer. Therefore the offset used to `Load`/`Store` a vector
+from/to a `ByteAddressBuffer` must be aligned to a multiple of the component type.
+(EX: half -> 2 bytes, uint -> 4 bytes, int64 -> 8 bytes). Misaligned offsets result 
+in undefined behavior.
+
 StructuredBuffers with N-element vectors are declared using the template syntax
  with a long vector type as the template parameter.
 N-element vectors are loaded and stored from ByteAddressBuffers using the templated load and store methods
