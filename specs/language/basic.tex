@@ -281,7 +281,8 @@ the same type throughout the translation unit.
 \p There are special implementation-defined types such as \textit{handle types},
 which fall into a category of \textit{standard intangible types}. Intangible
 types are types that have no defined object representation or value
-representation, as such the size is unknown at compile time.
+representation, as such the size is unknown at compile time. Usage restrictions
+for objects of intangible type are documented in \ref{Basic.types.intangible}.
 % Note: The above definition is likely incomplete, and it is unclear if minimum
 % precision types should be intangible.
 
@@ -403,6 +404,24 @@ type \texttt{T} is \(T\).
 \textit{scalar-layout-compatible types} if \texttt{T1} and \texttt{T2} are the same
 type or if the sequence of types defined by the scalar representation \(SR(T1)\)
 and scalar representation \(SR(T2)\) are identical.
+
+\Sub{Usage of Intangible Types}{Basic.types.intangible}
+
+\p The following usage restrictions apply to intangible types:
+\begin{itemize}
+
+\item Instances of objects of intangible type may only be declared in the Thread
+address space (\ref{Intro.Memory.Spaces}).
+
+\item An object of intangible type may not be loaded or stored to any address
+space other than the Thread address space
+(\ref{Intro.Memory.Spaces}).\footnote{DXC supports storing objects that contain
+resources in cbuffer declarations, but it does so by hoisting the resource
+declaration out to the global scope.}
+
+\item An object of intangible type may not be a parameter or return type of a
+function with program linkage (\ref{Basic.Linkage.Program}).
+\end{itemize}
 
 \Sec{Lvalues and rvalues}{Basic.lval}
 
