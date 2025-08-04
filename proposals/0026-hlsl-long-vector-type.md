@@ -142,37 +142,39 @@ HLSL vectors support extraction and recomposition of new vectors via swizzling, 
 long vectors don't support swizzling instead two new operations are made available on
 all vectors.
 
-**`slice<Offset, Count>()`**
+**`slice<Offset, Count, ComponentType, InSize>(vector<ComponentType, InSize> in)`**
 
-The `slice` member function returns a new `vector` containing elements starting
-at `Offset` containing `Count` number of components.
+The `slice` function returns a new `vector` containing elements starting at `Offset`
+containing `Count` number of components of type `ComponentType`. `ComponentType` and
+`InSize` are deduced by the compiler.
 
 ```hlsl
 vector<int, 6> src = {0, 1, 2, 3, 4, 5};
-vector<int, 3> sub = src.slice<2, 3>() // sub = {2, 3, 4}
+vector<int, 3> sub = slice<2, 3>(src) // sub = {2, 3, 4}
 ```
 
 `slice` also has a convenience version that assumes Offset is 0.
 
 ```hlsl
 vector<int, 6> src = {0, 1, 2, 3, 4, 5};
-vector<int, 4> sub = src.slice<4>() // sub = {0, 1, 2, 3}
+vector<int, 4> sub = slice<4>(src) // sub = {0, 1, 2, 3}
 ```
 
 A compiler error will be raised if the slice operation would result in out of bounds access.
 
-**`shuffle<Idx1, Idx2, ...>()`**
+**`shuffle<Idx1, Idx2, ..., ComponentType, InSize>(vector<ComponentType, InSize> in)`**
 
 *`shuffle` is only available in HLSL 202y*
 
-The `shuffle` member function returns a new `vector` containing each element listed by
+The `shuffle` function returns a new `vector` containing each element listed by
 index in the template parameters. The number of components of the resulting vector is
-the number of template parameters provided.
+the number of template parameters provided and the component type is `ComponentType`.
+`ComponentType` and `InSize` are deduced by the compiler.
 
 ```hlsl
 vector<int, 6> src = {5, 4, 3, 2, 1, 0};
-vector<int, 8> sub = src.shuffle<0,1,3,1,5,0,0,0>() // sub = {5, 4, 2, 4, 0, 5, 5, 5}
-vector<int, 2> sub = src.shuffle<2,2>() // sub = {4, 4}
+vector<int, 8> sub = shuffle<0,1,3,1,5,0,0,0>(src) // sub = {5, 4, 2, 4, 0, 5, 5, 5}
+vector<int, 2> sub = shuffle<2,2>(src) // sub = {4, 4}
 ```
 
 A compiler error will be raised if any index would result in out of bounds access.
