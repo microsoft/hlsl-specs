@@ -167,6 +167,8 @@ DXIL::OpCode::VectorReduceOr = 310
 Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
 native vectors in DXIL `dot` can now be treated as a normal binary operation.
 
+Returns `op1[0] * op2[0] + op1[1] * op2[1] + ... + op1[NUM - 1] * op2[NUM - 1]`
+
 ```C++
 DXIL::OpCode::VectorDotProduct = 311
 ```
