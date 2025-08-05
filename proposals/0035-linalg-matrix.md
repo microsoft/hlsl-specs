@@ -148,19 +148,16 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 // Cooperative Vector operates on per-thread vectors multiplying against B
 // matrices.
 
-template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
-vector<OutputElTy, K>
-Multiply(vector<InputElTy, M>,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+template <typename OutputElTy, typename InputElTy, uint M, uint K,
+          MatrixComponentType MatrixDT, MatrixScope Scope>
+vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
+                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
-          bool MatrixTranspose>
-vector<OutputElTy, K>
-MultiplyAdd(vector<InputElTy, M>,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
-            vector<BiasElTy, K>);
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
+                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                                  vector<BiasElTy, K>);
 
 } // namespace linalg
 } // namespace dx
@@ -203,8 +200,7 @@ void CoopVec() {
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
   MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
-  vector<float16_t, 16> Accum =
-      Multiply<float16_t, /*transpose*/ false>(Vec, MatB);
+  vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
 
@@ -659,10 +655,10 @@ type and takes arguments with potentially mismatched element types.
 
 ``` c++
 template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          MatrixComponentType MatrixDT, MatrixScope Scope, bool MatrixTranspose>
+          MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
-linalg::Multiply(vector<InputElTy, M> InputVector,
-         Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB);
+    linalg::Multiply(vector<InputElTy, M>,
+                     Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
 ```
 
 The `linalg::Multiply` function has an overload that takes an `M`-element vector
@@ -672,12 +668,11 @@ and an MxK `B` matrix of any scope. The function returns a `K`-element vector.
 
 ``` c++
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
-          bool MatrixTranspose>
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K>
-linalg::MultiplyAdd(vector<InputElTy, M> InputVector,
-            Matrix<MatrixDT, M, K, MatrixUse::B, Scope> MatB,
-            vector<BiasElTy, K> BiasVector);
+    linalg::MultiplyAdd(vector<InputElTy, M>,
+                        Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                        vector<BiasElTy, K>);
 ```
 
 The `linalg::MultiplyAdd` function has an overload that takes an `M`-element, an
@@ -955,7 +950,7 @@ Stores a row-vector to a matrix. Out of bounds writes no-op.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/WE8W3cM6e)
+[Compiler Explorer](https://godbolt.org/z/jbq7eheT1)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1158,14 +1153,13 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 // Cooperative Vector operates on per-thread vectors multiplying against B
 // matrices.
 
-template <typename OutputElTy, bool MatrixTranspose, typename InputElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+template <typename OutputElTy, typename InputElTy, uint M, uint K,
+          MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
                                Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope,
-          bool MatrixTranspose>
+          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
 vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
                                   Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
                                   vector<BiasElTy, K>);
@@ -1201,8 +1195,7 @@ void CoopVec() {
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
   MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
-  vector<float16_t, 16> Accum =
-      Multiply<float16_t, /*transpose*/ false>(Vec, MatB);
+  vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
 
