@@ -55,8 +55,6 @@ namespace linalg {
 
 template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
-template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
-          MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
 
