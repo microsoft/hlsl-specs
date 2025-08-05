@@ -496,7 +496,8 @@ Matrix::Splat(WaveReadLaneFirst(Val));
 ```c++
 static Matrix Matrix::Load(
     ByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
-    uint Align = sizeof(__detail::ComponentTypeTraits<ComqponentTy>::Type));
+    uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
+
 
 static Matrix Matrix::Load(
     RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
