@@ -132,6 +132,34 @@ The scalar variants of these DXIL intrinsics will remain unchanged and can be us
 This means that the same language-level vector (of any length) could be used
  in scalarized operations and native vector operations even within the same shader.
 
+### New DXIL Intrinsics
+
+#### Boolean Vector Reduction Intrinsics
+
+**VectorReduceAnd**
+
+Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
+
+```C++
+DXIL::OpCode::VectorReduceAnd = 309
+```
+
+```asm
+ [TYPE] @dx.op.unary.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+```
+
+**VectorReduceOr**
+
+Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
+
+```C++
+DXIL::OpCode::VectorReduceOr = 310
+```
+
+```asm
+ [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
+```
+
 ### Validation Changes
 
 Blanket validation errors for use of native vectors DXIL are removed.
