@@ -160,6 +160,21 @@ DXIL::OpCode::VectorReduceOr = 310
  [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
 ```
 
+#### Vectorized Dot
+
+**VectorDotProduct**
+
+Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
+native vectors in DXIL `dot` can now be treated as a normal binary operation.
+
+```C++
+DXIL::OpCode::VectorDotProduct = 311
+```
+
+```asm
+ [TYPE] @dx.op.binary.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
+```
+
 ### Validation Changes
 
 Blanket validation errors for use of native vectors DXIL are removed.
