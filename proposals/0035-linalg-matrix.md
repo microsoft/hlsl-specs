@@ -646,7 +646,8 @@ linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
 
 The `linalg::Multiply` function has two overloads that take an MxK `Wave`-scope
 `A` matrix, and a KxN `Wave`-scope `B` matrix and yields an MxN `Wave`-scope
-`Accumlator` matrix initialized with the product of the two input matrices. One
+`Accumulator` matrix initialized with the product of the two input matrices. One
+
 of the overloads infers the type of the output accumulator to match the input
 matrices, the other overload takes a template parameter for the output matrix
 type and takes arguments with potentially mismatched element types.
@@ -1180,10 +1181,9 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A,
-                          MatrixScope::Wave>::Load(B, 0, 8 * 4, false);
-  MatrixBTy MatB = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
-                          MatrixScope::Wave>::Load(B, 0, 32 * 4, false);
+  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, false);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
 }
