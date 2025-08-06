@@ -139,8 +139,8 @@ They do not support any swizzle operations.
 #### Converting dimensions of long vectors
 
 HLSL vectors support extraction and recomposition of new vectors via swizzling, however
-long vectors don't support swizzling instead two new operations are made available on
-all vectors.
+long vectors don't support swizzling, instead the following operation is made available
+on all vectors.
 
 **`slice<Offset, Count, ComponentType, InSize>(vector<ComponentType, InSize> in)`**
 
@@ -161,23 +161,6 @@ vector<int, 4> sub = slice<4>(src) // sub = {0, 1, 2, 3}
 ```
 
 A compiler error will be raised if the slice operation would result in out of bounds access.
-
-**`shuffle<Idx1, Idx2, ..., ComponentType, InSize>(vector<ComponentType, InSize> in)`**
-
-*`shuffle` is only available in HLSL 202y*
-
-The `shuffle` function returns a new `vector` containing each element listed by
-index in the template parameters. The number of components of the resulting vector is
-the number of template parameters provided and the component type is `ComponentType`.
-`ComponentType` and `InSize` are deduced by the compiler.
-
-```hlsl
-vector<int, 6> src = {5, 4, 3, 2, 1, 0};
-vector<int, 8> sub = shuffle<0,1,3,1,5,0,0,0>(src) // sub = {5, 4, 2, 4, 0, 5, 5, 5}
-vector<int, 2> sub = shuffle<2,2>(src) // sub = {4, 4}
-```
-
-A compiler error will be raised if any index would result in out of bounds access.
 
 **Why template values instead of parameters**
 
