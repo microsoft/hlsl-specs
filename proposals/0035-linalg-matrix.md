@@ -282,6 +282,20 @@ A matrix with thread scope must behave as if each thread has a unique copy of
 the matrix, however the storage is not required to be thread local, and an
 implementation may coalesce identical matrices across threads.
 
+#### Matrix Storage
+
+In HLSL, matrix objects are intangible objects so they do not have defined size
+or memory layout. When in use, implementations are expected to spread the
+storage of matrices across the thread-local storage for all threads in a SIMD
+unit. At the DXIL level we represent a matrix through a handle object.
+
+An A matrix is a collection of per-thread vectors representing matrix rows,
+while a B matrix is a collection of per-thread vectors representing matrix
+columns.
+
+An Accumulator matrix may be either an A matrix, or a B matrix, and it varies by
+hardware implementation.
+
 ### HLSL API Documentation
 
 #### HLSL Enumerations
@@ -997,7 +1011,7 @@ a bias vector added to the result.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/jbq7eheT1)
+[Compiler Explorer](https://godbolt.org/z/vv81ocTPc)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
