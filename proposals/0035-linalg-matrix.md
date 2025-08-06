@@ -57,6 +57,9 @@ template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
+  static const uint ElementsPerScalar = __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
+  static const uint MScalars = (M + (ElementsPerScalar-1)) / ElementsPerScalar;
+  static const uint NScalars = (N + (ElementsPerScalar-1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
   Matrix<NewCompTy, M, N, NewUse, Scope> cast();
@@ -90,6 +93,18 @@ class Matrix {
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           Matrix>::type
+      FromThreadVectors(vector<ElementType, MScalars>);
+
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           Matrix>::type
+      FromThreadVectors(vector<ElementType, NScalars>);
+
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              bool ColMajor, uint Align = sizeof(ElementType));
 
@@ -97,18 +112,18 @@ class Matrix {
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, void>::type
   Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
-  // Row accesses
-  vector<ElementType, M> GetRow(uint Index);
-  void SetRow(vector<ElementType, M> V, uint Index);
+  // Extract the thread-specific vector.
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           vector<ElementType, MScalars>>::type
+  GetThreadVector(uint Index = 0);
 
-  // Element access
-  typename hlsl::enable_if<
-      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-      ElementType>::type
-  Get(uint2 Index);
-  typename hlsl::enable_if<
-      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
-  Set(ElementType V, uint2 Index);
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           vector<ElementType, NScalars>>::type
+  GetThreadVector(uint Index = 0);
 
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
@@ -177,12 +192,11 @@ void WaveMatrixExample() {
   using MatrixAccumTy = Matrix<MatrixComponentType::F16, 8, 16,
                                MatrixUse::Accumulator, MatrixScope::Wave>;
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
-                               MatrixUse::Accumulator, MatrixScope::Wave>;
+                                 MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = Matrix<MatrixComponentType::F16, 8, 32, MatrixUse::A,
-                          MatrixScope::Wave>::Load(B, 0, 8 * 4, false);
-  MatrixBTy MatB = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
-                          MatrixScope::Wave>::Load(B, 0, 32 * 4, false);
+  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, false);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
 }
@@ -261,6 +275,12 @@ performance benefit when using `Wave` scope matrices.
 Throughout this document a matrix may be described as having a scope as
 specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
 _matrix with thread scope_).
+
+Matrix storage is always opaque, the `Scope` does not directly restrict how the
+matrix is stored, it merely denotes allowed scopes of allowed data divergence.
+A matrix with thread scope must behave as if each thread has a unique copy of
+the matrix, however the storage is not required to be thread local, and an
+implementation may coalesce identical matrices across threads.
 
 ### HLSL API Documentation
 
@@ -513,6 +533,32 @@ expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. If the type mismatches the target data
 type of the matrix a data conversion is applied on load.
 
+#### Matrix::FromThreadVectors
+
+```c++
+template <MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                              UseLocal == Use,
+                          Matrix>::type
+    FromThreadVectors(vector<ElementType, MScalars>);
+
+template <MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                              UseLocal == Use,
+                          Matrix>::type
+    FromThreadVectors(vector<ElementType, NScalars>);
+```
+
+Produces a matrix from per-thread vectors. An A matrix is produced from
+per-thread row vectors, while a B matrix is produced from per-thread column
+vectors. The `FromThreadVectors` construction method is not available for
+accumulator matrices which vary by hardware implementation.
+
+When creating an A matrix, the N dimension must be less than or equal to the
+wave size. When creating a B matrix, the M dimension must be less than or equal
+to the wave size. Threads outside the matrix size are discarded.
+
+Must be called from wave-uniform control flow.
 
 #### Matrix::Store
 
@@ -534,51 +580,33 @@ matrix object. When storing to `groupshared` memory, the matrix component data
 is converted to the target arithmetic or packed data type if the data types do
 not match.
 
-#### Matrix::GetRow(uint)
+#### Matrix::GetThreadVector(uint)
 
 ```c++
-vector<ElementType, M> Matrix::GetRow(uint Index);
+template <MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                              UseLocal == Use,
+                          vector<ElementType, MScalars>>::type
+GetThreadVector(uint Index = 0);
+
+template <MatrixUse UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                              UseLocal == Use,
+                          vector<ElementType, NScalars>>::type
+GetThreadVector(uint Index = 0);
 ```
 
-Returns a row vector of the matrix as a vector of the underlying HLSL native
-element type. If `Index` is out of range for the matrix size the result is a `0`
-filled vector.
+Returns the underlying vector for the associated thread in the matrix. The
+optional index is used when the matrix `K` dimension is larger than the wave
+size to compute the starting offset (i.e. `(Index * WaveSize) + ThreadID`).
 
+An A matrix produces a vector containing a row of a matrix, while a B matrix
+produces a vector containing a column of the matrix. This method may not be used
+on an Accumulator matrix because the matrix layout varies by hardware
+implementation.
 
-#### Matrix::SetRow(vector<ElementType, M>, uint)
-
-```c++
-void Matrix::SetRow(vector<ElementType, M> V, uint Index);
-```
-
-Sets the specified matrix row to the value in the vector V. If the matrix scope
-is `Wave`, this behaves as if called as `SetRow(WaveReadLaneFirst(V), Index)`.
-If the `Index` is out of range of the matrix, this is a no-op.
-
-#### Matrix::Get(uint2)
-
-```c++
-std::enable_if_t<__detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-                 ElementType>
-Matrix::Get(uint2 Index);
-```
-
-Accesses a specific component of the matrix using two-dimensional indexing. This
-method is only available if the component type has has native scalar support in
-HLSL. If the `Index` parameter is out-of range for the matrix the result is `0`
-casted to `ElementType`.
-
-#### Matrix::Set(ElementType, uint2)
-
-```c++
-std::enable_if_t<__detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-                 void>
-Matrix::Set(ElementType V, uint2 Index);
-```
-
-Sets a specified element of the matrix to the provided value. If the matrix
-scope is `Wave`, this behaves as if called as `Set(WaveReadLaneFirst(V), Index)`.
-If the `Index` is out of range, this is a no-op.
+Threads which correspond to threads outside the matrix size will return a vector
+with all elements zero initialized.
 
 #### Matrix::MultiplyAccumuate(Matrix, Matrix)
 
@@ -834,6 +862,28 @@ between opaque matrices and groupshared memory are defined in the
 [Conversions](#conversions) section below.
 
 ```llvm
+declare void @dx.op.matrixLoadFromThreads.v[NUM][TY](
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  < NUM x [Ty]>,         ; Vector
+  )
+```
+
+Populates a matrix from per-thread vectors. For an A matrix the NUM corresponds
+to the M dimension while for a B matrix it corresponds to the N dimension. The
+NUM must match the matrix corresponding dimension, unless the element is a
+packed data type in which case it must be the number of 32-bit unsigned integers
+used to store M elements. This operation may not be used on Accumulator
+matrices.
+
+For an A matrix the N dimension must be less than or equal to the WaveSize. For
+a B matrix the M dimension must be less than or equal to the WaveSize. Values
+from additional threads are discarded.
+
+The result of this operation is undefined if called from non-uniform control
+flow.
+
+```llvm
 declare void @dx.op.matrixStoreToDescriptor(
   immarg i32,            ; opcode
   %dx.types.MatrixRef *, ; matrix
@@ -861,6 +911,25 @@ declare void @dx.op.matrixStoreToMemory.p[Ty](
 Store a matrix to groupshared memory. Data conversions between opaque matrices
 and groupshared memory are defined in the [Conversions on groupshared
 memory](#conversions-on-groupshared-memory) section below.
+
+```llvm
+declare < NUM x [Ty]> @dx.op.matrixExtractToThreads.v[NUM][TY](
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  i32,                   ; Index
+  )
+```
+
+Extracts per-thread vectors from a matrix. For an A matrix the NUM corresponds
+to the M dimension while for a B matrix it corresponds to the N dimension. The
+NUM must match the matrix corresponding dimension, unless the element is a
+packed data type in which case it must be the number of 32-bit unsigned integers
+used to store M elements. This operation may not be used on Accumulator
+matrices.
+
+The Index argument specifies the starting row or column as a multiple of the
+wave size. The resulting vector corresponds to the row or column numbered
+`(Index * WaveSize) + ThreadID`.
 
 ```llvm
 declare void @dx.op.matrixOp(
@@ -915,35 +984,12 @@ a bias vector added to the result.
 
 > Note for this operation the matrix can be of any scope.
 
-```llvm
-declare <[NUMo] x [TYo]> @dx.op.matrixLoadRow.v[NUMo][Tyo](
-  immarg i32             ; opcode
-  %dx.types.MatrixRef *, ; matrix A
-  i32                    ; row index
-  )
-```
-
-Loads a row-vector from a matrix. Out of bounds reads return `0`.
-
-```llvm
-declare void @dx.op.matrixStoreRow.v[NUMi][Tyi](
-  immarg i32             ; opcode
-  %dx.types.MatrixRef *, ; matrix A
-  i32,                   ; index
-  <[NUMi] x [Tyi]>       ; row vector
-  )
-```
-
-Stores a row-vector to a matrix. Out of bounds writes no-op.
-
 ### Conversions
 
 ## Appendix 1: Outstanding Questions
 
 * What is the exhaustive list of data types we need to support?
 * What data type conversions do we need to support?
-* Do we need load and store per-element accessors or is row enough?
-* Should we consider get/set column accessors?
 * Support for other number formats that aren't natively supported by HLSL?
 * Do we need to specify a source/destination format for the data in the load and
   store operations that operate on descriptors or should we assume
@@ -1063,6 +1109,12 @@ template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
+  static const uint ElementsPerScalar =
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
+  static const uint MScalars =
+      (M + (ElementsPerScalar - 1)) / ElementsPerScalar;
+  static const uint NScalars =
+      (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
   Matrix<NewCompTy, M, N, NewUse, Scope> cast();
@@ -1096,6 +1148,18 @@ class Matrix {
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           Matrix>::type
+      FromThreadVectors(vector<ElementType, MScalars>);
+
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           Matrix>::type
+      FromThreadVectors(vector<ElementType, NScalars>);
+
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              bool ColMajor, uint Align = sizeof(ElementType));
 
@@ -1103,18 +1167,18 @@ class Matrix {
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, void>::type
   Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
-  // Row accesses
-  vector<ElementType, M> GetRow(uint Index);
-  void SetRow(vector<ElementType, M> V, uint Index);
+  // Extract the thread-specific vector.
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           vector<ElementType, MScalars>>::type
+  GetThreadVector(uint Index = 0);
 
-  // Element access
-  typename hlsl::enable_if<
-      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar,
-      ElementType>::type
-  Get(uint2 Index);
-  typename hlsl::enable_if<
-      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar, void>::type
-  Set(ElementType V, uint2 Index);
+  template <MatrixUse UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+                               UseLocal == Use,
+                           vector<ElementType, NScalars>>::type
+  GetThreadVector(uint Index = 0);
 
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
