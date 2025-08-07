@@ -142,6 +142,41 @@ myBuffer.Store(elementIndex, val);
 Long vectors support the existing vector subscript operators `[]` to access the scalar element values.
 They do not support any swizzle operations.
 
+#### Converting dimensions of long vectors
+
+HLSL vectors support extraction and recomposition of new vectors via swizzling, however
+long vectors don't support swizzling, instead the following operation is made available
+on all vectors.
+
+**`slice<Offset, Count, ComponentType, InSize>(vector<ComponentType, InSize> in)`**
+
+The `slice` function returns a new `vector` containing elements starting at `Offset`
+containing `Count` number of components of type `ComponentType`. `ComponentType` and
+`InSize` are deduced by the compiler.
+
+```hlsl
+vector<int, 6> src = {0, 1, 2, 3, 4, 5};
+vector<int, 3> sub = slice<2, 3>(src) // sub = {2, 3, 4}
+```
+
+`slice` also has a convenience version that assumes Offset is 0.
+
+```hlsl
+vector<int, 6> src = {0, 1, 2, 3, 4, 5};
+vector<int, 4> sub = slice<4>(src) // sub = {0, 1, 2, 3}
+```
+
+A compiler error will be raised if the slice operation would result in out of bounds access.
+
+**Why template values instead of parameters**
+
+It may seem like an odd choice to specify the extraction values via templates
+instead of using function parameters. This decision unlocks two key benefits both
+derived from the fact that the values must be known statically at compile time.
+
+ - The compiler can always detect and fail on out-of-bounds access
+ - The extraction operations can always be lowered to a single vector shuffle instruction
+
 #### Operations on long vectors
 
 Support all HLSL intrinsics that perform [elementwise calculations](0030-dxil-vectors.md#elementwise-intrinsics)
