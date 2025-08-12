@@ -252,14 +252,14 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | mad       | IMad | | Ternary | |
 | max       | IMax | | Binary | |
 | min       | IMin | | Binary | |
-| pow       | [Log, Exp] | [FMul] , [FDiv] | Binary | See [This comment](https://github.com/microsoft/DirectXShaderCompiler/blob/50f53c6c200fd6b53f65268912e6f9e444ce9242/lib/HLSL/HLOperationLowerd)|
+| pow       | [Log, Exp] | [FMul] , [FDiv] | Binary | Not required. Good coverage of DXIL Ops and LLVM instructions from other test cases. |
 | rcp       | | FDiv | Unary | Not required. Covered by floating point division. |
 | round     | Round_ne | | Unary | |
 | rsqrt     | Rsqrt | | Unary | |
 | sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | Unary | |
 | smoothstep| Saturate | FMul, FSub, FDiv | Ternary | |
 | sqrt      | Sqrt | | Unary | |
-| step      | | FCmpOLT, Select | Binary | |
+| step      | | FCmpOLT, Select | Binary | Not required. FCmpOLT covered by atan2 and sign. Select covered by explicit select test. |
 | trunc     | Round_z | | Unary | |
 | clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Ternary | Not required. Covered by min and max. |
 | exp2      | Exp | | Unary | Not required. Covered by exp. |
