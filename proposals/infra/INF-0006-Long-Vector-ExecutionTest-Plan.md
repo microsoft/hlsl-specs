@@ -247,7 +247,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | frac      | rc | | Unary | |
 | frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | Unary | Has a return value in addition to an output parameter. |
 | ldexp     | Exp | FMul | Binary | Not required. Covered by floating point multiplication and exp. |
-| lerp      | | FSub, FMul, FAdd | Ternary | All three inputs are of the same type. Any inputs that are long vectors must have the same number of dimensions. |
+| lerp      | | FSub, FMul, FAdd | Ternary | Not required. FSub, FMul, and FAdd are well covered by other test cases. |
 | log       | Log | FMul | Unary | All three inputs are of the same type. Any inputs that are long vectors must have the same number of dimensions. |
 | mad       | IMad | | Ternary | |
 | max       | IMax | | Binary | |
