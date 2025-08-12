@@ -249,14 +249,14 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | fma       | Fma | | |
 | frac      | rc | | |
 | frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | |
-| ldexp     | Exp | FMul |  |
+| ldexp     | Exp | FMul | Not required. Coverd by floating point multiplication and exp. |
 | lerp      | | FSub, FMul, FAdd | |
 | log       | Log | FMul | |
 | mad       | IMad | | |
 | max       | IMax | | |
 | min       | IMin | | |
 | pow       | [Log, Exp] | [FMul] , [FDiv] | See [This comment](https://github.com/microsoft/DirectXShaderCompiler/blob/50f53c6c200fd6b53f65268912e6f9e444ce9242/lib/HLSL/HLOperationLower.cpp#L761-L785)|
-| rcp       | | FDiv | |
+| rcp       | | FDiv | Not required. Covered by floating point division. |
 | round     | Round_ne | | |
 | rsqrt     | Rsqrt | | |
 | sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | |
@@ -265,9 +265,9 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | step      | | FCmpOLT, Select ||
 | trunc     | Round_z | | |
 | clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Not required. Covered by min and max. |
-| exp2      | Exp | | Not needed. Covered by exp. |
+| exp2      | Exp | | Not required. Covered by exp. |
 | log10     | Log | FMul | Not required. Covered by log.|
-| log2      | Log | | Not Required. Covered by log.|
+| log2      | Log | | Not required. Covered by log.|
 
 ### Float Ops
 
