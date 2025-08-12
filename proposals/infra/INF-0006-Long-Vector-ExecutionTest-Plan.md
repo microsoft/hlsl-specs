@@ -223,136 +223,135 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 
 ### Trigonometry
 
-| Intrinsic | DXIL OpCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| acos      | Acos | | range: -1 to 1 |
-| asin      | Asin | | range: -pi/2 to pi/2. Floating point types only. |
-| atan      | Atan | | range: -pi/2 to pi/2. |
-| cos       | Cos | | no range requirements. |
-| cosh      | Hcos | | no range requirements. |
-| sin       | Sin | | no range requirements. |
-| sinh      | Hsin | | no range requirements. |
-| tan       | Tan | | no range requirements. |
-| tanh      | Htan | | no range requirements. |
-| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, FCmpOEQ, FCmpOGE, FCmpOLT, And, Select | Not required. Covered by other ops. |
-| degrees   | | FMul | Not needed. Covered by FMul. |
-| radians   | | FMul | Not needed. Covered by FMul. |
+| Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
+|-----------|--------------|------------------|----------------|-----------|
+| acos      | Acos | | Unary | range: -1 to 1 |
+| asin      | Asin | | Unary | range: -pi/2 to pi/2. Floating point types only. |
+| atan      | Atan | | Unary | range: -pi/2 to pi/2. |
+| cos       | Cos | | Unary | no range requirements. |
+| cosh      | Hcos | | Unary | no range requirements. |
+| sin       | Sin | | Unary | no range requirements. |
+| sinh      | Hsin | | Unary | no range requirements. |
+| tan       | Tan | | Unary | no range requirements. |
+| tanh      | Htan | | Unary | no range requirements. |
+| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, FCmpOEQ, FCmpOGE, FCmpOLT, And, Select | Unary | Not required.
 
 ### Math
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| abs       | [Imax], [Fabs] | | Imax for ints. Fabs for floats. |
-| ceil      | Round_pi | | |
-| exp       | Exp | | |
-| floor     | Round_ni | | |
-| fma       | Fma | | |
-| frac      | rc | | |
-| frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | |
-| ldexp     | Exp | FMul | Not required. Coverd by floating point multiplication and exp. |
-| lerp      | | FSub, FMul, FAdd | |
-| log       | Log | FMul | |
-| mad       | IMad | | |
-| max       | IMax | | |
-| min       | IMin | | |
-| pow       | [Log, Exp] | [FMul] , [FDiv] | See [This comment](https://github.com/microsoft/DirectXShaderCompiler/blob/50f53c6c200fd6b53f65268912e6f9e444ce9242/lib/HLSL/HLOperationLower.cpp#L761-L785)|
+| Intrinsic | DXIL OPCode | LLVM Instruction | Basic Op Type | Notes |
+|-----------|--------------|------------------|----------------|-----------|
+| abs       | [Imax], [Fabs] | | unary | Imax for ints. Fabs for floats. |
+| ceil      | Round_pi | | unary | |
+| exp       | Exp | | unary | |
+| floor     | Round_ni | | unary | |
+| fma       | Fma | | ternary | |
+| frac      | rc | | unary | |
+| frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | unary | |
+| ldexp     | Exp | FMul | binary | Not required. Covered by floating point multiplication and exp. |
+| lerp      | | FSub, FMul, FAdd | ternary | |
+| log       | Log | FMul | unary | |
+| mad       | IMad | | ternary | |
+| max       | IMax | | binary | |
+| min       | IMin | | binary | |
+| pow       | [Log, Exp] | [FMul] , [FDiv] | binary | See [This comment](https://github.com/microsoft/DirectXShaderCompiler/blob/50f53c6c200fd6b53f65268912e6f9e444ce9242/lib/HLSL/HLOperationLowerd)|
 | rcp       | | FDiv | Not required. Covered by floating point division. |
-| round     | Round_ne | | |
-| rsqrt     | Rsqrt | | |
-| sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | |
-| smoothstep| Saturate | FMul, FSub, FDiv ||
-| sqrt      | Sqrt | | |
-| step      | | FCmpOLT, Select ||
-| trunc     | Round_z | | |
-| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Not required. Covered by min and max. |
-| exp2      | Exp | | Not required. Covered by exp. |
-| log10     | Log | FMul | Not required. Covered by log.|
-| log2      | Log | | Not required. Covered by log.|
+| round     | Round_ne | | unary | |
+| rsqrt     | Rsqrt | | unary | |
+| sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | unary | |
+| smoothstep| Saturate | FMul, FSub, FDiv | ternary | |
+| sqrt      | Sqrt | | unary | |
+| step      | | FCmpOLT, Select | binary | |
+| trunc     | Round_z | | unary | |
+| clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | ternary | Not required. Covered by min and max. |
+| exp2      | Exp | | unary | Not required. Covered by exp. |
+| log10     | Log | FMul | unary | Not required. Covered by log.|
+| log2      | Log | | unary | Not required. Covered by log.|
 
 ### Float Ops
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| f16tof32  | LegacyF16ToF32 | | |
-| f32tof16  | LegacyF32ToF16 | | |
-| isfinite  | IsFinite | | |
-| isinf     | IsInf | | |
-| isnan     | IsNan | | |
-| modf      | Round_z | FSub, Store | |
-| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, Select, FMul | |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| f16tof32  | LegacyF16ToF32 | | | unary |
+| f32tof16  | LegacyF32ToF16 | | | unary |
+| isfinite  | IsFinite | | | unary |
+| isinf     | IsInf | | | unary |
+| isnan     | IsNan | | | unary |
+| modf      | Round_z | FSub, Store | | unary |
+| fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, Select, FMul | | binary |
 
 ### Bitwise Ops
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| saturate  | Saturate | | |
-| reversebits| Bfrev | | |
-| countbits | Countbits | | |
-| firstbithigh| FirstbitSHi | | |
-| firstbitlow| FirstbitLo | | |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| saturate  | Saturate | | | unary |
+| reversebits| Bfrev | | | unary |
+| countbits | Countbits | | | unary |
+| firstbithigh| FirstbitSHi | | | unary |
+| firstbitlow| FirstbitLo | | | unary |
 
 ### Logic Ops
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| select    | | Select, [ExtractElement, InsertElement] | |
-| and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. |
-| or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| select    | | Select, [ExtractElement, InsertElement] | | ternary |
+| and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. | binary |
+| or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. | binary |
 
 ### Reductions
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| all       | | [FCmpUNE], [ICmpNE] , [ExtractElement, And] | |
-| any       | | [FCmpUNE], [ICmpNE] , [ExtractElement, Or] | |
-| dot       | | ExtractElement, Mul | |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| all       | | [FCmpUNE], [ICmpNE] , [ExtractElement, And] | | unary |
+| any       | | [FCmpUNE], [ICmpNE] , [ExtractElement, Or] | | unary |
+| dot       | | ExtractElement, Mul | | binary |
 
 ### Derivative and Quad Operations
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| ddx       | DerivCoarseX | | |
-| ddx_fine  | DerivFineX | | |
-| ddy       | DerivCoarseY | | |
-| ddy_fine  | DerivFineY | | |
-| fwidth    | QuadReadLaneAt | | |
-| QuadReadLaneAcrossX | QuadOp | | |
-| QuadReadLaneAcrossY | QuadOp | | Uses different QuadOp parameters leading to different behavior. |
-| QuadReadLaneAcrossDiagonal | QuadOp | | Uses different QuadOp parameters leading to different behavior. |
-| ddx_coarse| DerivCoarseX | | Not required. Covered by ddx |
-| ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| ddx       | DerivCoarseX | | | unary |
+| ddx_fine  | DerivFineX | | | unary |
+| ddy       | DerivCoarseY | | | unary |
+| ddy_fine  | DerivFineY | | | unary |
+| fwidth    | QuadReadLaneAt | | | unary |
+| QuadReadLaneAcrossX | QuadOp | | | unary |
+| QuadReadLaneAcrossY | QuadOp | | Uses different QuadOp parameters leading to different behavior. | unary |
+| QuadReadLaneAcrossDiagonal | QuadOp | | Uses different QuadOp parameters leading to different behavior. | unary |
+| ddx_coarse| DerivCoarseX | | Not required. Covered by ddx | unary |
+| ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy | unary |
 
 ### WaveOps
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| WaveActiveBitAnd      | WaveActiveBit | | |
-| WaveActiveBitOr       | WaveActiveBit | | |
-| WaveActiveBitXor      | WaveActiveBit | | |
-| WaveActiveProduct     | WaveActiveOp | | |
-| WaveActiveSum         | WaveActiveOp | | |
-| WaveActiveMin         | WaveActiveOp | | |
-| WaveActiveMax         | WaveActiveOp | | |
-| WaveMultiPrefixBitAnd | WaveMultiPrefixOp | | |
-| WaveMultiPrefixBitOr  | WaveMultiPrefixOp | | |
-| WaveMultiPrefixBitXor | WaveMultiPrefixOp | | |
-| WaveMultiPrefixProduct| WaveMultiPrefixOp | | |
-| WaveMultiPrefixSum    | WaveMultiPrefixOp | | |
-| WavePrefixSum         | WavePrefixOp | | |
-| WavePrefixProduct     | WavePrefixOp | | |
-| WaveReadLaneAt        | WaveReadLaneAt | | |
-| WaveReadLaneFirst     | WaveReadLaneFirst | | |
-| WaveActiveAllEqual    | WaveActiveAllEqual | | |
-| WaveMatch             | WaveMatch | | |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| WaveActiveBitAnd      | WaveActiveBit | | | binary |
+| WaveActiveBitOr       | WaveActiveBit | | | binary |
+| WaveActiveBitXor      | WaveActiveBit | | | binary |
+| WaveActiveProduct     | WaveActiveOp | | | binary |
+| WaveActiveSum         | WaveActiveOp | | | binary |
+| WaveActiveMin         | WaveActiveOp | | | binary |
+| WaveActiveMax         | WaveActiveOp | | | binary |
+| WaveMultiPrefixBitAnd | WaveMultiPrefixOp | | | binary |
+| WaveMultiPrefixBitOr  | WaveMultiPrefixOp | | | binary |
+| WaveMultiPrefixBitXor | WaveMultiPrefixOp | | | binary |
+| WaveMultiPrefixProduct| WaveMultiPrefixOp | | | binary |
+| WaveMultiPrefixSum    | WaveMultiPrefixOp | | | binary |
+| WavePrefixSum         | WavePrefixOp | | | binary |
+| WavePrefixProduct     | WavePrefixOp | | | binary |
+| WaveReadLaneAt        | WaveReadLaneAt | | | binary |
+| WaveReadLaneFirst     | WaveReadLaneFirst | | | unary |
+| WaveActiveAllEqual    | WaveActiveAllEqual | | | unary |
+| WaveMatch             | WaveMatch | | | unary |
 
 ### Type Casting Operations
 
-| Intrinsic | DXIL OPCode | LLVM Instruction | Notes |
-|-----------|--------------|----------|-----------|
-| asdouble           | MakeDouble  |         | |
-| asfloat            |             | BitCast | |
-| asfloat16          |             | BitCast | |
-| asint              |             | BitCast | |
-| asint16            |             | BitCast | |
-| asuint             | SplitDouble |         | |
-| asuint16           |             | BitCast | |
+| Intrinsic | DXIL OPCode | LLVM Instruction | Notes | Basic Op Type |
+|-----------|--------------|------------------|-----------|-----------------|
+| asdouble           | MakeDouble  | | | binary |
+| asfloat            | | BitCast | | unary |
+| asfloat16          | | BitCast | | unary |
+| asint              | | BitCast | | unary |
+| asint16            | | BitCast | | unary |
+| asuint (from double) | SplitDouble | | Converts double to two uints | binary |
+| asuint (bitcast)     | | BitCast | Bitcast from float/int to uint | unary |
+| asuint16           | | BitCast | | unary |
