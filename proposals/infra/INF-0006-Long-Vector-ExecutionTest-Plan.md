@@ -233,7 +233,7 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | sinh      | Hsin | | Unary | no range requirements. |
 | tan       | Tan | | Unary | no range requirements. |
 | tanh      | Htan | | Unary | no range requirements. |
-| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, FCmpOEQ, FCmpOGE, FCmpOLT, And, Select | Unary | Not required.
+| atan2     | Atan | FDiv, FAdd, FSub, FCmpOLT, FCmpOEQ, FCmpOGE, FCmpOLT, And, Select | Unary | Not required. |
 
 ### Math
 
