@@ -57,9 +57,14 @@ template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
-  static const uint ElementsPerScalar = __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
-  static const uint MScalars = (M + (ElementsPerScalar-1)) / ElementsPerScalar;
-  static const uint NScalars = (N + (ElementsPerScalar-1)) / ElementsPerScalar;
+  // If this isn't a native scalar, we have an 8-bit type, so we have 4 elements
+  // packed in each scalar value.
+  static const uint ElementsPerScalar =
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
+  static const uint MScalars =
+      (M + (ElementsPerScalar - 1)) / ElementsPerScalar;
+  static const uint NScalars =
+      (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
   Matrix<NewCompTy, M, N, NewUse, Scope> cast();
@@ -147,6 +152,8 @@ class Matrix {
                            void>::type
   OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
+
+MatrixUse AccumulatorLayout();
 
 template <MatrixComponentType OutTy, MatrixComponentType ATy,
           MatrixComponentType BTy, uint M, uint N, uint K>
@@ -521,6 +528,10 @@ to:
 Matrix::Splat(WaveReadLaneFirst(Val));
 ```
 
+This operation may be called in divergent control flow when creating a thread
+scope matrix, and must be called in uniform control flow when creating a wave
+scope matrix.
+
 #### Matrix::Load
 
 ```c++
@@ -546,6 +557,10 @@ from `[RW]ByteAddressBuffer` objects or `groupshared` arrays. When read from
 expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. If the type mismatches the target data
 type of the matrix a data conversion is applied on load.
+
+This operation may be called in divergent control flow when loading a thread
+scope matrix, and must be called in uniform control flow when loading a wave
+scope matrix.
 
 #### Matrix::FromThreadVectors
 
@@ -594,6 +609,10 @@ matrix object. When storing to `groupshared` memory, the matrix component data
 is converted to the target arithmetic or packed data type if the data types do
 not match.
 
+This operation may be called in divergent control flow when storing a thread
+scope matrix, and must be called in uniform control flow when storing a wave
+scope matrix.
+
 #### Matrix::GetThreadVector(uint)
 
 ```c++
@@ -622,7 +641,9 @@ implementation.
 Threads which correspond to threads outside the matrix size will return a vector
 with all elements zero initialized.
 
-#### Matrix::MultiplyAccumuate(Matrix, Matrix)
+Must be called from wave-uniform control flow.
+
+#### Matrix::MultiplyAccumulate(Matrix, Matrix)
 
 ```c++
 template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
@@ -638,6 +659,8 @@ An accumulator matrix with wave scope has a method `MultiplyAccumulate` which
 takes as parameters an M x K A matrix with wave scope and a K x N B matrix with
 wave scope. The matrix arguments are multiplied against each other and added
 back into the implicit object accumulator matrix.
+
+Must be called from wave-uniform control flow.
 
 #### Matrix::SumAccumulate(Matrix, Matrix)
 
@@ -656,6 +679,8 @@ as parameters an M x K A matrix with wave scope and a K x N B matrix with wave
 scope. The matrix arguments are added together then added back into the implicit
 object accumulator matrix.
 
+Must be called from wave-uniform control flow.
+
 #### Matrix::OuterProductAccumulate(vector, vector)
 
 ```c++
@@ -670,6 +695,17 @@ All accumulator matrix objects regardless of scope have a method
 vector. The operation performs an outer product of the two vectors to produce an
 MxN matrix which is then added back into the implicit object accumulator
 matrix.
+
+#### Matrix::AccumulatorLayout()
+
+```c++
+MatrixUse linalg::AccumulatorLayout();
+```
+
+Returns the `MatrixUse` that identifies the hardware-dependent layout used by
+Accumulator matrices. This can return `MatrixUse::A` or `MatrixUse::B`, and
+should be evaluated by the driver compiler as a compile-time constant allowing
+optimizing control flow and dead code elimination.
 
 #### linalg::Multiply(Matrix, Matrix)
 
@@ -693,6 +729,8 @@ The `linalg::Multiply` function has two overloads that take an MxK `Wave`-scope
 of the overloads infers the type of the output accumulator to match the input
 matrices, the other overload takes a template parameter for the output matrix
 type and takes arguments with potentially mismatched element types.
+
+Must be called from wave-uniform control flow.
 
 #### linalg::Multiply(vector, Matrix)
 
@@ -945,6 +983,20 @@ The Index argument specifies the starting row or column as a multiple of the
 wave size. The resulting vector corresponds to the row or column numbered
 `(Index * WaveSize) + ThreadID`.
 
+Must be called from wave-uniform control flow.
+
+```llvm
+declare i32 @dx.op.matrixQueryAccumulatorLayout.v[NUM][TY](
+  immarg i32,            ; opcode
+  )
+```
+
+This opcode must be evaluated at driver compile time and replaced with the
+appropriate architecture specific value denoting the layout of accumulator
+matrices. A return value of `0` will denote that accumulator matrices are `A`
+layout while a return value of `1` will denote that accumulator matrices are `B`
+layout.
+
 ```llvm
 declare void @dx.op.matrixOp(
   immarg i32             ; opcode
@@ -967,6 +1019,8 @@ Validation rules will enforce that:
 * Matrix B's dimensions shall be K x N
 * Matrix C's dimensions shall be M x N
 * The element types are compatible
+
+Must be called from wave-uniform control flow.
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
@@ -1011,7 +1065,7 @@ a bias vector added to the result.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/vv81ocTPc)
+[Compiler Explorer](https://godbolt.org/z/79bv43raj)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1123,6 +1177,8 @@ template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
+  // If this isn't a native scalar, we have an 8-bit type, so we have 4 elements
+  // packed in each scalar value.
   static const uint ElementsPerScalar =
       __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
   static const uint MScalars =
@@ -1216,6 +1272,8 @@ class Matrix {
                            void>::type
   OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
+
+MatrixUse AccumulatorLayout();
 
 template <MatrixComponentType OutTy, MatrixComponentType ATy,
           MatrixComponentType BTy, uint M, uint N, uint K>
