@@ -39,7 +39,7 @@ assert.h will provide the following definitions
 #if NDEBUG
 #define assert(cond) do { } while(false)
 #else
-#define assert(cond) do { if (cond) DebugBreak();} while(false)
+#define assert(cond) do { if (!cond) DebugBreak();} while(false)
 #endif
 ```
 
@@ -50,7 +50,7 @@ This will enable shader authors to write code such as:
 
 [numthreads(8,1,1)]
 void main(uint GI : SV_GroupIndex) {
-    assert(GI > 8);
+    assert(GI < 8);
 }
 ```
 
