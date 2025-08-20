@@ -31,7 +31,7 @@ breakpoints in shader code.
 
 ## Proposed solution
 
-This proposal introduces a new HLSL intrinsic `DebugAssert()`, a new header
+This proposal introduces a new HLSL intrinsic `DebugBreak()`, a new header
 `assert.h` which will define the `assert()` macro in a C-compatible interface.
 
 assert.h will provide the following definitions
