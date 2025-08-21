@@ -2,7 +2,7 @@
 
 # DebugBreak()
 
-* Proposal: [NNNN](NNNN-debugbreak.md)
+* Proposal: [0039](0039-debugbreak.md)
 * Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
