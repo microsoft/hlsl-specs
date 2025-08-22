@@ -61,8 +61,12 @@ class Matrix {
   // packed in each scalar value.
   static const uint ElementsPerScalar =
       __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
+  // Computes the number of scalars actually stored in the matrix M dimension
+  // accounting for packing.
   static const uint MScalars =
       (M + (ElementsPerScalar - 1)) / ElementsPerScalar;
+  // Computes the number of scalars actually stored in the matrix N dimension
+  // accounting for packing.
   static const uint NScalars =
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
@@ -1181,8 +1185,12 @@ class Matrix {
   // packed in each scalar value.
   static const uint ElementsPerScalar =
       __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar ? 1 : 4;
+  // Computes the number of scalars actually stored in the matrix M dimension
+  // accounting for packing.
   static const uint MScalars =
       (M + (ElementsPerScalar - 1)) / ElementsPerScalar;
+  // Computes the number of scalars actually stored in the matrix N dimension
+  // accounting for packing.
   static const uint NScalars =
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
