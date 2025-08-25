@@ -244,8 +244,13 @@ definition of the attribute behavior.
 > implementation is allowed to ignore without diagnosing.
 
 Each attribute may specify specific behavior for parsing attribute arguments.
-Any attribute that does not specify specific behavior shall be parsed with the
-general behavior described here.
+Any attribute that does not specify specific parsing behavior shall be parsed
+with the general behavior described here.
+
+> Note: The clause above enables attributes like the clang availability
+> attribute which supports named parameters (e.g.
+> `[[clang::availability(shadermodel, introduced=6.3)]]`), HLSL has a use for
+> similar functionality.
 
 An empty attribute specifier has no effect. The order in which attributes
 applied to the same source construct are written shall not be significant. When
@@ -259,7 +264,7 @@ attribute-argument-clause.
 If an attribute is applied to an entity or statement for which the attribute is
 not allowed to be applied, the program is ill-formed.
 
-For atttribute-tokens not specified in this specification the behavior is
+For attribute-tokens not specified in this specification the behavior is
 implementation-defined.
 
 Two consecutive square bracket tokens shall only appear when introducing an
@@ -320,8 +325,8 @@ register and space assignments to be specified for resources of different types
 (e.g. a UAV and SRV may have the same register and space values without
 aliasing).
 
-In Vulkan, the first value maps as the descriptor index, and the second maps as
-the descriptor set index.
+In Vulkan, the first value maps as the binding index, and the second maps as the
+descriptor set index.
 
 #### hlsl::payload_access(<enum>, ...)
 
