@@ -2,11 +2,11 @@
 
 # 8-bit integer support
 
-* Proposal: [0099](0099-8-bit-types.md)
+* Proposal: [0099](NNNN-8-bit-integers.md)
 * Author(s): [Matthäus Chajdas](https://github.com/anteru)
 * Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * Status: **Under Consideration**
-* Planned Version: 202x
+* Planned Version: SM 6.x
 * Issues: [HLSL 337](https://github.com/microsoft/hlsl-specs/issues/337)
 
 ## Introduction
