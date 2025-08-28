@@ -1,0 +1,56 @@
+baseURL = 'https://microsoft.github.io/hlsl-specs'
+languageCode = 'en-us'
+title = 'HLSL Specifications'
+theme = 'hugo-theme-techdoc'
+
+ignoreLogs = ['warning-goldmark-raw-html']
+
+[params]
+  menu_style = "slide-menu"
+  github_doc_repository = "https://github.com/microsoft/hlsl-specs"
+  github_doc_repository_branch = "main"
+  github_doc_repository_path = ""
+  
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false  
+
+[module]
+  [[module.mounts]]
+    source = './content'
+    target= 'content'
+
+  [[module.mounts]]
+    source = '../docs'
+    target = 'content/docs'
+    
+  # Use README.md as the home page
+  [[module.mounts]]
+    source = '../README.md'
+    target = 'content/_index.md'
+
+  [[module.mounts]]
+    source = '../proposals'
+    target = 'content/proposals'
+
+[menu]
+  [[menu.main]]
+  name = "Home"
+  url = "/"
+  weight = 1
+
+  [[menu.main]]
+  name = "Documentation"
+  url = "/docs"
+  weight = 2
+
+  [[menu.main]]
+  name = "Proposals"
+  url = "/proposals"
+  weight = 4
+
