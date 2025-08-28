@@ -290,15 +290,15 @@ _matrix with thread scope_).
 Matrix storage is always opaque, the `Scope` does not directly restrict how the
 matrix is stored, it merely denotes allowed scopes of allowed data divergence.
 A matrix with thread scope must behave as if each thread has a unique copy of
-the matrix, however the storage is not required to be thread local, and an
-implementation may coalesce identical matrices across threads.
+the matrix. An implementation may coalesce identical matrices across threads.
 
 #### Matrix Storage
 
 In HLSL, matrix objects are intangible objects so they do not have defined size
-or memory layout. When in use, implementations are expected to spread the
+or memory layout. When in use, implementations are expected to distribute the
 storage of matrices across the thread-local storage for all threads in a SIMD
-unit. At the DXIL level we represent a matrix through a handle object.
+unit. An implementation may also utilize caches or other memory regions as
+appropriate. At the DXIL level a matrix is represented as a handle object.
 
 An A matrix is a collection of per-thread vectors representing matrix rows,
 while a B matrix is a collection of per-thread vectors representing matrix
