@@ -478,7 +478,7 @@ float3x4 dx::HitObject::GetWorldToObject3x4();
 
 Returns a matrix for transforming from world-space to object-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetWorldToObject4x3()` is
 the matrix is transposed – use whichever is convenient.
@@ -493,7 +493,7 @@ float4x3 dx::HitObject::GetWorldToObject4x3();
 
 Returns a matrix for transforming from world-space to object-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetWorldToObject3x4()` is
 the matrix is transposed – use whichever is convenient.
