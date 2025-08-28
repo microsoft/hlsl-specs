@@ -583,7 +583,7 @@ typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
 ```
 
 Produces a matrix from per-thread vectors. An A matrix is produced from
-per-thread row vectors, while a B matrix is produced from per-thread column
+per-thread column vectors, while a B matrix is produced from per-thread row
 vectors. The `FromThreadVectors` construction method is not available for
 accumulator matrices which vary by hardware implementation.
 
@@ -637,8 +637,8 @@ Returns the underlying vector for the associated thread in the matrix. The
 optional index is used when the matrix `K` dimension is larger than the wave
 size to compute the starting offset (i.e. `(Index * WaveSize) + ThreadID`).
 
-An A matrix produces a vector containing a row of a matrix, while a B matrix
-produces a vector containing a column of the matrix. This method may not be used
+An A matrix produces a vector containing a column of a matrix, while a B matrix
+produces a vector containing a row of the matrix. This method may not be used
 on an Accumulator matrix because the matrix layout varies by hardware
 implementation.
 
