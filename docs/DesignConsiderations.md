@@ -1,4 +1,6 @@
-# HLSL Design Considerations
+---
+title: HLSL Design Considerations
+---
 
 When designing and proposing a feature for HLSL there are some design
 considerations that should be taken into account.

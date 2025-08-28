@@ -1,4 +1,6 @@
-# Meeting Minute Index
+---
+title: Meeting Minute Index
+---
 
 {% assign doclist = site.pages | sort: 'url'  %}
 {% for doc in doclist %}
