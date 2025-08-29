@@ -56,13 +56,6 @@ jobs:
           sudo apt -y install texlive-latex-extra
           curl -fsSL https://github.com/jgm/pandoc/releases/download/3.1.9/pandoc-3.1.9-1-amd64.deb -o pandoc.deb
           sudo dpkg -i pandoc.deb
-      - name: Build LaTeX
-        run: |
-          cmake -B build ${{github.workspace}}/specs/language
-          cmake --build build --target html
-          cmake --build build --target pdf
-          cp build/hlsl.pdf ${{github.workspace}}/website/public/specs/
-          cp build/html/* ${{github.workspace}}/website/public/specs/
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - name: Build with Hugo
@@ -74,6 +67,14 @@ jobs:
           hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Build LaTeX
+        run: |
+          cmake -B build ${{github.workspace}}/specs/language
+          cmake --build build --target html
+          cmake --build build --target pdf
+          mkdir -p ${{github.workspace}}/website/public/specs/
+          cp build/hlsl.pdf ${{github.workspace}}/website/public/specs/
+          cp build/html/* ${{github.workspace}}/website/public/specs/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
