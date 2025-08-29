@@ -1,6 +1,14 @@
-<!-- {% raw %} -->
+---
+title: "NNNN - Feature name"
+draft: true
+params:
+  authors:
+    - author_username: Author 1
+  sponsors:
+    - tbd: TBD
+  status: Under Consideration
+---
 
-# Feature name
 
 ## Instructions
 
@@ -17,11 +25,6 @@
 > 3. Delete this Instructions section including the line below.
 
 ---
-
-* Proposal: [NNNN](NNNN-filename.md)
-* Author(s): [Author 1](https://github.com/author_username)
-* Sponsor: TBD
-* Status: **Under Consideration**
 
 *During the review process, add the following fields as needed:*
 
@@ -75,4 +78,3 @@ reviewing.
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->

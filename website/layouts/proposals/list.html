@@ -1,0 +1,35 @@
+{{ define "main" }}
+
+  {{ $remaining_pages := (.Pages.ByParam "number") }}
+  
+  {{ range slice "Under Consideration" "Under Review" "Accepted" "Completed" "Rejected" }}
+    {{ $status := . }}
+    
+    {{ $pages := $remaining_pages }}
+    {{ $remaining_pages = slice }}
+
+    <h2>{{ $status }} </h2>
+    <ul>
+      {{ range $pages }}
+        {{ if eq .Params.status $status }}
+          <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+        {{ else }}
+          {{ $remaining_pages = $remaining_pages | append . }}
+        {{ end }}
+      {{ end }}
+    </ul>
+ {{ end }}
+
+ 
+ {{ if gt ($remaining_pages | len) 0 }}
+ <h2>Invalid Metadata</h2>
+ <ul>
+  {{range $remaining_pages }}
+  <li>
+    {{ .File.LogicalName }}
+  </li>
+  {{end}}
+ </ul>
+ {{ end }}
+
+{{ end }}

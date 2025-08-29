@@ -1,11 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0012 - Add shader name to Pipeline State Validation data (PSV0)
+params:
+  authors:
+  - tex3d: Tex Riddell
+  sponsors:
+  - tex3d: Tex Riddell
+  status: Completed
+---
 
-# Add shader name to Pipeline State Validation data (PSV0)
 
-* Proposal: [0012](0012-psv0-entry-name.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d)
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Completed**
+ 
 * Planned Version: SM 6.8, validator version 1.8
 * PRs:
   [#5946](https://github.com/microsoft/DirectXShaderCompiler/pull/5946)
@@ -374,4 +378,4 @@ complexity and maintenance costs for an intermediate DxilContainer format that
 can't realize any theorized advantages without larger changes that would have
 to be made in some future container format.
 
-<!-- {% endraw %} -->
+

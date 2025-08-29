@@ -1,11 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0005 - Strict Initializer Lists
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-# Strict Initializer Lists
 
-* Proposal: [0005](0005-strict-initializer-lists.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Review**
+ 
 * Planned Version: 202y
 
 ## Introduction
@@ -74,4 +78,3 @@ not be backwards compatible to older HLSL versions.
 This syntax conflicts with the effects annotation syntax which DXC supports
 parsing but is unsupported in code generation. Should we just stop parsing it?
 
-<!-- {% endraw %} -->

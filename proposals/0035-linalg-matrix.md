@@ -1,11 +1,13 @@
-<!-- {% raw %} -->
+---
+title: 0035 - Linear Algebra Matrix
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-# Linear Algebra Matrix
 
-* Proposal: [0035](0035-linalg-matrix.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: TBD
-* Status: **Under Review**
+ 
 * Planned Version: SM 6.x
 
 ## Introduction
@@ -1343,4 +1345,4 @@ void CoopVec() {
 }
 ```
 
-<!-- {% endraw %} -->
+

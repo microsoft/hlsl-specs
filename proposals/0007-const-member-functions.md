@@ -1,10 +1,15 @@
-<!-- {% raw %} -->
-# `const`-qualified Non-`static` Member Functions
+---
+title: 0007 - const-qualified Non-static Member Functions
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-* Proposal: [0007](0007-const-member-functions.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+
+ 
 * Planned Version: 202y
 
 ## Introduction
@@ -207,4 +212,3 @@ This change should have no impact on code generation through SPIR-V or DXIL
 assuming that the existing parameter mangling for constant implicit object
 parameters works as expected.
 
-<!-- {% endraw %} -->

@@ -1,11 +1,15 @@
 
-# Shader Execution Reordering (SER)
+---
+title: 0027 - Shader Execution Reordering (SER)
+params:
+    authors:
+    - rasmusnv: Rasmus Barringer
+    sponsors:
+    - tex3d: Tex Riddell
+    status: Accepted
+---
 
-* Proposal: [0027](0027-shader-execution-reordering.md)
-* Author(s): [Rasmus Barringer](https://github.com/rasmusnv), Robert Toth,
-Michael Haidl, Simon Moll, Martin Stich
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Accepted**
+ 
 * Impacted Projects: DXC
 * Planned Version: SM 6.9
 

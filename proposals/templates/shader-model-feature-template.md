@@ -1,6 +1,14 @@
-<!-- {% raw %} -->
+---
+title: "NNNN - Feature name"
+draft: true
+params:
+  authors:
+    - author_username: Author 1
+  sponsors:
+    - tbd: TBD
+  status: Under Consideration
+---
 
-# Feature name
 
 ## Instructions
 
@@ -11,7 +19,6 @@
 > but the descriptions are to outline what should be in those sections
 > and should be replaced by the feature-specific text.
 > However, not all sections may be required for all features.
-{}
 > This template wraps at 80-columns. You don't need to match that wrapping, but
 > having some consistent column wrapping makes it easier to view diffs on
 > GitHub's review UI. Please wrap your lines to make it easier to review.
@@ -25,11 +32,6 @@
 > 3. Delete this Instructions section including the line below.
 
 ---
-
-* Proposal: [NNNN](NNNN-filename.md)
-* Author(s): [Author 1](https://github.com/author_username)
-* Sponsor: TBD
-* Status: **Under Consideration**
 
 *During the review process, add the following fields as needed:*
 
@@ -148,4 +150,3 @@ might build on this on. Even variations on the chosen solution can be interestin
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->

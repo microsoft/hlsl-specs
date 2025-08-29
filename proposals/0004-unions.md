@@ -1,9 +1,14 @@
-# Unions
+---
+title: 0004 - Unions
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-* Proposal: [0004](0004-unions.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+ 
 * Planned Version: 202y
 
 ## Introduction

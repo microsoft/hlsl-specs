@@ -1,13 +1,15 @@
-<!-- {% raw %} -->
-
-# DXIL Vectors
-
+---
+title: 0030 - DXIL Vectors
+params:
+  authors:
+  - pow2clk: Greg Roth
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
 ---
 
-* Proposal: [0030](0030-dxil-vectors.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+
+ 
 * Planned Version: SM 6.9
 
 ## Introduction
@@ -300,4 +302,3 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 * [Anupama Chandrasekhar](https://github.com/anupamachandra) and [Tex Riddell](https://github.com/tex3d) for foundational contributions to the design.
 
-<!-- {% endraw %} -->

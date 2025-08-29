@@ -1,11 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0039 - DebugBreak()
+params:
+    authors:
+    - llvm-beanz: Chris Bieneman
+    sponsors:
+    - llvm-beanz: Chris Bieneman
+    status: Under Consideration
+---
 
-# DebugBreak()
 
-* Proposal: [0039](0039-debugbreak.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Issue(s): https://github.com/microsoft/hlsl-specs/issues/33
 
 ## Introduction
@@ -56,4 +60,3 @@ void main(uint GI : SV_GroupIndex) {
 
 This aligns with C/C++ conventions that our users are already familiar with.
 
-<!-- {% endraw %} -->

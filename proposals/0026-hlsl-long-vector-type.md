@@ -1,11 +1,16 @@
-<!-- {% raw %} -->
+---
+title: 0026 - HLSL Long Vectors
+params:
+  authors:
+  - anupamachandra: Anupama Chandrasekhar
+  - pow2clk: Greg Roth
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-# HLSL Long Vectors
 
-* Proposal: [0026](0026-hlsl-vector-type.md)
-* Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+ 
 * Planned Version: SM 6.9
 
 ## Introduction
@@ -366,4 +371,4 @@ Having a limit facilitates testing and sets expectations for both hardware and s
   * A: No. It doesn't make sense since they can't be used to access all elements
        and there's no way to create enough swizzle members to accommodate the longest allowed vector.
 
-<!-- {% endraw %} -->
+

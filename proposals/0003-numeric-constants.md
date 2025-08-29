@@ -1,9 +1,14 @@
-# Numeric Constants
+---
+title: 0003 - Numeric Constants
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-* Proposal: [0003](0003-numeric-constants.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Review**
+ 
 * Planned Version: 202x
 
 ## Introduction

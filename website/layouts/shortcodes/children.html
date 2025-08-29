@@ -1,0 +1,35 @@
+{{/*
+  Shortcode: children
+  Usage: {{< children maxDepth=0 >}}
+  Renders a nested list of child pages/sections under the current page.
+  Params:
+    - maxDepth: maximum depth (0 for unlimited)
+*/}}
+{{- $max := .Get "maxDepth" | default 0 -}}
+{{- partial "children-list.html" (dict "Page" .Page "Depth" 0 "MaxDepth" $max) -}}
+{{/*
+  Shortcode: children
+  Usage: {{< children order="desc" >}}
+  Lists all child pages (and optionally sections) under the current section.
+*/}}
+{{- $order := .Get "order" | default "asc" -}}
+{{- $includeSections := .Get "sections" | default "false" -}}
+
+{{- $pages := .Page.Pages -}}
+{{- if eq $includeSections "true" -}}
+  {{- $pages = $pages | union .Page.Sections -}}
+{{- end -}}
+
+{{- if eq $order "desc" -}}
+  {{- $pages = sort $pages "File.BaseFileName" "desc" -}}
+{{- else -}}
+  {{- $pages = sort $pages "File.BaseFileName" "asc" -}}
+{{- end -}}
+
+<ul>
+{{- range $pages -}}
+  {{- if not .Params.hidden -}}
+  <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+  {{- end -}}
+{{- end -}}
+</ul>

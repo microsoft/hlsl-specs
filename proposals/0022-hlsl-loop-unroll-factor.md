@@ -1,9 +1,14 @@
-# HLSL Loop Unroll Factor
+---
+title: 0022 - HLSL Loop Unroll Factor
+params:
+  authors:
+  - farzonl: Farzon Lotfi
+  sponsors:
+  - farzonl: Farzon Lotfi
+  status: Accepted
+---
 
-* Proposal: [0022](0022-hlsl-loop-unroll-factor.md)
-* Author(s): [Farzon Lotfi](https://github.com/farzonl)
-* Sponsor: [Farzon Lotfi](https://github.com/farzonl)
-* Status: **Accepted**
+ 
 * Planned Version: 202x
 * Impacted Projects: DXC & Clang
 
