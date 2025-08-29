@@ -106,7 +106,7 @@ initializer-list. For arrays of unknown size the initializer list shall contain
 elements.
 
 If an initializer-list contains more initializer-clauses than the number of
-subbjects being initialized, the program is ill-formed.
+subobjects being initialized, the program is ill-formed.
 
 If an initializer-list contains fewer initializer-clauses than the number of
 subobjects being initialized, each member not explicitly initialized shall be
