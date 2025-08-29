@@ -78,23 +78,18 @@ of the HLSL specification.
 
 ### Specification Language
 
-An _aggregate_ is a vector, matrix, array, or class which contains
-* no user-declared or inherited constructors
-* no non-public non-static data members, and
-* no non-public base classes
+An _aggregate_ is a vector, matrix, array, or class which does not contain
+* user-declared or inherited constructors
+* non-public non-static data members, and
+* non-public base classes
 
-The subobjects of an aggregate have a defined _subobject order_. For vectors and
-arrays the order is increasing subscript order. For matrices it is increasing
-subscript order with the subscript nesting such that in the notation
-`Mat[M][N]`, the ordering is `Mat[0][0]...Mat[0][N]... Mat[M][0]...Mat[M][N]`.
-For classes the order is recursively the order of the base class, followed by
-member subobjects in declaration order. Anonymous bitfields are not included in
-the subobject ordering.
+For the purposes of aggregate initialization, anonymous bit-fields are not
+considered members of an object.
 
-When initialized by an initializer list the elements of the initializer list are
-initializers for the members of the aggregate in subobject order. Each member is
-copy-initialized from the corresponding initializer-clause. If the
-initializer-clause is an expression which requires a narrowing conversion to
+When initialized by an initializer list, the elements of the initializer list
+are initializers for the members of the aggregate in subscript or member order.
+Each member is copy-initialized from the corresponding initializer-clause. If
+the initializer-clause is an expression which requires a narrowing conversion to
 convert to the subobject type, the program is ill-formed.
 
 An aggregate that is a class can also be initialized by a single expression not
@@ -112,10 +107,28 @@ If an initializer-list contains fewer initializer-clauses than the number of
 subobjects being initialized, each member not explicitly initialized shall be
 initialized as if by an empty initializer list.
 
-If an aggregate class contains a subobject member that has no members in its
-subobject order, the initializer-clause for the empty subobject shall not be
+If an aggregate class contains a subobject member that has no non-static data
+members, the initializer-clause for the empty subobject shall not be
 omitted from an initializer list for the containing class unless the
 initializer-caluses for all following members of the class are also omitted.
+
+```hlsl
+struct Empty {};
+
+struct Space {
+  int Stars;
+  Empty E;
+  double Size;
+};
+
+Space A = {};         // Zero-initializes all members.
+Space B = {1};        // Initializes Stars to 1 then zero-initializes remaining
+                      // fields.
+Space C = {1, 4};     // Ill-formed, cannot initialize Empty from 4, and cannot
+                      // omit the empty initializer.
+Space D = {1, {}, 4}; // Initializes Stars to 1 and Size to 4.
+```
+
 
 An initializer-list that is part of a braced-init-list may elide braces for
 initializing subobjects. If braces are elided, a number of initializer-clauses
@@ -142,6 +155,32 @@ assignment-expression is ill-formed and the element is a subobject, brace
 elision is assumed and an assignment-expression is evaluated as if initializing
 the first element of the subobject. If both assignment-expressions are
 ill-formed the program is ill-formed.
+
+```hlsl
+RWBuffer Buf;
+
+struct ResourceRef {
+  RWBuffer B;
+  int Offset;
+};
+
+struct A {
+    int X;
+    RWBuffer B;
+};
+
+struct B {
+    A S;
+    int Y;
+};
+
+A T = 1; // This is ill-formed, cannot initialize A from int.
+
+B U = {1,B,3}; // This is fine, brace elision is assumed because A cannot be
+               // initialized from int
+B V = {1,2,3}; // This is ill-formed, cannot initialize RWBuffer from int.
+
+```
 
 When a union is initialized with an initializer-list, the initializer-list will
 contain only one initializer-clause which will initialize the first non-static
