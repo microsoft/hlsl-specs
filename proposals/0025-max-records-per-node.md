@@ -1,12 +1,18 @@
+---
+title: 0025 - [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
+params:
+    authors:
+    - anupamachandra: Anupama Chandrasekhar
+    - mapodaca-nv: Mike Apodaca
+    status: Under Review
+---
+
 <!-- {% raw %} -->
 
-* Proposal: [0025](0025-max-records-per-node.md)
-* Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Mike Apodaca](https://github.com/mapodaca-nv)
-* Sponsor: Damyan Pepper
-* Status: **Under Review**
+ 
 * Planned Version: SM 6.x
 
-# [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
+ 
 
 ## Introduction
 

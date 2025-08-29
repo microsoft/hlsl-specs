@@ -1,12 +1,16 @@
+---
+title: 0011 - Inline SPIR-V
+params:
+    authors:
+    - s-perron: Steven Perron
+    sponsors:
+    - s-perron: Steven Perron
+    status: Under Review
+---
+
 <!-- {% raw %} -->
 
-# Inline SPIR-V
-
 *   Proposal: [0011](0011-inline-spirv.md)
-*   Author(s): [Steven Perron](https://github.com/s-perron)
-*   Sponsor: [Chris B](https://github.com/llvm-beanz) and
-    [Steven Perron](https://github.com/s-perron)
-*   Status: **Under Review**
 
 ## Introduction
 

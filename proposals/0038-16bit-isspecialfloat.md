@@ -1,12 +1,16 @@
+---
+title: 0038 - 16 bit isSpecialFloat DXIL Op
+params:
+  authors:
+  - spall: Sarah Spall
+  sponsors:
+  - spall: Sarah Spall
+  status: Under Consideration
+---
+
 <!-- {% raw %} -->
 
-# 16 bit isSpecialFloat DXIL Op
-
-* Proposal: [0038](0038-16bit-isspecialfloat.md)
-* Author(s): [Sarah Spall](https://github.com/spall)
-* Sponsor: [Sarah Spall](https://github.com/spall)
-* Status: **Under Consideration**
-
+ 
 * Planned Version: Shader Model 6.9
 * PRs:
 * Issues: [#521](https://github.com/microsoft/hlsl-specs/issues/521)

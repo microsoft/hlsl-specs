@@ -1,9 +1,14 @@
-# Long Vector Execution Test Plan
+---
+title: "INF-0006 - Long Vector Execution Test Plan"
+params:
+  authors:
+    - alsepkow: Alex Sepkowski
+  sponsors:
+    - alsepkow: Alex Sepkowski
+  status: Accepted
+---
 
-* Proposal: [0006](INF-0006-Long-Vector-ExecutionTest-Plan.md)
-* Author(s): [Alex Sepkowski](https://github.com/alsepkow)
-* Sponsor: [Alex Sepkowski](https://github.com/alsepkow)
-* Status: **Accepted**
+ 
 * Impacted Projects: DXC
 
 ## Introduction

@@ -1,11 +1,15 @@
+---
+title: 0037 - Refined cbuffer Contexts
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  - hekota: Helena Kotas
+  status: Under Consideration
+---
+
 <!-- {% raw %} -->
 
-# Refined `cbuffer` Contexts
-
-* Proposal: [0037](0037-cbuffer-contexts.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Helena Kotas](https://github.com/hekota)
-* Sponsor: TBD
-* Status: **Under Consideration**
+ 
 * Planned Version: 202x
 * Issues: [DXC #4514](https://github.com/microsoft/DirectXShaderCompiler/issues/4514)
 

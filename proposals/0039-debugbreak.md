@@ -1,11 +1,16 @@
+---
+title: 0039 - DebugBreak()
+params:
+    authors:
+    - llvm-beanz: Chris Bieneman
+    sponsors:
+    - llvm-beanz: Chris Bieneman
+    status: Under Consideration
+---
+
 <!-- {% raw %} -->
 
-# DebugBreak()
-
-* Proposal: [0039](0039-debugbreak.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Issue(s): https://github.com/microsoft/hlsl-specs/issues/33
 
 ## Introduction

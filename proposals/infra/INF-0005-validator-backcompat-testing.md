@@ -1,11 +1,14 @@
+---
+title: "INF-0005 - Validator Backwards Compatibility Testing"
+params:
+  authors:
+    - damyanp: Damyan Pepper
+  sponsors:
+    - damyanp: Damyan Pepper
+  status: Under Consideration
+---
 <!-- {% raw %} -->
-
-# Feature name
-
-* Proposal: [INF-0005](INF-0005-validator-backcompat-testing.md)
-* Author(s): [Damyan Pepper](https://github.com/damyanp)
-* Sponsor: [Damyan Pepper](https://github.com/damyanp)
-* Status: **Under Consideration**
+ 
 * Impacted Project(s): DXC
 
 ## Introduction

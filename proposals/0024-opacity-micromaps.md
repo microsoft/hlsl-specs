@@ -1,11 +1,16 @@
+---
+title: 0024 - Opacity Micromaps
+params:
+  authors:
+  - tex3d: Tex Riddell
+  sponsors:
+  - tex3d: Tex Riddell
+  status: Accepted
+---
+
 <!-- {% raw %} -->
 
-# Opacity Micromaps
-
-* Proposal: [0024](0024-opacity-micromaps.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d)
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Accepted**
+ 
 * Planned Version: SM 6.9
 
 > NOTE: some links in this document are to internal documents that are not

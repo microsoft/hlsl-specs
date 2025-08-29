@@ -1,10 +1,19 @@
+---
+title: 0029 - Cooperative Vectors
+params:
+  authors:
+  - anupamachandra: Anupama Chandrasekhar
+  - damyanp: Damyan Pepper
+  - shashankw: Shashank Wadhwa
+  sponsors:
+  - damyanp: Damyan Pepper
+  - pow2clk: Greg Roth
+  status: Under Review
+---
+
 <!-- {% raw %} -->
 
-* Proposal: [0029](0029-cooperative-vector.md)
-* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp],
-             [Shashank Wadhwa][shashankw]
-* Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
-* Status: **Under Review**
+ 
 * Planned Version: SM 6.9
 
 
@@ -13,7 +22,7 @@
 [pow2clk]: https://github.com/pow2clk
 [shashankw]: https://github.com/shashankw
 
-# Cooperative Vectors
+ 
 
 Cooperative Vectors is the overall name for this feature, though it doesn't appear
 in code other than feature tier/capability queries.

@@ -1,11 +1,14 @@
+---
+title: 0023 - Adopt C++11 Base
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
+
 <!-- {% raw %} -->
 
-# Adopt C++11 Base
-
-* Proposal: [0023](0023-cxx11-base.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: TBD
-* Status: **Under Review**
+ 
 * Planned Version: 202y
 
 ## Introduction

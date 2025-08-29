@@ -1,11 +1,16 @@
+---
+title: 0036 - 202x Feature Deprecations
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
+
 <!-- {% raw %} -->
 
-# 202x Feature Deprecations
-
-* Proposal: [0036](0036-202x-deprecations.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Review**
+ 
 * Planned Version: 202x
 * Issues: [#300](https://github.com/microsoft/hlsl-specs/issues/380),
   [#291](https://github.com/microsoft/hlsl-specs/issues/291),

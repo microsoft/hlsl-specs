@@ -1,10 +1,16 @@
-<!-- {% raw %} -->
-# `const`-qualified Non-`static` Member Functions
+---
+title: 0007 - const-qualified Non-static Member Functions
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-* Proposal: [0007](0007-const-member-functions.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+<!-- {% raw %} -->
+
+ 
 * Planned Version: 202y
 
 ## Introduction

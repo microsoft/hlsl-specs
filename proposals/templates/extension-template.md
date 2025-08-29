@@ -1,6 +1,14 @@
+---
+title: "NNNN - Feature name"
+draft: true
+params:
+  authors:
+    - author_username: Author 1
+  sponsors:
+    - tbd: TBD
+  status: Accepted
+---
 <!-- {% raw %} -->
-
-# Feature name
 
 ## Instructions
 
@@ -16,15 +24,6 @@
 > Delete this Instructions section including the line below.
 
 ---
-
-* Proposal: [NNNN](NNNN-filename.md)
-* Author(s): [Author 1](https://github.com/author_username)
-* Sponsor: TBD
-* Status: **Accepted**
-* Required Version: Shader Model X.Y, Vulkan X.Y, and/or HLSL 20XY
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues:
-  [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
 
 ## Introduction
 

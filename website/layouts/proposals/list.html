@@ -2,7 +2,7 @@
 
   {{ $remaining_pages := (.Pages.ByParam "number") }}
   
-  {{ range slice "Under Consideration" "Design In Progress" "Accepted" "Completed" "Rejected" }}
+  {{ range slice "Under Consideration" "Under Review" "Accepted" "Completed" "Rejected" }}
     {{ $status := . }}
     
     {{ $pages := $remaining_pages }}
