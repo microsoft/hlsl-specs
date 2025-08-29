@@ -1,5 +1,6 @@
 ---
 title: "Design Meeting Minutes: YYYY/MM/DD"
+draft: true
 ---
 
 > NOTE: Please read the [terms of participation](DesignMeetingTerms.txt)
