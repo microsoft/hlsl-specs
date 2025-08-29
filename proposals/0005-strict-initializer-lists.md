@@ -102,7 +102,7 @@ enclosed in braces.
 
 An array of unknown size may be initialized by a brace enclosed
 initializer-list. For arrays of unknown size the initializer list shall contain
-`n` initializers where `n > 0` and will produce an array containing `n`
+`n` initializers where `n > 0` and will produce a one-dimensional array containing `n`
 elements.
 
 If an initializer-list contains more initializer-clauses than the number of
