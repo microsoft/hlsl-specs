@@ -1,0 +1,26 @@
+{{/*
+  Shortcode: children
+  Usage: {{< children order="desc" >}}
+  Lists all child pages (and optionally sections) under the current section.
+*/}}
+{{- $order := .Get "order" | default "asc" -}}
+{{- $includeSections := .Get "sections" | default "false" -}}
+
+{{- $pages := .Page.Pages -}}
+{{- if eq $includeSections "true" -}}
+  {{- $pages = $pages | union .Page.Sections -}}
+{{- end -}}
+
+{{- if eq $order "desc" -}}
+  {{- $pages = sort $pages "File.BaseFileName" "desc" -}}
+{{- else -}}
+  {{- $pages = sort $pages "File.BaseFileName" "asc" -}}
+{{- end -}}
+
+<ul>
+{{- range $pages -}}
+  {{- if not .Params.hidden -}}
+  <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+  {{- end -}}
+{{- end -}}
+</ul>
