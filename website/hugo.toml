@@ -38,6 +38,10 @@ ignoreLogs = ['warning-goldmark-raw-html']
     source = '../proposals'
     target = 'content/proposals'
 
+  [[module.mounts]]
+    source = '../resources'
+    target = 'content/resources'
+
 [menu]
   [[menu.main]]
   name = "Home"

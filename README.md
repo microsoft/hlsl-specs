@@ -1,4 +1,4 @@
-<img src="https://microsoft.github.io/hlsl-specs/resources/HLSL.png" width="128">
+<img src="resources/HLSL.png" width="128">
 
 # HLSL Specifications
 
