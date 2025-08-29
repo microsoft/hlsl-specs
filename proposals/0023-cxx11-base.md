@@ -6,7 +6,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: 202y
@@ -56,4 +55,4 @@ configuring language features and supporting language modes. To restore those
 parts of clang sufficiently to support a C++11 base in DXC would be non-trivial.
 For that reason this is proposed as a Clang-only HLSL 202y feature.
 
-<!-- {% endraw %} -->
+

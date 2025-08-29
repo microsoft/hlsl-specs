@@ -8,7 +8,7 @@ params:
     - tbd: TBD
   status: Under Consideration
 ---
-<!-- {% raw %} -->
+
 
 ## Instructions
 
@@ -19,7 +19,6 @@ params:
 > but the descriptions are to outline what should be in those sections
 > and should be replaced by the feature-specific text.
 > However, not all sections may be required for all features.
-{}
 > This template wraps at 80-columns. You don't need to match that wrapping, but
 > having some consistent column wrapping makes it easier to view diffs on
 > GitHub's review UI. Please wrap your lines to make it easier to review.
@@ -151,4 +150,3 @@ might build on this on. Even variations on the chosen solution can be interestin
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->

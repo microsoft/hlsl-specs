@@ -6,7 +6,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.x
@@ -1202,4 +1201,4 @@ void CoopVec() {
 }
 ```
 
-<!-- {% endraw %} -->
+

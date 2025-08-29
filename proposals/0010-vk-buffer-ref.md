@@ -10,7 +10,6 @@ params:
         status: Completed
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3).
@@ -538,4 +537,3 @@ float4 MainPs(void) : SV_Target0
 
 ```
 
-<!-- {% endraw %} -->

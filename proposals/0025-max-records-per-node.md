@@ -7,7 +7,6 @@ params:
     status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.x
@@ -120,4 +119,4 @@ equal to `MaxRecords`.  This also avoids redundant attribute specifications for 
 `MaxRecords` and `MaxRecordsPerNode` are identical. However, for performance reasons, this was made a required
 attribute with a compiler fall back for backward compatibilty.
 
-<!-- {% endraw %} -->
+

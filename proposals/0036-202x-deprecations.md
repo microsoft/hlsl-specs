@@ -8,7 +8,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: 202x
@@ -92,4 +91,4 @@ initializer clauses are ignored, and DXC does not issue a diagnostic. In HLSL
 202x initializer clauses on declarations placed into an implicit or explicit
 `cbuffer` declaration are illegal and will produce an error.
 
-<!-- {% endraw %} -->
+

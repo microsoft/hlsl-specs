@@ -8,7 +8,6 @@ params:
   status: Accepted
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: 202y
@@ -213,4 +212,3 @@ This change should have no impact on code generation through SPIR-V or DXIL
 assuming that the existing parameter mangling for constant implicit object
 parameters works as expected.
 
-<!-- {% endraw %} -->

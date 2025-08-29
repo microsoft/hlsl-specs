@@ -6,12 +6,11 @@ params:
     - author_username: Author 1
   sponsors:
     - tbd: TBD
-  status: Accepted
+  status: Under Consideration
 ---
-<!-- {% raw %} -->
+
 
 ## Instructions
-
 > This template is a guideline for documenting a platform or vendor extension.
 > For a feature to be a conforming extension it must not change language
 > behaviors. It can introduce new builtin functions, data types, and annotating
@@ -112,4 +111,4 @@ might build on this on. Even variations on the chosen solution can be interestin
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->
+

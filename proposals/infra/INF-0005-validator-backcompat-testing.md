@@ -7,7 +7,7 @@ params:
     - damyanp: Damyan Pepper
   status: Under Consideration
 ---
-<!-- {% raw %} -->
+
  
 * Impacted Project(s): DXC
 
@@ -147,4 +147,3 @@ via logs.
 * [Tex Riddell](https://github.com/tex3d)
 * [Chris Bieneman](https://github.com/llvm-beanz)
 
-<!-- {% endraw %} -->

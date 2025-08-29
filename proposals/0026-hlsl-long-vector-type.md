@@ -9,7 +9,6 @@ params:
   status: Accepted
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.9
@@ -372,4 +371,4 @@ Having a limit facilitates testing and sets expectations for both hardware and s
   * A: No. It doesn't make sense since they can't be used to access all elements
        and there's no way to create enough swizzle members to accommodate the longest allowed vector.
 
-<!-- {% endraw %} -->
+

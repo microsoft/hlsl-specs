@@ -8,7 +8,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: 202y
@@ -237,4 +236,3 @@ following grammar formulations are valid:
 
 ![Latex Rendering](0002-assets/ClassGrammarRender.png)
 
-<!-- {% endraw %} -->

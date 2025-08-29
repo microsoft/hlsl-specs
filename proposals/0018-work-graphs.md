@@ -10,7 +10,6 @@ params:
   status: Completed
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.8
@@ -592,4 +591,3 @@ teams and IHV partners.
 
 Special thanks to Claire Andrews, Amar Patel, and Tex Riddell
 
-<!-- {% endraw %} -->

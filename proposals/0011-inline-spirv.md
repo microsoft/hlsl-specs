@@ -8,7 +8,6 @@ params:
     status: Under Review
 ---
 
-<!-- {% raw %} -->
 
 *   Proposal: [0011](0011-inline-spirv.md)
 
@@ -391,4 +390,3 @@ If we can hide all of the cases that could be implicitly added in a header file,
 then there is very little burden on users. This is why we chose to not have
 implicit inclusion of the capabilities and extensions.
 
-<!-- {% endraw %} -->

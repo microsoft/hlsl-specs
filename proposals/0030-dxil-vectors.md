@@ -8,7 +8,6 @@ params:
   status: Accepted
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.9
@@ -303,4 +302,3 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 * [Anupama Chandrasekhar](https://github.com/anupamachandra) and [Tex Riddell](https://github.com/tex3d) for foundational contributions to the design.
 
-<!-- {% endraw %} -->

@@ -11,7 +11,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.9
@@ -1060,4 +1059,4 @@ deciding to extend the existing `ComponentType` enum.
 We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill, Tex Riddell and
 Amar Patel for their contributions to this specification.
 
-<!-- {% endraw %} -->
+

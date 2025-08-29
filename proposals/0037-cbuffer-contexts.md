@@ -7,7 +7,6 @@ params:
   status: Under Consideration
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: 202x
@@ -105,4 +104,4 @@ Notably a `cbuffer` cannot contain function declarations, type declarations
 variable declarations, `cbuffer` declarations, or any other declaration type not
 explicitly listed as allowed.
 
-<!-- {% endraw %} -->
+

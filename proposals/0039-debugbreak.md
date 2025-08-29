@@ -8,7 +8,6 @@ params:
     status: Under Consideration
 ---
 
-<!-- {% raw %} -->
 
  
 * Issue(s): https://github.com/microsoft/hlsl-specs/issues/33
@@ -61,4 +60,3 @@ void main(uint GI : SV_GroupIndex) {
 
 This aligns with C/C++ conventions that our users are already familiar with.
 
-<!-- {% endraw %} -->

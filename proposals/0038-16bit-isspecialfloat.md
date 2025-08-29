@@ -8,7 +8,6 @@ params:
   status: Under Consideration
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: Shader Model 6.9
@@ -139,4 +138,4 @@ An open question is if we should always
 generate the 16 bit version of the relevant SPIRV ops for the 16 bit overloads,
 or if their generation should be gatekept behind some not yet determined condition.
 
-<!-- {% endraw %} -->
+

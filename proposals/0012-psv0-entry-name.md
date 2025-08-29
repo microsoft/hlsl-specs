@@ -8,7 +8,6 @@ params:
   status: Completed
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.8, validator version 1.8
@@ -379,4 +378,4 @@ complexity and maintenance costs for an intermediate DxilContainer format that
 can't realize any theorized advantages without larger changes that would have
 to be made in some future container format.
 
-<!-- {% endraw %} -->
+

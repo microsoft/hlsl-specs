@@ -6,7 +6,7 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
+
 
  
 * Required Version: HLSL 2021
@@ -190,4 +190,4 @@ variable of the class holding the low-level inline SPIR-V representation. We
 decided that such a mechanism would be too general, as new resource types in
 HLSL are rare and users should not have the ability to create them themselves.
 
-<!-- {% endraw %} -->
+

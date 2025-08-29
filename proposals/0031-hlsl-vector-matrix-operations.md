@@ -10,7 +10,6 @@ params:
   status: Under Review
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.9
@@ -737,4 +736,4 @@ TBD
 
 We would like to thank Jeff Bolz for his contribution to this spec.
 
-<!-- {% endraw %} -->
+

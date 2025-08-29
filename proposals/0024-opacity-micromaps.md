@@ -8,7 +8,6 @@ params:
   status: Accepted
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: SM 6.9
@@ -388,4 +387,4 @@ reachable in the current compilation.
 [dxr-flags]: <https://dev.azure.com/cga-exchange/_git/docs?path=/d3d/Raytracing.md&_a=preview&anchor=d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS  (internal only)"
 [rayflags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayflags> "RayFlags()"
 
-<!-- {% endraw %} -->
+

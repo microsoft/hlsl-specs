@@ -8,7 +8,7 @@ params:
     - tbd: TBD
   status: Under Consideration
 ---
-<!-- {% raw %} -->
+
 
 ## Instructions
 
@@ -79,4 +79,3 @@ reviewing.
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->

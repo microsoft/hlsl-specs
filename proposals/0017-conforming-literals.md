@@ -8,7 +8,6 @@ params:
   status: Completed
 ---
 
-<!-- {% raw %} -->
 
  
 * Planned Version: HLSL 202x
@@ -326,4 +325,4 @@ less than or equal to `UINT32_MAX`, otherwise it is 64-bit.
 warning: literal value is treated as signed in HLSL before 202x, and unsigned in 202x and later
 ```
 
-<!-- {% endraw %} -->
+

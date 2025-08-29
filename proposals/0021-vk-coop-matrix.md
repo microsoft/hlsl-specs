@@ -6,7 +6,6 @@ params:
   status: Completed
 ---
 
-<!-- {% raw %} -->
 
 *   Proposal: [0021](0021-vk-coop-matrix.md)
 *   Required Version: Vulkan 1.3
@@ -514,4 +513,4 @@ enum StorageClass {
 };
 ```
 
-<!-- {% endraw %} -->
+
