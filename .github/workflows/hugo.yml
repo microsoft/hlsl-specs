@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PDF
-          path: build/hlsl.pdf
+          path: ${{github.workspace}}/specs/hlsl.pdf
 
   # Deployment job
   deploy:

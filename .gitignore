@@ -350,9 +350,3 @@ MigrationBackup/
 .ionide/
 
 _site/
-
-# LaTeX and build artifacts
-build/
-*.pdf
-*.deb
-website/public/
