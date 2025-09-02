@@ -5,9 +5,7 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    types: [opened,synchronize]
-    paths:
-      - specs/language/**
+    types: [opened, synchronize]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
