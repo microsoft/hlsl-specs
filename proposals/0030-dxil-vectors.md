@@ -147,19 +147,21 @@ DXIL::OpCode::VectorReduceAnd = 309
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.unaryReduce.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
 ```
 
 **VectorReduceOr**
 
 Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceOr = 310
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.unaryReduce.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
 ```
 
 #### Vectorized Dot
@@ -167,16 +169,19 @@ DXIL::OpCode::VectorReduceOr = 310
 **VectorDotProduct**
 
 Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
-native vectors in DXIL `dot` can now be treated as a normal binary operation.
+native vectors in DXIL `dot` can now be treated as a normal binary operation. Return
+type matches vector element type.
 
 Returns `op1[0] * op2[0] + op1[1] * op2[1] + ... + op1[NUM - 1] * op2[NUM - 1]`
 
+The scalar type may be `half` or `float`.
+
 ```C++
-DXIL::OpCode::VectorDotProduct = 311
+DXIL::OpCode::FDot = 311
 ```
 
 ```asm
- [TYPE] @dx.op.binary.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
+ [TYPE] @dx.op.binaryReduce.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
 ```
 
 ### Validation Changes
