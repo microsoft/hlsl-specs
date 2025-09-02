@@ -142,6 +142,8 @@ This means that the same language-level vector (of any length) could be used
 
 Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceAnd = 309
 ```
