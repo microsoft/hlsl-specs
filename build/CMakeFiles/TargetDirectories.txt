@@ -1,7 +1,0 @@
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/hlsl-dirs.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/hlsl-prebuild.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/hlsl-glossaries.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/pdf.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/html.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/edit_cache.dir
-/home/runner/work/hlsl-specs/hlsl-specs/build/CMakeFiles/rebuild_cache.dir
