@@ -5,7 +5,7 @@ params:
   - spall: Sarah Spall
   sponsors:
   - spall: Sarah Spall
-  status: Under Consideration
+  status: Accepted
 ---
 
 
