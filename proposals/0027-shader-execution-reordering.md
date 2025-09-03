@@ -568,14 +568,14 @@ Returns 0 if the `HitObject` does not encode a hit.
 
 ```C++
 template<attr_t>
-attr_t dx::HitObject::GetAttributes();
+void dx::HitObject::GetAttributes(out attr_t Attributes);
 ```
 
-Returns the attributes of a hit. `attr_t` must match the committed
+Stores the committed attributes to `Attributes`. `attr_t` must match the committed
 attributes’ type regardless of whether they were committed by an intersection
 shader, fixed function logic, or using `HitObject::FromRayQuery`.
 
-If the `HitObject` does not encode a hit, the returned value will be
+If the `HitObject` does not encode a hit, `Attributes` will be
 zero-initialized. The size of `attr_t` must not exceed
 `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
 
