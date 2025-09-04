@@ -3,6 +3,7 @@ title: 0035 - Linear Algebra Matrix
 params:
   authors:
   - llvm-beanz: Chris Bieneman
+  - mapodaca-nv: Mike Apodaca
   status: Under Review
 ---
 
@@ -73,7 +74,9 @@ class Matrix {
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-  Matrix<NewCompTy, M, N, NewUse, Scope> cast();
+  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
+                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
+  cast();
 
   // Element-wise operations
   template <typename T>
@@ -116,13 +119,13 @@ class Matrix {
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+  typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
                                UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, MScalars>);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+  typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
                                UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, NScalars>);
@@ -517,7 +520,9 @@ scalar support.
 
 ```c++
 template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-Matrix<NewCompTy, M, N, NewUse, Scope> Matrix::cast();
+  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
+                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
+  Matrix::cast();
 ```
 
 The `Matrix::cast()` function supports casting component types and matrix `Use`.
@@ -617,13 +622,13 @@ scope matrix.
 
 ```c++
 template <MatrixUse UseLocal = Use>
-typename hlsl::enable_if<Use == MatrixUse::A && Scope == MatrixScope::Wave &&
+typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
                               UseLocal == Use,
                           Matrix>::type
     FromThreadVectors(vector<ElementType, MScalars>);
 
 template <MatrixUse UseLocal = Use>
-typename hlsl::enable_if<Use == MatrixUse::B && Scope == MatrixScope::Wave &&
+typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
                               UseLocal == Use,
                           Matrix>::type
     FromThreadVectors(vector<ElementType, NScalars>);
@@ -1119,7 +1124,7 @@ a bias vector added to the result.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/TzqvjGWr1)
+[Compiler Explorer](https://godbolt.org/z/er4nG4bba)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1245,27 +1250,36 @@ class Matrix {
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-  Matrix<NewCompTy, M, N, NewUse, Scope> cast();
+  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
+                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
+  cast();
 
   // Element-wise operations
   template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                           Scope != MatrixScope::Thread, Matrix>::type
   operator+=(T);
   template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                           Scope != MatrixScope::Thread, Matrix>::type
   operator-=(T);
   template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                           Scope != MatrixScope::Thread, Matrix>::type
   operator*=(T);
   template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                           Scope != MatrixScope::Thread, Matrix>::type
   operator/=(T);
 
   // Apply a unary operation to each element.
-  template <UnaryOperation Op> Matrix ApplyUnaryOperation();
+  template <UnaryOperation Op>
+  typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+  ApplyUnaryOperation();
 
   template <typename T>
-  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                                  Scope != MatrixScope::Thread, Matrix>::type
   Splat(T Val);
   
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -1276,7 +1290,8 @@ class Matrix {
        bool ColMajor, uint Align = sizeof(ElementType));
 
   template <typename T>
-  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                                  Scope != MatrixScope::Thread, Matrix>::type
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
 
   template <MatrixUse UseLocal = Use>
