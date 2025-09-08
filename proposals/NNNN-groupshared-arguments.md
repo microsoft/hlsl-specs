@@ -1,6 +1,5 @@
 ---
 title: "NNNN - `groupshared` Arguments"
-draft: true
 params:
   authors:
     - llvm-beanz: Chris Bieneman
