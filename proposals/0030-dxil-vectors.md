@@ -138,7 +138,7 @@ This means that the same language-level vector (of any length) could be used
 
 #### `VectorReduce` OpCodeClass
 
-A new generic OpCodeClass `VectorReduce` is introduce for usage in new operations
+A new generic OpCodeClass `VectorReduce` is introduced for usage in new operations
 below. `VectorReduce` combines a vector of elements into a single element with
 the same type as the vector element type. The elements are combined using an
 operation specified by the opcode parameter.
