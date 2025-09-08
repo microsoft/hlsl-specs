@@ -598,8 +598,8 @@ Matrix::Splat(T Val);
 ```
 
 Constructs a matrix filled with the provided value casted to the element type.
-If the matrix is a `Wave` or `ThreadGroup` scope matrix, this operation shall behave equivalent
-to:
+If the matrix is a `Wave` or `ThreadGroup` scope matrix, this operation shall
+behave equivalent to:
 
 ```c++
 Matrix::Splat(WaveReadLaneFirst(Val));
@@ -607,7 +607,7 @@ Matrix::Splat(WaveReadLaneFirst(Val));
 
 This operation may be called in divergent control flow when creating a thread
 scope matrix, and must be called in uniform control flow when creating a wave
-scope matrix.
+scope or thread group scope matrix.
 
 #### Matrix::Load
 
