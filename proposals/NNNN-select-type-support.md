@@ -1,6 +1,5 @@
 ---
 title: "NNNN - Select type support"
-draft: true
 params:
   authors:
     - kmpeng: Kaitlin Peng
