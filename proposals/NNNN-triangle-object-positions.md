@@ -394,6 +394,18 @@ A couple other options:
 
 ---
 
+### Use Availability Attributes
+
+Instead of custom diagnostics for these functions, we could potentially use
+availability attributes for a more general mechanism.  For DXC, this will
+require some investigation into the intrinsic system to see how these
+attributes could be added to intrinsic function declarations that are created
+on-demand in a custom way.
+
+**Resolution**: This seems worthwhile to investigate in Clang but out of scope for DXC.
+
+---
+
 ## Open Issues
 
 ---
@@ -402,16 +414,6 @@ A couple other options:
 
 `BuiltInTrianglePositions` isn't necessarily the best name for the struct,
 so suggestions for a better name are welcome.
-
----
-
-### Use Availability Attributes
-
-Instead of custom diagnostics for these functions, we could potentially use
-availability attributes for a more general mechanism.  For DXC, this will
-require some investigation into the intrinsic system to see how these
-attributes could be added to intrinsic function declarations that are created
-on-demand in a custom way.
 
 ---
 
