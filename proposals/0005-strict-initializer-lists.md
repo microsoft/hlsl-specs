@@ -80,7 +80,7 @@ of the HLSL specification.
 
 An _aggregate_ is a vector, matrix, array, or class which does not contain
 * user-declared or inherited constructors
-* non-public non-static data members, and
+* non-public non-static data members, or
 * non-public base classes
 
 For the purposes of aggregate initialization, anonymous bit-fields are not
