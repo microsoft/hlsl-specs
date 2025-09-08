@@ -374,26 +374,6 @@ opcode classes for no good reason.
 
 ---
 
-### Return type for DXIL ops
-
-There is some open debate about the return type used for DXIL operations.
-The current approach is to return one component at a time, as this matches the
-similar pre-existing operations for looking up matrix components for
-object/world transforms.  Keeping the DXIL operations consistent with the other
-operations in the same area would seem to carry less risk and keep the DXIL
-more regular.  This seems to outweigh a desire to do something special here.
-
-A couple other options:
-
-* Use built-in struct containing all positions.
-  * struct layout up for debate
-  * actual form in op signature up for debate (return value, return pointer, sret - write to output pointer arg?).
-* Use native llvm array type, actual form in op signature up for debate.
-
-**Resolution**: Keep DXIL op scalar for consistency with other ops.
-
----
-
 ### Use Availability Attributes
 
 Instead of custom diagnostics for these functions, we could potentially use
@@ -414,6 +394,29 @@ on-demand in a custom way.
 
 `BuiltInTrianglePositions` isn't necessarily the best name for the struct,
 so suggestions for a better name are welcome.
+
+---
+
+### Return type for DXIL ops
+
+There is some open debate about the return type used for DXIL operations.
+The current approach is to return one component at a time, as this matches the
+similar pre-existing operations for looking up matrix components for
+object/world transforms.  Keeping the DXIL operations consistent with the other
+operations in the same area would seem to carry less risk and keep the DXIL
+more regular.  This seems to outweigh a desire to do something special here.
+
+A couple other options:
+
+* Use built-in struct containing all positions.
+  * struct layout up for debate
+  * actual form in op signature up for debate (return value, return pointer, sret - write to output pointer arg?).
+* Use native llvm array type, actual form in op signature up for debate.
+* Leverage shader model 6.9 vectorized DXIL and return
+  * one `<3 x float>` per call, taking a vertex ID as a parameter
+  * one `<9 x float>` with all values at once
+
+**Proposed Resolution**: Keep DXIL op scalar for consistency with other ops.
 
 ---
 
