@@ -318,28 +318,6 @@ opcode, with `Intersection` set to `RayQueryCandidateIntersectionKHR` for
 
 ---
 
-### Diagnostic Changes
-
----
-
-#### Validation Changes
-
-New Validation:
-
-* When the VertexInTri or ColumnIndex is not an immediate constant or out of
-  range:
-  * `"<DXIL Op> %select{VertexInTri|ColumnIndex}0 (%1) must be an immediate constant value in range [0..2]"`
-
-Existing infrastructure for enforcing shader model and shader stage
-requirements for DXIL ops will be used.
-Existing validation for RayQuery handle will be used.
-
----
-
-### Runtime Additions
-
----
-
 #### Runtime information
 
 Use of any of these new DXIL ops will set the
