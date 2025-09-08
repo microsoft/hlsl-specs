@@ -290,6 +290,34 @@ RayQuery state, which is impacted by various other RayQuery methods.
 
 ---
 
+### SPIR-V Mapping
+
+The `TriangleObjectPositions()` HLSL intrinsic can be implemented against the
+[`SPV_KHR_ray_tracing_position_fetch`](spv-ext) extension by effectively
+using the following inline HLSL:
+
+```c++
+[[vk::builtin("HitTriangleVertexPositionsKHR")]]
+float3 HitTriangleVertexPositionsKHR[3];
+
+inline BuiltInTrianglePositions TriangleObjectPositions()
+{
+  BuiltInTrianglePositions result;
+  result.p0 = HitTriangleVertexPositionsKHR[0];
+  result.p1 = HitTriangleVertexPositionsKHR[1];
+  result.p2 = HitTriangleVertexPositionsKHR[2];
+  return result;
+}
+```
+
+The `RayQuery` methods can be implemented against the same extension by mapping
+HLSL intrinsic to the `OpRayQueryGetIntersectionTriangleVertexPositionsKHR`
+opcode, with `Intersection` set to `RayQueryCandidateIntersectionKHR` for
+`CandidateTriangleObjectPositions`, and `Intersection` set to
+`RayQueryCommittedIntersectionKHR` for `CommittedTriangleObjectPositions`.
+
+---
+
 ### Diagnostic Changes
 
 ---
