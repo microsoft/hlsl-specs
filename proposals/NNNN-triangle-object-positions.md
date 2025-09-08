@@ -75,7 +75,7 @@ currently hit triangle: `TriangleObjectPositions`.
 ///
 /// Hit kind must be a triangle, where HitKind() returns either
 /// HIT_KIND_TRIANGLE_FRONT_FACE (254) or HIT_KIND_TRIANGLE_BACK_FACE (255),
-/// otherwise undefined behavior results.
+/// otherwise results are undefined.
 ///
 /// Ordering of positions returned is based on the order used to build the
 /// acceleration structure, and must match barycentric ordering.
@@ -100,8 +100,8 @@ class RayQuery {
   ///
   /// The RayQuery must be in a state where `RayQuery::Proceed()` has returned
   /// true, and where `RayQuery::CandidateType()` returns
-  /// `CANDIDATE_TYPE::CANDIDATE_NON_OPAQUE_TRIANGLE`, otherwise undefined
-  /// behavior results.
+  /// `CANDIDATE_TYPE::CANDIDATE_NON_OPAQUE_TRIANGLE`, otherwise results
+  /// are undefined.
   ///
   /// Ordering of positions returned is based on the order used to build the
   /// acceleration structure, and must match barycentric ordering.
@@ -114,8 +114,8 @@ class RayQuery {
   ///
   /// The RayQuery must be in a state with a committed triangle hit,
   /// where `CommittedStatus()` returns
-  /// `COMMITTED_STATUS::COMMITTED_TRIANGLE_HIT`, otherwise undefined behavior
-  /// results.
+  /// `COMMITTED_STATUS::COMMITTED_TRIANGLE_HIT`, otherwise results are
+  /// undefined.
   ///
   /// Ordering of positions returned is based on the order used to build the
   /// acceleration structure, and must match barycentric ordering.
@@ -123,10 +123,29 @@ class RayQuery {
 };
 ```
 
+One new intrinsic method for `HitObject` to retrieve triangle object-space
+positions:
+
+```c++
+/// \brief Retrieve current hit triangle object-space vertex positions
+/// \returns position of vertex in object-space
+///
+/// Minimum shader model: 6.10
+///
+/// Hit kind must be a triangle, where dx::HitObject::GetHitKind() returns
+/// HIT_KIND_TRIANGLE_FRONT_FACE (254) or HIT_KIND_TRIANGLE_BACK_FACE (255),
+/// or else results are undefined.
+///
+/// Ordering of positions returned is based on the order used to build the
+/// acceleration structure, and must match barycentric ordering.
+BuiltInTriangleHitPositions dx::HitObject::TriangleObjectPositions() const;
+```
+
 These return the object-space position for all vertices that make up the
 triangle for a hit.  The hit is the current hit inside an
 [AnyHit][dxr-anyhit] or [ClosestHit][dxr-closesthit] shader, or
-the candidate or committed hit state of a RayQuery object.
+the candidate or committed hit state of a RayQuery object, or the
+committed hit state of a HitObject.
 
 May only be used if the hit BLAS was built with
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`
@@ -136,7 +155,8 @@ otherwise behavior is undefined.
 These intrinsics may only be used with a triangle hit, otherwise behavior is
 undefined. A shader can check for a triangle hit with
 [`HitKind()`][dxr-hitkind], [`RayQuery::CandidateType()`][dxr-rq-can-type], or
-[`CommittedStatus()`][dxr-rq-com-status] depending on the context.
+[`CommittedStatus()`][dxr-rq-com-status], or
+[`dx::HitObject::GetHitKind()`](dxr-ser-hit-kind) depending on the context.
 
 Shader model 6.10 is required to use these intrinsics.
 
@@ -167,6 +187,7 @@ New Validation:
 Existing infrastructure for enforcing shader model and shader stage
 requirements for DXIL ops will be used.
 Existing validation for RayQuery handle will be used.
+Existing validation for HitObject handle will be used.
 
 ---
 
@@ -179,9 +200,15 @@ Existing validation for RayQuery handle will be used.
 Use of Triangle Object Positions intrinsics require Shader Model 6.10 and
 [D3D12_RAYTRACING_TIER_1_0][dxr-tier].
 
+Use of RayQuery intrinsics require Shader Model 6.10 and
+[D3D12_RAYTRACING_TIER_1_1][dxr-tier].
+
+Use of HitObject intrinsics require Shader Model 6.10 and
+[D3D12_RATRACING_TIER_1_2][dxr-tier].
+
 > Note: any raytracing tier requirement is implied by the shader stage
-> requirement or use of RayQuery, so no other changes are required in the
-> compiler, aside from the shader model requirement.
+> requirement or use of RayQuery or use of HitObject, so no other changes
+> are required in the compiler, aside from the shader model requirement.
 
 ---
 
@@ -207,7 +234,7 @@ Use of Triangle Object Positions intrinsics require Shader Model 6.10 and
 
 ---
 
-### Interchange Format Additions
+### DXIL Additions
 
 ```llvm
 ; Availability: Shader Model 6.10+
@@ -233,11 +260,20 @@ declare f32 @dx.op.rayQuery_CommittedTriangleObjectPosition.f32(
       i32,  ; RayQuery Handle
       i32,  ; VertexInTri, immediate constant [0..2]
       i32)  ; ColumnIndex, immediate constant [0..2]
+
+; Availability: Shader Model 6.10+
+; Function Attrs: nounwind readonly
+declare f32 @dx.op.hitObject_TriangleObjectPosition.f32(
+      i32,                 ; DXIL OpCode
+      %dx.types.HitObject, ; HitObject handle
+      i32,                 ; VertexInTri, immediate constant [0..2]
+      i32)                 ; ColumnIndex, immediate constant [0..2]
 ```
 
 New DXIL operations: `TriangleObjectPosition`,
 `RayQuery_CandidateTriangleObjectPosition`,
-`RayQuery_CommittedTriangleObjectPosition`.
+`RayQuery_CommittedTriangleObjectPosition`,
+`HitObject_TriangleObjectPosition`.
 These accept an immediate constant `VertexInTri`, and immediate constant
 `ColumnIndex` to read a single `x`, `y`, or `z` component from the specified
 vertex position for the triangle.
@@ -327,12 +363,13 @@ Other approaches have been proposed for the return type of this intrinsic:
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
   * Drawback: layout isn't obvious
 * Use a by-value array return type: `float3[3]`:
-  * checking static index is automatic
+  * Benefit: checking static index is automatic
+  * Benefit: convergence with SPIR-V
   * Drawback: likely difficult to introduce this into intrinsic system
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
   * Drawback: might want to remove return array-by-value support in future HLSL version, as this is not allowed in C++.
 * Use a constant reference-to-array return type: `const float3[3] &`:
-  * checking static index is automatic
+  * Benefit: checking static index is automatic
   * Drawback: likely difficult to introduce this into intrinsic system
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
 * Return a special object type that implements the array subscript, returning `float3`:
@@ -435,5 +472,6 @@ A couple other options:
 [dxr-hitkind]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#hitkind> "HitKind()"
 [dxr-rq-can-type]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-candidatetype> "RayQuery CandidateType"
 [dxr-rq-com-status]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-committedstatus> "RayQuery CommittedStatus"
+[dxr-ser-hit-kind]: <https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html#hitobject-gethitkind> "dx::HitObject::GetHitKind()"
 
 <!-- {% endraw %} -->
