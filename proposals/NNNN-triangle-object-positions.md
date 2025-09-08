@@ -70,7 +70,7 @@ currently hit triangle: `TriangleObjectPositions`.
 /// \brief Retrieve current hit triangle object-space vertex positions
 /// \returns position of vertex in object-space
 ///
-/// Minimum shader model: (Version TBD)
+/// Minimum shader model: 6.10
 /// Allowed shader types: anyhit, closesthit.
 ///
 /// Hit kind must be a triangle, where HitKind() returns either
@@ -96,7 +96,7 @@ class RayQuery {
   /// \brief Retrieve candidate hit triangle object-space vertex positions
   /// \returns position of vertex in object-space
   ///
-  /// Minimum shader model: (Version TBD)
+  /// Minimum shader model: 6.10
   ///
   /// The RayQuery must be in a state where `RayQuery::Proceed()` has returned
   /// true, and where `RayQuery::CandidateType()` returns
@@ -110,7 +110,7 @@ class RayQuery {
   /// \brief Retrieve committed hit triangle object-space vertex positions
   /// \returns position of vertex in object-space
   ///
-  /// Minimum shader model: (Version TBD)
+  /// Minimum shader model: 6.10
   ///
   /// The RayQuery must be in a state with a committed triangle hit,
   /// where `CommittedStatus()` returns
@@ -138,7 +138,7 @@ undefined. A shader can check for a triangle hit with
 [`HitKind()`][dxr-hitkind], [`RayQuery::CandidateType()`][dxr-rq-can-type], or
 [`CommittedStatus()`][dxr-rq-com-status] depending on the context.
 
-Shader model (Version TBD) is required to use these intrinsics.
+Shader model 6.10 is required to use these intrinsics.
 
 ---
 
@@ -146,8 +146,8 @@ Shader model (Version TBD) is required to use these intrinsics.
 
 New diagnostics:
 
-* When any intrinsic is used and the Shader Model is less than (Version TBD):
-  * `"<intrinsic> is only available on Shader Model (Version TBD) or newer"`
+* When any intrinsic is used and the Shader Model is less than 6.10:
+  * `"<intrinsic> is only available on Shader Model 6.10 or newer"`
 * When the `TriangleObjectPositions` intrinsic is used outside an `anyhit` or
   `closesthit` shader:
   * `"TriangleObjectPositions is not available in <stage> on Shader Model <shadermodel>"`
@@ -176,7 +176,7 @@ Existing validation for RayQuery handle will be used.
 
 #### Device Capability
 
-Use of Triangle Object Positions intrinsics require Shader Model (Version TBD) and
+Use of Triangle Object Positions intrinsics require Shader Model 6.10 and
 [D3D12_RAYTRACING_TIER_1_0][dxr-tier].
 
 > Note: any raytracing tier requirement is implied by the shader stage
@@ -195,7 +195,7 @@ Use of Triangle Object Positions intrinsics require Shader Model (Version TBD) a
 * Test CodeGen for each new HLSL intrinsic
 * Test final DXIL output for each HLSL intrinsic
   * Test static and dynamic vertex index
-* Use D3DReflect test to verify min shader model of (Version TBD) with each intrinsic
+* Use D3DReflect test to verify min shader model of 6.10 with each intrinsic
   usage for library target.
 
 ---
@@ -210,7 +210,7 @@ Use of Triangle Object Positions intrinsics require Shader Model (Version TBD) a
 ### Interchange Format Additions
 
 ```llvm
-; Availability: Shader Model (Version TBD)+
+; Availability: Shader Model 6.10+
 ; Availability: anyhit,closesthit
 ; Function Attrs: nounwind readnone
 declare f32 @dx.op.triangleObjectPosition.f32(
@@ -218,7 +218,7 @@ declare f32 @dx.op.triangleObjectPosition.f32(
       i32,  ; VertexInTri, immediate constant [0..2]
       i32)  ; ColumnIndex, immediate constant [0..2]
 
-; Availability: Shader Model (Version TBD)+
+; Availability: Shader Model 6.10+
 ; Function Attrs: nounwind readonly
 declare f32 @dx.op.rayQuery_CandidateTriangleObjectPosition.f32(
       i32,  ; DXIL OpCode
@@ -226,7 +226,7 @@ declare f32 @dx.op.rayQuery_CandidateTriangleObjectPosition.f32(
       i32,  ; VertexInTri, immediate constant [0..2]
       i32)  ; ColumnIndex, immediate constant [0..2]
 
-; Availability: Shader Model (Version TBD)+
+; Availability: Shader Model 6.10+
 ; Function Attrs: nounwind readonly
 declare f32 @dx.op.rayQuery_CommittedTriangleObjectPosition.f32(
       i32,  ; DXIL OpCode
@@ -242,7 +242,7 @@ These accept an immediate constant `VertexInTri`, and immediate constant
 `ColumnIndex` to read a single `x`, `y`, or `z` component from the specified
 vertex position for the triangle.
 
-All of these DXIL operations require Shader Model (Version TBD).
+All of these DXIL operations require Shader Model 6.10.
 
 `TriangleObjectPosition` may only be called from entry functions of type
 `anyhit` or `closesthit`.
@@ -279,7 +279,7 @@ Existing validation for RayQuery handle will be used.
 #### Runtime information
 
 Use of any of these new DXIL ops will set the
-`RuntimeDataFunctionInfo::MinShaderTarget` shader model to a minimum of (Version TBD) in
+`RuntimeDataFunctionInfo::MinShaderTarget` shader model to a minimum of 6.10 in
 the `RDAT` part for the calling function.
 
 ---
