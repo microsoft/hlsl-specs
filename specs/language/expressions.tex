@@ -167,6 +167,11 @@ vector, or matrix of \texttt{T[]}, or an object of type \texttt{T} where
 (\ref{Overload}).\footnote{HLSL does not support the base address of a subscript
 operator being the expression inside the braces, which is valid in C and C++.}
 
+\p If the base object is of array, vector or matrix type, the index expression
+must be of integer type or of a type that implicitly converts to integer type.
+If the index expression evaluates to a value that is out-of-range for the base
+object, the behavior is undefined.
+
 \Sec{Function Calls}{Expr.Post.Call}
 
 \p A function call may be an \textit{ordinary function}, or a \textit{member

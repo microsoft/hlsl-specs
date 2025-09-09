@@ -19,14 +19,14 @@
   \textit{template-declaration}\br
   \textit{type-alias-declaration}\br
   ...
-  
+
   \define{special-declaration}\br
   \textit{export-declaration-group}\br
   \textit{cbuffer-declaration-group}\br
   ...
 
   \define{empty-declaration} \terminal{;}
-  
+
 \end{grammar}
 
 \Sec{Specifiers}{Decl.Spec}
@@ -56,6 +56,64 @@
 \p If a function is declared with an \texttt{export} specifier then all redeclarations of the same function must also use the \texttt{export} specifier or be part of \textit{export-declaration-group} (\ref{Decl.Export}).
 
 \Sec{Declarators}{Decl.Decl}
+
+\begin{grammar}
+  \define{init-declarator-list}\br
+  \textit{init-declarator}\br
+  \textit{init-declarator-list} \terminal{,} \textit{init-declarator}\br
+
+  \define{init-declarator}\br
+  \textit{declarator} \opt{initializer}\br
+
+  \define{declarator}\br
+  \textit{declarator-id} \opt{attribute-specifier-seq}\br
+  \textit{declarator} \textit{parameters-and-qualifiers}\br
+  \textit{declarator} \terminal{[} \opt{constant-expression} \terminal{]} \opt{attribute-specifier-seq}\br
+
+  \define{parameters-and-qualifiers}\br
+  \terminal{(} \textit{parameter-declaration-clause} \terminal{)} \opt{cv-qualifier-seq} \opt{attribute-specifier-seq}\br
+
+  \define{cv-qualifier-seq}\br
+  \textit{cv-qualifier} \opt{cv-qualifier-seq}\br
+
+  \define{cv-qualifier}\br
+  \terminal{const}\br
+
+  \define{declarator-id}\br
+  \textit{id-expression}\br
+
+\end{grammar}
+
+\Sub{Arrays}{Decl.arrays}
+% This might need to nest deeper as we flesh out the sections.
+
+\p A declaration \texttt{T D} where \texttt{D} is of the form
+
+\begin{grammar}
+\textit{D} \terminal{[} \textit{N} \terminal{]} \opt{attribute-specifier-seq}\br
+\end{grammar}
+
+declares an array of \texttt{N} \texttt{T}, where \texttt{N} is the \textit{array
+bound}, and \texttt{T} is the contained type of the array. \texttt{N} shall be a
+constant expression converted to unsigned integer type and shall have a value
+greater than zero.
+
+\p A declaration \texttt{T D} where \texttt{D} is of the form
+
+\begin{grammar}
+\textit{D} \terminal{[} \terminal{]} \opt{attribute-specifier-seq}\br
+\end{grammar}
+
+declares an array of unknown bound, except when the bound is implicitly derived
+as described below. A declaration may only declare an array of unknown bound for
+global declarations of resource objects (\ref{Resources}).
+
+\p A declarator with an omitted array bound is valid if the when declaring an
+object of array type which is not a non-static data member and is initialized
+with an initializer that follows the declarator. In this case the array bound is
+implied by the number of elements provided by the initializer list following the
+rules described in \ref{Decl.Init}.
+
 \Sec{Initializers}{Decl.Init}
 
 \p The process of initialization described in this section applies to all
