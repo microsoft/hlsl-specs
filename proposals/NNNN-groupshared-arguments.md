@@ -26,7 +26,7 @@ expressible in HLSL and rely on special case implementation in DXC.
 
 HLSL 202x will allow the `groupshared` type annotation keyword on function
 parameter declarations. The keyword when applied to a parameter declaration of
-type `T`, alters the qualified type of the parameter to a `groupshared & T`
+type `T`, alters the qualified type of the parameter to a `groupshared T &`
 (a reference to `groupshared` memory of type `T`).
 
 No implicit or explicit conversion can change the memory space of an object. To
