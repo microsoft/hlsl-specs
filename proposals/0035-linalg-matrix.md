@@ -201,6 +201,17 @@ Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
 
+template <MatrixComponentType OutTy, MatrixComponentType ATy,
+          MatrixComponentType BTy, uint M, uint N, uint K>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+
+template <MatrixComponentType T, uint M, uint N, uint K>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<T, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
 // matrices.
@@ -325,44 +336,54 @@ uniformity scope of the matrix. The scope impacts which operations can be
 performed on the matrix and may have performance implications depending on the
 implementation.
 
-There are two supported matrix scopes: `Thread` and `Wave`.
+There are three supported matrix scopes: `Thread`, `Wave`, and `ThreadGroup`.
 * The `Thread` matrix scope denotes that a matrix's values may vary by thread,
   which requires that an implementation handle divergent matrix values.
 * The `Wave` matrix scope denotes that a matrix's values are uniform across a
   wave, which allows an implementation to assume all instances of the matrix
   across a wave are identical.
+* The `ThreadGroup` matrix scope denotes that a matrix's values are uniform
+  across a thread group, which allows an implementation to assume all instances
+  of the matrix across a thread group are identical.
 
-Some operations require `Wave` scope matrices, while others can operate on
-`Thread` scope matrices. All operations that can operate on `Thread` scope
-matrices can also operate on `Wave` scope matrices, and there may be significant
-performance benefit when using `Wave` scope matrices.
+Operations are categorized by their scope requirements. Some operations require
+uniform scope matrices (`Wave` or`ThreadGroup`), while others can operate on
+non-uniform (`Thread`) scope matrices. Operations that support non-uniform
+scope also support uniform scopes.  There may be significant performance
+benefits when using uniform scope matrices.
+
+When using `ThreadGroup` scope matrices, explicit barriers are required only when
+there are actual cross-thread dependencies, such as when multiple threads
+contribute to building or modifying the matrix before it is used by other
+threads. The matrix scope semantics handle most synchronization automatically,
+eliminating the need for barriers between every matrix operation.
 
 The following table summarizes the operations supported for each matrix scope:
 
-| Operation | Thread Scope | Wave Scope |
-|-----------|--------------|------------|
-| `Matrix::cast()` | ✗ | ✓ |
-| `Matrix::operator+=()` | ✗ | ✓ |
-| `Matrix::operator-=()` | ✗ | ✓ |
-| `Matrix::operator*=()` | ✗ | ✓ |
-| `Matrix::operator/=()` | ✗ | ✓ |
-| `Matrix::ApplyUnaryOperation()` | ✗ | ✓ |
-| `Matrix::Splat()` | ✗ | ✓ |
-| `Matrix::Load(ByteAddressBuffer)` | ✓ | ✓ |
-| `Matrix::Load(RWByteAddressBuffer)` | ✗ | ✓ |
-| `Matrix::Load(groupshared)` | ✗ | ✓ |
-| `Matrix::Store(RWByteAddressBuffer)` | ✗ | ✓ |
-| `Matrix::Store(groupshared)` | ✗ | ✓ |
-| `Matrix::Accumulate(RWByteAddressBuffer)` | ✓ | ✓ |
-| `Matrix::Accumulate(groupshared)` | ✗ | ✓ |
-| `Matrix::FromThreadVectors()` | ✗ | ✓ |
-| `Matrix::GetThreadVector()` | ✗ | ✓ |
-| `Matrix::MultiplyAccumulate()` | ✗ | ✓ |
-| `Matrix::SumAccumulate()` | ✗ | ✓ |
-| `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ |
-| `linalg::Multiply(vector, Matrix)` | ✓ | ✓ |
-| `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✓ |
-| `linalg::OuterProduct(vector, vector)` | ✓ | ✓ |
+| Operation | Thread Scope | Wave Scope | ThreadGroup Scope |
+|-----------|--------------|------------|-------------------|
+| `Matrix::cast()` | ✗ | ✓ | ✓ |
+| `Matrix::operator+=()` | ✗ | ✓ | ✓ |
+| `Matrix::operator-=()` | ✗ | ✓ | ✓ |
+| `Matrix::operator*=()` | ✗ | ✓ | ✓ |
+| `Matrix::operator/=()` | ✗ | ✓ | ✓ |
+| `Matrix::ApplyUnaryOperation()` | ✗ | ✓ | ✓ |
+| `Matrix::Splat()` | ✗ | ✓ | ✓ |
+| `Matrix::Load(ByteAddressBuffer)` | ✓ | ✓ | ✓ |
+| `Matrix::Load(RWByteAddressBuffer)` | ✗ | ✓ | ✓ |
+| `Matrix::Load(groupshared)` | ✗ | ✓ | ✓ |
+| `Matrix::Store(RWByteAddressBuffer)` | ✗ | ✓ | ✓ |
+| `Matrix::Store(groupshared)` | ✗ | ✓ | ✓ |
+| `Matrix::Accumulate(RWByteAddressBuffer)` | ✓ | ✓ | ✓ |
+| `Matrix::Accumulate(groupshared)` | ✗ | ✓ | ✓ |
+| `Matrix::FromThreadVectors()` | ✗ | ✓ | ✓ |
+| `Matrix::GetThreadVector()` | ✗ | ✓ | ✓ |
+| `Matrix::MultiplyAccumulate()` | ✗ | ✓ | ✓ |
+| `Matrix::SumAccumulate()` | ✗ | ✓ | ✓ |
+| `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
+| `linalg::Multiply(vector, Matrix)` | ✓ | ✓ | ✓ |
+| `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✓ | ✓ |
+| `linalg::OuterProduct(vector, vector)` | ✓ | ✓ | ✓ |
 
 Throughout this document a matrix may be described as having a scope as
 specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
@@ -423,6 +444,7 @@ enum class MatrixUse {
 enum class MatrixScope {
   Thread = 0,
   Wave = 1,
+  ThreadGroup = 2,
 };
 
 enum class UnaryOperation {
@@ -622,8 +644,8 @@ Matrix::Splat(T Val);
 ```
 
 Constructs a matrix filled with the provided value casted to the element type.
-If the matrix is a `Wave` scope matrix, this operation shall behave equivalent
-to:
+If the matrix is a `Wave` or `ThreadGroup` scope matrix, this operation shall
+behave equivalent to:
 
 ```c++
 Matrix::Splat(WaveReadLaneFirst(Val));
@@ -631,7 +653,7 @@ Matrix::Splat(WaveReadLaneFirst(Val));
 
 This operation may be called in divergent control flow when creating a thread
 scope matrix, and must be called in uniform control flow when creating a wave
-scope matrix.
+scope or thread group scope matrix.
 
 #### Matrix::Load
 
@@ -649,7 +671,7 @@ Matrix::Load(
 
 template <typename T>
 static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, Matrix>::type
+                                Scope != MatrixScope::Thread, Matrix>::type
 Matrix::Load(groupshared T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 ```
 
@@ -680,15 +702,15 @@ scope matrix.
 ```c++
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                              UseLocal == Use,
-                          Matrix>::type
-    FromThreadVectors(vector<ElementType, MScalars>);
+                         UseLocal == Use,
+                         Matrix>::type
+FromThreadVectors(vector<ElementType, MScalars>);
 
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                              UseLocal == Use,
-                          Matrix>::type
-    FromThreadVectors(vector<ElementType, NScalars>);
+                         UseLocal == Use,
+                         Matrix>::type
+FromThreadVectors(vector<ElementType, NScalars>);
 ```
 
 Produces a matrix from per-thread vectors. An A matrix is produced from
@@ -696,9 +718,15 @@ per-thread column vectors, while a B matrix is produced from per-thread row
 vectors. The `FromThreadVectors` construction method is not available for
 accumulator matrices which vary by hardware implementation.
 
-When creating an A matrix, the N dimension must be less than or equal to the
-wave size. When creating a B matrix, the M dimension must be less than or equal
-to the wave size. Threads outside the matrix size are discarded.
+When creating an A wave scope matrix, the N dimension must be less than or
+equal to the wave size.  When creating an A thread group scope matrix, the N
+dimension must be less than or equal to the thread group size.
+
+When creating a B wave scope matrix, the M dimension must be less than or
+equal to the wave size.  When creating a B thread group scope matrix, the M
+dimension must be less than or equal to the thread group size.
+
+Threads outside the matrix size are discarded.
 
 Must be called from wave-uniform control flow.
 
@@ -774,14 +802,14 @@ are unsupported:
 ```c++
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                              UseLocal == Use,
-                          vector<ElementType, MScalars>>::type
+                         UseLocal == Use,
+                         vector<ElementType, MScalars>>::type
 GetThreadVector(uint Index = 0);
 
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                              UseLocal == Use,
-                          vector<ElementType, NScalars>>::type
+                         UseLocal == Use,
+                         vector<ElementType, NScalars>>::type
 GetThreadVector(uint Index = 0);
 ```
 
@@ -797,7 +825,8 @@ implementation.
 Threads which correspond to threads outside the matrix size will return a vector
 with all elements zero initialized.
 
-Must be called from wave-uniform control flow.
+Must be called from wave-uniform control flow for a wave scope matrix and
+thread group-uniform control flow for a thread group scope matrix..
 
 #### Matrix::MultiplyAccumulate(Matrix, Matrix)
 
@@ -811,9 +840,9 @@ Matrix::MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                            const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
 
-An accumulator matrix with wave scope has a method `MultiplyAccumulate` which
-takes as parameters an M x K A matrix with wave scope and a K x N B matrix with
-wave scope. The matrix arguments are multiplied against each other and added
+An accumulator matrix with wave or thread group scope has a method `MultiplyAccumulate` which
+takes as parameters an M x K A matrix with the same scope and a K x N B matrix with
+the same scope. The matrix arguments are multiplied against each other and added
 back into the implicit object accumulator matrix.
 
 Must be called from wave-uniform control flow.
@@ -830,8 +859,8 @@ Matrix::SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                       const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
 ```
 
-An accumulator matrix with wave scope has a method `SumAccumulate` which takes
-as parameters an M x K A matrix with wave scope and a K x N B matrix with wave
+An accumulator matrix with wave or thread group scope has a method `SumAccumulate` which takes
+as parameters an M x K A matrix with the same scope and a K x N B matrix with the same
 scope. The matrix arguments are added together then added back into the implicit
 object accumulator matrix.
 
@@ -852,15 +881,15 @@ optimizing control flow and dead code elimination.
 
 ```c++
 template <MatrixComponentType OutTy, MatrixComponentType ATy,
-          MatrixComponentType BTy, uint M, uint N, uint K>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
-                 const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+          MatrixComponentType BTy, uint M, uint N, uint K, MatrixScope Scope>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, Scope>,
+                 const Matrix<T, K, N, MatrixUse::B, Scope>);
 
 template <MatrixComponentType T, uint M, uint N, uint K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
-                 const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+Matrix<T, M, N, MatrixUse::Accumulator, Scope>
+linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, Scope>,
+                 const Matrix<T, K, N, MatrixUse::B, Scope>);
 ```
 
 The `linalg::Multiply` function has two overloads that take an MxK `Wave`-scope
@@ -932,6 +961,7 @@ enum class DXILMatrixUse {
 enum class DXILMatrixScope {
   Thread = 0,
   Wave = 1,
+  ThreadGroup = 2,
 };
 
 enum class DXILMatrixUnaryOperation {
@@ -1170,7 +1200,7 @@ Validation rules will enforce that:
 * argument A is an `A` matrix
 * argument B is a `B` matrix
 * argument C is an `Accumulator` matrix
-* All three matrices are `Wave` scope
+* All three matrices have the same scope (Wave or ThreadGroup)
 * Matrix A's dimensions shall be M x K
 * Matrix B's dimensions shall be K x N
 * Matrix C's dimensions shall be M x N
@@ -1222,7 +1252,7 @@ a bias vector added to the result.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/4463ze5h1)
+[Compiler Explorer](https://godbolt.org/z/dh9jzbj8K)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1319,6 +1349,7 @@ enum class MatrixUse {
 enum class MatrixScope {
   Thread = 0,
   Wave = 1,
+  ThreadGroup = 2,
 };
 
 enum class UnaryOperation {
@@ -1481,6 +1512,17 @@ template <MatrixComponentType T, uint M, uint N, uint K>
 Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+
+template <MatrixComponentType OutTy, MatrixComponentType ATy,
+          MatrixComponentType BTy, uint M, uint N, uint K>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+
+template <MatrixComponentType T, uint M, uint N, uint K>
+Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<T, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
