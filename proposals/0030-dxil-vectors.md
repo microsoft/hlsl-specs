@@ -136,47 +136,66 @@ This means that the same language-level vector (of any length) could be used
 
 ### New DXIL Intrinsics
 
+#### `VectorReduce` OpCodeClass
+
+A new generic OpCodeClass `VectorReduce` is introduced for usage in new operations
+below. `VectorReduce` combines a vector of elements into a single element with
+the same type as the vector element type. The elements are combined using an
+operation specified by the opcode parameter.
+
 #### Boolean Vector Reduction Intrinsics
 
 **VectorReduceAnd**
 
 Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceAnd = 309
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
 ```
 
 **VectorReduceOr**
 
 Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceOr = 310
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
 ```
 
 #### Vectorized Dot
 
-**VectorDotProduct**
+A new OpCodeClass `dot` is introduced. The return type matches the vector element
+return type. The 2nd and 3rd parameters are two vectors of the same dimention and
+element type. The 1st parameter is an opcode that specifies what type of dot
+operation to calculate. The only supported opcode as of this proposal is floating
+point dot.
+
+**FDot**
 
 Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
-native vectors in DXIL `dot` can now be treated as a normal binary operation.
+native vectors in DXIL `dot` can now be treated similarly to a binary operation.
 
 Returns `op1[0] * op2[0] + op1[1] * op2[1] + ... + op1[NUM - 1] * op2[NUM - 1]`
 
+The scalar type for `FDot` may be `half` or `float`.
+
 ```C++
-DXIL::OpCode::VectorDotProduct = 311
+DXIL::OpCode::FDot = 311
 ```
 
 ```asm
- [TYPE] @dx.op.binary.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
+ [TYPE] @dx.op.dot.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
 ```
 
 ### Validation Changes
