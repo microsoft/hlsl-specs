@@ -26,9 +26,6 @@ geometry (among other topics).
 How clustered geometry gets exposed in D3D overall is to be determined but this document is
 certainly a part: a proposal for the HLSL operations needed for clustered geometry.
 
-
----
-
 ## Motivation
 
 Clustered Geometry refers to a building block for Bottom Level Acceleration Structures 
@@ -41,11 +38,7 @@ This isn't an index into the clusters in a given BLAS but rather an ID assigned 
 the user for each cluster in a BLAS.  Different BLASs could reuse simmilar building blocks, and 
 thus share cluster ID.
 
----
-
 ## HLSL
-
----
 
 ### Enums
 
@@ -62,13 +55,9 @@ Value                | Definition
 -----                | ----
 `CLUSTER_ID_INVALID` | Returned if a BLAS was intersected that was not constructed from CLAS
 
----
-
 ### DXR 1.0 System Value Intrinsics
 
 A new DXR System Value Intrinsic is added to support fetching the `ClusterID` of an intersected CLAS.
-
----
 
 #### ClusterID
 
@@ -83,18 +72,14 @@ is returned.
 The following table shows which shaders can access it:
 | **values \\ shaders**                                     | ray generation | intersection | any hit | closest hit | miss | callable |
 |:---------------------------------------------------------:|:--------------:|:------------:|:-------:|:-----------:|:----:|:--------:|
-| *Primitive/object space system values:*               |                |              |         |         |            |      |
-| uint [ClusterID()](#clusterid)                            |                |              |   \*    |    \*   |            |      |
-
----
+| *Primitive/object space system values:*                   |                |              |         |             |      |          |
+| uint [ClusterID()](#clusterid)                            |                |              |   \*    |    \*       |      |          |
 
 ## Extension to DXR 1.1 RayQuery API
 
 New intrinsics [CandidateClusterID()](#rayquery-candidateclusterid) and 
 [CommittedClusterID()](#rayquery-committedclusterid) are added to `RayQuery`.
 Behavior of all other intrinsics is unchanged.
-
----
 
 ### RayQuery intrinsics
 
@@ -106,10 +91,10 @@ depending on the current [CommittedStatus()](https://github.com/microsoft/Direct
 (i.e. what type of hit has been committed yet, if any) - this is further
 clarified in another table further below.
 
-| **Intrinsic** \ **CandidateType()** | `HIT_CANDIDATE_NON_OPAQUE_TRIANGLE` | `HIT_CANDIDATE_PROCEDURAL_PRIMITIVE`
-|:--------------|:-----------:|:-----------:|
-| uint [CandidateClusterID()](#rayquery-candidateclusterid)|   \*      |              |
-| uint [CommittedClusterID()](#rayquery-committedclusterid)|   \*      |              |
+| **Intrinsic** \ **CandidateType()**                      | `HIT_CANDIDATE_NON_OPAQUE_TRIANGLE` | `HIT_CANDIDATE_PROCEDURAL_PRIMITIVE` |
+|:---------------------------------------------------------|:-----------------------------------:|:------------------------------------:|
+| uint [CandidateClusterID()](#rayquery-candidateclusterid)|   \*                                |                                      |
+| uint [CommittedClusterID()](#rayquery-committedclusterid)|   \*                                |                                      |
 
 The following table lists intrinsics available depending on the current
 [COMMITTED_STATUS](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#committed_status) (i.e. what type of
@@ -119,11 +104,9 @@ hit has been committed, if any). This applies regardless of whether
 complete). If `TRUE`, additional methods than those shown below are
 available (see the above table).
 
-| **Intrinsic** \ **CommittedStatus()** | `COMMITTED_TRIANGLE_HIT` | `COMMITTED_PROCEDURAL_PRIMITIVE_HIT` | `COMMITTED_NOTHING` |
-|:--------------|:-----------:|:-----------:|:-----------:|
-| uint [CommittedClusterID()](#rayquery-committedclusterid)|   \*      |             |        |
-
----
+| **Intrinsic** \ **CommittedStatus()**                    | `COMMITTED_TRIANGLE_HIT` | `COMMITTED_PROCEDURAL_PRIMITIVE_HIT` | `COMMITTED_NOTHING` |
+|:---------------------------------------------------------|:------------------------:|:------------------------------------:|:-------------------:|
+| uint [CommittedClusterID()](#rayquery-committedclusterid)|   \*                     |                                      |                     |
 
 #### RayQuery CandidateClusterID
 
@@ -139,8 +122,6 @@ uint RayQuery::CandidateClusterID();
 call.
 Lowers to [RayQuery_CandidateClusterID DXIL Opcode](#rayquery_candidateclusterid-dxil-opcode).
 
----
-
 #### RayQuery CommittedClusterID
 
 The user-provided `ClusterID` of the intersected CLAS, if a Cluster BLAS was
@@ -154,8 +135,6 @@ uint RayQuery::CommittedClusterID();
 [RayQuery intrinsics](#rayquery-intrinsics) illustrates when this is valid to
 call.
 Lowers to [RayQuery_CommittedClusterID DXIL Opcode](#rayquery_committedclusterid-dxil-opcode).
-
----
 
 ### Extension to the DXR 1.2 HitObject API
 
@@ -172,8 +151,6 @@ Returns the user-provided `ClusterID` of the intersected CLAS of a hit.
 Returns `CLUSTER_ID_INVALID` if a non-Cluster BLAS was intersected or if
 the `HitObject` does not encode a hit.
 Lowers to [HitObject_ClusterID DXIL Opcode](#hitobject_clusterid-dxil-opcode).
-
----
 
 ### Diagnostic Changes
 
@@ -194,8 +171,6 @@ This proposal does not introduce or remove diagnostics or warnings.
 
 * Expected error when ClusterID builtins called from unsupported shader kinds.
 
----
-
 ### DXIL
 
 | Opcode | Opcode name | Description
@@ -204,8 +179,6 @@ XXX      | ClusterID | Returns the cluster ID of this hit
 XXX + 1  | RayQuery_CandidateClusterID  | Returns the candidate hit cluster ID
 XXX + 2  | RayQuery_CommittedClusterID  | Returns the committed hit cluster ID
 XXX + 2  | HitObject_ClusterID  | Returns the cluster ID of this committed hit
-
----
 
 #### ClusterID DXIL Opcode
 
@@ -216,8 +189,6 @@ declare i32 @dx.op.clusterID(
 ```
 
 Valid shader kinds defined in [ClusterID HLSL](#clusterid).
-
----
 
 #### RayQuery_CandidateClusterID DXIL Opcode
 
@@ -231,8 +202,6 @@ declare i32 @dx.op.rayQuery_StateScalar.i32(
 Validation errors:
 * Validate that the RayQuery handle is not `undef`.
 
----
-
 #### RayQuery_CommittedClusterID DXIL Opcode
 
 ```DXIL
@@ -245,8 +214,6 @@ declare i32 @dx.op.rayQuery_StateScalar.i32(
 Validation errors:
 * Validate that the RayQuery handle is not `undef`.
 
----
-
 #### HitObject_ClusterID DXIL Opcode
 
 ```DXIL
@@ -258,8 +225,6 @@ declare i32 @dx.op.hitObject_StateScalar.i32(
 
 Validation errors:
 * Validate that the HitObject is not `undef`.
-
----
 
 ### Diagnostic Changes
 
