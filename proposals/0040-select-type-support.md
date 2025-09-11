@@ -5,7 +5,7 @@ params:
     - kmpeng: Kaitlin Peng
   sponsors:
     - kmpeng: Kaitlin Peng
-  status: Under Consideration
+  status: Accepted
 ---
 
 ---
@@ -42,7 +42,3 @@ T select(bool, T, T);
 This proposal does not suggest making similar changes to DXC, as DXC’s ternary
 operator intentionally limits its supported types. Clang’s divergence here is
 justified by its alignment with C++ semantics.
-
-## Detailed design
-
-_The detailed design is not required until the feature is under review._
