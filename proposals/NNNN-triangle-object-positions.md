@@ -156,7 +156,7 @@ These intrinsics may only be used with a triangle hit, otherwise behavior is
 undefined. A shader can check for a triangle hit with
 [`HitKind()`][dxr-hitkind], [`RayQuery::CandidateType()`][dxr-rq-can-type], or
 [`CommittedStatus()`][dxr-rq-com-status], or
-[`dx::HitObject::GetHitKind()`](dxr-ser-hit-kind) depending on the context.
+[`dx::HitObject::GetHitKind()`][dxr-ser-hit-kind] depending on the context.
 
 Shader model 6.10 is required to use these intrinsics.
 
@@ -479,4 +479,5 @@ A couple other options:
 [dxr-rq-can-type]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-candidatetype> "RayQuery CandidateType"
 [dxr-rq-com-status]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-committedstatus> "RayQuery CommittedStatus"
 [dxr-ser-hit-kind]: <https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html#hitobject-gethitkind> "dx::HitObject::GetHitKind()"
+[dxr-tier]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_tier> "D3D12_RAYTRACING_TIER"
 
