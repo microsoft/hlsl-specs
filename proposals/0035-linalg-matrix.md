@@ -290,7 +290,7 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<MatrixComponentType::F16, MatrixScope::Thread>(VecA, VecB);
   
-  MatAcc.Accumulate(Buf, 0, 16 * 2, MatrixLayout::OuterProductOptimal);
+  MatAcc.Accumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
 
@@ -693,6 +693,9 @@ unsupported:
 | `Matrix::Load(ByteAddressBuffer)` | `Thread` | any |
 | `Matrix::Load(*)` | `Wave` | `RowMajor`, `ColMajor` |
 
+If the `Layout` argument is `MulOptimal` or `OuterProductOptimal`, then
+the `Stride` must be `0`.
+
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
 scope matrix.
@@ -796,6 +799,9 @@ are unsupported:
 |-----------|--------------|------------|
 | `Matrix::Accumulate(RWByteAddressBuffer)` | `Thread` | `OuterProductOptimal` |
 | `Matrix::Accumulate(*)` | `Wave` | `RowMajor`, `ColMajor` |
+
+If the `Layout` argument is `OuterProductOptimal`, then the `Stride` must be
+`0`.
 
 #### Matrix::GetThreadVector(uint)
 
@@ -1252,7 +1258,7 @@ a bias vector added to the result.
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/dh9jzbj8K)
+[Compiler Explorer](https://godbolt.org/z/qYW89nTTK)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1588,7 +1594,7 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<MatrixComponentType::F16, MatrixScope::Thread>(VecA, VecB);
   
-  MatAcc.Accumulate(Buf, 0, 16 * 2, MatrixLayout::OuterProductOptimal);
+  MatAcc.Accumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
 
