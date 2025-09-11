@@ -240,6 +240,7 @@ TODO: link the DXR spec proposal when available
 
 * Valid calls to new DXIL ops pass validation.
 * Invalid calls fail validation (undef `i32` RayQuery handle or `%dx.types.HitObject` HitObject parameter).
+* Calls in invalid shader stages fail validation.
 
 ### Execution Tests
 
