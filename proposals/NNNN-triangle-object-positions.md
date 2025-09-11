@@ -15,8 +15,6 @@ This proposal adds intrinsics that can be called from an Any hit or Closest
 hit shader to obtain the positions of the vertices for the triangle that has
 been hit.
 
----
-
 ## Motivation
 
 Developers often need to know the positions of the vertices for the triangle
@@ -29,8 +27,6 @@ If developers can access this data from their shader code then this will remove
 the need have a duplicate copy of it. In addition, this will provide drivers
 with opportunities to optimize the data layout for their implementations.
 
----
-
 ## Proposed solution
 
 Add intrinsics to look up the object-space vertex positions of the triangle for
@@ -41,11 +37,7 @@ For context, see related sections in DirectX Raytracing Specification:
 [RayQuery::CandidateTriangleObjectPositions][dxr-rq-can-tri-obj-pos],
 [RayQuery::CommittedTriangleObjectPositions][dxr-rq-com-tri-obj-pos].
 
----
-
 ## Detailed design
-
----
 
 ### HLSL Additions
 
@@ -160,8 +152,6 @@ undefined. A shader can check for a triangle hit with
 
 Shader model 6.10 is required to use these intrinsics.
 
----
-
 ### Diagnostic Changes
 
 New diagnostics:
@@ -173,8 +163,6 @@ New diagnostics:
   * `"TriangleObjectPositions is not available in <stage> on Shader Model <shadermodel>"`
 
 > Open Issue: [Use Availability Attributes](#use-availability-attributes)
-
----
 
 #### Validation Changes
 
@@ -189,11 +177,7 @@ requirements for DXIL ops will be used.
 Existing validation for RayQuery handle will be used.
 Existing validation for HitObject handle will be used.
 
----
-
 ### Runtime Additions
-
----
 
 #### Device Capability
 
@@ -210,11 +194,7 @@ Use of HitObject intrinsics require Shader Model 6.10 and
 > requirement or use of RayQuery or use of HitObject, so no other changes
 > are required in the compiler, aside from the shader model requirement.
 
----
-
 ## Testing
-
----
 
 ### Compiler output
 
@@ -225,14 +205,10 @@ Use of HitObject intrinsics require Shader Model 6.10 and
 * Use D3DReflect test to verify min shader model of 6.10 with each intrinsic
   usage for library target.
 
----
-
 ### Diagnostics
 
 * Test shader model diagnostic for each new HLSL intrinsic.
 * Test shader stage diagnostic for `TriangleObjectPositions` intrinsic.
-
----
 
 ### DXIL Additions
 
@@ -288,8 +264,6 @@ for the shader invocation.
 However, the new RayQuery methods must be `readonly` because they read from
 RayQuery state, which is impacted by various other RayQuery methods.
 
----
-
 ### SPIR-V Mapping
 
 The `TriangleObjectPositions()` HLSL intrinsic can be implemented against the
@@ -316,19 +290,13 @@ opcode, with `Intersection` set to `RayQueryCandidateIntersectionKHR` for
 `CandidateTriangleObjectPositions`, and `Intersection` set to
 `RayQueryCommittedIntersectionKHR` for `CommittedTriangleObjectPositions`.
 
----
-
 #### Runtime information
 
 Use of any of these new DXIL ops will set the
 `RuntimeDataFunctionInfo::MinShaderTarget` shader model to a minimum of 6.10 in
 the `RDAT` part for the calling function.
 
----
-
 ## Testing
-
----
 
 ### Validation
 
@@ -338,18 +306,12 @@ the `RDAT` part for the calling function.
 * Test non-constant argument validation with each DXIL op.
 * Test out-of-range argument validation with each DXIL op.
 
----
-
 ### Execution
 
 Testing for triangle object position operations will be added to the existing
 Raytracing HLK tests.
 
----
-
 ## Resolved Issues
-
----
 
 ### Return Type
 
@@ -388,8 +350,6 @@ Other approaches have been proposed for the return type of this intrinsic:
 
 **Resolution**: Return built-in struct containing all three positions.
 
----
-
 ### Intrinsic Naming
 
 `TriangleObjectPositions` doesn't match the name used in SPIR-V, which is more
@@ -397,8 +357,6 @@ like `HitTriangleVertexPositions`.  Should we adjust naming to align?
 
 **Resolution**: `TriangleObjectPositions` aligns with our conventions for related
 intrinsics.
-
----
 
 ### Share OpCodeClass
 
@@ -415,8 +373,6 @@ opcode classes for no good reason.
 
 **Resolution**: Use separate OpCodeClass for consistency with related ops.
 
----
-
 ### Use Availability Attributes
 
 Instead of custom diagnostics for these functions, we could potentially use
@@ -427,18 +383,12 @@ on-demand in a custom way.
 
 **Resolution**: This seems worthwhile to investigate in Clang but out of scope for DXC.
 
----
-
 ## Open Issues
-
----
 
 ### Built-in struct return type
 
 `BuiltInTrianglePositions` isn't necessarily the best name for the struct,
 so suggestions for a better name are welcome.
-
----
 
 ### Return type for DXIL ops
 
@@ -460,8 +410,6 @@ A couple other options:
   * one `<9 x float>` with all values at once
 
 **Proposed Resolution**: Keep DXIL op scalar for consistency with other ops.
-
----
 
 ## Acknowledgments
 
