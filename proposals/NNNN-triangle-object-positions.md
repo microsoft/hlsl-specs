@@ -198,13 +198,13 @@ Existing validation for HitObject handle will be used.
 #### Device Capability
 
 Use of Triangle Object Positions intrinsics require Shader Model 6.10 and
-[D3D12_RAYTRACING_TIER_1_0][dxr-tier].
+[D3D12_RAYTRACING_TIER_1_0](dxr-tier).
 
 Use of RayQuery intrinsics require Shader Model 6.10 and
-[D3D12_RAYTRACING_TIER_1_1][dxr-tier].
+[D3D12_RAYTRACING_TIER_1_1](dxr-tier).
 
 Use of HitObject intrinsics require Shader Model 6.10 and
-[D3D12_RATRACING_TIER_1_2][dxr-tier].
+[D3D12_RATRACING_TIER_1_2](dxr-tier).
 
 > Note: any raytracing tier requirement is implied by the shader stage
 > requirement or use of RayQuery or use of HitObject, so no other changes
