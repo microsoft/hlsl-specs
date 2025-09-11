@@ -1,14 +1,12 @@
-<!-- {% raw %} -->
-
-# HLSL support for Clustered Geometry in Raytracing
-
 ---
-
-* Proposal: [NNNN](NNNN-clustered-geometry.md)
-* Author(s): [Jan Schmid](https://github.com/jschmid-nvidia), [Simon Moll](https://github.com/simoll)
-* Sponsor: [Jesse Natalie](https://github.com/jenatali)
-* Status: **Under Consideration**
-
+title: NNNN - HLSL support for Clustered Geometry in Raytracing
+params:
+  authors:
+  - jschmid-nvidia: Jan Schmid
+  - simoll: Simon Moll
+  sponsors:
+  - jenatali: Jesse Natalie
+  status: Under Review
 ---
 
 ## Introduction
@@ -28,7 +26,6 @@ geometry (among other topics).
 How clustered geometry gets exposed in D3D overall is to be determined but this document is
 certainly a part: a proposal for the HLSL operations needed for clustered geometry.
 
-Also see the complementary [DXIL](NNNN-dxil-clustered-geometry.md) proposal.
 
 ---
 
@@ -307,4 +304,3 @@ Builtin [HitObject::GetClusterID](#hitobjectgetclusterid) to test in these HitOb
 * Test expected cluster ID value for HitObject obtained from `HitObject::TraceRay` (CLAS hit, CLAS miss, non-CLAS hit).
 * Test `CLUSTER_ID_INVALID` for HitObject constructed from `HitObject::MakeMiss` and `HitObject::MakeNop`. 
 
-<!-- {% endraw %} -->
