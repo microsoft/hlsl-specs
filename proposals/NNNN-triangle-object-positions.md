@@ -1,12 +1,12 @@
-<!-- {% raw %} -->
-
-# HLSL TriangleObjectPositions
-
-* Proposal: [NNNN](NNNN-triangle-object-positions.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d), [Jesse Natalie](https://github.com/jenatali)
-* Sponsor: [Jesse Natalie](https://github.com/jenatali)
-* Status: **Under Consideration**
-
+--- 
+title: NNNN - TriangleObjectPositions
+params:
+  authors:
+  - tex3d: Tex Riddell
+  - jenatali: Jesse Natalie
+  sponsors:
+  - jenatali: Jesse Natalie
+  status: Under Review
 ---
 
 ## Introduction
@@ -480,4 +480,3 @@ A couple other options:
 [dxr-rq-com-status]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-committedstatus> "RayQuery CommittedStatus"
 [dxr-ser-hit-kind]: <https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html#hitobject-gethitkind> "dx::HitObject::GetHitKind()"
 
-<!-- {% endraw %} -->
