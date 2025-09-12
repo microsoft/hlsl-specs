@@ -61,7 +61,7 @@ This aligns with C/C++ conventions that our users are already familiar with.
 This proposal introduces a new HLSL `DebugBreak` intrinsic which has a
 runtime-defined behavior to facilitate shader debugging workflows. If the
 runtime does not support or is not configured to enable support for the
-corresponding DXIL instruction must be treated as a no-op by the driver.
+corresponding DXIL instruction, it must be treated as a no-op by the driver.
 
 ### HLSL Surface
 
