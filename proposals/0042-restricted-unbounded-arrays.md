@@ -1,5 +1,5 @@
 ---
-title: "NNNN - Restricted Unbounded Arrays"
+title: "0042 - Restricted Unbounded Arrays"
 params:
   authors:
     - llvm-beanz: Chris Bieneman
