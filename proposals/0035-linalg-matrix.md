@@ -107,16 +107,16 @@ class Matrix {
   Splat(T Val);
   
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     bool ColMajor, uint Align = sizeof(ElementType));
+                     MatrixLayout Layout, uint Align = sizeof(ElementType));
   
   static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-       bool ColMajor, uint Align = sizeof(ElementType));
+       MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                   Scope != MatrixScope::Thread, Matrix>::type
-  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   template <MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
@@ -132,12 +132,12 @@ class Matrix {
 
   typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-             bool ColMajor, uint Align = sizeof(ElementType));
+        MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                            Scope != MatrixScope::Thread, void>::type
-  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   // Extract the thread-specific vector.
   template <MatrixUse UseLocal = Use>
@@ -254,7 +254,7 @@ void CoopVec() {
       Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
@@ -416,6 +416,11 @@ enum class UnaryOperation {
   Sin = 3,
   Cos = 4,
   Tan = 5,
+};
+
+enum class MatrixLayout {
+  RowMajor = 0,
+  ColMajor = 1,
 };
 ```
 
@@ -613,18 +618,18 @@ scope or thread group scope matrix.
 
 ```c++
 static Matrix Matrix::Load(
-    ByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
+    ByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
 static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
 Matrix::Load(
-    RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
+    RWByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
 template <typename T>
 static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                 Scope != MatrixScope::Thread, Matrix>::type
-Matrix::Load(groupshared T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+Matrix::Load(groupshared T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 ```
 
 The matrix `Load` methods create a new matrix of the specified dimensions and
@@ -678,14 +683,14 @@ Must be called from wave-uniform control flow.
 ```c++
 typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
 Matrix::Store(
-    RWByteAddressBuffer Res, uint StartOffset, uint Stride, bool ColMajor,
+    RWByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
 template <typename T>
 typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                          Scope != MatrixScope::Thread, void>::type
 Matrix::Store(groupshared T Arr[], uint StartIdx, uint Stride,
-                   bool ColMajor);
+              MatrixLayout Layout);
 ```
 
 The matrix `Store` methods store the matrix data to a target
@@ -976,7 +981,7 @@ declare void @dx.op.matrixLoadFromDescriptor(
   %dx.types.Handle *,    ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
-  i1,                    ; isColumnMajor
+  i32,                   ; matrix layout
   )
 ```
 
@@ -993,7 +998,7 @@ declare void @dx.op.matrixLoadFromMemory.p[Ty](
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
-  i1,                    ; isColumnMajor
+  i32,                   ; matrix layout
   )
 ```
 
@@ -1030,7 +1035,7 @@ declare void @dx.op.matrixStoreToDescriptor(
   %dx.types.Handle *,    ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
-  i1,                    ; isColumnMajor
+  i32,                   ; matrix layout
   )
 ```
 
@@ -1044,7 +1049,7 @@ declare void @dx.op.matrixStoreToMemory.p[Ty](
   [Ty] *,                ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
-  i1,                    ; isColumnMajor
+  i32,                   ; matrix layout
   )
 ```
 
@@ -1263,6 +1268,11 @@ enum class UnaryOperation {
   Tan = 5,
 };
 
+enum class MatrixLayout {
+  RowMajor = 0,
+  ColMajor = 1,
+};
+
 template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
           MatrixScope Scope>
 class Matrix {
@@ -1314,16 +1324,16 @@ class Matrix {
   Splat(T Val);
   
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     bool ColMajor, uint Align = sizeof(ElementType));
+                     MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-       bool ColMajor, uint Align = sizeof(ElementType));
+       MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                   Scope != MatrixScope::Thread, Matrix>::type
-  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   template <MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
@@ -1339,12 +1349,12 @@ class Matrix {
 
   typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-             bool ColMajor, uint Align = sizeof(ElementType));
+        MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                            Scope != MatrixScope::Thread, void>::type
-  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, bool ColMajor);
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   // Extract the thread-specific vector.
   template <MatrixUse UseLocal = Use>
@@ -1438,8 +1448,8 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, false);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
 
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
@@ -1451,7 +1461,7 @@ void CoopVec() {
       Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
