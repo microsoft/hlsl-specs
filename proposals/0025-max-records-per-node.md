@@ -1,12 +1,17 @@
-<!-- {% raw %} -->
+---
+title: 0025 - [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
+params:
+    authors:
+    - anupamachandra: Anupama Chandrasekhar
+    - mapodaca-nv: Mike Apodaca
+    status: Under Review
+---
 
-* Proposal: [0025](0025-max-records-per-node.md)
-* Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Mike Apodaca](https://github.com/mapodaca-nv)
-* Sponsor: Damyan Pepper
-* Status: **Under Review**
+
+ 
 * Planned Version: SM 6.x
 
-# [MaxRecordsPerNode(count)] Attribute for NodeOutputArray
+ 
 
 ## Introduction
 
@@ -114,4 +119,4 @@ equal to `MaxRecords`.  This also avoids redundant attribute specifications for 
 `MaxRecords` and `MaxRecordsPerNode` are identical. However, for performance reasons, this was made a required
 attribute with a compiler fall back for backward compatibilty.
 
-<!-- {% endraw %} -->
+

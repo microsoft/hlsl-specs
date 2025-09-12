@@ -1,11 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0039 - DebugBreak()
+params:
+    authors:
+    - llvm-beanz: Chris Bieneman
+    sponsors:
+    - llvm-beanz: Chris Bieneman
+    status: Under Consideration
+---
 
-# DebugBreak()
 
-* Proposal: [0039](0039-debugbreak.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Issue(s): https://github.com/microsoft/hlsl-specs/issues/33
 
 ## Introduction
@@ -120,6 +124,3 @@ The SPIRV usage will utilize the following instructions:
   * This should be "cheap" and would potentially address pre-existing bugs.
   * This would preserve the requirement that this operation not be moved during
     optimization in the final DXIL.
-
-
-<!-- {% endraw %} -->

@@ -1,4 +1,6 @@
-# Proposal Process
+---
+title: Proposal Process
+---
 
 The primary purpose of this repository is to provide visibility into the feature
 development process for HLSL and solicit feedback from the wider community.

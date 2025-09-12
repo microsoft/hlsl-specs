@@ -1,11 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0024 - Opacity Micromaps
+params:
+  authors:
+  - tex3d: Tex Riddell
+  sponsors:
+  - tex3d: Tex Riddell
+  status: Accepted
+---
 
-# Opacity Micromaps
 
-* Proposal: [0024](0024-opacity-micromaps.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d)
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Accepted**
+ 
 * Planned Version: SM 6.9
 
 > NOTE: some links in this document are to internal documents that are not
@@ -383,4 +387,4 @@ reachable in the current compilation.
 [dxr-flags]: <https://dev.azure.com/cga-exchange/_git/docs?path=/d3d/Raytracing.md&_a=preview&anchor=d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS  (internal only)"
 [rayflags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayflags> "RayFlags()"
 
-<!-- {% endraw %} -->
+

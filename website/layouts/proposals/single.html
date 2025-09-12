@@ -1,0 +1,78 @@
+{{- define "main" -}}
+
+<style>
+    ul.hlsl-specs-names { list-style: none; margin: 0; padding: 0;  }
+    ul.hlsl-specs-names li { display: inline; }
+    ul.hlsl-specs-names li + li::before { content: ", ";  }
+    .hlsl-specs-error, .hlsl-specs-error * { background-color: #ff8080 !important }
+</style>
+
+{{ with .Title }}
+<h1>{{ . }}</h1>
+{{ else }}
+<h1 class="hlsl-specs-error">Missing Title</h1>
+{{ end }}
+
+
+<table style="width: auto">
+    <tbody>
+        {{ if .Params.status }}
+        <tr>
+            <th>
+                Status
+            </th>        
+            <td>
+                    {{ .Params.status }}
+
+            </td>
+        </tr>
+        {{ else }}
+            <tr class="hlsl-specs-error"><th>Status</th><td>Missing Metadata</td></tr>
+        {{ end }}
+        {{ if .Params.authors }}
+        <tr>            
+            <th>
+                Author{{- if gt (.Params.authors | len) 1 -}}s{{- end -}}
+            </th>
+            <td>
+                <ul class="hlsl-specs-names">
+                {{- range .Params.authors -}}
+                    {{- range $username, $name := . -}}
+                       <li><a href="https://github.com/{{ $username }}">{{- $name -}}</a></li>
+                    {{- end -}}
+                {{- end -}}
+                </ul>
+            </td>
+        </tr>
+        {{ else }}
+            <tr class="hlsl-specs-error"><th>Authors</th><td>Missing Metadata</td></tr>
+        {{ end }}
+        {{ with .Params.sponsors }}
+        <tr>
+            <th>
+                Sponsor{{- if gt (. | len) 1 -}}s{{- end -}}
+            </th>
+            <td>
+                <ul class="hlsl-specs-names">
+                {{- range . -}}
+                    {{- range $username, $name := . -}}
+                        <li><a href="https://github.com/{{ $username }}">{{- $name -}}</a></li>
+                    {{- end -}}
+                {{- end -}}
+                </ul>
+            </td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+
+{{/* Force-enable ToC for proposals */}}
+{{- $tocParams := merge .Params (dict "TableOfContents" true) -}}
+{{- partial "table-of-contents.html" (dict "Params" $tocParams "TableOfContents" .TableOfContents) -}}
+
+{{- .Content -}}
+
+{{- partial "edit-meta.html" . -}}
+{{- partial "pagination.html" . -}}
+{{- end -}}
+
