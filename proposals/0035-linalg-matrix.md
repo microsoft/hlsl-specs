@@ -785,7 +785,7 @@ Accumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Lay
 The matrix `Accumulate` methods add the matrix data to a target
 `RWByteAddressBuffer` or `groupshared` array. These methods are only available
 for matrices with `MatrixUse::Accumulator`. The `RWByteAddressBuffer` overload
-works with all thread scopes, while the `groupshared` overload only works with
+works with all matrix scopes, while the `groupshared` overload only works with
 `Wave` scope matrices. When accumulating to `RWByteAddressBuffer` objects the
 data is added in the component type of the matrix object. When accumulating to
 `groupshared` memory, the matrix component data is converted to the target
