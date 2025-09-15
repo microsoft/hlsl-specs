@@ -1,13 +1,14 @@
-<!-- {% raw %} -->
+---
+title: 0037 - Refined cbuffer Contexts
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  - hekota: Helena Kotas
+  status: Under Consideration
+---
 
-# Refined `cbuffer` Contexts
 
-## Instructions
-
-* Proposal: [0037](0037-cbuffer-contexts.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Helena Kotas](https://github.com/hekota)
-* Sponsor: TBD
-* Status: **Under Consideration**
+ 
 * Planned Version: 202x
 * Issues: [DXC #4514](https://github.com/microsoft/DirectXShaderCompiler/issues/4514)
 
@@ -83,7 +84,7 @@ grammar formation is adopted for cbuffers:
   empty-declaration\br
 \end{grammar}
 ```
-![Latex Rendering](NNNN-assets/cbuffer-grammar.png)
+![Latex Rendering](0037-assets/cbuffer-grammar.png)
 
 This simplified grammar disallows members of `cbuffer` declarations that do not
 have semantic meaning, and allows a simplification of `cbuffer` scoping rules.
@@ -103,4 +104,4 @@ Notably a `cbuffer` cannot contain function declarations, type declarations
 variable declarations, `cbuffer` declarations, or any other declaration type not
 explicitly listed as allowed.
 
-<!-- {% endraw %} -->
+

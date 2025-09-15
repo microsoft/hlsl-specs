@@ -1,10 +1,16 @@
-# Mesh Nodes
+---
+title: 0019 - Mesh Nodes
+params:
+  authors:
+  - tex3d: Tex Riddell
+  - amarpMSFT: Amar Patel
+  sponsors:
+  - tex3d: Tex Riddell
+  status: Under Consideration
+---
 
-* Proposal: [0019](0019-mesh-nodes.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d), [Amar Patel](https://github.com/amarpMSFT)
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Consideration**
-* Proposed Version: SM 6.9 experimental
+ 
+* Planned Version: SM 6.x
 
 ## Introduction
 

@@ -1,11 +1,20 @@
-<!-- {% raw %} -->
+---
+title: 0029 - Cooperative Vectors
+params:
+  authors:
+  - anupamachandra: Anupama Chandrasekhar
+  - damyanp: Damyan Pepper
+  - shashankw: Shashank Wadhwa
+  sponsors:
+  - damyanp: Damyan Pepper
+  - pow2clk: Greg Roth
+  status: Rejected
+---
 
-* Proposal: [0029](0029-cooperative-vector.md)
-* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp],
-             [Shashank Wadhwa][shashankw]
-* Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
-* Status: **Under Review**
-* Planned Version: Shader Model 6.9
+> This has been superceded by [0035-linalg-matrix.md](0035-linalg-matrix.md)
+
+ 
+* Planned Version: SM 6.9
 
 
 [anupamachandra]: https://github.com/anupamachandra
@@ -13,17 +22,17 @@
 [pow2clk]: https://github.com/pow2clk
 [shashankw]: https://github.com/shashankw
 
-# Cooperative Vectors
+ 
 
 Cooperative Vectors is the overall name for this feature, though it doesn't appear
-in code other that feature tier/capability queries.
+in code other than feature tier/capability queries.
 
 Many implementations implement matrix-matrix and matrix-vector operations by allowing
 threads in a wave to cooperate under the hood while accessing the specialized hardware 
 to achieve peak performance, hence these APIs that expose the acceleration hardware 
 to HLSL users were put under the moniker **Cooperative/Wave**. But since this is an 
 implementation detail below the level of abstraction of HLSL, the namespace 
-**Linear Algebra** was chosen to categorize these set of operations.
+**Linear Algebra** was chosen to categorize this set of operations.
 
 E.g. `dx::linalg::` MatVec operations in HLSL, 
 `D3D12_LINEAR_ALGEBRA_*` and `D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_*` in D3D API structs.
@@ -250,7 +259,7 @@ row/column of the matrix is valid memory.
 The **matrix stride** is 16-byte aligned.
 
 This operation doesn't perform bounds checking for matrix loads. If any part of
-the matrix load is out of bounds then the entire operation is undefined.
+the matrix load is out of bounds then the entire matrix load will return zero.
 
 
 ##### Bias Vector
@@ -266,7 +275,7 @@ The base address of **bias vector resource** and **bias vector offset** must be
 64-byte aligned.
 
 This operation doesn't perform bounds checking for bias loads. If any part of
-the vector load is out of bounds then the entire operation is undefined.
+the vector load is out of bounds then the entire vector load will return zero.
 
 #### Return Type
 
@@ -336,6 +345,9 @@ row/column of the matrix is valid memory. Implementations may write to the
 contents of the padding between the end of the matrix and the 16-byte boundary,
 so developers should not use this padding space for anything else.
 
+If any part of the matrix write is out-of-bounds, the whole operation is
+skipped.
+
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
 determine which combinations are supported. A list of combinations that are
@@ -382,6 +394,9 @@ there is valid memory between the end of the array and the 16-byte boundary.
 Implementations may write to the contents of the padding between the end of the
 matrix and the 16-byte boundary, so developers should not use this padding space
 for anything else.
+
+If any part of the vector write is out-of-bounds, the whole operation is
+skipped.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -1045,4 +1060,4 @@ deciding to extend the existing `ComponentType` enum.
 We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill, Tex Riddell and
 Amar Patel for their contributions to this specification.
 
-<!-- {% endraw %} -->
+

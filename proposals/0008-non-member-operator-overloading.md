@@ -1,11 +1,14 @@
-# Non-member Operator Overloading
+---
+title: 0008 - Non-member Operator Overloading
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-## Instructions
-
-* Proposal: [0008](0008-non-member-operator-overloading.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Planned Version: 202y
 * Related Proposal(s): [0006 Reference Types](0006-reference types.md)
 
@@ -43,6 +46,68 @@ Because this solution should not break existing code, it could also be enabled
 under HLSL 2021 as an extension. Using the feature in HLSL 2021 mode as an
 extension will produce warnings so that users can be aware of portability issues
 that may arise between compiler versions.
+
+## Detailed Design
+
+### **Overloaded Operators** Spec Language
+
+```latex
+\begin{grammar}
+  \define{operator-function-id}\br
+    \terminal{operator} operator\br
+
+  \define{operator} one of\br
+    \terminal{+} \terminal{-} \terminal{*} \terminal{/} \terminal{\%}
+    \terminal{\^{}} \terminal{\&} \terminal{|} \terminal{\~{}} \terminal{!}
+    \terminal{=} \terminal{<} \terminal{>}\br
+    \terminal{+=} \terminal{-=} \terminal{*=} \terminal{/=} \terminal{\%=}
+    \terminal{\^{}=} \terminal{\&=} \terminal{|=}\br
+    \terminal{<<} \terminal{>>} \terminal{>>=} \terminal{<<=}
+    \terminal{==} \terminal{!=} \terminal{<=} \terminal{>=} \terminal{\&\&}
+    \terminal{||}\br
+    \terminal{++} \terminal{--} \terminal{,} \terminal{()}
+    \terminal{\[\]}\br
+\end{grammar}
+```
+![Latex Rendering](0008-assets/OperatorGrammar.png)
+
+An _operator function_ is a function declared with an _operator-function-id_ as
+its name. An _operator function template_ is a function template
+operator-function-id as its name.
+
+Both the binary and unary forms of `+`, `-`, `*` and `&` can be overloaded.
+Except in the case of the unary `++` operator (see below), binary and unary operators are
+differentiated by the sum of implicit and explicit parameters; two for a
+binary operator and one for a unary operator.
+
+An operator function can be called explicitly by using the _operator-function_id
+as the name of the function.
+
+An operator function shall either be a non-static member function or a
+non-member function. If an operator is a non-member function it must have at
+least one parameter of class or enumeration type.
+
+No argument to an operator function shall have a default value. Operators cannot
+have more or fewer parameters than the number required for the corresponding
+operator.
+
+#### Increment and Decrement Operators
+
+A user-defined function `operator++` or `operator--` implements the prefix and
+postfix operators. If the function has only one implicit or explicit parameter
+it defines a prefix operator for the type of the single parameter. Otherwise the
+function will have two parameters where the implicit object or first parameter
+are of class type, and the second parameter is of `int` type, and it will
+implement the postfix operator for the type of the first parameter.
+
+When a user-defined post-fix operator is called the value of the `int` parameter
+will be `0`.
+
+### Overload Resolution Language
+
+The HLSL draft specification already defines overload resolution to occur in all
+the relevant places required for non-member overload resolution (see:
+[[Overload.Res]](https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Overload.Res)).
 
 ## Alternatives considered
 

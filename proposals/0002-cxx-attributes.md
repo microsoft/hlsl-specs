@@ -1,10 +1,15 @@
-<!-- {% raw %} -->
-# C++ Attributes
+---
+title: 0002 - C++ Attributes
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-* Proposal: [0002](0002-cxx-attributes.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+
+
 * Planned Version: 202y
 
 ## Introduction
@@ -350,8 +355,3 @@ struct [[raypayload]] Payload {
   float f [[payload_access(read, caller, anyhit), payload_access(write, caller, anyhit)]];
 };
 ```
-
-
-
-
-<!-- {% endraw %} -->

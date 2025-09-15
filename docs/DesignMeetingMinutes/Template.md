@@ -1,4 +1,7 @@
-# Design Meeting Minutes: YYYY/MM/DD
+---
+title: "Design Meeting Minutes: YYYY/MM/DD"
+draft: true
+---
 
 > NOTE: Please read the [terms of participation](DesignMeetingTerms.txt)
 > ("Terms") prior to joining the Teams meeting.  You joining the Teams meeting

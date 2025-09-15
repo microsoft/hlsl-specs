@@ -1,4 +1,6 @@
-# Contacting the HLSL Team
+---
+title: Contacting the HLSL Team
+---
 
 This page lists some of the public spaces where you can find members of the HLSL.
 
