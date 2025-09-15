@@ -747,7 +747,7 @@ template <typename T>
 typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                          Scope != MatrixScope::Thread, void>::type
 Matrix::Store(groupshared T Arr[], uint StartIdx, uint Stride,
-                   MatrixLayout Layout);
+              MatrixLayout Layout);
 ```
 
 The matrix `Store` methods store the matrix data to a target

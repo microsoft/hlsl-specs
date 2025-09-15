@@ -8,9 +8,10 @@ params:
   sponsors:
   - damyanp: Damyan Pepper
   - pow2clk: Greg Roth
-  status: Under Review
+  status: Rejected
 ---
 
+> This has been superceded by [0035-linalg-matrix.md](0035-linalg-matrix.md)
 
  
 * Planned Version: SM 6.9
