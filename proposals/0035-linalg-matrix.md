@@ -1244,6 +1244,55 @@ a bias vector added to the result.
 
 > Note for this operation the matrix can be of any scope.
 
+```llvm
+declare void @dx.op.matrixAccumulateToDescriptor(
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  %dx.types.Handle *,    ; RWByteAddressBuffer
+  i32,                   ; Offset
+  i32,                   ; Stride
+  i32                    ; matrix layout
+  )
+```
+
+Accumulates a matrix to a RWByteAddressBuffer at a specified offset. This
+operation is only available for matrices with `MatrixUse::Accumulator`. The
+matrix data is added to the existing data in the buffer. If any destination
+address is out of bounds the entire accumulate operation is a no-op.
+
+```llvm
+declare void @dx.op.matrixAccumulateToMemory.p[Ty](
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  [Ty] *,                ; groupshared T[M * N]
+  i32,                   ; Offset
+  i32,                   ; Stride
+  i32                    ; matrix layout
+  )
+```
+
+Accumulates a matrix to groupshared memory. This operation is only available
+for matrices with `MatrixUse::Accumulator` and `Wave` scope. The matrix
+component data is converted to the target arithmetic or packed data type if the
+data types do not match, then added to the existing data in memory.
+
+```llvm
+declare %dx.types.MatrixRef *@dx.op.matrixOuterProduct(
+  immarg i32,            ; opcode
+  immarg i32,            ; component type (DXILMatrixComponentType)
+  immarg i32,            ; M dimension
+  immarg i32,            ; N dimension
+  immarg i32,            ; matrix Scope (DXILMatrixScope)
+  <[M] x [Ty]>,          ; vector A
+  <[N] x [Ty]>           ; vector B
+  )
+```
+
+Creates a new MxN accumulator matrix initialized with the outer product of the
+two input vectors. The matrix scope can be `Thread`, `Wave`, or `ThreadGroup`.
+The element type of the output matrix matches the element type of the input
+vectors.
+
 ### Conversions
 
 ## Appendix 1: Outstanding Questions
