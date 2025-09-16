@@ -37,3 +37,8 @@ A new HLK test will be added that verifies that for SM 6.9 the optional features
 
 The other tests will be written assuming that these features are supported.
 
+## Alternatives Considered
+
+### Require double precision support
+
+Across the broader ecosystem there are devices that do not support double precision, and since most GPU programmer models are "fast math" by default there doesn't seem to be a strong need for double precision as a _required_ feature.
