@@ -13,6 +13,15 @@ params:
 
 ## Introduction
 
+DXC inconsistently allows some C style explicit casts to produce LValues and be
+used as arguments for inout parameters.  However, C style explicit casts do not
+produce LValues and inout parameters require LValues.
+
+## Motivation
+
+It is inconsistent in DXC which C Style casts are allowed to produce LValues
+for an inout parameter.
+
 DXC allows explicitly casting an array of type T to a vector of type T as an inout parameter.
 ```
 void fn(inout float4 F) {}
@@ -98,16 +107,7 @@ void main() {
 ```
 https://godbolt.org/z/evMbq39nf
 
-
-The proposal is that in Clang all explicit casts be disallowed for inout
-parameters, because inout parameters require an LValue and CStyle
-casts do not produce LValues.
-
-## Motivation
-
-It is inconsistent in DXC which C Style casts are allowed to produce LValues
-for an inout parameter.
-
 ## Proposed solution
 
-The proposed solution is to disallow all explicit casts for inout parameters.
+The proposed solution is that in Clang all explicit casts be disallowed
+for inout parameters.
