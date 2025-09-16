@@ -87,26 +87,36 @@
 \Sub{Arrays}{Decl.arrays}
 % This might need to nest deeper as we flesh out the sections.
 
-\p A declaration \texttt{T D} where \texttt{D} is of the form
+\p A declaration \textit{T D} where \textit{D} is of the form
 
 \begin{grammar}
-\textit{D} \terminal{[} \textit{N} \terminal{]} \opt{attribute-specifier-seq}\br
+\textit{D`} \terminal{[} \textit{N} \terminal{]} \opt{attribute-specifier-seq}\br
 \end{grammar}
 
-declares an array of \texttt{N} \texttt{T}, where \texttt{N} is the \textit{array
-bound}, and \texttt{T} is the contained type of the array. \texttt{N} shall be a
-constant expression converted to unsigned integer type and shall have a value
-greater than zero.
+declares an array of \textit{N} \textit{T`}, where \textit{N} is the
+\textit{array bound}, and \textit{T`} is the derived type of the declarator
+\textit{D`} and is called the \textit{contained type} of the array. \textit{N}
+shall be a constant expression converted to unsigned integer type and shall have
+a value greater than zero.
 
-\p A declaration \texttt{T D} where \texttt{D} is of the form
+\p A declaration \textit{T D} where \textit{D} is of the form
 
 \begin{grammar}
-\textit{D} \terminal{[} \terminal{]} \opt{attribute-specifier-seq}\br
+\textit{D`} \terminal{[} \terminal{]} \opt{attribute-specifier-seq}\br
 \end{grammar}
 
 declares an array of unknown bound, except when the bound is implicitly derived
 as described below. A declaration may only declare an array of unknown bound for
 global declarations of resource objects (\ref{Resources}).
+
+\p The contained type of an array of either form shall be a complete type.
+
+\begin{note}
+  An array of arrays may be declared with infinite nesting of array declarators
+  as long as either all array bounds are known, or only the outermost array
+  bound is unknown. This is codified in the spec above with the requirement that
+  the contained type of an array be a complete type.
+\end{note}
 
 \p A declarator with an omitted array bound is valid if the when declaring an
 object of array type which is not a non-static data member and is initialized
