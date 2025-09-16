@@ -267,6 +267,9 @@ ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
+  // Note: MatrixScope::Thread is used here to demonstrate the thread-level usage model,
+  // but MatrixScope::Wave could be used as an optimization for better performance
+  // when wave-level cooperation is available and desired.
   using MatrixBTy =
       Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
 
@@ -1153,8 +1156,11 @@ declare void @dx.op.matrixStoreToMemory.p[Ty](
 ```
 
 Store a matrix to groupshared memory. Data conversions between opaque matrices
-and groupshared memory are defined in the [Conversions on groupshared
-memory](#conversions-on-groupshared-memory) section below.
+and groupshared memory are defined in the [Conversions](#conversions) section
+below.
+
+The validator ensure that the group shared target memory is large enough for the
+write.
 
 ```llvm
 declare < NUM x [Ty]> @dx.op.matrixExtractToThreads.v[NUM][TY](
@@ -1257,7 +1263,9 @@ declare void @dx.op.matrixAccumulateToDescriptor(
 
 Accumulates a matrix to a RWByteAddressBuffer at a specified offset. This
 operation is only available for matrices with `MatrixUse::Accumulator`. The
-matrix data is added to the existing data in the buffer. If any destination
+matrix data is added to the existing data in the buffer. The matrix component
+data is converted to the target arithmetic or packed data type if the data types
+do not match, then added to the existing data in memory. If any destination
 address is out of bounds the entire accumulate operation is a no-op.
 
 ```llvm
@@ -1271,10 +1279,13 @@ declare void @dx.op.matrixAccumulateToMemory.p[Ty](
   )
 ```
 
-Accumulates a matrix to groupshared memory. This operation is only available
-for matrices with `MatrixUse::Accumulator` and `Wave` scope. The matrix
-component data is converted to the target arithmetic or packed data type if the
-data types do not match, then added to the existing data in memory.
+Accumulates a matrix to groupshared memory. This operation is only available for
+matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
+conversions between opaque matrices and groupshared memory are defined in the
+[Conversions](#conversions) section below.
+
+The validator ensure that the group shared target memory is large enough for the
+write.
 
 ```llvm
 declare %dx.types.MatrixRef *@dx.op.matrixOuterProduct(
