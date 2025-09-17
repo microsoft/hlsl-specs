@@ -97,20 +97,20 @@ class Matrix {
   operator/=(T);
 
   // Apply a unary operation to each element.
-  template <UnaryOperation Op, MatrixScope ScopeLocal=Scope>
+  template <UnaryOperation Op, MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                            ScopeLocal == Scope, Matrix>::type
   ApplyUnaryOperation();
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                 Scope != MatrixScope::Thread, Matrix>::type
+                                  Scope != MatrixScope::Thread, Matrix>::type
   Splat(T Val);
-   
+  
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayout Layout, uint Align = sizeof(ElementType));
   
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   static typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                                   ScopeLocal == Scope, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -133,7 +133,7 @@ class Matrix {
                            Matrix>::type
       FromThreadVectors(vector<ElementType, NScalars>);
 
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                            ScopeLocal == Scope, void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -145,7 +145,7 @@ class Matrix {
   Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   // Accumulate methods
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
                            ScopeLocal == Scope, void>::type
   Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -625,7 +625,7 @@ contains the same handle and refers to the same (now modified) `Matrix`.
 #### Matrix::ApplyUnaryOperation<>()
 
 ```c++
-template <linalg::UnaryOperation Op, linalg::MatrixScope ScopeLocal=Scope>
+template <linalg::UnaryOperation Op, linalg::MatrixScope ScopeLocal = Scope>
 typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                          ScopeLocal == Scope, Matrix>::type
 Matrix::ApplyUnaryOperation();
@@ -665,7 +665,7 @@ static Matrix Matrix::Load(
     ByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
- template <MatrixScope ScopeLocal=Scope>
+ template <MatrixScope ScopeLocal = Scope>
 static typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                                 ScopeLocal == Scope, Matrix>::type
 Matrix::Load(
@@ -691,13 +691,10 @@ The following table specifies the valid values for the `Layout` parameter
 given the `Load` method type and matrix scope.  All other combinations are
 unsupported:
 
-| Operation | Matrix Scope | Matrix Layout |
-|-----------|--------------|------------|
-| `Matrix::Load(ByteAddressBuffer)` | `Thread` | any |
-| `Matrix::Load(*)` | `Wave` | `RowMajor`, `ColMajor` |
-
-If the `Layout` argument is `MulOptimal` or `OuterProductOptimal`, then
-the `Stride` must be `0`.
+| Operation                         | Matrix Scope          | Matrix Layout          |
+|-----------------------------------|-----------------------|------------------------|
+| `Matrix::Load(ByteAddressBuffer)` | `Thread`              | any                    |
+| `Matrix::Load(*)`                 | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
 
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
@@ -739,7 +736,7 @@ Must be called from wave-uniform control flow.
 #### Matrix::Store
 
 ```c++
-template <MatrixScope ScopeLocal=Scope>
+template <MatrixScope ScopeLocal = Scope>
 typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                          ScopeLocal == Scope, void>::type
 Matrix::Store(
@@ -764,14 +761,14 @@ The following table specifies the valid values for the `Layout` parameter
 given the `Store` method type and matrix scope.  All other combinations are
 unsupported:
 
-| Operation | Matrix Scope | Matrix Layout |
-|-----------|--------------|------------|
-| `Matrix::Store(*)` | `Wave` | `RowMajor`, `ColMajor` |
+| Operation          | Matrix Scope          | Matrix Layout          |
+|--------------------|-----------------------|------------------------|
+| `Matrix::Store(*)` | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
 
 #### Matrix::Accumulate
 
 ```c++
-template <MatrixScope ScopeLocal=Scope>
+template <MatrixScope ScopeLocal = Scope>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
                          ScopeLocal == Scope, void>::type
 Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -798,13 +795,10 @@ The following table specifies the valid values for the `Layout` parameter
 given the `Accumulate` method type and matrix scope.  All other combinations
 are unsupported:
 
-| Operation | Matrix Scope | Matrix Layout |
-|-----------|--------------|------------|
-| `Matrix::Accumulate(RWByteAddressBuffer)` | `Thread` | `OuterProductOptimal` |
-| `Matrix::Accumulate(*)` | `Wave` | `RowMajor`, `ColMajor` |
-
-If the `Layout` argument is `OuterProductOptimal`, then the `Stride` must be
-`0`.
+| Operation                                 | Matrix Scope          | Matrix Layout          |
+|-------------------------------------------|-----------------------|------------------------|
+| `Matrix::Accumulate(RWByteAddressBuffer)` | `Thread`              | `OuterProductOptimal`  |
+| `Matrix::Accumulate(*)`                   | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
 
 #### Matrix::GetThreadVector(uint)
 
@@ -1093,6 +1087,11 @@ matrix is OOB the matrix is returned zero-initialized.
 > Question: Do we need to specify a source format for the data or should we
 > assume DXILMatrixComponentType?
 
+Validation rules will enforce that:
+* `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
+  or `ThreadGroup`
+* `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+
 ```llvm
 declare void @dx.op.matrixLoadFromMemory.p[Ty](
   immarg i32,            ; opcode
@@ -1144,6 +1143,9 @@ declare void @dx.op.matrixStoreToDescriptor(
 Store a matrix to a RWByteAddressBuffer at a specified offset. If any
 destination address is out of bounds the entire store is a no-op.
 
+Validation rules will enforce that:
+* `Layout` is `RowMajor` or `ColMajor`
+
 ```llvm
 declare void @dx.op.matrixStoreToMemory.p[Ty](
   immarg i32,            ; opcode
@@ -1159,8 +1161,8 @@ Store a matrix to groupshared memory. Data conversions between opaque matrices
 and groupshared memory are defined in the [Conversions](#conversions) section
 below.
 
-The validator ensure that the group shared target memory is large enough for the
-write.
+The validator will ensure that the group shared target memory is large enough
+for the write.
 
 ```llvm
 declare < NUM x [Ty]> @dx.op.matrixExtractToThreads.v[NUM][TY](
@@ -1268,6 +1270,12 @@ data is converted to the target arithmetic or packed data type if the data types
 do not match, then added to the existing data in memory. If any destination
 address is out of bounds the entire accumulate operation is a no-op.
 
+Validation rules will enforce that:
+* `Layout` is `OuterProductOptimal` for matrix with `MatrixScope` of `Thread`
+* `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
+  or `ThreadGroup`
+* `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+
 ```llvm
 declare void @dx.op.matrixAccumulateToMemory.p[Ty](
   immarg i32,            ; opcode
@@ -1284,8 +1292,8 @@ matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
 conversions between opaque matrices and groupshared memory are defined in the
 [Conversions](#conversions) section below.
 
-The validator ensure that the group shared target memory is large enough for the
-write.
+The validator will ensure that the group shared target memory is large enough
+for the write.
 
 ```llvm
 declare %dx.types.MatrixRef *@dx.op.matrixOuterProduct(
@@ -1475,7 +1483,7 @@ class Matrix {
   operator/=(T);
 
   // Apply a unary operation to each element.
-  template <UnaryOperation Op, MatrixScope ScopeLocal=Scope>
+  template <UnaryOperation Op, MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                            ScopeLocal == Scope, Matrix>::type
   ApplyUnaryOperation();
@@ -1488,7 +1496,7 @@ class Matrix {
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayout Layout, uint Align = sizeof(ElementType));
 
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   static typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                                   ScopeLocal == Scope, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -1511,7 +1519,7 @@ class Matrix {
                            Matrix>::type
       FromThreadVectors(vector<ElementType, NScalars>);
 
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Scope != MatrixScope::Thread &&
                            ScopeLocal == Scope, void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -1523,7 +1531,7 @@ class Matrix {
   Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
 
   // Accumulate methods
-  template <MatrixScope ScopeLocal=Scope>
+  template <MatrixScope ScopeLocal = Scope>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
                            ScopeLocal == Scope, void>::type
   Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
