@@ -7,9 +7,7 @@ params:
   status: Under Review
 ---
 
-
- 
-* Planned Version: SM 6.x
+* Planned Version: SM 6.10
 
 ## Introduction
 
@@ -411,6 +409,33 @@ columns.
 
 An Accumulator matrix may be either an A matrix, or a B matrix, and it varies by
 hardware implementation.
+
+#### Restrictions on Dimensions
+
+The HLSL API will enforce restrictions on the `K` dimension as found in the
+formula: `MxK * K*N = MxN`
+
+This restriction impacts the number of rows in an A matrix, and columns in a B
+matrix, but has no impact on an accumulator matrix.
+
+The minimum and maximum `K` dimension for Wave and Thread scope matrices is tied
+to the the minimum and maximum wave size, while the minimum and maximum `K`
+dimension for ThreadGroup matrices is tied to the thread group size.
+
+
+| Matrix Scope | Scalar element dimensions     |
+| ------------ | ----------------------------- |
+| Thread       | Powers of two between [4,128] |
+| Wave         | Powers of two between [4,128] |
+| ThreadGroup  | [1,1024]                      |
+
+Sizes for matrices of packed data types are 4 times the valid size for a scalar
+element.
+
+Not all hardware is required to support all possible dimensions for thread and
+wave scope matrices, or all possible element types. The shader compiler will
+encode the dimensions and input and output data types used by each shader in the
+[Pipeline State Validation metadata](#pipeline-state-validation-metadata).
 
 ### HLSL API Documentation
 
@@ -1312,6 +1337,45 @@ two input vectors. The matrix scope can be `Thread`, `Wave`, or `ThreadGroup`.
 The element type of the output matrix matches the element type of the input
 vectors.
 
+#### Pipeline State Validation Metadata
+
+Shader Model 6.10 will introduce a version 4 of the Pipeline
+State Validation RuntimeInfo structure. A new 32-bit unsigned integer
+`LinalgMatrixUses` will count the number of `MatrixUse` objects appended after
+the signature output vectors (presently the last data at the end of `PSV0` for
+version 3).
+
+The `MatrixUse` object is defined:
+
+```c
+struct MatrixUse {
+  uint32_t Dimensions[3]; // M, N, K
+  uint32_t Scope;
+  uint32_t Flags; // do we need this?
+  uint32_t OperandType;
+  uint32_t ResultType;
+};
+```
+
+This object will encode each matrix shape and element type as used by the DXIL
+operations in the `matrixOp` and `matvecmuladd` opcode classes.
+
+The Scope field will encode one of the values defined in the enumeration:
+
+```c
+enum MatrixScope {
+  Thread = 1,
+  Wave = 2,
+  ThreadGroup = 3,
+};
+```
+
+> Open questions:
+> 1) Do we need the M and N dimensions or just the K dimension?
+> 2) Do we need both operand types, or should we expect the operands to be the
+>    same type?
+> 3) What flags do we need?
+
 ### Conversions
 
 ## Appendix 1: Outstanding Questions
@@ -1665,5 +1729,3 @@ void OuterProdAccum() {
   MatAcc.Accumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
-
-
