@@ -413,7 +413,7 @@ hardware implementation.
 #### Restrictions on Dimensions
 
 The HLSL API will enforce restrictions on the `K` dimension as found in the
-formula: `MxK * K*N = MxN`
+formula: `MxK * KxN = MxN`
 
 This restriction impacts the number of rows in an A matrix, and columns in a B
 matrix, but has no impact on an accumulator matrix.
