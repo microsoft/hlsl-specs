@@ -1350,25 +1350,22 @@ The `MatrixUse` object is defined:
 ```c
 struct MatrixUse {
   uint32_t Dimensions[3]; // M, N, K
-  uint32_t Scope;
+  uint8_t Scope;
+  uint8_t OperandType;
+  uint8_t ResultType;
+  uint8_t RESERVED; // unused but reserved for padding/alignment.
   uint32_t Flags; // do we need this?
-  uint32_t OperandType;
-  uint32_t ResultType;
 };
 ```
 
 This object will encode each matrix shape and element type as used by the DXIL
 operations in the `matrixOp` and `matvecmuladd` opcode classes.
 
-The Scope field will encode one of the values defined in the enumeration:
+The Scope field will encode one of the values defined in the [`DXILMatrixScope`
+enumeration](#dxil-enumerations).
 
-```c
-enum MatrixScope {
-  Thread = 1,
-  Wave = 2,
-  ThreadGroup = 3,
-};
-```
+The `OperandType` and `ResultType` fields will encode one of the values defined
+in the [`DXILMatrixComponentType` enumeration](#dxil-enumerations).
 
 > Open questions:
 > 1) Do we need the M and N dimensions or just the K dimension?
