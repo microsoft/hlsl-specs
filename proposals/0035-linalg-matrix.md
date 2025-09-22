@@ -737,7 +737,20 @@ typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
 Matrix::Length();
 ```
 
-Returns the number of components stored in the thread's thread local memory.
+Returns the number of matrix components accessible to the current thread. The
+mapping and distribution of threads to matrix elements is opaque and
+implementation-specific. The value returned by `Length` may not be the same
+across all threads. The sum of the values returned by `Length` across all
+threads must be greater than or equal to the total number of matrix elements.
+Some implementations may map multiple threads to the same matrix element.
+Therefore, developers should take this into consideration when programming
+side-effects, such as atomic operations and/or UAV writes, within user-defined
+matrix operations.
+
+May be called from non-uniform control flow. However, given the above rules,
+calling `Length` from divergent threads may result in unpredictable behavior.
+For example, the number of matrix elements accessible to each thread will be
+inconsistent across different implementations.
 
 #### Matrix::GetCoordinate
 
@@ -747,9 +760,10 @@ typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
                          uint2>::type Matrix::GetCoordinate(uint);
 ```
 
-Converts an index into the thread-local collection of matrix elements to the
-matrix column and row returned as a `uint2`. The mapping of thread local indices
-to matrix coordinates is implementation defined.
+Converts a specified index into row and column coordinates. The valid range of
+`Index` is `[0, Length()-1]`. If the value of `Index` is out of
+range, then the result value is `UINT32_MAX.xx`. The mapping of indices to
+matrix coordinates is implementation-specific.
 
 #### Matrix::Get
 
@@ -759,8 +773,9 @@ typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
                            ElementType>::type Matrix::Get(uint);
 ```
 
-Gets the element corresponding to the thread-local index provided. The mapping
-of thread local indices to matrix coordinates is implementation defined.
+Retrieves the value of a matrix component at the specified index.  The valid
+range of `Index` is `[0, Length()-1]`. If the value of `Index` is out of range,
+then the result value zero casted to the `ElementType`.
 
 #### Matrix::Set
 
@@ -770,9 +785,9 @@ typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
                          void>::type Matrix::Set(uint, ElementType);
 ```
 
-Sets the element at the corresponding thread-local index to the provided value.
-The mapping of thread local indices to matrix coordinates is implementation
-defined.
+Sets the value of a matrix component at the specified index.  The valid
+range of `Index` is `[0, Length()-1]`.  If the value of `Index` is out of range,
+then the operation is a no-op.
 
 #### Matrix::Store
 
