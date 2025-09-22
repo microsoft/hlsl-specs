@@ -402,8 +402,6 @@ The following table summarizes the operations supported for each matrix scope:
 | `Matrix::Store(groupshared)` | ✗ | ✓ | ✓ |
 | `Matrix::Accumulate(RWByteAddressBuffer)` | ✓ | ✓ | ✓ |
 | `Matrix::Accumulate(groupshared)` | ✗ | ✓ | ✓ |
-| `Matrix::FromThreadVectors()` | ✗ | ✓ | ✓ |
-| `Matrix::GetThreadVector()` | ✗ | ✓ | ✓ |
 | `Matrix::MultiplyAccumulate()` | ✗ | ✓ | ✓ |
 | `Matrix::SumAccumulate()` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
