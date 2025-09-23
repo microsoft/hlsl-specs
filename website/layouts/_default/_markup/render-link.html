@@ -1,0 +1,35 @@
+{{/*
+  This render hook transforms markdown links to work correctly in both GitHub and Hugo.
+  
+  For relative links ending in .md (like "0002-cxx-attributes.md"):
+  - Uses Hugo's page lookup to find the target page and get its permalink
+  - Falls back to constructing the URL manually if the page isn't found
+  
+  This allows natural markdown syntax like [text](proposal.md) to work in both:
+  - GitHub (renders as relative link to the .md file)
+  - Hugo (renders as link to the generated page)
+*/}}
+
+{{- $url := .Destination -}}
+{{- $text := .Text -}}
+{{- $title := .Title -}}
+
+{{- if and (strings.HasSuffix $url ".md") (not (strings.HasPrefix $url "http")) (not (strings.HasPrefix $url "/")) -}}
+  {{- /* This is a relative .md link like "0002-cxx-attributes.md" */ -}}
+  {{- $targetPage := .Page.GetPage $url -}}
+  {{- if $targetPage -}}
+    {{- /* Found the target page - use its permalink */ -}}
+    <a href="{{ $targetPage.RelPermalink }}"{{- with $title }} title="{{ . }}"{{ end }}>{{ $text | safeHTML }}</a>
+  {{- else -}}
+    {{- /* Page not found - construct URL manually */ -}}
+    {{- $cleanUrl := $url -}}
+    {{- if strings.HasPrefix $url "./" -}}
+      {{- $cleanUrl = strings.TrimPrefix $url "./" -}}
+    {{- end -}}
+    {{- $proposalName := strings.TrimSuffix $cleanUrl ".md" -}}
+    <a href="/proposals/{{ $proposalName }}/"{{- with $title }} title="{{ . }}"{{ end }}>{{ $text | safeHTML }}</a>
+  {{- end -}}
+{{- else -}}
+  {{- /* All other links (absolute paths, HTTP URLs, etc.) - render as-is */ -}}
+  <a href="{{ $url | safeURL }}"{{- with $title }} title="{{ . }}"{{ end }}>{{ $text | safeHTML }}</a>
+{{- end -}}
