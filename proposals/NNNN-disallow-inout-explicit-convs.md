@@ -1,6 +1,5 @@
 ---
 title: "NNNN - Disallow all explicit conversions in inout parameters"
-draft: true
 params:
   authors:
     - spall: Sarah Spall
