@@ -737,8 +737,8 @@ Matrix::Length();
 
 Returns the number of matrix components accessible to the current thread. The
 mapping and distribution of threads to matrix elements is opaque and
-implementation-specific. The value returned by `Length` may not be the same
-across all threads. The sum of the values returned by `Length` across all
+implementation-specific. The value returned by `Length` may be different
+for each thread. The sum of the values returned by `Length` across all
 threads must be greater than or equal to the total number of matrix elements.
 Some implementations may map multiple threads to the same matrix element.
 Therefore, developers should take this into consideration when programming
