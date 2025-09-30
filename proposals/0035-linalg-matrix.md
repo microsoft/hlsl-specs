@@ -7,9 +7,7 @@ params:
   status: Under Review
 ---
 
-
- 
-* Planned Version: SM 6.x
+* Planned Version: SM 6.10
 
 ## Introduction
 
@@ -74,88 +72,116 @@ class Matrix {
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
-                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
+  typename hlsl::enable_if<Scope != MatrixScope::Thread,
+                           Matrix<NewCompTy, M, N, NewUse, Scope>>::type
   cast();
 
   // Element-wise operations
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator+=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator-=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator*=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator/=(T);
 
   // Apply a unary operation to each element.
-  template <UnaryOperation Op>
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+  template <UnaryOperation Op, MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                           Matrix>::type
   ApplyUnaryOperation();
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                  Scope != MatrixScope::Thread, Matrix>::type
+                                      Scope != MatrixScope::Thread,
+                                  Matrix>::type
   Splat(T Val);
-  
+
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayout Layout, uint Align = sizeof(ElementType));
-  
-  static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+
+  template <MatrixScope ScopeLocal = Scope>
+  static typename hlsl::enable_if<
+      Scope != MatrixScope::Thread && ScopeLocal == Scope, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
        MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                  Scope != MatrixScope::Thread, Matrix>::type
-  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
+                                      Scope != MatrixScope::Thread,
+                                  Matrix>::type
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+       MatrixLayout Layout);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::A &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, MScalars>);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::B &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, NScalars>);
 
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
+  template <MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                           void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
         MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
+  typename hlsl::enable_if<
+      hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, void>::type
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+        MatrixLayout Layout);
+
+  // Accumulate methods
+  template <MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && ScopeLocal == Scope,
+                           void>::type
+  Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+             MatrixLayout Layout, uint Align = sizeof(ElementType));
+
+  template <typename T, MatrixUse UseLocal = Use>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, void>::type
-  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
+                               Use == MatrixUse::Accumulator &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
+                           void>::type
+  Accumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+             MatrixLayout Layout);
 
   // Extract the thread-specific vector.
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::A &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            vector<ElementType, MScalars>>::type
   GetThreadVector(uint Index = 0);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::B &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            vector<ElementType, NScalars>>::type
   GetThreadVector(uint Index = 0);
 
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope != MatrixScope::Thread && UseLocal == Use,
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            void>::type
   MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
@@ -163,17 +189,10 @@ class Matrix {
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope != MatrixScope::Thread && UseLocal == Use,
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            void>::type
   SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                 const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
-
-  // Cooperative Vector outer product accumulate.
-  template <typename T, MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope == MatrixScope::Wave && UseLocal == Use,
-                           void>::type
-  OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
 
 MatrixUse AccumulatorLayout();
@@ -215,6 +234,12 @@ vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
                                   Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
                                   vector<BiasElTy, K>);
 
+// Outer product functions
+template <MatrixComponentType OutTy, MatrixScope Scope, typename InputElTy,
+          uint M, uint N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+    OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
+
 } // namespace linalg
 } // namespace dx
 ```
@@ -235,8 +260,8 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, false);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, false);
+  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
 
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
@@ -246,7 +271,7 @@ void WaveMatrixExample() {
 ### Example Usage: Cooperative Vectors
 
 ```c++
-RWByteAddressBuffer B : register(u0);
+ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
@@ -256,6 +281,25 @@ void CoopVec() {
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
   MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
+}
+```
+
+### Example Usage: OuterProduct and Accumulate
+
+```c++
+RWByteAddressBuffer Buf : register(u1);
+
+void OuterProdAccum() {
+  using namespace dx::linalg;
+  using MatrixAccumTy = Matrix<MatrixComponentType::F16, 16, 8,
+                               MatrixUse::Accumulator, MatrixScope::Thread>;
+
+  vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
+  vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
+  MatrixAccumTy MatAcc =
+      OuterProduct<MatrixComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+
+  MatAcc.Accumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
 
@@ -337,15 +381,18 @@ The following table summarizes the operations supported for each matrix scope:
 | `Matrix::Load(ByteAddressBuffer)` | ✓ | ✓ | ✓ |
 | `Matrix::Load(RWByteAddressBuffer)` | ✗ | ✓ | ✓ |
 | `Matrix::Load(groupshared)` | ✗ | ✓ | ✓ |
-| `Matrix::Store()` | ✗ | ✓ | ✓ |
+| `Matrix::Store(RWByteAddressBuffer)` | ✗ | ✓ | ✓ |
+| `Matrix::Store(groupshared)` | ✗ | ✓ | ✓ |
+| `Matrix::Accumulate(RWByteAddressBuffer)` | ✓ | ✓ | ✓ |
+| `Matrix::Accumulate(groupshared)` | ✗ | ✓ | ✓ |
 | `Matrix::FromThreadVectors()` | ✗ | ✓ | ✓ |
 | `Matrix::GetThreadVector()` | ✗ | ✓ | ✓ |
 | `Matrix::MultiplyAccumulate()` | ✗ | ✓ | ✓ |
 | `Matrix::SumAccumulate()` | ✗ | ✓ | ✓ |
-| `Matrix::OuterProductAccumulate()` | ✗ | ✓ | ✗ |
 | `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(vector, Matrix)` | ✓ | ✓ | ✓ |
 | `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✓ | ✓ |
+| `linalg::OuterProduct(vector, vector)` | ✓ | ✓ | ✓ |
 
 Throughout this document a matrix may be described as having a scope as
 specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
@@ -370,6 +417,33 @@ columns.
 
 An Accumulator matrix may be either an A matrix, or a B matrix, and it varies by
 hardware implementation.
+
+#### Restrictions on Dimensions
+
+The HLSL API will enforce restrictions on the `K` dimension as found in the
+formula: `MxK * KxN = MxN`
+
+This restriction impacts the number of rows in an A matrix, and columns in a B
+matrix, but has no impact on an accumulator matrix.
+
+The minimum and maximum `K` dimension for Wave and Thread scope matrices is tied
+to the the minimum and maximum wave size, while the minimum and maximum `K`
+dimension for ThreadGroup matrices is tied to the thread group size.
+
+
+| Matrix Scope | Scalar element dimensions     |
+| ------------ | ----------------------------- |
+| Thread       | Powers of two between [4,128] |
+| Wave         | Powers of two between [4,128] |
+| ThreadGroup  | [1,1024]                      |
+
+Sizes for matrices of packed data types are 4 times the valid size for a scalar
+element.
+
+Not all hardware is required to support all possible dimensions for thread and
+wave scope matrices, or all possible element types. The shader compiler will
+encode the dimensions and input and output data types used by each shader in the
+[Pipeline State Validation metadata](#pipeline-state-validation-metadata).
 
 ### HLSL API Documentation
 
@@ -421,6 +495,8 @@ enum class UnaryOperation {
 enum class MatrixLayout {
   RowMajor = 0,
   ColMajor = 1,
+  MulOptimal = 2,
+  OuterProductOptimal = 3,
 };
 ```
 
@@ -547,9 +623,9 @@ scalar support.
 
 ```c++
 template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
-                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
-  Matrix::cast();
+typename hlsl::enable_if<Scope != MatrixScope::Thread,
+                         Matrix<NewCompTy, M, N, NewUse, Scope>>::type
+Matrix::cast();
 ```
 
 The `Matrix::cast()` function supports casting component types and matrix `Use`.
@@ -558,21 +634,21 @@ The `Matrix::cast()` function supports casting component types and matrix `Use`.
 
 ```c++
 template <typename T>
-typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, Matrix>::type
-Matrix::operator+=(T);
+typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
+    Matrix::operator+=(T);
 template <typename T>
-typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, Matrix>::type
-Matrix::operator-=(T);
+typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
+    Matrix::operator-=(T);
 template <typename T>
-typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, Matrix>::type
-Matrix::operator*=(T);
+typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
+    Matrix::operator*=(T);
 template <typename T>
-typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, Matrix>::type
-Matrix::operator/=(T);
+typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
+    Matrix::operator/=(T);
 ```
 
 For any arithmetic scalar type the `+`, `-`, `*` and `/` binary operators
@@ -582,8 +658,9 @@ contains the same handle and refers to the same (now modified) `Matrix`.
 #### Matrix::ApplyUnaryOperation<>()
 
 ```c++
-template<linalg::UnaryOperation Op>
-typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+template <linalg::UnaryOperation Op, linalg::MatrixScope ScopeLocal = Scope>
+typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                         Matrix>::type
 Matrix::ApplyUnaryOperation();
 ```
 
@@ -597,8 +674,8 @@ the standalone HLSL intrinsic had been applied.
 
 ```c++
 template <typename T>
-static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                Scope != MatrixScope::Thread, Matrix>::type
+static typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
 Matrix::Splat(T Val);
 ```
 
@@ -621,15 +698,18 @@ static Matrix Matrix::Load(
     ByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
-static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+template <MatrixScope ScopeLocal = Scope>
+static typename hlsl::enable_if<
+    Scope != MatrixScope::Thread && ScopeLocal == Scope, Matrix>::type
 Matrix::Load(
     RWByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
 template <typename T>
-static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                Scope != MatrixScope::Thread, Matrix>::type
-Matrix::Load(groupshared T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
+static typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
+Matrix::Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+             MatrixLayout Layout);
 ```
 
 The matrix `Load` methods create a new matrix of the specified dimensions and
@@ -641,6 +721,15 @@ expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. If the type mismatches the target data
 type of the matrix a data conversion is applied on load.
 
+The following table specifies the valid values for the `Layout` parameter
+given the `Load` method type and matrix scope.  All other combinations are
+unsupported:
+
+| Operation                         | Matrix Scope          | Matrix Layout          |
+|-----------------------------------|-----------------------|------------------------|
+| `Matrix::Load(ByteAddressBuffer)` | `Thread`              | any                    |
+| `Matrix::Load(*)`                 | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
+
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
 scope matrix.
@@ -650,15 +739,15 @@ scope matrix.
 ```c++
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                         UseLocal == Use,
+                             UseLocal == Use,
                          Matrix>::type
-FromThreadVectors(vector<ElementType, MScalars>);
+    Matrix::FromThreadVectors(vector<ElementType, MScalars>);
 
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                         UseLocal == Use,
+                             UseLocal == Use,
                          Matrix>::type
-FromThreadVectors(vector<ElementType, NScalars>);
+    Matrix::FromThreadVectors(vector<ElementType, NScalars>);
 ```
 
 Produces a matrix from per-thread vectors. An A matrix is produced from
@@ -681,15 +770,17 @@ Must be called from wave-uniform control flow.
 #### Matrix::Store
 
 ```c++
-typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
+template <MatrixScope ScopeLocal = Scope>
+typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                         void>::type
 Matrix::Store(
     RWByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
     uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
 
 template <typename T>
-typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                         Scope != MatrixScope::Thread, void>::type
-Matrix::Store(groupshared T Arr[], uint StartIdx, uint Stride,
+typename hlsl::enable_if<
+    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, void>::type
+Matrix::Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
               MatrixLayout Layout);
 ```
 
@@ -700,24 +791,64 @@ matrix object. When storing to `groupshared` memory, the matrix component data
 is converted to the target arithmetic or packed data type if the data types do
 not match.
 
-This operation may be called in divergent control flow when storing a thread
-scope matrix, and must be called in uniform control flow when storing a wave
-scope matrix.
+The following table specifies the valid values for the `Layout` parameter
+given the `Store` method type and matrix scope.  All other combinations are
+unsupported:
+
+| Operation          | Matrix Scope          | Matrix Layout          |
+|--------------------|-----------------------|------------------------|
+| `Matrix::Store(*)` | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
+
+#### Matrix::Accumulate
+
+```c++
+template <MatrixScope ScopeLocal = Scope>
+typename hlsl::enable_if<Use == MatrixUse::Accumulator && ScopeLocal == Scope,
+                         void>::type
+Matrix::Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+                   MatrixLayout Layout, uint Align = sizeof(ElementType));
+
+template <typename T, MatrixUse UseLocal = Use>
+typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                             Use == MatrixUse::Accumulator &&
+                             Scope != MatrixScope::Thread && UseLocal == Use,
+                         void>::type
+Matrix::Accumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+                   MatrixLayout Layout);
+```
+
+The matrix `Accumulate` methods add the matrix data to a target
+`RWByteAddressBuffer` or `groupshared` array. These methods are only available
+for matrices with `MatrixUse::Accumulator`. The `RWByteAddressBuffer` overload
+works with all matrix scopes, while the `groupshared` overload only works with
+`Wave` scope matrices. When accumulating to `RWByteAddressBuffer` objects the
+data is added in the component type of the matrix object. When accumulating to
+`groupshared` memory, the matrix component data is converted to the target
+arithmetic or packed data type if the data types do not match.
+
+The following table specifies the valid values for the `Layout` parameter
+given the `Accumulate` method type and matrix scope.  All other combinations
+are unsupported:
+
+| Operation                                 | Matrix Scope          | Matrix Layout          |
+|-------------------------------------------|-----------------------|------------------------|
+| `Matrix::Accumulate(RWByteAddressBuffer)` | `Thread`              | `OuterProductOptimal`  |
+| `Matrix::Accumulate(*)`                   | `Wave`, `ThreadGroup` | `RowMajor`, `ColMajor` |
 
 #### Matrix::GetThreadVector(uint)
 
 ```c++
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                         UseLocal == Use,
+                             UseLocal == Use,
                          vector<ElementType, MScalars>>::type
-GetThreadVector(uint Index = 0);
+Matrix::GetThreadVector(uint Index = 0);
 
 template <MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                         UseLocal == Use,
+                             UseLocal == Use,
                          vector<ElementType, NScalars>>::type
-GetThreadVector(uint Index = 0);
+Matrix::GetThreadVector(uint Index = 0);
 ```
 
 Returns the underlying vector for the associated thread in the matrix. The
@@ -741,7 +872,7 @@ thread group-uniform control flow for a thread group scope matrix..
 template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
           MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                         Scope != MatrixScope::Thread && UseLocal == Use,
+                             Scope != MatrixScope::Thread && UseLocal == Use,
                          void>::type
 Matrix::MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                            const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
@@ -760,7 +891,7 @@ Must be called from wave-uniform control flow.
 template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
           MatrixUse UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                         Scope != MatrixScope::Thread && UseLocal == Use,
+                             Scope != MatrixScope::Thread && UseLocal == Use,
                          void>::type
 Matrix::SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                       const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
@@ -772,21 +903,6 @@ scope. The matrix arguments are added together then added back into the implicit
 object accumulator matrix.
 
 Must be called from wave-uniform control flow.
-
-#### Matrix::OuterProductAccumulate(vector, vector)
-
-```c++
-template <typename T, MatrixUse UseLocal = Use>
-typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                         Scope == MatrixScope::Wave && UseLocal == Use,
-                         void>::type
-Matrix::OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
-```
-
-An accumulator matrix with wave scope has a method `OuterProductAccumulate`
-which takes an M-element vector and an N-element vector. The operation
-performs an outer product of the two vectors to produce an MxN matrix
-which is then added back into the implicit object accumulator matrix.
 
 #### Matrix::AccumulatorLayout()
 
@@ -836,6 +952,22 @@ vector<OutputElTy, K>
 
 The `linalg::Multiply` function has an overload that takes an `M`-element vector
 and an MxK `B` matrix of any scope. The function returns a `K`-element vector.
+
+#### linalg::OuterProduct(vector, vector)
+
+```c++
+template <MatrixComponentType OutTy, MatrixScope Scope, typename InputElTy,
+          uint M, uint N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+    linalg::OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
+```
+
+The `linalg::OuterProduct` function has two overloads that take an M-element vector
+and an N-element vector and yield an MxN `Accumulator` matrix with the specified
+scope initialized with the outer product of the two input vectors. One overload
+infers the type of the output accumulator to match the input vector element type,
+the other overload takes a template parameter for the output matrix element type.
+All matrix scopes are allowed for the output matrix.
 
 #### linalg::MultiplyAdd(vector, Matrix, vector)
 
@@ -991,6 +1123,11 @@ matrix is OOB the matrix is returned zero-initialized.
 > Question: Do we need to specify a source format for the data or should we
 > assume DXILMatrixComponentType?
 
+Validation rules will enforce that:
+* `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
+  or `ThreadGroup`
+* `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+
 ```llvm
 declare void @dx.op.matrixLoadFromMemory.p[Ty](
   immarg i32,            ; opcode
@@ -1042,6 +1179,9 @@ declare void @dx.op.matrixStoreToDescriptor(
 Store a matrix to a RWByteAddressBuffer at a specified offset. If any
 destination address is out of bounds the entire store is a no-op.
 
+Validation rules will enforce that:
+* `Layout` is `RowMajor` or `ColMajor`
+
 ```llvm
 declare void @dx.op.matrixStoreToMemory.p[Ty](
   immarg i32,            ; opcode
@@ -1054,8 +1194,11 @@ declare void @dx.op.matrixStoreToMemory.p[Ty](
 ```
 
 Store a matrix to groupshared memory. Data conversions between opaque matrices
-and groupshared memory are defined in the [Conversions on groupshared
-memory](#conversions-on-groupshared-memory) section below.
+and groupshared memory are defined in the [Conversions](#conversions) section
+below.
+
+The validator will ensure that the group shared target memory is large enough
+for the write.
 
 ```llvm
 declare < NUM x [Ty]> @dx.op.matrixExtractToThreads.v[NUM][TY](
@@ -1145,6 +1288,102 @@ a bias vector added to the result.
 
 > Note for this operation the matrix can be of any scope.
 
+```llvm
+declare void @dx.op.matrixAccumulateToDescriptor(
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  %dx.types.Handle *,    ; RWByteAddressBuffer
+  i32,                   ; Offset
+  i32,                   ; Stride
+  i32                    ; matrix layout
+  )
+```
+
+Accumulates a matrix to a RWByteAddressBuffer at a specified offset. This
+operation is only available for matrices with `MatrixUse::Accumulator`. The
+matrix data is added to the existing data in the buffer. The matrix component
+data is converted to the target arithmetic or packed data type if the data types
+do not match, then added to the existing data in memory. If any destination
+address is out of bounds the entire accumulate operation is a no-op.
+
+Validation rules will enforce that:
+* `Layout` is `OuterProductOptimal` for matrix with `MatrixScope` of `Thread`
+* `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
+  or `ThreadGroup`
+* `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+
+```llvm
+declare void @dx.op.matrixAccumulateToMemory.p[Ty](
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef *, ; matrix
+  [Ty] *,                ; groupshared T[M * N]
+  i32,                   ; Offset
+  i32,                   ; Stride
+  i32                    ; matrix layout
+  )
+```
+
+Accumulates a matrix to groupshared memory. This operation is only available for
+matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
+conversions between opaque matrices and groupshared memory are defined in the
+[Conversions](#conversions) section below.
+
+The validator will ensure that the group shared target memory is large enough
+for the write.
+
+```llvm
+declare %dx.types.MatrixRef *@dx.op.matrixOuterProduct(
+  immarg i32,            ; opcode
+  immarg i32,            ; component type (DXILMatrixComponentType)
+  immarg i32,            ; M dimension
+  immarg i32,            ; N dimension
+  immarg i32,            ; matrix Scope (DXILMatrixScope)
+  <[M] x [Ty]>,          ; vector A
+  <[N] x [Ty]>           ; vector B
+  )
+```
+
+Creates a new MxN accumulator matrix initialized with the outer product of the
+two input vectors. The matrix scope can be `Thread`, `Wave`, or `ThreadGroup`.
+The element type of the output matrix matches the element type of the input
+vectors.
+
+#### Pipeline State Validation Metadata
+
+Shader Model 6.10 will introduce a version 4 of the Pipeline
+State Validation RuntimeInfo structure. A new 32-bit unsigned integer
+`LinalgMatrixUses` will count the number of `MatrixUse` objects appended after
+the signature output vectors (presently the last data at the end of `PSV0` for
+version 3).
+
+The `MatrixUse` object is defined:
+
+```c
+struct MatrixUse {
+  uint32_t Dimensions[3]; // M, N, K
+  uint8_t Scope;
+  uint8_t OperandType;
+  uint8_t ResultType;
+  uint8_t RESERVED; // unused but reserved for padding/alignment.
+  uint32_t Flags; // do we need this?
+};
+```
+
+This object will encode each matrix shape and element type as used by the DXIL
+operations in the `matrixOp` and `matvecmuladd` opcode classes.
+
+The Scope field will encode one of the values defined in the [`DXILMatrixScope`
+enumeration](#dxil-enumerations).
+
+The `OperandType` and `ResultType` fields will encode one of the values defined
+in the [`DXILMatrixComponentType` enumeration](#dxil-enumerations).
+
+> Open questions:
+> 1) Do we need the M and N dimensions or just the K dimension?
+> 2) Do we need both operand types, or should we expect the operands to be the
+>    same type?
+> 3) What flags do we need?
+
 ### Conversions
 
 ## Appendix 1: Outstanding Questions
@@ -1155,11 +1394,11 @@ a bias vector added to the result.
 * Do we need to specify a source/destination format for the data in the load and
   store operations that operate on descriptors or should we assume
   DXILMatrixComponentType?
-* Do we need to support `OuterProductAccumulate` for thread scope matrices?
+
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/rT5qaqPrb)
+[Compiler Explorer](https://godbolt.org/z/PMW89rdTv)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1271,6 +1510,8 @@ enum class UnaryOperation {
 enum class MatrixLayout {
   RowMajor = 0,
   ColMajor = 1,
+  MulOptimal = 2,
+  OuterProductOptimal = 3,
 };
 
 template <MatrixComponentType ComponentTy, uint M, uint N, MatrixUse Use,
@@ -1291,88 +1532,116 @@ class Matrix {
       (N + (ElementsPerScalar - 1)) / ElementsPerScalar;
 
   template <MatrixComponentType NewCompTy, MatrixUse NewUse = Use>
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, 
-                           Matrix<NewCompTy, M, N, NewUse, Scope> >::type
+  typename hlsl::enable_if<Scope != MatrixScope::Thread,
+                           Matrix<NewCompTy, M, N, NewUse, Scope>>::type
   cast();
 
   // Element-wise operations
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator+=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator-=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator*=(T);
   template <typename T>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, Matrix>::type
+                               Scope != MatrixScope::Thread,
+                           Matrix>::type
   operator/=(T);
 
   // Apply a unary operation to each element.
-  template <UnaryOperation Op>
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+  template <UnaryOperation Op, MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                           Matrix>::type
   ApplyUnaryOperation();
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                  Scope != MatrixScope::Thread, Matrix>::type
+                                      Scope != MatrixScope::Thread,
+                                  Matrix>::type
   Splat(T Val);
-  
+
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayout Layout, uint Align = sizeof(ElementType));
 
-  static typename hlsl::enable_if<Scope != MatrixScope::Thread, Matrix>::type
+  template <MatrixScope ScopeLocal = Scope>
+  static typename hlsl::enable_if<
+      Scope != MatrixScope::Thread && ScopeLocal == Scope, Matrix>::type
   Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
        MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                  Scope != MatrixScope::Thread, Matrix>::type
-  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
+                                      Scope != MatrixScope::Thread,
+                                  Matrix>::type
+  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+       MatrixLayout Layout);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::A &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, MScalars>);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::B &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            Matrix>::type
       FromThreadVectors(vector<ElementType, NScalars>);
 
-  typename hlsl::enable_if<Scope != MatrixScope::Thread, void>::type
+  template <MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Scope != MatrixScope::Thread && ScopeLocal == Scope,
+                           void>::type
   Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
         MatrixLayout Layout, uint Align = sizeof(ElementType));
 
   template <typename T>
+  typename hlsl::enable_if<
+      hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, void>::type
+  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+        MatrixLayout Layout);
+
+  // Accumulate methods
+  template <MatrixScope ScopeLocal = Scope>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && ScopeLocal == Scope,
+                           void>::type
+  Accumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+             MatrixLayout Layout, uint Align = sizeof(ElementType));
+
+  template <typename T, MatrixUse UseLocal = Use>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                           Scope != MatrixScope::Thread, void>::type
-  Store(/*groupshared*/ T Arr[], uint StartIdx, uint Stride, MatrixLayout Layout);
+                               Use == MatrixUse::Accumulator &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
+                           void>::type
+  Accumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+             MatrixLayout Layout);
 
   // Extract the thread-specific vector.
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::A && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::A &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            vector<ElementType, MScalars>>::type
   GetThreadVector(uint Index = 0);
 
   template <MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::B && Scope != MatrixScope::Thread &&
-                               UseLocal == Use,
+  typename hlsl::enable_if<Use == MatrixUse::B &&
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            vector<ElementType, NScalars>>::type
   GetThreadVector(uint Index = 0);
 
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope != MatrixScope::Thread && UseLocal == Use,
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            void>::type
   MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                      const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
@@ -1380,17 +1649,10 @@ class Matrix {
   template <MatrixComponentType LHSTy, MatrixComponentType RHSTy, uint K,
             MatrixUse UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope != MatrixScope::Thread && UseLocal == Use,
+                               Scope != MatrixScope::Thread && UseLocal == Use,
                            void>::type
   SumAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
                 const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
-
-  // Cooperative Vector outer product accumulate.
-  template <typename T, MatrixUse UseLocal = Use>
-  typename hlsl::enable_if<Use == MatrixUse::Accumulator &&
-                           Scope == MatrixScope::Wave && UseLocal == Use,
-                           void>::type
-  OuterProductAccumulate(const vector<T, M>, const vector<T, N>);
 };
 
 MatrixUse AccumulatorLayout();
@@ -1432,6 +1694,12 @@ vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
                                   Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
                                   vector<BiasElTy, K>);
 
+// Outer product functions
+template <MatrixComponentType OutTy, MatrixScope Scope, typename InputElTy,
+          uint M, uint N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+    OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
+
 } // namespace linalg
 } // namespace dx
 
@@ -1464,6 +1732,19 @@ void CoopVec() {
   MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
+
+RWByteAddressBuffer Buf : register(u1);
+
+void OuterProdAccum() {
+  using namespace dx::linalg;
+  using MatrixAccumTy = Matrix<MatrixComponentType::F16, 16, 8,
+                               MatrixUse::Accumulator, MatrixScope::Thread>;
+
+  vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
+  vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
+  MatrixAccumTy MatAcc =
+      OuterProduct<MatrixComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+
+  MatAcc.Accumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
+}
 ```
-
-
