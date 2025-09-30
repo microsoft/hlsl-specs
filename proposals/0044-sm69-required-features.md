@@ -1,5 +1,5 @@
 ---
-title: "NNNN - SM69 Required Features"
+title: "0044 - SM69 Required Features"
 params:
   authors:
     - damyanp: Damyan Pepper
