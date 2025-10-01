@@ -1,11 +1,13 @@
-<!-- {% raw %} -->
+---
+title: NNNN - 8-bit integer support
+params:
+    authors:
+    - anteru: Matthäus Chajdas
+    sponsors:
+    - llvm-beanz: Chris Bieneman
+    status: Under Consideration
+---
 
-# 8-bit integer support
-
-* Proposal: [0099](NNNN-8-bit-integers.md)
-* Author(s): [Matthäus Chajdas](https://github.com/anteru)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
 * Planned Version: SM 6.x
 * Issues: [HLSL 337](https://github.com/microsoft/hlsl-specs/issues/337)
 
