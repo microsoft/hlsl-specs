@@ -226,17 +226,17 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
-// matrices.
+// matrices with thread scope.
 
 template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          MatrixComponentType MatrixDT, MatrixScope Scope>
+          MatrixComponentType MatrixDT>
 vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
-                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+                               Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+          uint K, MatrixComponentType MatrixDT>
 vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
-                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                                  Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
                                   vector<BiasElTy, K>);
 
 // Outer product functions
@@ -290,7 +290,7 @@ ByteAddressBuffer B : register(t0);
 void CoopVec() {
   using namespace dx::linalg;
   using MatrixBTy =
-      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
   MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
@@ -405,8 +405,8 @@ The following table summarizes the operations supported for each matrix scope:
 | `Matrix::MultiplyAccumulate()` | ✗ | ✓ | ✓ |
 | `Matrix::SumAccumulate()` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
-| `linalg::Multiply(vector, Matrix)` | ✓ | ✓ | ✓ |
-| `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✓ | ✓ |
+| `linalg::Multiply(vector, Matrix)` | ✓ | ✗ | ✗ |
+| `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✗ | ✗ |
 | `linalg::OuterProduct(vector, vector)` | ✓ | ✓ | ✓ |
 
 Throughout this document a matrix may be described as having a scope as
@@ -933,14 +933,15 @@ Must be called from wave-uniform control flow.
 
 ``` c++
 template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          MatrixComponentType MatrixDT, MatrixScope Scope>
+          MatrixComponentType MatrixDT>
 vector<OutputElTy, K>
     linalg::Multiply(vector<InputElTy, M>,
-                     Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+                     Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>);
 ```
 
 The `linalg::Multiply` function has an overload that takes an `M`-element vector
-and an MxK `B` matrix of any scope. The function returns a `K`-element vector.
+and an MxK `B` matrix with `Thread` scope. The function returns a `K`-element
+vector.
 
 #### linalg::OuterProduct(vector, vector)
 
@@ -962,19 +963,19 @@ All matrix scopes are allowed for the output matrix.
 
 ``` c++
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+          uint K, MatrixComponentType MatrixDT>
 vector<OutputElTy, K>
     linalg::MultiplyAdd(vector<InputElTy, M>,
-                        Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                        Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
                         vector<BiasElTy, K>);
 ```
 
 The `linalg::MultiplyAdd` function has an overload that takes an `M`-element, an
-MxK `B` matrix of any scope, and a `K`-element vector. The operation multiplies
-the `M`-element vector by the matrix then adds the `K`-element vector producing
-a result `K`-element vector.
+MxK `B` matrix with `Thread` scope, and a `K`-element vector. The operation
+multiplies the `M`-element vector by the matrix then adds the `K`-element vector
+producing a result `K`-element vector.
 
-### DXIL Enumerations
+### DXIL Types
 
 This feature adds the following new DXIL enumerations, which used as immediate
 arguments to the new operations.
@@ -1015,10 +1016,27 @@ enum class DXILMatrixComponentType {
 }
 ```
 
+This feature also adds a matrix ref that serves as an opaque type handle to the
+implementation's representation of the matrix.
+
+
+```llvm
+  %dx.types.MatrixRef     = type { i8 * }
+
+```
+
 ### DXIL Operations
 
 ```llvm
-declare %dx.types.MatrixRef *@dx.op.createMatrix(
+declare %dx.types.MatrixRef @dx.op.createMatrix(
+  immarg i32  ; opcode
+  )
+```
+
+Creates a new uninitialized matrix handle.
+
+```llvm
+declare %dx.types.MatrixRef @dx.op.annotateMatrix(
   immarg i32, ; opcode
   immarg i32, ; component type (DXILMatrixComponentType)
   immarg i32, ; M dimension
@@ -1028,13 +1046,13 @@ declare %dx.types.MatrixRef *@dx.op.createMatrix(
   )
 ```
 
-Creates a new uninitialized matrix with the component, dimensions, use and scope
-as specified.
+Defines a matrix as having the specified component type, dimensions, use, and
+scope.
 
 ```llvm
 declare @dx.op.fillMatrix.[TY](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   [Ty]                   ; fill value
   )
 ```
@@ -1046,8 +1064,8 @@ documented in the [Conversions](#conversions) section.
 ```llvm
 declare void @dx.op.castMatrix(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix destination
-  %dx.types.MatrixRef *  ; matrix source
+  %dx.types.MatrixRef,   ; matrix destination
+  %dx.types.MatrixRef    ; matrix source
   )
 ```
 
@@ -1058,8 +1076,8 @@ applied. Validation shall enforce that both matrices have the same scope.
 ```llvm
 declare void @dx.op.matrixLoadFromDescriptor(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
-  %dx.types.Handle *,    ; ByteAddressBuffer
+  %dx.types.MatrixRef,   ; matrix
+  %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
   i32,                   ; matrix layout
@@ -1080,7 +1098,7 @@ Validation rules will enforce that:
 ```llvm
 declare void @dx.op.matrixLoadFromMemory.p[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
@@ -1095,7 +1113,7 @@ between opaque matrices and groupshared memory are defined in the
 ```llvm
 declare i32 @dx.op.matrixLength(
   immarg i32,           ; opcode
-  %dx.types.MatrixRef * ; matrix
+  %dx.types.MatrixRef   ; matrix
   )
 ```
 
@@ -1105,7 +1123,7 @@ thread for the provided matrix.
 ```llvm
 declare <2 x i32> @dx.op.matrixGetCoordinate(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   i32                    ; thread-local index
   )
 ```
@@ -1116,7 +1134,7 @@ the thread-local index corresponds to.
 ```llvm
 declare [Ty] @dx.op.matrixGetElement.[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   i32                    ; thread-local index
   )
 ```
@@ -1128,7 +1146,7 @@ If the index is out of range for the values stored in this thread the result is
 ```llvm
 declare void @dx.op.matrixSetElement.[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   i32,                   ; thread-local index
   [Ty]                   ; value
   )
@@ -1141,8 +1159,8 @@ this thread the result is a no-op.
 ```llvm
 declare void @dx.op.matrixStoreToDescriptor(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
-  %dx.types.Handle *,    ; ByteAddressBuffer
+  %dx.types.MatrixRef,   ; matrix
+  %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
   i32,                   ; matrix layout
@@ -1158,7 +1176,7 @@ Validation rules will enforce that:
 ```llvm
 declare void @dx.op.matrixStoreToMemory.p[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   [Ty] *,                ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
@@ -1187,10 +1205,10 @@ layout.
 
 ```llvm
 declare void @dx.op.matrixOp(
-  immarg i32             ; opcode
-  %dx.types.MatrixRef *, ; matrix A
-  %dx.types.MatrixRef *, ; matrix B
-  %dx.types.MatrixRef *  ; matrix C
+  immarg i32,            ; opcode
+  %dx.types.MatrixRef,   ; matrix A
+  %dx.types.MatrixRef,   ; matrix B
+  %dx.types.MatrixRef    ; matrix C
   )
 ```
 
@@ -1212,39 +1230,41 @@ Must be called from wave-uniform control flow.
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
-  immarg i32            ; opcode
+  immarg i32,           ; opcode
   <[NUMi] x [TYi]>,     ; input vector
-  %dx.types.MatrixRef * ; matrix A
+  %dx.types.MatrixRef   ; matrix A
 )
 ```
 
-This operation implements a row-vector multiplication against a `B` matrix.
-
-> Note for this operation the matrix can be of any scope.
+This operation implements a row-vector multiplication against a `B` matrix of
+`Thread` scope.
 
 Validation will enforce that:
-* The input vector is an `N` element vector
-* The matrix A is a `B` matrix
+* The input vector length matches the `M` matrix dimension
+* The matrix A is a `B` matrix of `Thread` scope
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi](
-  immarg i32             ; opcode
+declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi].v[NUMo][TYb](
+  immarg i32,            ; opcode
   <[NUMi] x [TYi]>,      ; input vector
-  %dx.types.MatrixRef *, ; matrix A
-  <[NUMo] x [TYo]>       ; bias vector
+  %dx.types.MatrixRef,   ; matrix A
+  <[NUMo] x [TYb]>       ; bias vector
 )
 ```
 
-This operation implements a row-vector multiplication against a `B` matrix with
-a bias vector added to the result.
+This operation implements a row-vector multiplication against a `B` matrix of
+`Thread` scope with a bias vector added to the result.
 
-> Note for this operation the matrix can be of any scope.
+Validation will enforce that:
+* The input vector length matches the `M` matrix dimension
+* The bias vector length matches the `N` matrix dimension
+* The matrix A is a `B` matrix of `Thread` scope
 
 ```llvm
 declare void @dx.op.matrixAccumulateToDescriptor(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
-  %dx.types.Handle *,    ; RWByteAddressBuffer
+  %dx.types.MatrixRef,   ; matrix
+  %dx.types.Handle,      ; RWByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
   i32                    ; matrix layout
@@ -1267,7 +1287,7 @@ Validation rules will enforce that:
 ```llvm
 declare void @dx.op.matrixAccumulateToMemory.p[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef *, ; matrix
+  %dx.types.MatrixRef,   ; matrix
   [Ty] *,                ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
@@ -1284,7 +1304,7 @@ The validator will ensure that the group shared target memory is large enough
 for the write.
 
 ```llvm
-declare %dx.types.MatrixRef *@dx.op.matrixOuterProduct(
+declare %dx.types.MatrixRef @dx.op.matrixOuterProduct.v[M][TY].v[N][TY](
   immarg i32,            ; opcode
   immarg i32,            ; component type (DXILMatrixComponentType)
   immarg i32,            ; M dimension
@@ -1350,7 +1370,7 @@ in the [`DXILMatrixComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/hn6z1ePT1)
+[Compiler Explorer](https://godbolt.org/z/eY8bYvdo7)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1629,17 +1649,17 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
-// matrices.
+// matrices with thread scope.
 
 template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          MatrixComponentType MatrixDT, MatrixScope Scope>
+          MatrixComponentType MatrixDT>
 vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
-                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+                               Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, MatrixComponentType MatrixDT, MatrixScope Scope>
+          uint K, MatrixComponentType MatrixDT>
 vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
-                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+                                  Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
                                   vector<BiasElTy, K>);
 
 // Outer product functions
@@ -1680,13 +1700,15 @@ void WaveMatrixExample() {
   MatrixAccum32Ty Accum32 = Multiply<MatrixComponentType::F32>(MatA, MatB);
 }
 
+ByteAddressBuffer MBuf : register(t0);
+
 void CoopVec() {
   using namespace dx::linalg;
   using MatrixBTy =
-      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Wave>;
+      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(MBuf, 0, 32 * 4, MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 
