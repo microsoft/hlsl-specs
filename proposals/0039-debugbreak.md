@@ -98,7 +98,8 @@ declare void @dx.op.debugBreak(
 ```
 
 This DXIL operation must be treated as `convergent` even though it is not to
-prevent code motion.
+prevent code motion. It should also not be marked `readonly` or `readnone` even
+though it technically doesn't read memory.
 
 This instruction will only be valid in a new shader model.
 
