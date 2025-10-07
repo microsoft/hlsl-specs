@@ -234,6 +234,8 @@ This proposal does not introduce or remove diagnostics or warnings.
 
 TODO: link the DXR spec proposal when available
 
+Note: No unique raytracing tier is required to use this intrinsic. If the device does not support clustered geometry, it must still support returning `CLUSTER_ID_INVALID` from this intrinsic.
+
 ## Testing
 
 ### Validation Tests
