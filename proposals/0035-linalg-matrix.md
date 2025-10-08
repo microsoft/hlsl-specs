@@ -1017,11 +1017,20 @@ enum class DXILMatrixComponentType {
 ```
 
 This feature also adds a matrix ref that serves as an opaque type handle to the
-implementation's representation of the matrix.
+implementation's representation of the matrix and a properties struct that
+represents other attributes of the created matrix.
 
 
 ```llvm
   %dx.types.MatrixRef     = type { i8 * }
+
+  %dx.types.MatrixProperties = type {
+  i8,  ; DXILMatrixComponentType
+  i32, ; M Dimension
+  i32, ; N Dimension
+  i8,  ; DXILMatrixUse
+  i8,  ; DXILMatrixScope
+  }
 
 ```
 
@@ -1037,12 +1046,9 @@ Creates a new uninitialized matrix handle.
 
 ```llvm
 declare %dx.types.MatrixRef @dx.op.annotateMatrix(
-  immarg i32, ; opcode
-  immarg i32, ; component type (DXILMatrixComponentType)
-  immarg i32, ; M dimension
-  immarg i32, ; N dimension
-  immarg i32, ; matrix Use (DXILMatrixUse)
-  immarg i32  ; matrix Scope (DXILMatrixScope)
+  immarg i32,                ; opcode
+  %dx.types.MatrixRef,       ; Matrix being annotated
+  %dx.types.MatrixProperties ; Struct containing annotation info
   )
 ```
 
