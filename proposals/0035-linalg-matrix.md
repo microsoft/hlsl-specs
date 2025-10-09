@@ -1066,8 +1066,8 @@ declare void @dx.op.matrixLoadFromDescriptor(
   )
 ```
 
-Populates a matrix with data from a [RW]ByteAddressBuffer. If any member of the
-matrix is OOB the matrix is returned zero-initialized.
+Populates a matrix with data from a [RW]ByteAddressBuffer. This operation must
+observe [bounds checking behavior](#bounds-checking-behavior) described below.
 
 > Question: Do we need to specify a source format for the data or should we
 > assume DXILMatrixComponentType?
@@ -1149,8 +1149,9 @@ declare void @dx.op.matrixStoreToDescriptor(
   )
 ```
 
-Store a matrix to a RWByteAddressBuffer at a specified offset. If any
-destination address is out of bounds the entire store is a no-op.
+Store a matrix to a RWByteAddressBuffer at a specified offset. This operation
+must observe [bounds checking behavior](#bounds-checking-behavior) described
+below.
 
 Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
@@ -1255,8 +1256,8 @@ Accumulates a matrix to a RWByteAddressBuffer at a specified offset. This
 operation is only available for matrices with `MatrixUse::Accumulator`. The
 matrix data is added to the existing data in the buffer. The matrix component
 data is converted to the target arithmetic or packed data type if the data types
-do not match, then added to the existing data in memory. If any destination
-address is out of bounds the entire accumulate operation is a no-op.
+do not match, then added to the existing data in memory. This operation must
+observe [bounds checking behavior](#bounds-checking-behavior) described below.
 
 Validation rules will enforce that:
 * `Layout` is `OuterProductOptimal` for matrix with `MatrixScope` of `Thread`
@@ -1299,6 +1300,26 @@ Creates a new MxN accumulator matrix initialized with the outer product of the
 two input vectors. The matrix scope can be `Thread`, `Wave`, or `ThreadGroup`.
 The element type of the output matrix matches the element type of the input
 vectors.
+
+#### Bounds Checking Behavior
+
+The `@dx.op.matrixLoadFromDescriptor` operation loads data from a descriptor.
+For load operations a default element value of zero casted to the element type
+is substituted for out of bounds reads. An implementation may either perform
+bounds checking on the full bounds of the load initializing the full matrix to
+the default element value if any element is out of bounds, or it may perform
+per-element bounds checking initializing only the out of bounds elements to the
+default value.
+
+The `@dx.op.matrixStoreToDescriptor` and `@dx.op.matrixAccumulateToDescriptor`
+operations write data to a descriptor. Writes to out of bounds memory are a
+no-op. An implementation may either perform bounds checking on the full bounds
+of the store converting the whole store to a no-op if any elelemt is out of
+bounds, or it may perform per-element bounds checking only converting the out of
+bounds stores to no-ops.
+
+> Note: bounds checking is not required for reads and writes to root descriptors
+> as D3D does not attach dimensions to root descriptors.
 
 #### Pipeline State Validation Metadata
 
