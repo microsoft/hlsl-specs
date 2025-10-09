@@ -5,7 +5,7 @@ params:
   - damyanp: Damyan Pepper
   - llvm-beanz: Chris Bieneman
   sponsors:
-  - damyanp: Damyan Pepper
+  - llvm-beanz: Chris Bieneman
   status: Under Review
 ---
 
