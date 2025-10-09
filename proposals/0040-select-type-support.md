@@ -15,7 +15,7 @@ params:
 ## Introduction
 This proposal seeks to extend the `select` intrinsic in Clang's HLSL
 implementation to support additional result types beyond scalar, vector, and
-matrix types (e.g. structs and arrays).
+matrix types (e.g. structs).
 
 ## Motivation
 The `select` intrinsic was introduced in HLSL 2021 to replace the
@@ -32,13 +32,16 @@ reasonable for Clang’s `select` to be similarly general.
 
 ## Proposed solution
 Allow Clang's `select` intrinsic to support more types outside of the ones
-supported by DXC, such as structs and arrays. This support would apply through
-the scalar degenerate case:
+supported by DXC, such as structs. This support would apply through the scalar
+degenerate case:
 ```hlsl
 template <typename T>
 _HLSL_BUILTIN_ALIAS(__builtin_hlsl_select)
 T select(bool, T, T);
 ```
+*Note: Since HLSL does not support array return types from functions, `select`
+would not support arrays.*
+
 This proposal does not suggest making similar changes to DXC, as DXC’s ternary
 operator intentionally limits its supported types. Clang’s divergence here is
 justified by its alignment with C++ semantics.
