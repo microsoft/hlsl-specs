@@ -1,6 +1,5 @@
 ---
-title: "NNNN - Disallow all explicit conversions from producing lvalues"
-draft: true
+title: "NNNN - Disallow all explicit conversions in inout parameters"
 params:
   authors:
     - spall: Sarah Spall
