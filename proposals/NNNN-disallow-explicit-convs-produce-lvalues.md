@@ -1,12 +1,12 @@
 ---
-title: "NNNN - Disallow all explicit conversions in inout parameters"
+title: "NNNN - Disallow all explicit conversions from producing lvalues"
 draft: true
 params:
   authors:
     - spall: Sarah Spall
   sponsors:
     - spall: Sarah Spall
-  status: Under Consideration
+  status: Approved
 ---
 
 * Issues: https://github.com/microsoft/hlsl-specs/issues/639
@@ -15,7 +15,8 @@ params:
 
 DXC inconsistently allows some C style explicit casts to produce LValues and be
 used as arguments for inout parameters.  However, C style explicit casts do not
-produce LValues and inout parameters require LValues.
+produce LValues and inout parameters require LValues. We would like HLSL to follow
+C++ and not allow C style casts to produce LValues.
 
 ## Motivation
 
@@ -110,4 +111,4 @@ https://godbolt.org/z/evMbq39nf
 ## Proposed solution
 
 The proposed solution is that in Clang all explicit casts be disallowed
-for inout parameters.
+from producing lvalues.
