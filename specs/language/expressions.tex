@@ -230,6 +230,10 @@ prvalue.
   \end{tabular}
 \end{center}
 
+\p A program is ill-formed if any component in the \textit{swizzle-component-sequence}
+refers to an element index that is out of range of the vector type of the
+postfix expression before the dot.
+
 \Sec{Function Calls}{Expr.Post.Call}
 
 \p A function call may be an \textit{ordinary function}, or a \textit{member
