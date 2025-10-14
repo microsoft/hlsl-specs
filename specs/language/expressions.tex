@@ -210,10 +210,12 @@ produce either an lvalue or a prvalue; otherwise it produces a prvalue.
 \p A \textit{swizzle-component-sequence} is a sequence of one or more swizzle
 components of either the \textit{swizzle-component-rgba} or
 \textit{swizzle-component-xyzw} forms; the two forms may not be mixed in the
-same \textit{swizzle-component-sequence}. If the postfix expression before the
-dot is an lvalue and the \textit{swizzle-component-sequence} contains no
-repeated components, the swizzle expression is an lvalue; otherwise it is a
-prvalue.
+same \textit{swizzle-component-sequence}. The type of a swizzle expression is a
+vector of the same element type as the postfix expression before the dot, with a
+number of elements equal to the number of components in the
+\textit{swizzle-component-sequence}. If the postfix expression before the dot is
+an lvalue and the \textit{swizzle-component-sequence} contains no repeated
+components, the swizzle expression is an lvalue; otherwise it is a prvalue.
 
 \p Swizzle components map to elements of the vector in the following way:
 
