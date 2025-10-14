@@ -152,8 +152,9 @@ undefined. A shader can check for a triangle hit with
 
 Shader model 6.10 is required to use these intrinsics.
 
-The implementation for all of these can be implemented in terms of a built-in
-intrinsic which matches the DXIL definitions mentioned below:
+The DXIL implementation for all of these will be effectively lowered to an
+implementation that behaves like the following HLSL pseudocode, given a
+built-in function for the DXIL intrinsic.
 
 ```c++
 vector<float, 9> __builtin_TriangleObjectPositions();
@@ -336,6 +337,7 @@ Other approaches have been proposed for the return type of this intrinsic:
   * Drawback: It's not really a matrix
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
   * Drawback: layout isn't obvious
+  * Drawback: matrices can participate in implicit conversions that are likely to be programmer bugs, e.g. truncation to vector
 * Use a by-value array return type: `float3[3]`:
   * Benefit: checking static index is automatic
   * Benefit: convergence with SPIR-V
