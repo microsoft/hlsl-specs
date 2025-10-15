@@ -326,6 +326,7 @@ Other approaches have been proposed for the return type of this intrinsic:
   * Benefit: user can use same struct elsewhere and easily assign to result of call
   * Benefit: no appearance of native dynamic indexing support
   * Benefit: should work with DXC intrinsic system relatively easily
+  * Benefit: will easily explicitly convert to long vector or matrix
   * Drawback: adds a new built-in type which effectively matches the memory layout of matrices or arrays
 * Add a vertex index parameter to the intrinsic and return a single position: `float3`:
   * Drawback: three calls required to store all vertices in a single variable in HLSL
@@ -344,7 +345,7 @@ Other approaches have been proposed for the return type of this intrinsic:
   * Benefit: avoids adding a new built-in type
   * Drawback: likely difficult to introduce this into intrinsic system
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
-  * Drawback: might want to remove return array-by-value support in future HLSL version, as this is not allowed in C++.
+  * Drawback: current plans are to [disallow array return types in HLSL 202x](https://github.com/microsoft/hlsl-specs/issues/652)
 * Use a constant reference-to-array return type: `const float3[3] &`:
   * Benefit: checking static index is automatic
   * Drawback: likely difficult to introduce this into intrinsic system
