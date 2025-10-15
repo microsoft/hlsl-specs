@@ -7,8 +7,6 @@ params:
   status: Under Consideration
 ---
 
-
- 
 * Planned Version: 202x
 * Issues: [DXC #4514](https://github.com/microsoft/DirectXShaderCompiler/issues/4514)
 
@@ -69,39 +67,62 @@ To simplify HLSL's language semantics and the compiler implementation a new
 grammar formation is adopted for cbuffers:
 
 ```latex
-
 \begin{grammar}
-  \define{cbuffer-declaration-group}\br
-  \terminal{cbuffer} identifier \opt{resource-binding} \terminal{\{}
-  \opt{cbuffer-declaration-seq} \terminal {\}}\br
-
-  \define{cbuffer-declaration-seq}\br
-  cbuffer-declaration\br
-  cbuffer-declaration-seq cbuffer-declaration\br
-
   \define{cbuffer-declaration}\br
-  variable-declaration\br
-  empty-declaration\br
+  \terminal{cbuffer} name \opt{resource-binding} \terminal{\{}
+    \opt{cbuffer-member-seq} \terminal {\}}\br
+
+  \define{cbuffer-member-seq}\br
+  cbuffer-member-declaration\br
+  cbuffer-member-seq cbuffer-member-declaration\br
+
+  \define{cbuffer-member-declaration}\br
+  block-declaration\br
+  function-definition\br
+  template-declaration\br
+  empty-declaration
 \end{grammar}
 ```
 ![Latex Rendering](0037-assets/cbuffer-grammar.png)
 
-This simplified grammar disallows members of `cbuffer` declarations that do not
-have semantic meaning, and allows a simplification of `cbuffer` scoping rules.
+This simplified grammar restricts the declarations that are valid within a
+cbuffer to declarations that are broadly valid inside block scopes as well as
+function and template declarations. This allows a cbuffer to contain
+declarations of classes and data types as well as functions and variables.
 
 A `cbuffer` may only be declared at translation unit or namespace scope. A
-`cbuffer` may only contain non-static non-constexpr variable (or empty)
-declarations. All declarations within a `cbuffer` declare names in the immediate
-enclosing scope.
+`cbuffer` may not contain a namespace declaration and may only contain a subset
+of valid global declarations.
 
-A `cbuffer` is a colection of constant values provided to a shader at runtime.
-As such, it should only contain constant variable declarations backed by
-read-only storage in device memory that persists across the life of the
-dispatch.
+## Detailed Design
 
-Notably a `cbuffer` cannot contain function declarations, type declarations
-(classes, enumerations, typedefs), namespace declarations, constexpr or static
-variable declarations, `cbuffer` declarations, or any other declaration type not
-explicitly listed as allowed.
+> The following text will be included in the [Decl.cbuffer] section in the
+> language specification.
 
+A _cbuffer declaration_ is declared with the \texttt{cbuffer} keyword. The name
+of the cbuffer declaration does not declare a name, and cannot be referenced
+from within the translation unit, nor is it required to be unique. Each cbuffer
+declaration refers to a unique constant buffer resource.
 
+Declarations within a cbuffer declaration that declare names, declare their
+names in the scope containing the cbuffer declaration. The cbuffer declaration
+itself does not declare a declaration scope. A cbuffer declaration may not
+contain a _namespace-declaration_ or _cbuffer-declaration_.
+
+Variable declarations with program storage duration in the cbuffer declaration
+are called _shader constants_. Shader constants are implicitly `const`
+and cannot be modified in program code.
+
+## Long-term Considerations
+
+During our discussion in the language design meeting additional restrictions to
+cbuffer declarations were considered. The general consesnsus was that additional
+restrictions are desirable and will remove possible programmer errors, however
+there were concerns about HLSL 202x changing too much at once.
+
+In a future language version we may consider further restricting cbuffers to
+allow only variable declarations of _program storage duration_.
+
+In implementing cbuffer support in Clang we should consider implementing
+a diagnostic for all variable declarations that are not of program storage
+duration to identify potential programmer errors.
