@@ -116,7 +116,7 @@ and cannot be modified in program code.
 ## Long-term Considerations
 
 During our discussion in the language design meeting additional restrictions to
-cbuffer declarations were considered. The general consesnsus was that additional
+cbuffer declarations were considered. The general consensus was that additional
 restrictions are desirable and will remove possible programmer errors, however
 there were concerns about HLSL 202x changing too much at once.
 
