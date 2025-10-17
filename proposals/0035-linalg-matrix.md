@@ -224,8 +224,12 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixATy MatA = MatrixATy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 32 * 4,
+      MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
 
   for (uint I = 0; I < MatB.Length(); ++I) {
     uint2 Pos = MatB.GetCoordinate(I);
@@ -248,11 +252,13 @@ ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy =
-      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
+  using MatrixBTy = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
+                           MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
@@ -1327,7 +1333,7 @@ in the [`DXILMatrixComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/GMz4T1bh8)
+[Compiler Explorer](https://godbolt.org/z/47YYqqx1Y)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1602,8 +1608,12 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixATy MatA = MatrixATy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 32 * 4,
+      MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
 
   for (uint I = 0; I < MatB.Length(); ++I) {
     uint2 Pos = MatB.GetCoordinate(I);
@@ -1626,7 +1636,9 @@ void CoopVec() {
                            MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(MBuf, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 
