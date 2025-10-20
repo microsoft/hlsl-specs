@@ -267,12 +267,14 @@ postfix expression before the dot.
  indexing for both row and column.
 \end{itemize}
 
-\p A \textit{matrix-swizzle-component-sequence} is a sequence of one or more swizzle
-components of either the \textit{matrix-zero-indexed-swizzle} or
-\textit{matrix-one-indexed-swizzle} forms; the two forms may not be mixed in the
-same \textit{matrix-swizzle-component-sequence}. The type of a swizzle expression is a
-vector of the same element type as the postfix expression before the dot, with a
-number of elements equal to the number of components in the \textit{matrix-swizzle-component-sequence}.
+\p A \textit{matrix-swizzle-component-sequence} is a sequence of one but less
+than or equal to four swizzle components of either the
+\textit{matrix-zero-indexed-swizzle} or \textit{matrix-one-indexed-swizzle}
+forms; the two forms may not be mixed in the same 
+\textit{matrix-swizzle-component-sequence}. The type of a swizzle expression is
+a vector of the same element type as the postfix expression before the dot,
+with a number of elements equal to the number of components in the
+\textit{matrix-swizzle-component-sequence}.
 
 \Sec{Function Calls}{Expr.Post.Call}
 
