@@ -208,6 +208,5 @@ We need to update both, discussion was had on deprecating PSV0 and just doing
 RDAT however this doesn't align with near term goals for modernization.
 
 ### Shader Reflection
-I don't have enough context to even posit a guess.
 Would require a refelction api version bump, reflection would be based on the
 PSV0/RDAT updates. Still unclear if its something we want to do.
