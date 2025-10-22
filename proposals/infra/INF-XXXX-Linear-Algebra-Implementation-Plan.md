@@ -16,10 +16,9 @@ params:
 This implementation plan covers a high level description of the work necessary
 to implement the
 [linalg spec](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0035-linalg-matrix.md)
-for SM6.10 including back-of-the-napkin time
-estimates. This document is not intended to be a comprehensive implementation
-timeline, instead the estimates are purely for strawmanning discussion and
-should be expected to vary in at least an order of magnetude in either direction.
+for SM6.10 including back-of-the-napkin time estimates. This document is being
+continually refined with higher resolution estimates. Currently estimates are
+expected to be correct within an order of magnatude.
 
 ## Time Estimate Windows
 
@@ -46,11 +45,11 @@ See [Commentary](#Commentary) for discussion on specific work items.
 
 | Item Class            | Time Window |
 |-----------------------|-------------|
+| Impl Headers using __builtins()   | Days       |
 | Check in HLSL Headers | Day         |
 | Header Distribution   | Weeks       |
 | Groupshared Args      | Weeks       |
-| HLSL __builtins api   | Months*     |
-| DXIL api              | Months*     |
+| HLSL + DXIL api       | Months*     |
 | DXIL Validator        | Sprints     |
 | HLK Testing           | Months      |
 | PSV0 Updates          | Weeks       |
@@ -61,54 +60,34 @@ See [Commentary](#Commentary) for discussion on specific work items.
 
 A couple notes on the tables below:
  - The tables below are subject to change and may fall out of sync. The [linalg spec](https://github.com/microsoft/hlsl-specs/blob/main/proposals/0035-linalg-matrix.md) is the source of truth
- - The HLSL builtin ops will have different names, the header names are used as placeholders
+ - The HLSL builtin ops will have different names, the names are used as placeholders
+ - It's useful to pair the builtin and dxil op work when they are 1:1 mapped so the table below reflects that
 
-| HLSL __builtin op     | Time Window |
+| Name                  | Time Window |
 |-----------------------|-------------|
-| `Matrix::Splat()` | Days |
-| `Matrix::Cast()` | Days |
-| `Matrix::Length()` | Days |
-| `Matrix::GetCoordinate(uint)` | Days |
-| `Matrix::Get(uint)` | Days |
-| `Matrix::Set(uint, T)` | Days |
-| `Matrix::Load(ByteAddressBuffer)` | Days |
-| `Matrix::Load(RWByteAddressBuffer)` | Days |
-| `Matrix::Load(groupshared)` | Days |
-| `Matrix::Store(RWByteAddressBuffer)` | Days |
-| `Matrix::Store(groupshared)` | Days |
-| `Matrix::Accumulate(RWByteAddressBuffer)` | Days |
-| `Matrix::Accumulate(groupshared)` | Days |
-| `Matrix::MultiplyAccumulate()` | Days |
-| `Matrix::SumAccumulate()` | Days |
-| `linalg::Multiply(Matrix, Matrix)` | Days |
-| `linalg::Multiply(vector, Matrix)` | Days |
-| `linalg::MultiplyAdd(vector, Matrix, vector)` | Days |
-| `linalg::OuterProduct(vector, vector)` | Days |
-| `linalg::AccumulatorLayout()` | Days |
+| `__matrix_create()` + `dx.op.createMatrix` | Days |
+| `__matrix_annotate()` + `dx.op.annotateMatrix` | Weeks |
+| `__matrix_fill()` + `dx.op.fillMatrix` | Days |
+| `__matrix_cast()` + `dx.op.castMatrix` | Days |
+| `__matrix_length()` + `dx.op.matrixLength` | Days |
+| `__matrix_get_coordinate()` + `dx.op.matrixGetCoordinate` | Days |
+| `__matrix_get_element()` + `dx.op.matrixGetElement` | Days |
+| `__matrix_set_element()` + `dx.op.matrixSetElement` | Days |
+| `__matrix_load_from_descriptor()` + `dx.op.matrixLoadFromDescriptor` | Days |
+| `__matrix_load_from_memory()` + `dx.op.matrixLoadFromMemory` | Days |
+| `__matrix_store_to_descriptor()` + `dx.op.matrixStoreToDescriptor` | Days |
+| `__matrix_store_to_memory()` + `dx.op.matrixStoreToMemory` | Days |
+| `__matrix_accumulate_to_descriptor()` + `dx.op.matrixAccumulateToDescriptor` | Days |
+| `__matrix_accumulate_to_memory()` + `dx.op.matrixAccumulateToMemory` | Days |
+| `__matrix_vector_multiply` + `dx.op.matvecmul` | Days |
+| `__matrix_vector_multiply_add` + `dx.op.matvecmuladd` | Days |
+| `__matrix_outer_product()` + `dx.op.matrixOuterProduct` | Days |
+| `__matrix_matrix_multiply` + `dx.op.matrixOp(1)` | Days |
+| `__matrix_matrix_multiply_accumulate()` + `dx.op.matrixOp(2)` | Days |
+| `__matrix_matrix_sum_accumulate()` + `dx.op.matrixOp(3)` | Days |
+| `__matrix_query_accumulator_layout()` + `dx.op.matrixQueryAccumulatorLayout` | Days |
 
-| DXIL op               | Time Window |
-|-----------------------|-------------|
-| `dx.op.createMatrix` | Days |
-| `dx.op.annotateMatrix` | Weeks |
-| `dx.op.fillMatrix` | Days |
-| `dx.op.castMatrix` | Days |
-| `dx.op.matrixLength` | Days |
-| `dx.op.matrixGetCoordinate` | Days |
-| `dx.op.matrixGetElement` | Days |
-| `dx.op.matrixSetElement` | Days |
-| `dx.op.matrixLoadFromDescriptor` | Days |
-| `dx.op.matrixLoadFromMemory` | Days |
-| `dx.op.matrixStoreToDescriptor` | Days |
-| `dx.op.matrixStoreToMemory` | Days |
-| `dx.op.matrixAccumulateToDescriptor` | Days |
-| `dx.op.matrixAccumulateToMemory` | Days |
-| `dx.op.matvecmul` | Days |
-| `dx.op.matvecmuladd` | Days |
-| `dx.op.matrixOuterProduct` | Days |
-| `dx.op.matrixOp` | Days |
-| `dx.op.matrixQueryAccumulatorLayout` | Days |
-
-Loosely adding everything up gives ~5 months of serialized work with a wide error margin.
+Loosely adding everything up gives ~4 months of serialized work with a wide error margin.
 
 ## Milestones
 
@@ -116,10 +95,10 @@ Loosely adding everything up gives ~5 months of serialized work with a wide erro
 While we expect the spec to move more, we need to have a resonable expectation
 that the DXIL ops are mostly finalized before moving into implementation.
 
-### IHV Preview (Multiple Drops on a recurring basis)
-IHVs will need early previews to test their driver implementation. This
-milestone focuses on delivering an MVP compiler that unlocks the various DXIL
-features. Early drops may have minimum feature support but the tasks must be
+### IVH Preview Drops
+IHVs will need early previews to test their driver implementation. Each drop
+will increase the total number of supported operations until the full list
+below is completed. Early drops may have minimum feature support but the tasks must be
 iteratively completed by the end of this milestone.
 
  - Check in linalg.h
@@ -129,12 +108,70 @@ iteratively completed by the end of this milestone.
  - Basic HLKs
  - DXIL Validation - Trival / Free
 
+Each drop should unlock a new set of useful and independent features. Below is
+a proposal for a useful division of features in each drop. Drops 2 through 5 can
+be completed in any order based on feature unlock priorities.
+
+#### Drop 1 (~Sprint)
+The absolute minimum obserable matrix
+
+ - The following HLSL / DXIL Ops
+   - createMatrix
+   - annotateMatrix (simple version, no attempt to deduplicate annotations)
+   - fillMatrix
+   - matrixLoadFromDescriptor
+   - matrixStoreToMemory
+
+#### Drop 2 (~Sprint)
+Expanded Load/Store operations + cast
+
+ - Groupshared Args
+ - The following HLSL / DXIL Ops
+   - matrixLoadFromMemory
+   - matrixStoreToMemory
+   - castMatrix (abritrarily added here to balance drop size)
+
+### Drop 3 (~Week)
+Elementwise Matrix Operations
+
+ - The following HLSL / DXIL Ops
+   - matrixLength
+   - matrixGetCoordinate
+   - matrixGetElement
+   - matrixSetElement
+
+### Drop 4 (~Week)
+Matrix Multiply
+
+ - The following HLSL / DXIL Ops
+   - matvecmul
+   - matvecmuladd
+   - matrixOp(1) (Mat Mat Multiply)
+
+### Drop 5 (~Sprint)
+Matrix Accumlate
+
+ - The following HLSL / DXIL Ops
+   - matrixAccumulateToDescriptor
+   - matrixAccumulateToMemory (depends on Drop 2)
+   - matrixOuterProduct
+   - matrixQueryAccumulatorLayout
+   - matrixOp(2) (Mat Mat Multiply Accumulate)
+   - matrixOp(3) (Mat Mat Sum Accumulate)
+
+#### Drop 6 (~Sprint)
+Complete IHV preview feature set
+ - Checked in final version of linalg.h with all calls to builtins
+ - Complex `annotate` implementation with deduplication
+ - Basic HLKs
+
+
 ### Public Preview
 Public preview is a beta verson of the compiler with the features enabled so
 that public developers can try out the new features in a mostly complete state.
 The expectation at the point is near feature completeness / minimal api changes
 to enable the developers to test out the features in real world scenarios. Only
-one drop is planned and it needs the follwoing tasks to be completed.
+one drop is planned and it needs the following tasks to be completed.
 
  - Header Distribution
  - PSV0 Updates
