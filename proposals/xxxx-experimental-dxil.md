@@ -10,7 +10,7 @@ params:
   status: Under Consideration
 ---
 
-* Planned Version: 2021
+* Planned Version: SM 6.10
 
 ## Introduction
 
@@ -137,23 +137,27 @@ Cons:
 
 ### Extension/Experimental Feature Opcode
 Relaxing the restriction that DXIL opcodes are immediate constants would allow
-a call that returns a value representing a special operation. The call creates the value from a feature ID and feature local opcode. Unique-ify information could be stored in the call directory or in metadata.
+a call that returns a value representing a special operation. The call creates
+the value from a feature ID and feature local opcode. Unique-ify information
+could be stored in the call directory or in metadata.
 
 Pros:
  * Enables vary robust extension system
  * Doesn't consume any of the current opcode space
  * Obvious from reading the DXIL that experimental/extension is being used
 Cons:
- * Transistion from experimental to stable seems quite complicated
+ * Transistion from experimental to stable is non trivial. [See here](####stabilizing-with-opcode-subsets)
  * Not integrated into the current system, would require notable dev work
- * Breaks a pretty fundamental DXIL assumptiod
+ * Breaks a pretty fundamental DXIL assumption
 
 ### Single Specific Experimental Opcode with varargs
-A new opcode class `dx.op.experimental` is introduced which consumes one of the existing core opcodes with the following shape.
+A new opcode class `dx.op.experimental` is introduced which consumes one of the
+existing core opcodes with the following shape.
 
 `dx.op.experimental(12345, <opcode set name global>, <specific opcode>, operands...)`
 
-The opcode set name and specific opcode are just arbitrary values from other parts of the compiled shader.
+The opcode set name and specific opcode are just arbitrary values from other
+parts of the compiled shader.
 
 Pros:
  * Doesn't consume any of the current opcode space
@@ -162,12 +166,28 @@ Pros:
  * Maintains first args as immediate constant
  * All the information is encoded in the call
 Cons:
- * Transistion from experimental to stable is pretty much reimplementing the opcode
+ * Transistion from experimental to stable is non trivial. [See here](####stabilizing-with-opcode-subsets)
  * Unclear how well the current system will handle varargs
  * More complex to implement and integrate
  * Not really a solution for extensions
    * Though calling it something other that `experimental` seems to solve that
 
+#### Stabilizing with opcode subsets
+Some proposals in this doc create new opcodes sets that reuse existing numbers
+nested under a set name or feature id. These proposals have a more complex route
+for transistioning from experimental to stable. There are two potential routes
+to be considered.
+
+ * Create a new stable opcode from scratch using the normal mechanisms that
+   currently exist then migrate lowering paths to use it
+ * Maintain a notion of experimental and non-experimental opcode subset then 
+   update the specific subset to no longer be considered experimental keeping
+   all lowering the same
+
+The first option has a larger churn burden but maintains the status quo and keeps
+the generated code relatively dense while the second option is likely the easiest
+transistion system from any proposal in this document at the cost of code density
+and introducing a second way for stable operations to exist in DXIL.
 
 ## Potential HLSL Intrinsic Solutions
 There are two types of intrinsic solutions that can be imagined. One where an
@@ -190,6 +210,8 @@ updated to reflect that.
 
 ## Outstanding Questions
 
-* Should DXC have some kind of --experimental flag that turns on/off experimental
-  intrinsics and DXIL ops?
-* Related, when/how are experimental ops exposed in the compiler, when are they errors to use?
+* Should DXC have some kind of --experimental flag that turns on/off
+  experimental intrinsics and DXIL ops?
+* Related, when/how are experimental ops exposed in the compiler, when are they
+  errors to use?
+* Should the validator warn on experimental op usage?
