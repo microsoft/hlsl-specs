@@ -141,6 +141,13 @@ a call that returns a value representing a special operation. The call creates
 the value from a feature ID and feature local opcode. Unique-ify information
 could be stored in the call directory or in metadata.
 
+```llvm
+%feature_id = i32 123
+%cool_operation = i32 456
+%opcode = i32 dx.create.extensionop(%feature_id, %cool_operaton)
+%result = i32 dx.op.binary(%opcode, %a, %b)
+```
+
 Pros:
  * Enables vary robust extension system
  * Doesn't consume any of the current opcode space
@@ -151,10 +158,15 @@ Cons:
  * Breaks a pretty fundamental DXIL assumption
 
 ### Single Specific Experimental Opcode with varargs
-A new opcode class `dx.op.experimental` is introduced which consumes one of the
-existing core opcodes with the following shape.
+A new opcode class `dx.op.extension` is introduced as a core stable opcode in
+which named opcode subsets can be called directly.
 
-`dx.op.experimental(12345, <opcode set name global>, <specific opcode>, operands...)`
+
+```llvm
+%opcode_set = str "My Cool Experiment"
+%opcode = i32 123
+%res = i32 dx.op.extension(i32 12345, %opcode_set, %opcode, operands...)
+```
 
 The opcode set name and specific opcode are just arbitrary values from other
 parts of the compiled shader.
@@ -169,8 +181,7 @@ Cons:
  * Transistion from experimental to stable is non trivial. [See here](####stabilizing-with-opcode-subsets)
  * Unclear how well the current system will handle varargs
  * More complex to implement and integrate
- * Not really a solution for extensions
-   * Though calling it something other that `experimental` seems to solve that
+ * `dx.op.extension` will need to support any arbitrary overload
 
 #### Stabilizing with opcode subsets
 Some proposals in this doc create new opcodes sets that reuse existing numbers
@@ -180,7 +191,7 @@ to be considered.
 
  * Create a new stable opcode from scratch using the normal mechanisms that
    currently exist then migrate lowering paths to use it
- * Maintain a notion of experimental and non-experimental opcode subset then 
+ * Maintain a notion of experimental and non-experimental opcode subsets then
    update the specific subset to no longer be considered experimental keeping
    all lowering the same
 
