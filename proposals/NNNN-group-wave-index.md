@@ -4,7 +4,7 @@ params:
     authors:
     - MartinAtXbox: Martin Fuller
     - damyanp: Damyan Pepper
-    - jackell: Jack Elliott
+    - JoeCitizen: Jack Elliott
     sponsors:
     - damyanp: Damyan Pepper
     - jackell: Jack Elliott
