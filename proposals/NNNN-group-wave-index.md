@@ -6,7 +6,6 @@ params:
     - damyanp: Damyan Pepper
     - JoeCitizen: Jack Elliott
     sponsors:
-    - damyanp: Damyan Pepper
     - jackell: Jack Elliott
     status: Under Consideration
 ---
