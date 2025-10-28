@@ -67,9 +67,7 @@ This solution enables:
 
 1. **Wave-level collaboration**: Different waves within a thread group can perform
    different tasks and coordinate their work efficiently.
-2. **Single-wave specialization**: Shaders can optimize for the common case where
-   a thread group contains exactly one wave.
-3. **Portable code**: A single code path works across all wave sizes without
+2. **Portable code**: A single code path works across all wave sizes without
    conditionals on `WaveGetLaneCount()`.
 
 ## Detailed design
