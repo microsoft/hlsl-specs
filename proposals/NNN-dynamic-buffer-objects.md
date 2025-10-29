@@ -1,9 +1,13 @@
-# Dynamic Buffer Objects
-
-* Proposal: [NNNN](NNNN-dynamic-buffer-objects.md)
-* Author(s): [Mike Apodaca](https://github.com/mapodaca-nv)
-* Sponsor: TBD
-* Status: **Under Consideration**
+---
+title: "NNNN - Dynamic Buffer Objects"
+params:
+  authors:
+    - mapodaca-nv: Mike Apodaca
+  sponsors:
+    - amarpMSFT: Amar Patel
+    - llvm-beanz: Chris Bieneman
+  status: Under Consideration
+---
 
 ## Introduction
 
