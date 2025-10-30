@@ -57,34 +57,53 @@ Introduce two core pieces:
 No change is proposed to how static `groupshared` objects are declared; sizes
 remain compile-time constants.
 
-### Example
-
+### Examples
+#### Example 1: `GroupSharedLimit` declared but not exceeded
 ```hlsl
+groupshared uint g_BigScratch1[ 16384 ];
+
 [numthreads(128,1,1)]
 // Author intends to remain portable to devices with>= 64 KB
 [GroupSharedLimit(65536)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
-    // 64 KB O.K.
-    groupshared uint bigScratch[ 16384 ];
+    g_BigScratch1[dtid.x] = ...
 }
+```
+In this example the shader declares a maximum of 64k group shared memory usage
+and it's static usage does not exceed that therefore no errors are generated.
+
+#### Example 2: `GroupSharedLimit` declared but exceeded
+
+```hlsl
+// 64 KB + 4 Bytes FAIL (GroupSharedLimit Exceeded)
+groupshared uint g_BigScratch2[ 16385 ];
 
 [numthreads(128,1,1)]
  // Author intends to remain portable to devices with >= 64 KB
 [GroupSharedLimit(65536)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
-    // 64 KB + 4 Bytes FAIL (GroupSharedLimit Exceeded)
-    groupshared uint bigScratch[ 16385 ];
+    g_BigScratch2[dtid.x] = ...
 }
+```
+This shader declares a maximum of 64k group shared memory but it's actual usage
+is 4 bytes larger than that which results in a compiler error.
+
+#### Example 2: `GroupSharedLimit` undeclared and original limit exceeded
+```hlsl
+// 64 KB FAIL. (no GroupSharedLimit -> fallback to 32k limit)
+groupshared uint g_BigScratch3[ 16384 ];  
 
 [numthreads(128,1,1)]
 void CSMain(uint3 dtid : SV_DispatchThreadID)
 {
-    // 64 KB FAIL. (no GroupSharedLimit -> fallback to 32k limit)
-    groupshared uint bigScratch[ 16384 ];  
+    g_BigScratch3[dtid.x] = ...
 }
 ```
+This shader does not make use of `GroupSharedLimit` therefore the SM6.10 and
+prior limit of 32k is applied and a compiler error is generated because it's
+actual usage exceeds that.
 
 ## Detailed Design
 
