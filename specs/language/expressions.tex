@@ -152,7 +152,7 @@ as the same non-parenthesized expression.
   simple-type-specifier braced-init-list\br
   typename-specifier braced-init-list\br
   postfix-expression \terminal{.} \opt{\terminal{template}} id-expression\br
-  postfix-expression \terminal{->} \opt{\terminal{template}} id-expression\br
+  postfix-expression \terminal{.} vector-swizzle-component-sequence\br
   postfix-expression \terminal{++}\br
   postfix-expression \terminal{--}
 \end{grammar}
@@ -166,6 +166,69 @@ vector, or matrix of \texttt{T[]}, or an object of type \texttt{T} where
 \texttt{T} provides an overloaded implementation of \texttt{operator[]}
 (\ref{Overload}).\footnote{HLSL does not support the base address of a subscript
 operator being the expression inside the braces, which is valid in C and C++.}
+
+\p If the postfix expression \texttt{E1} is of vector type, the expression
+\textit{E2} must be a value of integer type. If the value is known at compile
+time to be outside the range \texttt{[0, N-1]} where \texttt{N} is the number of
+elements in the vector, the program is ill-formed. If the value is outside the
+range at runtime, the behavior is undefined.
+
+\Sec{Vector Swizzle}{Expr.Post.VectorSwizzle}
+
+\begin{grammar}
+  \define{vector-swizzle-component-sequence}\br
+  swizzle-component-sequence-rgba\br
+  swizzle-component-sequence-xyzw\br
+
+  \define{swizzle-component-sequence-rgba}\br
+  swizzle-component-rgba\br
+  swizzle-component-sequence-rgba swizzle-component-rgba\br
+
+  \define{swizzle-component-sequence-xyzw}\br
+  swizzle-component-xyzw\br
+  swizzle-component-sequence-xyzw swizzle-component-xyzw\br
+
+  \define{swizzle-component-rgba} \textnormal{one of}\br
+  \terminal{r g b a}\br
+
+  \define{swizzle-component-xyzw} \textnormal{one of}\br
+  \terminal{x y z w}
+\end{grammar}
+
+\p A \textit{postfix-expression} followed by a dot (\texttt{.}) and a sequence
+of one or more \textit{swizzle-components} is a postfix expression. The
+postfix expression before the dot is evaluated and must be of vector type. If
+the postfix expression before the dot is an lvalue, the swizzle expression may
+produce either an lvalue or a prvalue; otherwise it produces a prvalue.
+
+\p A \textit{swizzle-component-sequence} is a sequence of one or more swizzle
+components of either the \textit{swizzle-component-rgba} or
+\textit{swizzle-component-xyzw} forms; the two forms may not be mixed in the
+same \textit{swizzle-component-sequence}. The type of a swizzle expression is a
+vector of the same element type as the postfix expression before the dot, with a
+number of elements equal to the number of components in the
+\textit{swizzle-component-sequence}. If the postfix expression before the dot is
+an lvalue and the \textit{swizzle-component-sequence} contains no repeated
+components, the swizzle expression is an lvalue; otherwise it is a prvalue.
+
+\p Swizzle components map to elements of the vector in the following way:
+
+\begin{center}
+  \begin{tabular}{|| c | c | c ||}
+    \hline
+    Element Index & RGBA component & XYZW component \\
+    \hline
+    0 & r & x \\
+    1 & g & y \\
+    2 & b & z \\
+    3 & a & w \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\p A program is ill-formed if any component in the \textit{swizzle-component-sequence}
+refers to an element index that is out of range of the vector type of the
+postfix expression before the dot.
 
 \Sec{Function Calls}{Expr.Post.Call}
 

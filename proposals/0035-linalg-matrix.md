@@ -76,47 +76,6 @@ class Matrix {
                            Matrix<NewCompTy, M, N, NewUse, Scope>>::type
   Cast();
 
-  // Element-wise operations
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator+=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) + V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator-=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) - V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator*=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) * V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator/=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) / V);
-    return this;
-  }
-
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                       Scope != MatrixScope::Thread,
@@ -265,8 +224,12 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixATy MatA = MatrixATy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 32 * 4,
+      MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
 
   for (uint I = 0; I < MatB.Length(); ++I) {
     uint2 Pos = MatB.GetCoordinate(I);
@@ -289,11 +252,13 @@ ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy =
-      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
+  using MatrixBTy = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
+                           MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 ```
@@ -385,11 +350,7 @@ The following table summarizes the operations supported for each matrix scope:
 
 | Operation | Thread Scope | Wave Scope | ThreadGroup Scope |
 |-----------|--------------|------------|-------------------|
-| `Matrix::cast()` | ✗ | ✓ | ✓ |
-| `Matrix::operator+=()` | ✗ | ✓ | ✓ |
-| `Matrix::operator-=()` | ✗ | ✓ | ✓ |
-| `Matrix::operator*=()` | ✗ | ✓ | ✓ |
-| `Matrix::operator/=()` | ✗ | ✓ | ✓ |
+| `Matrix::Cast()` | ✗ | ✓ | ✓ |
 | `Matrix::Length()` | ✗ | ✓ | ✓ |
 | `Matrix::GetCoordinate(uint)` | ✗ | ✓ | ✓ |
 | `Matrix::Get(uint)` | ✗ | ✓ | ✓ |
@@ -635,31 +596,6 @@ Matrix::Cast();
 ```
 
 The `Matrix::Cast()` function supports casting component types and matrix `Use`.
-
-#### Element-wise Operators
-
-```c++
-template <typename T>
-typename hlsl::enable_if<
-    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
-    Matrix::operator+=(T);
-template <typename T>
-typename hlsl::enable_if<
-    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
-    Matrix::operator-=(T);
-template <typename T>
-typename hlsl::enable_if<
-    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
-    Matrix::operator*=(T);
-template <typename T>
-typename hlsl::enable_if<
-    hlsl::is_arithmetic<T>::value && Scope != MatrixScope::Thread, Matrix>::type
-    Matrix::operator/=(T);
-```
-
-For any arithmetic scalar type the `+`, `-`, `*` and `/` binary operators
-perform element-wise arithmetic on the matrix. The returned by-value `Matrix`
-contains the same handle and refers to the same (now modified) `Matrix`.
 
 #### Matrix::Splat(T)
 
@@ -1397,7 +1333,7 @@ in the [`DXILMatrixComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/eY8bYvdo7)
+[Compiler Explorer](https://godbolt.org/z/47YYqqx1Y)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1526,47 +1462,6 @@ class Matrix {
                            Matrix<NewCompTy, M, N, NewUse, Scope>>::type
   Cast();
 
-  // Element-wise operations
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator+=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) + V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator-=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) - V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator*=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) * V);
-    return this;
-  }
-
-  template <typename T>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Scope != MatrixScope::Thread,
-                           Matrix>::type
-  operator/=(T V) {
-    for (uint I = 0; I < Length(); ++I)
-      Set(I, Get(I) / V);
-    return this;
-  }
-
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                       Scope != MatrixScope::Thread,
@@ -1680,14 +1575,16 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, uint M, uint K,
           MatrixComponentType MatrixDT>
-vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
-                               Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>);
+vector<OutputElTy, K>
+    Multiply(vector<InputElTy, M>,
+             Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, MatrixComponentType MatrixDT>
-vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
-                                  Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
-                                  vector<BiasElTy, K>);
+vector<OutputElTy, K>
+    MultiplyAdd(vector<InputElTy, M>,
+                Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
+                vector<BiasElTy, K>);
 
 // Outer product functions
 template <MatrixComponentType OutTy, MatrixScope Scope, typename InputElTy,
@@ -1711,8 +1608,12 @@ void WaveMatrixExample() {
   using MatrixAccum32Ty = Matrix<MatrixComponentType::F32, 8, 16,
                                  MatrixUse::Accumulator, MatrixScope::Wave>;
 
-  MatrixATy MatA = MatrixATy::Load(B, 0, 8 * 4, MatrixLayout::RowMajor);
-  MatrixBTy MatB = MatrixBTy::Load(B, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixATy MatA = MatrixATy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 32 * 4,
+      MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      B, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
 
   for (uint I = 0; I < MatB.Length(); ++I) {
     uint2 Pos = MatB.GetCoordinate(I);
@@ -1731,11 +1632,13 @@ ByteAddressBuffer MBuf : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy =
-      Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B, MatrixScope::Thread>;
+  using MatrixBTy = Matrix<MatrixComponentType::F16, 32, 16, MatrixUse::B,
+                           MatrixScope::Thread>;
 
   vector<float16_t, 32> Vec = (vector<float16_t, 32>)0;
-  MatrixBTy MatB = MatrixBTy::Load(MBuf, 0, 32 * 4, MatrixLayout::RowMajor);
+  MatrixBTy MatB = MatrixBTy::Load(
+      MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
+      MatrixLayout::RowMajor);
   vector<float16_t, 16> Accum = Multiply<float16_t>(Vec, MatB);
 }
 
