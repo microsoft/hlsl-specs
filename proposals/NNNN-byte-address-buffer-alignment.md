@@ -359,21 +359,21 @@ void main() {
 }
 ```
 
-#### Validation
+#### DXIL Validation Changes
 
 The compiler validates that both `BaseAlignment` attribute values and `AlignedLoad`/`AlignedStore` function `alignment`
 parameters meet their respective constraints. When an `alignment` parameter value exceeds the buffer's `BaseAlignment`
 value, the effective alignment is limited to the `BaseAlignment` value without generating an error, ensuring that
-alignment guarantees remain consistent and achievable.
+alignment guarantees remain consistent and achievable.  See [DXIL Diagnostic Changes](#dxil-diagnostic-changes) for
+more details.
+
+#### HLSL Compatibility
 
 This feature maintains source code compatibility with existing HLSL. The `BaseAlignment` attribute is optional and the
 new `AlignedLoad`/`AlignedStore` functions are additional functionality. Existing buffer declarations, function
 parameters, and access operations continue to compile and execute correctly. When `BaseAlignment` is added to existing
 buffers, existing `Load`/`Store` operations may receive improved alignment for larger element types, which should only
 enhance performance without affecting correctness.
-
-Applications can rely on compiler support for this feature starting with DXC version X.Y and later for Shader Model 6.x
-and above.
 
 #### Common Usage Patterns
 
@@ -587,7 +587,7 @@ instructions or capabilities.
 **Note**: Like DXIL, SPIR-V alignment parameters expect **absolute alignment** values. The compiler must perform the
 same relative-to-absolute alignment conversion when generating SPIR-V as it does for DXIL.
 
-### Diagnostic Changes
+### DXIL Diagnostic Changes
 
 This proposal introduces several new compile-time error conditions when the `BaseAlignment` attribute and
 `AlignedLoad`/`AlignedStore` functions are used incorrectly or inconsistently.
@@ -714,7 +714,7 @@ This proposal introduces several new compile-time error conditions when the `Bas
 
 This proposal does not remove any existing error or warning conditions.
 
-#### Validation Changes
+### Runtime Validation Changes
 
 This proposal introduces runtime validation for alignment mismatches that can only be detected during shader execution.
 This proposal does not remove any existing validation conditions.
@@ -849,94 +849,6 @@ The compiler must provide the following information to the runtime for proper bu
   * **Format**: Standard DXIL resource metadata structures
   * **Runtime Usage**: Runtime and backend compilers can use this information for resource binding validation and
     optimization
-
-##### Optional Shader Flag Addition
-
-The runtime may benefit from a new shader flag to optimize handling of shaders that use buffer alignment features:
-
-```cpp
-// Proposed addition to D3D_SHADER_FLAGS
-#define D3D_SHADER_FLAG_USES_BUFFER_OBJECT_ALIGNMENT 0x00200000
-```
-
-**Benefits:**
-
-* **Performance Optimization**: Runtimes can enable alignment-specific optimization paths only for shaders that use the
-  feature
-* **Resource Efficiency**: Allows runtimes to skip alignment-related processing overhead for shaders that don't use
-  alignment features
-* **Validation Efficiency**: GPU-Based Validation can selectively enable alignment checking only when necessary
-
-##### Runtime Processing Requirements
-
-* **Compile-time**: Alignment requirements are fully specified in existing DXIL structures and available during pipeline
-  state creation without additional parsing or metadata extraction
-* **Runtime**: No additional alignment information needs to be provided beyond what is already embedded in standard DXIL
-  operations and resource properties
-* **GPU-Based Validation**: Can extract both `BaseAlignment` and `AlignedLoad`/`AlignedStore` function alignment
-  requirements directly from existing DXIL structures for validation purposes
-
-##### Implementation Considerations
-
-* **DXIL Parsing**: Existing DXIL parsing infrastructure requires no modifications to extract alignment information
-* **Backend Compatibility**: IHV backend compilers can choose to implement alignment-based optimizations or ignore the
-  alignment hints without affecting correctness
-* **Resource Binding**: Resource binding mechanisms (root descriptors, descriptor tables, descriptor heap indexing)
-  remain unchanged and fully compatible
-
-#### Device Capability
-
-This feature requires no specific device capabilities, hardware features, or runtime extensions beyond existing Direct3D
-12 buffer operations.
-
-##### Hardware Requirements
-
-* **None Required**: No additional hardware capabilities beyond standard buffer load/store operations
-* **Universal Support**: Any device supporting the minimum Direct3D 12 feature level can use this feature
-* **No New Instructions**: Since this leverages existing DXIL buffer operations, no new hardware instructions or
-  capabilities are required
-
-##### Alignment Support Handling
-
-* **Minimum Alignment Compatibility**: The minimum alignment values (4 bytes for `ByteAddressBuffer`) match existing
-  Direct3D 12 specification requirements for root view GPUVAs
-* **Higher Alignment Graceful Degradation**: Implementations can choose to ignore alignment hints greater than what they
-  can optimize for without causing errors
-* **Conservative Operation**: The implementation uses the highest alignment it can handle, falling back to default
-  behavior when specific alignment values are not supported
-
-##### IHV Compiler Integration
-
-* **Existing Infrastructure**: IHV compilers already parse DXIL alignment parameters in buffer operations but typically
-  set them to largest scalar type sizes - this proposal provides meaningful values for these existing fields
-* **Optional Optimization**: Backend compilers can choose to implement alignment-based optimizations (vectorization,
-  memory coalescing, etc.) at their discretion without breaking compatibility
-* **No Breaking Changes**: Existing backend compilers continue to work unchanged if they choose not to implement
-  alignment-based optimizations
-
-##### Platform and API Compatibility
-
-* **Universal Direct3D 12 Support**: Works across all Direct3D 12 implementations without requiring new driver
-  capabilities or API extensions
-* **Shader Model Independence**: Compatible with existing shader models that support buffer operations
-* **Resource Binding Independence**: Works with all existing resource binding methods (root descriptors, descriptor
-  tables, dynamic indexing)
-
-##### Runtime Validation Integration
-
-* **GPU-Based Validation Compatibility**: When enabled, GPU-Based Validation can extract alignment requirements from
-  standard DXIL structures for runtime checking
-* **Debug Layer Integration**: Debug layer can provide alignment-related warnings and error reporting using existing
-  validation infrastructure
-* **PIX Integration**: Performance analysis tools can leverage alignment information for buffer access pattern analysis
-
-##### Performance Characteristics
-
-* **Optimization Only**: This feature affects performance optimization only - never correctness of program execution
-* **No Performance Regression**: Implementations that don't recognize alignment information continue to operate with
-  their existing performance characteristics
-* **Scalable Benefits**: Performance improvements scale with the implementation's ability to leverage alignment
-  information for vectorization and memory access optimization
 
 ## Testing
 
