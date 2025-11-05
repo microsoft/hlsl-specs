@@ -14,8 +14,9 @@ params:
 ## Introduction
 
 Today HLSL (DXIL) validation enforces a fixed upper limit of 32 KB
-of group shared memory per thread group for compute, mesh, and amplification
-shaders. Modern GPU architectures often expose substantially larger physically
+of group shared memory per thread group for Compute, and Amplification
+Shaders with Mesh shaders being limited to 28 KB. Modern GPU architectures
+often expose substantially larger physically
 available shared memory, and practical algorithms (e.g. large tile / cluster
 culling, large matrix manipulation, software raster bins, wave-cooperative BVH
 traversal, etc.) are constrained by the fixed specification limit rather than
@@ -43,8 +44,8 @@ nothing).
 Introduce two core pieces:
 
 1. A runtime API query returning `MaxGroupSharedMemoryPerGroup` (in bytes).
-    - This will return a minimum value of 32,768 i.e the default for SM 6.9 and
-    prior
+    - This will return a value at minimum equal to the existing limits in SM 6.9
+    and prior i.e. 32k for CS and AS and 28k for Mesh Shaders.
     - There is no defined maximum value.
     - Values must be 4 byte aligned.
 2. A new optional entry-point attribute allowing a shader author to declare the
@@ -109,8 +110,8 @@ actual usage exceeds that.
 
 ### Runtime Validation
 * If `GroupSharedLimit` is omitted, validation will fall back to the original
-32k limit. The error message will be update to indicate that the limit may be
-raised with the caveat that hardware support must be checked.
+32k limit (28k for MS). The error message will be updated to indicate that the
+limit may be raised with the caveat that hardware support must be checked.
 * If `GroupSharedLimit` is present, HLSL validation will ensure the actual
 static usage is less than that limit. While a shader may pass validation and
 compile successfully the runtime may reject it if the shared memory usage is
@@ -161,7 +162,7 @@ Validator must:
 * Sum byte sizes of all groupshared globals (respect alignment / padding like
 today).
 * Check attribute presence & argument correctness.
-* Ensure intrinsic appears only in compute/mesh/amplification and SM >= 6.10.
+* Ensure attribute appears only in compute/mesh/amplification and SM >= 6.10.
 * Emit / retain static usage metadata (existing) for runtime comparison against
 device capability.
 
@@ -170,24 +171,24 @@ device capability.
 #### Capability Bit / Query
 
 Add a new feature query (illustrative naming):
-* D3D12: `D3D12_FEATURE_DATA_D3D12_OPTIONS_XX::MaxGroupSharedMemoryPerGroup`
+* D3D12: `D3D12_FEATURE_DATA_D3D12_OPTIONS_XX::MaxGroupSharedMemoryPerGroupCSAS`
     - Value declares the maximum group shared memory in bytes per thread group
+    for Compute and Amplification Shaders.
     - Must be >= 32,768 and 4 byte aligned
+* D3D12: `D3D12_FEATURE_DATA_D3D12_OPTIONS_XX::MaxGroupSharedMemoryPerGroupMS`
+    - Value declares the maximum group shared memory in bytes per thread group
+    for Mesh Shaders.
+    - Must be >= 28,672 and 4 byte aligned
 
 #### Pipeline Compilation / Load
 * Runtime compares shader static usage versus device capacity.
 * Failure path mirrors existing shader model mismatch failures.
 
-### Device Capability
-
-* When targeting Shader Model 6.10 drivers must return a value for
-`MaxGroupSharedMemoryPerGroup` greater than or equal to 32,768.
-
 ## Testing
 
 Testing matrix axes:
 * Stages: compute, mesh, amplification.
-* Capacities: 0 - 32 KB, 48 KB, 64 KB, 96 KB, 128 KB.
+* Capacities: 0 - 32/28 KB, 48 KB, 64 KB, 96 KB, 128 KB.
 * Attribute: absent vs present (below, equal, above static usage; above
 capacity).
 
