@@ -1,4 +1,6 @@
-# Design Meeting
+---
+title: Design Meeting
+---
 
 > NOTE: Please read the [terms of participation](#design-meeting-terms)
 > ("Terms") below prior to joining the Teams meeting.  You joining the Teams

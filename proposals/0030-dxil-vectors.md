@@ -1,14 +1,16 @@
-<!-- {% raw %} -->
-
-# DXIL Vectors
-
+---
+title: 0030 - DXIL Vectors
+params:
+  authors:
+  - pow2clk: Greg Roth
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
 ---
 
-* Proposal: [0030](0030-dxil-vectors.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: **Under Consideration**
-* Planned Version: Shader Model 6.9
+
+ 
+* Planned Version: SM 6.9
 
 ## Introduction
 
@@ -94,7 +96,7 @@ Here and hereafter, `NUM` is the number of elements in the loaded vector, `TYPE`
 #### Vector access
 
 Dynamic access to vectors were previously converted to array accesses.
-Native vectors can be dynamically accessed using `extractelement`, `insertelement`, or `getelementptr` operations.
+Native vectors can be dynamically accessed using `extractelement`, `insertelement`, `shufflevector` or `getelementptr` operations.
 Previously usage of `extractelement` and `insertelement` in DXIL didn't allow dynamic index parameters.
 
 #### Elementwise intrinsics
@@ -131,6 +133,70 @@ The scalar variants of these DXIL intrinsics will remain unchanged and can be us
  with the vector variants.
 This means that the same language-level vector (of any length) could be used
  in scalarized operations and native vector operations even within the same shader.
+
+### New DXIL Intrinsics
+
+#### `VectorReduce` OpCodeClass
+
+A new generic OpCodeClass `VectorReduce` is introduced for usage in new operations
+below. `VectorReduce` combines a vector of elements into a single element with
+the same type as the vector element type. The elements are combined using an
+operation specified by the opcode parameter.
+
+#### Boolean Vector Reduction Intrinsics
+
+**VectorReduceAnd**
+
+Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
+
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
+```C++
+DXIL::OpCode::VectorReduceAnd = 309
+```
+
+```asm
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+```
+
+**VectorReduceOr**
+
+Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
+
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
+```C++
+DXIL::OpCode::VectorReduceOr = 310
+```
+
+```asm
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
+```
+
+#### Vectorized Dot
+
+A new OpCodeClass `dot` is introduced. The return type matches the vector element
+return type. The 2nd and 3rd parameters are two vectors of the same dimention and
+element type. The 1st parameter is an opcode that specifies what type of dot
+operation to calculate. The only supported opcode as of this proposal is floating
+point dot.
+
+**FDot**
+
+Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
+native vectors in DXIL `dot` can now be treated similarly to a binary operation.
+
+Returns `op1[0] * op2[0] + op1[1] * op2[1] + ... + op1[NUM - 1] * op2[NUM - 1]`
+
+The scalar type for `FDot` may be `half` or `float`.
+
+```C++
+DXIL::OpCode::FDot = 311
+```
+
+```asm
+ [TYPE] @dx.op.dot.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
+```
 
 ### Validation Changes
 
@@ -239,13 +305,8 @@ In practice, this testing will largely represent verifying correct intrinsic out
 | 121    | WavePrefixOp       | WavePrefixOp       |
 | 122    | QuadReadLaneAt     | QuadReadLaneAt     |
 | 123    | QuadOp             | QuadOp             |
-| 124    | BitcastI16toF16    | BitcastI16toF16    |
-| 125    | BitcastF16toI16    | BitcastF16toI16    |
-| 126    | BitcastI32toF32    | BitcastI32toF32    |
-| 127    | BitcastF32toI32    | BitcastF32toI32    |
-| 128    | BitcastI64toF64    | BitcastI64toF64    |
-| 129    | BitcastF64toI64    | BitcastF64toI64    |
 | 165    | WaveMatch          | WaveMatch          |
+| 166    | WaveMultiPrefixOp  | WaveMultiPrefixOp  |
 
 
 
@@ -253,4 +314,3 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 * [Anupama Chandrasekhar](https://github.com/anupamachandra) and [Tex Riddell](https://github.com/tex3d) for foundational contributions to the design.
 
-<!-- {% endraw %} -->

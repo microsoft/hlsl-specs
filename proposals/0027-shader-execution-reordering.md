@@ -1,12 +1,17 @@
 
-# Shader Execution Reordering (SER)
+---
+title: 0027 - Shader Execution Reordering (SER)
+params:
+    authors:
+    - rasmusnv: Rasmus Barringer
+    sponsors:
+    - tex3d: Tex Riddell
+    status: Accepted
+---
 
-* Proposal: [0027](0027-shader-execution-reordering.md)
-* Author(s): [Rasmus Barringer](https://github.com/rasmusnv), Robert Toth,
-Michael Haidl, Simon Moll, Martin Stich
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Under Consideration**
+ 
 * Impacted Projects: DXC
+* Planned Version: SM 6.9
 
 ## Introduction
 
@@ -189,12 +194,14 @@ This function introduces [Reorder Points](#reorder-points).
 
 #### HitObject::FromRayQuery
 
-Construct a `HitObject` representing the committed hit in a `RayQuery`. It is
-not bound to a shader table record and behaves as a NOP-HitObject if invoked.
+Construct a `HitObject` representing the committed hit in a `RayQuery`.
+If there is no committed hit in the RayQuery, the HitObject returned is the
+NOP-HitObject.
+Regardless whether it is a hit, miss or nop, the resulting `HitObject` is not
+bound to a shader table record and behaves as a NOP-HitObject if invoked.
 It can be used for reordering based on hit information.
-If no hit is committed in the RayQuery,
-the HitObject returned is a NOP-HitObject. A shader table record can be assigned
-separately, which in turn allows invoking a shader.
+A shader table record can be assigned separately, which in turn allows invoking
+a shader.
 
 An overload takes a user-defined hit kind and custom attributes associated with
 COMMITTED_PROCEDURAL_PRIMITIVE_HIT.
@@ -243,6 +250,7 @@ Parameter                           | Definition
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `uint RayFlags` | Valid combination of Ray flags as specified by `TraceRay`. Only defined ray flags are propagated by the system.
 `uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
+`RayDesc Ray` | Ray for the miss.
 
 ---
 
@@ -447,7 +455,7 @@ float3x4 dx::HitObject::GetObjectToWorld3x4();
 
 Returns a matrix for transforming from object-space to world-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetObjectToWorld4x3()` is the
 matrix is transposed – use whichever is convenient.
@@ -462,7 +470,7 @@ float4x3 dx::HitObject::GetObjectToWorld4x3();
 
 Returns a matrix for transforming from object-space to world-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetObjectToWorld3x4()` is
 the matrix is transposed – use whichever is convenient.
@@ -477,7 +485,7 @@ float3x4 dx::HitObject::GetWorldToObject3x4();
 
 Returns a matrix for transforming from world-space to object-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetWorldToObject4x3()` is
 the matrix is transposed – use whichever is convenient.
@@ -492,7 +500,7 @@ float4x3 dx::HitObject::GetWorldToObject4x3();
 
 Returns a matrix for transforming from world-space to object-space.
 
-Returns an identity matrix if the `HitObject` does not encode a hit.
+Returns a zero matrix with ones on the diagonal if the `HitObject` does not encode a hit.
 
 The only difference between this and `HitObject::GetWorldToObject3x4()` is
 the matrix is transposed – use whichever is convenient.
@@ -563,14 +571,14 @@ Returns 0 if the `HitObject` does not encode a hit.
 
 ```C++
 template<attr_t>
-attr_t dx::HitObject::GetAttributes();
+void dx::HitObject::GetAttributes(out attr_t Attributes);
 ```
 
-Returns the attributes of a hit. `attr_t` must match the committed
+Stores the committed attributes to `Attributes`. `attr_t` must match the committed
 attributes’ type regardless of whether they were committed by an intersection
 shader, fixed function logic, or using `HitObject::FromRayQuery`.
 
-If the `HitObject` does not encode a hit, the returned value will be
+If the `HitObject` does not encode a hit, `Attributes` will be
 zero-initialized. The size of `attr_t` must not exceed
 `MaxAttributeSizeInBytes` specified in the `D3D12_RAYTRACING_SHADER_CONFIG`.
 

@@ -1,9 +1,14 @@
-# HLSL Loop Unroll Factor
+---
+title: 0022 - HLSL Loop Unroll Factor
+params:
+  authors:
+  - farzonl: Farzon Lotfi
+  sponsors:
+  - farzonl: Farzon Lotfi
+  status: Accepted
+---
 
-* Proposal: [0022](0022-hlsl-loop-unroll-factor.md)
-* Author(s): [Farzon Lotfi](https://github.com/farzonl)
-* Sponsor: [Farzon Lotfi](https://github.com/farzonl)
-* Status: **Accepted**
+ 
 * Planned Version: 202x
 * Impacted Projects: DXC & Clang
 
@@ -31,7 +36,7 @@ and the one in DXC. While there is an expectation that the new compiler will
 not be fully compatible with the previous compilers, These compat breaks should
  be minimized when possible.
 
- ## Proposed solution
+## Proposed solution
 In [HLSL 202X](0020-hlsl-202x-202y.md) the DXC implementation of the loop
 unroll factor should no longer alter the  number of iteration executions.
 Ideally the loop unroll factor will also become a compiler hint for partial

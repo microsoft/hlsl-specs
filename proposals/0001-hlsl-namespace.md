@@ -1,9 +1,13 @@
-# HLSL Namespace
+---
+title: 0001 - HLSL Namespace
+params:
+    authors:
+    - llvm-beanz: Chris Bieneman
+    sponsors:
+    - llvm-beanz: Chris Bieneman
+    status: Under Review
+---
 
-* Proposal: [0001](0001-hlsl-namespace.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
 * Planned Version: 202y
 
 ## Introduction

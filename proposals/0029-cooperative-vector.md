@@ -1,11 +1,20 @@
-<!-- {% raw %} -->
+---
+title: 0029 - Cooperative Vectors
+params:
+  authors:
+  - anupamachandra: Anupama Chandrasekhar
+  - damyanp: Damyan Pepper
+  - shashankw: Shashank Wadhwa
+  sponsors:
+  - damyanp: Damyan Pepper
+  - pow2clk: Greg Roth
+  status: Rejected
+---
 
-* Proposal: [0029](0029-cooperative-vector.md)
-* Author(s): [Anupama Chandrasekhar][anupamachandra], [Damyan Pepper][damyanp],
-             [Shashank Wadhwa][shashankw]
-* Sponsor: [Damyan Pepper][damyanp], [Greg Roth][pow2clk]
-* Status: **Under Review**
-* Planned Version: Shader Model 6.9
+> This has been superceded by [0035-linalg-matrix.md](0035-linalg-matrix.md)
+
+ 
+* Planned Version: SM 6.9
 
 
 [anupamachandra]: https://github.com/anupamachandra
@@ -13,17 +22,17 @@
 [pow2clk]: https://github.com/pow2clk
 [shashankw]: https://github.com/shashankw
 
-# Cooperative Vectors
+ 
 
 Cooperative Vectors is the overall name for this feature, though it doesn't appear
-in code other that feature tier/capability queries.
+in code other than feature tier/capability queries.
 
 Many implementations implement matrix-matrix and matrix-vector operations by allowing
 threads in a wave to cooperate under the hood while accessing the specialized hardware 
 to achieve peak performance, hence these APIs that expose the acceleration hardware 
 to HLSL users were put under the moniker **Cooperative/Wave**. But since this is an 
 implementation detail below the level of abstraction of HLSL, the namespace 
-**Linear Algebra** was chosen to categorize these set of operations.
+**Linear Algebra** was chosen to categorize this set of operations.
 
 E.g. `dx::linalg::` MatVec operations in HLSL, 
 `D3D12_LINEAR_ALGEBRA_*` and `D3D12_LINEAR_ALGEBRA_MATRIX_VECTOR_*` in D3D API structs.
@@ -136,14 +145,14 @@ void ps_main(args) // args: texture, normal, position
 
 ## Proposed solution
 
-Introduce new DXIL operations to accelarate matrix-vector operations. In this
+Introduce new DXIL operations to accelerate matrix-vector operations. In this
 specification we add four operations:
 
 * **Matrix-Vector Multiply:** Multiply a matrix in memory and a vector
     parameter.
 * **Matrix-Vector Multiply-Add:** Multiply a matrix in memory and a vector
     parameter and add a vector from memory.
-* **Vector-Vector Outer Product and Accumulate:** Compute the outerproduct of
+* **Vector-Vector Outer Product and Accumulate:** Compute the outer product of
     two vectors and accumulate the result matrix atomically-elementwise in
     memory.
 * **Vector Accumulate:** Accumulate elements of a vector
@@ -250,7 +259,7 @@ row/column of the matrix is valid memory.
 The **matrix stride** is 16-byte aligned.
 
 This operation doesn't perform bounds checking for matrix loads. If any part of
-the matrix load is out of bounds then the entire operation is undefined.
+the matrix load is out of bounds then the entire matrix load will return zero.
 
 
 ##### Bias Vector
@@ -266,7 +275,7 @@ The base address of **bias vector resource** and **bias vector offset** must be
 64-byte aligned.
 
 This operation doesn't perform bounds checking for bias loads. If any part of
-the vector load is out of bounds then the entire operation is undefined.
+the vector load is out of bounds then the entire vector load will return zero.
 
 #### Return Type
 
@@ -336,6 +345,9 @@ row/column of the matrix is valid memory. Implementations may write to the
 contents of the padding between the end of the matrix and the 16-byte boundary,
 so developers should not use this padding space for anything else.
 
+If any part of the matrix write is out-of-bounds, the whole operation is
+skipped.
+
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
 determine which combinations are supported. A list of combinations that are
@@ -378,10 +390,13 @@ The output array is accumulated to the writeable raw-buffer resource specified
 by **output array resource** and **output array offset**.  The base address and
 **output array offset** must be 64-byte aligned.  Also note that the size of the
 underlying allocation is guaranteed to be a multiple of 16 bytes, ensuring that
-there is valid memory between the end of the array and the 16-byte bounadry.
+there is valid memory between the end of the array and the 16-byte boundary.
 Implementations may write to the contents of the padding between the end of the
 matrix and the 16-byte boundary, so developers should not use this padding space
 for anything else.
+
+If any part of the vector write is out-of-bounds, the whole operation is
+skipped.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
@@ -652,8 +667,7 @@ interpretation combinations supported by new vector-matrix intrinsics.
 typedef enum D3D12_FEATURE {
     ...
     // Contains Cooperative Vector tier.
-    // NN tbd when implemented
-    D3D12_FEATURE_D3D12_OPTIONSNN;
+    D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL;
     D3D12_FEATURE_COOPERATIVE_VECTOR;
 };
 
@@ -686,10 +700,10 @@ typedef enum D3D12_COOPERATIVE_VECTOR_TIER
 
 // This struct may be augmented with more capability bits
 // as the feature develops
-typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONSNN // NN tbd when implemented
+typedef struct D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL
 {
     Out D3D12_COOPERATIVE_VECTOR_TIER CooperativeVectorTier;
-} D3D12_FEATURE_DATA_D3D12_OPTIONSNN;
+} D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL;
 
 // Used for MatrixVectorMulAdd intrinsic
 typedef struct D3D12_COOPERATIVE_VECTOR_PROPERTIES_MUL
@@ -788,10 +802,10 @@ explicitly checked for the combinations below.
 
 ```c++
 // Check for matrix vector support and query properties for MatrixVectorMulAdd
-D3D12_FEATURE_DATA_D3D12_OPTIONSNN TierSupport = {};
+D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL TierSupport = {};
 
-d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONSNN, &TierSupport, 
-                                 sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONSNN));
+d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS_EXPERIMENTAL, &TierSupport, 
+                                 sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS_EXPERIMENTAL));
 
 if (TierSupport.CooperativeVectorTier >= D3D12_COOPERATIVE_VECTOR_TIER_1_0) {
     // PropCounts to be filled by driver implementation
@@ -873,8 +887,8 @@ typedef struct D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO {
 // the destination layout information and does not depend on the source layout
 // information.
 
-void ID3D12Device::GetLinearAlgebraMatrixConversionDestinationInfo(
-                        D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
+void ID3D12DevicePreview::GetLinearAlgebraMatrixConversionDestinationInfo(
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_DEST_INFO* pDesc);
 
 ```
 
@@ -933,8 +947,9 @@ number of bytes returned in call to
 
 ```c++
 // Converts source matrix to desired layout and datatype
-void ID3D12CommandList::ConvertLinearAlgebraMatrix(D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
-                                                   UINT DescCount);
+void ID3D12GraphicsCommandListPreview::ConvertLinearAlgebraMatrix(
+    D3D12_LINEAR_ALGEBRA_MATRIX_CONVERSION_INFO* pDesc,
+    UINT DescCount);
 
 ```
 
@@ -1045,4 +1060,4 @@ deciding to extend the existing `ComponentType` enum.
 We would like to thank Jeff Bolz, Yury Uralsky, Patrick Neill, Tex Riddell and
 Amar Patel for their contributions to this specification.
 
-<!-- {% endraw %} -->
+

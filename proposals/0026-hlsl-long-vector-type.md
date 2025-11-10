@@ -1,11 +1,17 @@
-<!-- {% raw %} -->
+---
+title: 0026 - HLSL Long Vectors
+params:
+  authors:
+  - anupamachandra: Anupama Chandrasekhar
+  - pow2clk: Greg Roth
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-# HLSL Long Vectors
 
-* Proposal: [0026-HLSL-Vectors](0026-hlsl-vector-type.md)
-* Author(s): [Anupama Chandrasekhar](https://github.com/anupamachandra), [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: **Under Consideration**
+ 
+* Planned Version: SM 6.9
 
 ## Introduction
 
@@ -117,6 +123,12 @@ myBuffer.Store< vector<T, N> >(StartoffsetInBytes + 100, val);
 
 ```
 
+Long Vectors loaded from or stored to a Raw Buffer must comply with the alignment
+rules of the underlying buffer. Therefore the offset used to `Load`/`Store` a vector
+from/to a `ByteAddressBuffer` must be aligned to a multiple of the component type.
+(EX: half -> 2 bytes, uint -> 4 bytes, int64 -> 8 bytes). Misaligned offsets result 
+in undefined behavior.
+
 StructuredBuffers with N-element vectors are declared using the template syntax
  with a long vector type as the template parameter.
 N-element vectors are loaded and stored from ByteAddressBuffers using the templated load and store methods
@@ -134,6 +146,41 @@ myBuffer.Store(elementIndex, val);
 
 Long vectors support the existing vector subscript operators `[]` to access the scalar element values.
 They do not support any swizzle operations.
+
+#### Converting dimensions of long vectors
+
+HLSL vectors support extraction and recomposition of new vectors via swizzling, however
+long vectors don't support swizzling, instead the following operation is made available
+on all vectors.
+
+**`slice<Offset, Count, ComponentType, InSize>(vector<ComponentType, InSize> in)`**
+
+The `slice` function returns a new `vector` containing elements starting at `Offset`
+containing `Count` number of components of type `ComponentType`. `ComponentType` and
+`InSize` are deduced by the compiler.
+
+```hlsl
+vector<int, 6> src = {0, 1, 2, 3, 4, 5};
+vector<int, 3> sub = slice<2, 3>(src) // sub = {2, 3, 4}
+```
+
+`slice` also has a convenience version that assumes Offset is 0.
+
+```hlsl
+vector<int, 6> src = {0, 1, 2, 3, 4, 5};
+vector<int, 4> sub = slice<4>(src) // sub = {0, 1, 2, 3}
+```
+
+A compiler error will be raised if the slice operation would result in out of bounds access.
+
+**Why template values instead of parameters**
+
+It may seem like an odd choice to specify the extraction values via templates
+instead of using function parameters. This decision unlocks two key benefits both
+derived from the fact that the values must be known statically at compile time.
+
+ - The compiler can always detect and fail on out-of-bounds access
+ - The extraction operations can always be lowered to a single vector shuffle instruction
 
 #### Operations on long vectors
 
@@ -274,7 +321,8 @@ Verify that long vectors produce validation errors in:
 Correct behavior for all of the intrinsics listed in [allowed elementwise vector intrinsics](#allowed-elementwise-vector-intrinsics)
  will be verified with execution tests that perform the operations on long vectors and confirm correct results
  for the given test values.
-Where possible, these tests will be variations on existing tests for these intrinsics.
+Where possible, these tests will be variations on existing tests for these
+intrinsics. [Long-Vector-ExecutionTest-Plan](./infra/INF-0006-Long-Vector-ExecutionTest-Plan.md)
 
 ## Alternatives considered
 
@@ -323,4 +371,4 @@ Having a limit facilitates testing and sets expectations for both hardware and s
   * A: No. It doesn't make sense since they can't be used to access all elements
        and there's no way to create enough swizzle members to accommodate the longest allowed vector.
 
-<!-- {% endraw %} -->
+

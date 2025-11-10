@@ -1,11 +1,13 @@
-<!-- {% raw %} -->
+---
+title: 0021 - Vulkan cooperative matrix extension
+params:
+  authors:
+  - s-perron: Steven Perron
+  status: Completed
+---
 
-# Vulkan cooperative matrix extension
 
 *   Proposal: [0021](0021-vk-coop-matrix.md)
-*   Author(s): [Steven Perron](https://github.com/s-perron)
-*   Sponsor: TBD
-*   Status: **Accepted**
 *   Required Version: Vulkan 1.3
 *   PRs: [#6720](https://github.com/microsoft/DirectXShaderCompiler/pull/6720)
 
@@ -511,4 +513,4 @@ enum StorageClass {
 };
 ```
 
-<!-- {% endraw %} -->
+

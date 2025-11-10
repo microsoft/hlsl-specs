@@ -1,11 +1,16 @@
-# Expanded Comparison Sampling
+---
+title: 0014 - Expanded Comparison Sampling
+params:
+  authors:
+  - pow2clk: Greg Roth
+  - jenatali: Jesse Natalie
+  sponsors:
+  - pow2clk: Greg Roth
+  status: Completed
+---
 
-* Proposal: [0014](0014-expanded-comparison-sampling.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk),
-             [Jesse Natalie](https://github.com/jenatali)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: Complete
-* Version: Shader Model 6.8
+ 
+* Version: SM 6.8
 
 ## Introduction
 

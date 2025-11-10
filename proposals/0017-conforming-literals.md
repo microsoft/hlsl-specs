@@ -1,20 +1,24 @@
-<!-- {% raw %} -->
+---
+title: 0017 - Conforming Literals
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Completed
+---
 
-# Conforming Literals
 
-* Proposal: [0017](0017-conforming-literals.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+ 
 * Planned Version: HLSL 202x
 * PRs: [#175](https://github.com/microsoft/hlsl-specs/pull/175)
-* Issues: [#73](https://github.com/microsoft/hlsl-specs/issue/73),
-  [microsoft/DirectXShaderCompiler#6147](https://github.com/microsoft/DirectXShaderCompiler/issue/6147),
-  [microsoft/DirectXShaderCompiler#3973](https://github.com/microsoft/DirectXShaderCompiler/issue/3973),
-  [microsoft/DirectXShaderCompiler#4683](https://github.com/microsoft/DirectXShaderCompiler/issue/4683),
-  [microsoft/DirectXShaderCompiler#5493](https://github.com/microsoft/DirectXShaderCompiler/issue/5493),
-  [microsoft/DirectXShaderCompiler#6410](https://github.com/microsoft/DirectXShaderCompiler/issue/6410),
-  [shader-slang/slang#1185](https://github.com/shader-slang/slang/issue/1185)
+* Issues: [#73](https://github.com/microsoft/hlsl-specs/issues/73),
+  [microsoft/DirectXShaderCompiler#6147](https://github.com/microsoft/DirectXShaderCompiler/issues/6147),
+  [microsoft/DirectXShaderCompiler#3973](https://github.com/microsoft/DirectXShaderCompiler/issues/3973),
+  [microsoft/DirectXShaderCompiler#4683](https://github.com/microsoft/DirectXShaderCompiler/issues/4683),
+  [microsoft/DirectXShaderCompiler#5493](https://github.com/microsoft/DirectXShaderCompiler/issues/5493),
+  [microsoft/DirectXShaderCompiler#6410](https://github.com/microsoft/DirectXShaderCompiler/issues/6410),
+  [shader-slang/slang#1185](https://github.com/shader-slang/slang/issues/1185)
 
 ## Introduction
 
@@ -321,4 +325,4 @@ less than or equal to `UINT32_MAX`, otherwise it is 64-bit.
 warning: literal value is treated as signed in HLSL before 202x, and unsigned in 202x and later
 ```
 
-<!-- {% endraw %} -->
+
