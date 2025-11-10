@@ -1,12 +1,14 @@
-<!-- {% raw %} -->
+---
+title: 0050 - Formalized Memory and Execution Model
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Consideration
+---
 
-# Formalized Memory and Execution Model
-
-* Proposal: [NNNN](NNNN-filename.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
 * PRs: [hlsl-specs#321](https://github.com/microsoft/hlsl-specs/pull/321)
-* Status: **Under Consideration**
 
 ## Introduction
 
@@ -160,5 +162,3 @@ Specific concerns that must be addressed:
 |              | tangle       | A grouping of co-executing threads. |
 | wave         | subgroup     | A group of threads which may form one or more tangles and are executed on a shared SIMD or other compute unit. |
 | threadgroup  | workgroup    | A group of threads which may be subdivided into one or more waves and comprise a larger computation. |
-
-<!-- {% endraw %} -->
