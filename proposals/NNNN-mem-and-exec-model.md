@@ -133,7 +133,7 @@ void main(uint GI : SV_GroupIndex) {
 One problem with this model is not having clearly defined memory ordering which
 can impact tangle formation. If a thread is allowed to execute the second `if`
 body before all threads have finished evaluating the condition, tangle formation
-becomes unintuitive.
+becomes unintuitive and potentially undefined.
 
 This can be made slightly stricter by requiring that branch statements (`if`,
 `else`, `switch`, `for`, `while`, etc.) are thread sync points. It also likely
