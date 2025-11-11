@@ -109,14 +109,20 @@ declares an array of unknown bound, except when the bound is implicitly derived
 as described below. A declaration may only declare an array of unknown bound for
 global declarations of resource objects (\ref{Resources}).
 
-\p The contained type of an array of either form shall be a complete type.
+\p Array declarations may be nested to form multidimensional arrays. When
+declaring a multidimensional array, only the first (outermost) dimension may
+have an unknown bound; all inner dimensions must have known bounds.
 
 \begin{note}
-  An array of arrays may be declared with infinite nesting of array declarators
-  as long as either all array bounds are known, or only the outermost array
-  bound is unknown. This is codified in the spec above with the requirement that
-  the contained type of an array be a complete type.
+  For example the declaration \texttt{int A[3][4];} declares \texttt{A} as an
+  array of 3 elements, each of which is an array of 4 integers.
+
+  Applying this example to the above grammar, \texttt{T} is \texttt{int},
+  \texttt{D} is \texttt{A[3][4]}, \texttt{D'} is \texttt{A[3]}, \texttt{N} is 3,
+  and \texttt{T'} is \texttt{int[4]}.
 \end{note}
+
+\p The contained type of an array of any form shall be a complete type.
 
 \p A declarator with an omitted array bound is valid when declaring an object of
 array type which is not a non-static data member and is initialized with an
