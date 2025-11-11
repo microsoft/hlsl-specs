@@ -1,5 +1,5 @@
 ---
-title: "0051 - ByteAddressBuffer Alignment
+title: 0051 - ByteAddressBuffer Alignment
 params:
   authors:
      - mapodaca-nv: Mike Apodaca
