@@ -2,10 +2,10 @@
 title: 0051 - ByteAddressBuffer Alignment
 params:
   authors:
-     - mapodaca-nv: Mike Apodaca
-   sponsors:
-     - tex3D: Tex Riddell
-   status: Under Consideration
+  - mapodaca-nv: Mike Apodaca
+  sponsors:
+  - tex3D: Tex Riddell
+  status: Under Consideration
 ---
 
 * Required Version: Shader Model X.Y, Vulkan X.Y, and/or HLSL 20XY
