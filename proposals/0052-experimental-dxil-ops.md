@@ -38,7 +38,7 @@ This proposal seeks to implement a systematic method to handle these issues.
 This proposal seeks to address the following points:
  * Needless churn when experimental op are delayed or rejected
  * Experimental feature boundaries are rigid and unaffected by SM updates
- * Enable long term experiments and potentially extensions
+ * Enable long term experiments
  * Focused on core api system (hlsl instrinsics and DXIL ops)
  * Works within the current intrinsics/DXIL op mechanisms
  * Minimizes overall changes to the system and IHV processes
