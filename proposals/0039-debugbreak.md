@@ -60,3 +60,68 @@ void main(uint GI : SV_GroupIndex) {
 
 This aligns with C/C++ conventions that our users are already familiar with.
 
+## Detailed Design
+
+This proposal introduces a new HLSL `DebugBreak` intrinsic which has a
+runtime-defined behavior to facilitate shader debugging workflows. If the
+runtime does not support or is not configured to enable support for the
+corresponding DXIL instruction, it must be treated as a no-op by the driver.
+
+### HLSL Surface
+
+A new `DebugBreak` function is added with the signature:
+
+```
+void DebugBreak();
+```
+
+A new header `assert.h` is added and included with the compiler packaging which
+implements the `assert` macro:
+
+```c
+#if NDEBUG
+#define assert(cond) do { } while(false)
+#else
+#define assert(cond) do { if (!cond) DebugBreak();} while(false)
+#endif
+```
+
+### DXIL Lowering
+
+This change introduces a new DXIL operation:
+
+
+``` llvm
+declare void @dx.op.debugBreak(
+  immarg i32             ; opcode
+)
+```
+
+This DXIL operation must be treated as `convergent` even though it is not to
+prevent code motion. It should also not be marked `readonly` or `readnone` even
+though it technically doesn't read memory.
+
+This instruction will only be valid in a new shader model.
+
+Because it is valid to treat this operation as a no-op, it is a required
+supported feature and does not require a capabilities bit.
+
+### SPIRV Lowering
+
+This change will utilize the existing `NonSemantic.DebugBreak` instruction.
+While this instruction is not widely supported by Vulkan debuggers, it is
+supported by NVIDIA's NSight and can be safely ignored by Vulkan runtimes.
+
+The SPIRV usage will utilize the following instructions:
+
+```
+%1 = OpExtInstImport "NonSemantic.DebugBreak"
+%2 = OpExtInst %void %1 DebugBreak
+```
+
+## Open Questions
+
+* Consider introducing the `convergent` attribute to DXIL.
+  * This should be "cheap" and would potentially address pre-existing bugs.
+  * This would preserve the requirement that this operation not be moved during
+    optimization in the final DXIL.

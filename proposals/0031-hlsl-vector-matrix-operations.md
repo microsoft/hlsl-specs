@@ -7,7 +7,7 @@ params:
   - anupamachandra: Anupama Chandrasekhar
   sponsors:
   - damyanp: Damyan Pepper
-  status: Under Review
+  status: Rejected
 ---
 
 

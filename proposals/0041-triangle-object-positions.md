@@ -152,6 +152,23 @@ undefined. A shader can check for a triangle hit with
 
 Shader model 6.10 is required to use these intrinsics.
 
+The DXIL implementation for all of these will be effectively lowered to an
+implementation that behaves like the following HLSL pseudocode, given a
+built-in function for the DXIL intrinsic.
+
+```c++
+vector<float, 9> __builtin_TriangleObjectPositions();
+BuiltInTriangleHitPositions TriangleObjectPositions()
+{
+  vector<float, 9> LocalPositions;
+  BuiltInTriangleHitPositions result;
+  result.p0 = slice<0, 3>(LocalPositions);
+  result.p1 = slice<3, 3>(LocalPositions);
+  result.p2 = slice<6, 3>(LocalPositions);
+  return result;
+}
+```
+
 ### Diagnostic Changes
 
 New diagnostics:
@@ -167,10 +184,6 @@ New diagnostics:
 #### Validation Changes
 
 New Validation:
-
-* When the VertexInTri or ColumnIndex is not an immediate constant or out of
-  range:
-  * `"<DXIL Op> %select{VertexInTri|ColumnIndex}0 (%1) must be an immediate constant value in range [0..2]"`
 
 Existing infrastructure for enforcing shader model and shader stage
 requirements for DXIL ops will be used.
@@ -216,43 +229,34 @@ Use of HitObject intrinsics require Shader Model 6.10 and
 ; Availability: Shader Model 6.10+
 ; Availability: anyhit,closesthit
 ; Function Attrs: nounwind readnone
-declare f32 @dx.op.triangleObjectPosition.f32(
-      i32,  ; DXIL OpCode
-      i32,  ; VertexInTri, immediate constant [0..2]
-      i32)  ; ColumnIndex, immediate constant [0..2]
+declare <9 x float> @dx.op.triangleObjectPosition.f32(
+      i32)  ; DXIL OpCode
 
 ; Availability: Shader Model 6.10+
 ; Function Attrs: nounwind readonly
-declare f32 @dx.op.rayQuery_CandidateTriangleObjectPosition.f32(
+declare <9 x float> @dx.op.rayQuery_CandidateTriangleObjectPosition.f32(
       i32,  ; DXIL OpCode
-      i32,  ; RayQuery Handle
-      i32,  ; VertexInTri, immediate constant [0..2]
-      i32)  ; ColumnIndex, immediate constant [0..2]
+      i32)  ; RayQuery Handle
 
 ; Availability: Shader Model 6.10+
 ; Function Attrs: nounwind readonly
-declare f32 @dx.op.rayQuery_CommittedTriangleObjectPosition.f32(
+declare <9 x float> @dx.op.rayQuery_CommittedTriangleObjectPosition.f32(
       i32,  ; DXIL OpCode
-      i32,  ; RayQuery Handle
-      i32,  ; VertexInTri, immediate constant [0..2]
-      i32)  ; ColumnIndex, immediate constant [0..2]
+      i32)  ; RayQuery Handle
 
 ; Availability: Shader Model 6.10+
 ; Function Attrs: nounwind readonly
-declare f32 @dx.op.hitObject_TriangleObjectPosition.f32(
+declare <9 x float> @dx.op.hitObject_TriangleObjectPosition.f32(
       i32,                 ; DXIL OpCode
-      %dx.types.HitObject, ; HitObject handle
-      i32,                 ; VertexInTri, immediate constant [0..2]
-      i32)                 ; ColumnIndex, immediate constant [0..2]
+      %dx.types.HitObject) ; HitObject handle
 ```
 
 New DXIL operations: `TriangleObjectPosition`,
 `RayQuery_CandidateTriangleObjectPosition`,
 `RayQuery_CommittedTriangleObjectPosition`,
-`HitObject_TriangleObjectPosition`.
-These accept an immediate constant `VertexInTri`, and immediate constant
-`ColumnIndex` to read a single `x`, `y`, or `z` component from the specified
-vertex position for the triangle.
+`HitObject_TriangleObjectPosition`. These return a vector of 9 floats,
+which is comprised of 3 components from vertex 0, followed by 3 floats
+from vertex 1, followed by 3 floats from vertex 2.
 
 All of these DXIL operations require Shader Model 6.10.
 
@@ -274,9 +278,9 @@ using the following inline HLSL:
 [[vk::builtin("HitTriangleVertexPositionsKHR")]]
 float3 HitTriangleVertexPositionsKHR[3];
 
-inline BuiltInTrianglePositions TriangleObjectPositions()
+inline BuiltInTriangleHitPositions TriangleObjectPositions()
 {
-  BuiltInTrianglePositions result;
+  BuiltInTriangleHitPositions result;
   result.p0 = HitTriangleVertexPositionsKHR[0];
   result.p1 = HitTriangleVertexPositionsKHR[1];
   result.p2 = HitTriangleVertexPositionsKHR[2];
@@ -317,25 +321,31 @@ Raytracing HLK tests.
 
 Other approaches have been proposed for the return type of this intrinsic:
 
-* Current approach: return built-in struct containing all three vertices as `float3` fields:
+* Return built-in struct containing all three vertices as `float3` fields:
   * Benefit: all values returned from one call
   * Benefit: user can use same struct elsewhere and easily assign to result of call
   * Benefit: no appearance of native dynamic indexing support
   * Benefit: should work with DXC intrinsic system relatively easily
+  * Benefit: will easily explicitly convert to long vector or matrix
+  * Drawback: adds a new built-in type which effectively matches the memory layout of matrices or arrays
 * Add a vertex index parameter to the intrinsic and return a single position: `float3`:
   * Drawback: three calls required to store all vertices in a single variable in HLSL
   * Drawback: checking index requires an explicit diagnostic check
   * Benefit: A dynamic vertex index would easily lower directly to underlying DXIL op parameter without ugly codegen, if support for this was desired.
 * Use a matrix return type: `float3x3`:
+  * Benefit: resulting data is likely to be used for linear algebra
+  * Benefit: avoids adding a new built-in type
   * Drawback: It's not really a matrix
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
   * Drawback: layout isn't obvious
+  * Drawback: matrices can participate in implicit conversions that are likely to be programmer bugs, e.g. truncation to vector
 * Use a by-value array return type: `float3[3]`:
   * Benefit: checking static index is automatic
   * Benefit: convergence with SPIR-V
+  * Benefit: avoids adding a new built-in type
   * Drawback: likely difficult to introduce this into intrinsic system
   * Drawback: language suggests native indexing supported, which would result in ugly codegen
-  * Drawback: might want to remove return array-by-value support in future HLSL version, as this is not allowed in C++.
+  * Drawback: current plans are to [disallow array return types in HLSL 202x](https://github.com/microsoft/hlsl-specs/issues/652)
 * Use a constant reference-to-array return type: `const float3[3] &`:
   * Benefit: checking static index is automatic
   * Drawback: likely difficult to introduce this into intrinsic system
@@ -349,6 +359,25 @@ Other approaches have been proposed for the return type of this intrinsic:
   * Drawback: potential exposure of intermediate object could complicate things
 
 **Resolution**: Return built-in struct containing all three positions.
+
+### Return type for DXIL ops
+
+Several options are available for how to define the DXIL ops for this feature:
+
+* Return one component at a time
+* Use built-in struct containing all positions.
+  * struct layout up for debate
+  * actual form in op signature up for debate (return value, return pointer, sret - write to output pointer arg?).
+* Use native llvm array type, actual form in op signature up for debate.
+* Leverage shader model 6.9 vectorized DXIL and return
+  * one `<3 x float>` per call, taking a vertex ID as a parameter
+  * one `<9 x float>` with all values at once
+
+**Resolution**: Use `<9 x float>`. Since the HLSL API returns all components in one call, there
+is no opportunity (outside of dead code elimination) to omit some calls, so we might as well just
+return all components in DXIL as well. This structure is straightforward with SM6.9's value
+semantics with long vectors, and it's trivial to shuffle the resulting vector to convert to
+the HLSL return value.
 
 ### Intrinsic Naming
 
@@ -385,31 +414,7 @@ on-demand in a custom way.
 
 ## Open Issues
 
-### Built-in struct return type
-
-`BuiltInTrianglePositions` isn't necessarily the best name for the struct,
-so suggestions for a better name are welcome.
-
-### Return type for DXIL ops
-
-There is some open debate about the return type used for DXIL operations.
-The current approach is to return one component at a time, as this matches the
-similar pre-existing operations for looking up matrix components for
-object/world transforms.  Keeping the DXIL operations consistent with the other
-operations in the same area would seem to carry less risk and keep the DXIL
-more regular.  This seems to outweigh a desire to do something special here.
-
-A couple other options:
-
-* Use built-in struct containing all positions.
-  * struct layout up for debate
-  * actual form in op signature up for debate (return value, return pointer, sret - write to output pointer arg?).
-* Use native llvm array type, actual form in op signature up for debate.
-* Leverage shader model 6.9 vectorized DXIL and return
-  * one `<3 x float>` per call, taking a vertex ID as a parameter
-  * one `<9 x float>` with all values at once
-
-**Proposed Resolution**: Keep DXIL op scalar for consistency with other ops.
+No outstanding open issues.
 
 ## Acknowledgments
 
