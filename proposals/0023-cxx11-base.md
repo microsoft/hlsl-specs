@@ -3,7 +3,7 @@ title: 0023 - Adopt C++11 Base
 params:
   authors:
   - llvm-beanz: Chris Bieneman
-  status: Under Review
+  status: Under Consideration
 ---
 
 
