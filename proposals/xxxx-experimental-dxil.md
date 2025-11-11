@@ -189,6 +189,7 @@ Cons:
    * complicates the experimental->stable mapping
  * Not well integrated into the current system, would require notable dev work
  * Unclear how to allocate extension vs experimental ops in the opx space
+ * Causes issues for drivers as drivers don't currently consider the op code class
 
 ### Extension/Experimental Feature Opcode
 Relaxing the restriction that DXIL opcodes are immediate constants would allow
