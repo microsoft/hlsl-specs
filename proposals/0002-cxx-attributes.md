@@ -248,10 +248,8 @@ definition of the attribute behavior.
 > Note: an example here would be optimization hint attributes which an
 > implementation is allowed to ignore without diagnosing.
 
-Each attribute may specify specific behavior for parsing attribute arguments.
-Any attribute that does not specify specific parsing behavior shall be parsed
-with the general behavior described here.
-
+Each attribute may define specific behavior for how its arguments are parsed.
+Attributes that do not define custom parsing behavior shall be parsed according to the general rules outlined here.
 > Note: The clause above enables attributes like the clang availability
 > attribute which supports named parameters (e.g.
 > `[[clang::availability(shadermodel, introduced=6.3)]]`), HLSL has a use for
