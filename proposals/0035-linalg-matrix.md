@@ -1189,9 +1189,10 @@ declare void @dx.op.matrixOp(
   )
 ```
 
-Two opcodes are available for this operation class, one for multiplying matrices
-and storing the result as `C = A * B`. The second for multiply accumulation `C
-+= A * B`.
+Three opcodes are available for this operation class:
+* Matrix Matrix Multiply: `C = A * B`
+* Matrix Matrix Multiply with Accumulation: `C += A * B`
+* Matrix Matrix Addition with Accumulation: `C += A + B`
 
 Validation rules will enforce that:
 * argument A is an `A` matrix
