@@ -121,9 +121,11 @@ has the high bit set informs that it is experimental. This makes it very easy
 for the compiler and drivers to detect experimental opcodes. When an opcode is
 transistioned to stable the opcode needs to be assigned a stable number.
 This splits the 4 billion opcode space into two 2 billion partions. One for
-stable one for experimental.
+stable one for experimental. The proposal results in two separatlye contiguous
+op code tables.
 
-This is the simpliest proposal with the least invasive set of changes.
+This is marginally the simpliest proposal with the least invasive set of changes.
+It is only marginally simpler than other reserved bit proposals.
 
 Pros:
  * Very simple
@@ -157,7 +159,7 @@ Pros:
 Cons:
  * transistion from experimental to stable isn't just clearing the partition
    * other stable ops may have already taken that number
-   * complicates the experimental->stable mapping
+   * significantly complicates the experimental->stable transition
 
 ### Top 16 bits as "opcode partition" value
 Identical concept as above but with 64k partitions, each with 64k opcodes.
