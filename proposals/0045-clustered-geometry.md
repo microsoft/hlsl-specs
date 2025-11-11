@@ -4,6 +4,7 @@ params:
   authors:
   - jschmid-nvidia: Jan Schmid
   - simoll: Simon Moll
+  - amarpMSFT: Amar Patel
   sponsors:
   - jenatali: Jesse Natalie
   status: Under Review
