@@ -271,7 +271,7 @@ The behavior of _attribute-token_ not specified in this specification is
 implementation-defined.
 
 Two consecutive square bracket tokens shall only appear when introducing an
-attribute-specifier. Any other occurrence of two consecutive square brackets is
+_attribute-specifier_. Any other occurrence of two consecutive square brackets is
 ill-formed.
 
 ### Removal of HLSL Annotation Syntax
