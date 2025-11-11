@@ -22,26 +22,29 @@ later DXIL version.
 
 During iterative development of the shader compiler it is beneficial to
 implement real lowering into real opcodes to validate that a proposal actually
-solves real world use cases. Traditionally this has been done by marking all in
-development opcodes as expirmental opcodes of the next dxil version release.
-In most cases this is sufficient as the opcodes are accepted into the next
-release but challenges arise when one or more opcodes are rejected or delayed
-from the release while the opcodes following them are not. In the rejection
-case the opcodes must be burned and in the delayed case the opcodes must be
-manually moved to the next release with special casing code. This proposal
-seaks to implemented a systematic method to handle these issues.
+solves real world use cases. Traditionally this has been done by adding new
+opcodes right after the last released opcode in the prior DXIL version.
+In some cases this is sufficient, when feature development is unified, opcodes
+don't change after being added, and all opcodes in a contiguous block starting
+from the prior release are accepted into the next release.
+But challenges arise during parallel feature development, from experimental
+feature evolution requiring opcode changes, or when a feature and its opcodes
+are excluded from the release while the opcodes following them are not.
+Excluded opcodes must either be turned into reserved opcodes or a breaking DXIL
+change must be synchronized between the compiler, tests, and drivers.
+This proposal seeks to implement a systematic method to handle these issues.
 
 ## Goals
 This proposal seeks to address the following points:
  * Needless churn when experimental op are delayed or rejected
- * Expermental op boundary point is rigid and moves with every SM update
- * Long term experiments (and potentially extensions) aren't currently feasible
+ * Experimental feature boundaries are rigid and unaffected by SM updates
+ * Enable long term experiments and potentially extensions
  * Focused on core api system (hlsl instrinsics and DXIL ops)
  * Works within the current intrinsics/DXIL op mechanisms
  * Minimizes overall changes to the system and IHV processes
  * Straightforward transition route from experimental to stable
- * IHV drivers can support both experimental and stable versions of an op simultaneously
-   * simplifies migrations
+ * Soft transitions between versions of experimental ops and final ops simplify migrations
+   * IHV drivers can support multiple experimental versions and the final version of a set of ops in the same driver
 
 ## Non-goals
 Future proposals may address the topics below but this proposal seeks to be a
@@ -54,6 +57,58 @@ solution. Thus this proposal explicitly avoids addressing these issues:
  * Metadata/RDAT/PSV0/Custom lowering are out of scope for this document
 
 
+
+## Existing DXIL Op and HLSL Intrinsic Infrastructure
+
+In DXC, there exists a large amount of infrastructure for handling DXIL ops as special types of functions throughout the compiler. From definition to lowering to passes to validation and consumption, any solution that doesn't fit into this system will face significant challenges from development through to the transition of operations from experimental to final official DXIL ops in a shader model, both in the compiler and in drivers consuming the ops.
+
+There is also a high-level intrinsic system which uses its own set of opcodes in the generated enum: `hlsl::IntrinsicOp`. Though these are internal to the DXC compilation pipeline, stability of these opcodes impacts any tests with high-level IR, such as tests for lowering.
+
+This section outlines key areas of this system for clarity in reasoning about solutions.
+
+### DXIL Op Definitions
+
+DXIL Ops are defined in `hctdb.py`, which is used by `hctdb_instrhelp.py` to generate header and cpp code used directly by drivers to consume the operations, as well as generate a variety of other code for the compiler, validator, DXIL spec, etc...
+
+`DxilOperations.h/cpp` implements the core of the system for handling DXIL operations in a DxilModule.
+
+DXIL OpCodes, which are always passed as a literal in the first argument of a DXIL operation call, are a contiguous set of values starting at 0, such that they may be used to directly index a table of opcode definitions at the core of this infrastructure. This OpCode argument in the DXIL Op call is the sole identifier of the operation being called. Function names reflect OpCodeClass and overloads, but this is only a means to prevent collisions between functions used by operations requiring different signatures and attributes.
+
+The contiguous nature of DXIL OpCodes used to index into a table is the first key hurdle in defining experimental ops. If an operation at a particular index is changed in any significant way, the interpretation of IR across that change boundary produces undefined behavior (crash if you're lucky), with no automatic mechanism to guard against this.
+
+### HLSL IntrinsicOp definitions
+
+Intrinsic operations are normally defined in `gen_intrin_main.txt`, which is parsed by `hctdb.py` and used by `hctdb_instrhelp.py` to generate the `hlsl::IntrinsicOp` enum, and a bunch of tables used by custom intrinsic overload handling code in `Sema.cpp`.
+
+There is infrastructure that tracks previously assigned HL op indices by intrinsic name in `hlsl_intrinsic_opcodes.json`. This can be a merge conflict point between any parallel feature development.
+
+While indices are separated between functions and methods, all functions or all methods with the same name will share the same HL opcode. Generally this isn't a problem as the arguments (which would include an object) allow you to differentiate things when handling opcode calls. Recently a `class_prefix` attribute was added to the intrinsic definition syntax for `gen_intrin_main.txt` to prepend a class name, used for `DxHitObject`. This is just an example of how this system can be extended to separate out ops if necessary.
+
+`HLOperationLower.cpp` uses a direct table lookup from the (unsigned) `IntrinsicOp` value to the lowering function and arguments. This creates another merge point for any experimental features (and potentially extensions), which integrate into the same intrinsic table.
+
+There is an extension mechanism defined through the `IDxcLangExtensions` interface on the DXC compiler API object. It allows you to define a separate intrinsic table with predefined lowering strategies to produce extended ops as external function calls outside the recognized DXIL operations. It's meant to enable target extensions (extra intrinsics within certain limited definitional bounds) in HLSL for a custom backend. Modules using extensions wouldn't be accepted by the DXIL validator (unmodified). The way extensions must be defined, used, and interpreted differs significantly from adding built-in HLSL intrinsics and DXIL operations, which means it will introduce significant burdens and limitations to initial op definitions, lowering and compiler interaction, and make the transition to final DXIL operations painful. For these reasons, I don't think we should consider this extension mechanism as part of our solution at this time.
+
+While this document focuses on a solution for DXIL ops, the HL opcodes can lead to difficult conflicts between independent feature development branches as well. Avoiding these requires synchronizing `hlsl_intrinsic_opcodes.json` and pre-allocated lowering table entries in `HLOperationLower.cpp` in a common branch as a very first step whenever adding any new HLSL intrinsics.
+
+### IR Tests
+
+Tests that contain DXIL, will have DXIL operation calls passing a literal `i32` OpCode value in as the first argument. If these opcodes are to change between experimental and final versions, there should be an easy way to update the tests accordingly. Same for any high-level IR for the IntrinsicOp numbers.
+
+There are two places where hard-coded numbers appear in tests: source IR and FileCheck statements for checking output IR.
+
+There isn't any known solution that doesn't involve a change to at least the DXIL OpCodes when transitioning from experimental to final DXIL ops.
+
+That requires either updating these across all tests (potentially with scripted regex replacement - matching could be error-prone) or adding some tool (or tool option) to translate symbolic opcodes to literal numbers as a first step.
+
+### Summary of key elements a solution should address
+
+- DXIL Op property table indexed by OpCode
+- HLOperationLower table indexed by IntrinsicOp
+- A way to update and deprecate experimental opcodes during development without a new opcode overlapping an old one, leading to undefined behavior in a driver if mismatched IR is used.
+- A way for the same driver to accept multiple versions of ops without undefined behavior.
+- A way to easily transition tests from experimental ops to final DXIL ops
+- Potentially: A way to avoid some of the more difficult HL opcode conflicts between independent feature development branches
+- Minimal, or ideally no, changes required to source code interacting with or consuming DXIL ops when transitioning from experimental to final ops.
 
 ## Potential DXIL Op Solutions
 
