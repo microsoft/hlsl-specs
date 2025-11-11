@@ -267,7 +267,7 @@ _attribute-argument-clause_.
 If an attribute is applied to an entity or statement for which the attribute is
 not allowed to be applied, the program is ill-formed.
 
-For attribute-tokens not specified in this specification the behavior is
+The behavior of _attribute-token_ not specified in this specification is
 implementation-defined.
 
 Two consecutive square bracket tokens shall only appear when introducing an
