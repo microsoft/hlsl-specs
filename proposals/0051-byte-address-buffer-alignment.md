@@ -1,5 +1,5 @@
 ---
-title: "NNNN - ByteAddressBuffer Alignment
+title: "0051 - ByteAddressBuffer Alignment
 params:
   authors:
      - mapodaca-nv: Mike Apodaca
@@ -77,7 +77,7 @@ alignment to the backend compiler.
 
 ```cpp
 // Per-operation alignment specification
-uint4 data = MyBuffer.AlignedLoad<uint4>(index0, 16); 
+uint4 data = MyBuffer.AlignedLoad<uint4>(index0, 16);
 ```
 
 The compiler uses the `BaseAlignment` attribute and the relative offset alignment parameters from
@@ -387,7 +387,7 @@ RWByteAddressBuffer MyBuffer;
 
 struct MyStruct {
     uint3 a;    // 12 bytes
-    uint3 b;    // 12 bytes  
+    uint3 b;    // 12 bytes
     uint2 b;    // 8 bytes
 };  // Total: 32 bytes per vertex
 
@@ -441,7 +441,7 @@ if (useOptimizedPath) {
     // Optimized path guarantees 32-byte alignment
     uint alignedOffset = computeAlignedOffset();  // Returns 32-byte aligned offset
     uint4 data = MyBuffer.AlignedLoad<uint4>(alignedOffset, 32);
-} 
+}
 else {
     // Fallback path only guarantees 4-byte alignment
     uint basicOffset = computeBasicOffset();  // Returns 4-byte aligned offset
@@ -510,20 +510,20 @@ populated with values calculated by DXC from both existing `Load`/`Store` functi
 function calls:
 
 * `dx.op.rawBufferLoad.*` - includes alignment parameter for load operations
-* `dx.op.rawBufferStore.*` - includes alignment parameter for store operations  
+* `dx.op.rawBufferStore.*` - includes alignment parameter for store operations
 * `dx.op.rawBufferVectorLoad.*` - includes alignment parameter for vector load operations
 * `dx.op.rawBufferVectorStore.*` - includes alignment parameter for vector store operations
 
 > **Implementation notes:**
-> 
+>
 > DXC populates DXIL operation alignment parameters with **absolute alignment** values calculated from the scenarios
 > described in the behavior sections above:
-> 
+>
 > * **AlignedLoad/AlignedStore with BaseAlignment**: Calculates `min(BaseAlignment, function_alignment_parameter)`
-> * **Existing Load/Store with BaseAlignment**: Calculates `min(BaseAlignment, largest_scalar_type_size)`  
+> * **Existing Load/Store with BaseAlignment**: Calculates `min(BaseAlignment, largest_scalar_type_size)`
 > * **AlignedLoad/AlignedStore without BaseAlignment**: Uses existing HLSL specification alignment requirements based on
 >   largest scalar type size, with appropriate error checking for mismatches
-> 
+>
 > The key distinction is that HLSL functions specify **relative alignment** (offset alignment relative to base address)
 > while DXIL operations expect **absolute alignment** (final memory address alignment). DXC performs this conversion
 > automatically.
@@ -604,7 +604,7 @@ This proposal introduces several new compile-time error conditions when the `Bas
     ```cpp
     [BaseAlignment(16)]
     Texture2D MyTexture; // Error: unsupported type
-    
+
     Buffer<uint4> TypedBuffer;
     uint4 data = TypedBuffer.AlignedLoad<uint4>(0, 16); // Error: unsupported type
     ```
@@ -618,12 +618,12 @@ This proposal introduces several new compile-time error conditions when the `Bas
     static const int align = 16;
     [BaseAlignment(align)]  // Error: not a literal constant
     ByteAddressBuffer MyBuffer;
-    
+
     int dynamicAlign = calculateAlignment();
     uint4 data = MyBuffer.AlignedLoad<uint4>(0, dynamicAlign);  // Error: not a compile-time constant
-    
+
     [BaseAlignment(3)]    // Error: not power of 2
-    [BaseAlignment(2)]    // Error: less than 4  
+    [BaseAlignment(2)]    // Error: less than 4
     [BaseAlignment(8192)] // Error: greater than 4096
     ByteAddressBuffer MyBuffer2;
     ```
@@ -639,7 +639,7 @@ This proposal introduces several new compile-time error conditions when the `Bas
     ```cpp
     [BaseAlignment(4)]  // Minimum allowed BaseAlignment
     RWByteAddressBuffer MyBuffer : register(u0);
-    
+
     uint64_t data = MyBuffer.Load<uint64_t>(offset); // Error: BaseAlignment = 4 < scalar type alignment = 8
     ```
 
@@ -652,7 +652,7 @@ This proposal introduces several new compile-time error conditions when the `Bas
   * **Example**:
     ```cpp
     ByteAddressBuffer MyBuffer : register(t0);  // No BaseAlignment declared
-    
+
     uint64_t data = MyBuffer.AlignedLoad<uint64_t>(0, 4);  // Error: alignment = 4 < scalar type alignment = 8
     ```
 
@@ -667,10 +667,10 @@ This proposal introduces several new compile-time error conditions when the `Bas
     void Process([BaseAlignment(32)] RWByteAddressBuffer buffer, uint offset) {
         uint4 data = buffer.AlignedLoad<uint4>(offset, 32);
     }
-    
+
     [BaseAlignment(16)]  // Only 16-byte alignment available
     RWByteAddressBuffer MyBuffer : register(u0);
-    
+
     void main() {
         Process(MyBuffer, 0);  // Error: 16 < 32, insufficient alignment
     }
@@ -687,9 +687,9 @@ This proposal introduces several new compile-time error conditions when the `Bas
     void Process([BaseAlignment(16)] RWByteAddressBuffer buffer, uint offset) {
         uint4 data = buffer.AlignedLoad<uint4>(offset, 16);
     }
-    
+
     RWByteAddressBuffer MyBuffer : register(u0);  // No BaseAlignment declared
-    
+
     void main() {
         Process(MyBuffer, 0);  // Error: function requires BaseAlignment but argument has none
     }
@@ -706,7 +706,7 @@ This proposal introduces several new compile-time error conditions when the `Bas
   * **Example**:
     ```cpp
     ByteAddressBuffer MyBuffer : register(t0);  // No BaseAlignment declared
-    
+
     uint data = MyBuffer.AlignedLoad<uint>(0, 16);  // Warning: alignment = 16 > scalar type alignment = 4
     ```
 
@@ -735,23 +735,23 @@ When GPU-Based Validation is enabled, the following runtime checks are performed
     ```cpp
     [BaseAlignment(16)]
     ByteAddressBuffer MyBuffer : register(t0);
-    
+
     // Scenario 1: Buffer bound to misaligned address
     // If buffer is bound to address 0x1000000C (only 12-byte aligned, not 16-byte aligned)
-    // V1001 validation error: "Buffer bound at address 0x1000000C violates declared 
+    // V1001 validation error: "Buffer bound at address 0x1000000C violates declared
     // BaseAlignment of 16 bytes. Address is only aligned to 4 bytes"
-    
+
     // Scenario 2: Buffer bound to completely unaligned address
     // If buffer is bound to address 0x10000001 (only 1-byte aligned)
-    // V1001 validation error: "Buffer bound at address 0x10000001 violates declared 
+    // V1001 validation error: "Buffer bound at address 0x10000001 violates declared
     // BaseAlignment of 16 bytes. Address is only aligned to 1 bytes"
-    
+
     // Scenario 3: Large alignment requirement violated
     [BaseAlignment(64)]
     ByteAddressBuffer LargeBuffer : register(t1);
-    
+
     // If buffer is bound to address 0x10000020 (only 32-byte aligned, not 64-byte aligned)
-    // V1001 validation error: "Buffer bound at address 0x10000020 violates declared 
+    // V1001 validation error: "Buffer bound at address 0x10000020 violates declared
     // BaseAlignment of 64 bytes. Address is only aligned to 32 bytes"
     ```
 
@@ -767,45 +767,45 @@ When GPU-Based Validation is enabled, the following runtime checks are performed
     ```cpp
     [BaseAlignment(32)]
     ByteAddressBuffer MyBuffer : register(t0);
-    
+
     // Scenario 1: Offset violates relative alignment requirement
     // Buffer base address: 0x10000000 (32-byte aligned)
     // Offset: 0x0C (12), only 4-byte aligned relative to base
     uint4 data1 = MyBuffer.AlignedLoad<uint4>(0x0C, 16);
     // Final address: 0x1000000C (4-byte aligned, but 16-byte alignment required)
-    // V1002 validation error: "Buffer operation at address 0x1000000C violates effective 
-    // alignment of 16 bytes (BaseAlignment: 32, offset_alignment: 16). Address is only 
+    // V1002 validation error: "Buffer operation at address 0x1000000C violates effective
+    // alignment of 16 bytes (BaseAlignment: 32, offset_alignment: 16). Address is only
     // aligned to 4 bytes"
-    
+
     // Scenario 2: Misaligned offset with larger alignment request
     // Buffer base address: 0x10000000 (32-byte aligned)
     // Offset: 0x04 (4), only 4-byte aligned relative to base
     uint4 data2 = MyBuffer.AlignedLoad<uint4>(0x04, 32);
     // Final address: 0x10000004 (4-byte aligned, but 32-byte alignment required)
-    // V1002 validation error: "Buffer operation at address 0x10000004 violates effective 
-    // alignment of 32 bytes (BaseAlignment: 32, offset_alignment: 32). Address is only 
+    // V1002 validation error: "Buffer operation at address 0x10000004 violates effective
+    // alignment of 32 bytes (BaseAlignment: 32, offset_alignment: 32). Address is only
     // aligned to 4 bytes"
-    
+
     // Scenario 3: Complex calculation leading to misalignment
     // Buffer base address: 0x10000000 (32-byte aligned)
     uint someIndex = 3;
     uint calculatedOffset = someIndex * 12;  // 36 = 0x24, only 4-byte aligned
     uint4 data3 = MyBuffer.AlignedLoad<uint4>(calculatedOffset, 16);
     // Final address: 0x10000024 (4-byte aligned, but 16-byte alignment required)
-    // V1002 validation error: "Buffer operation at address 0x10000024 violates effective 
-    // alignment of 16 bytes (BaseAlignment: 32, offset_alignment: 16). Address is only 
+    // V1002 validation error: "Buffer operation at address 0x10000024 violates effective
+    // alignment of 16 bytes (BaseAlignment: 32, offset_alignment: 16). Address is only
     // aligned to 4 bytes"
-    
+
     // Scenario 4: Store operation alignment violation
     [BaseAlignment(16)]
     RWByteAddressBuffer WriteBuffer : register(u0);
-    
+
     // Buffer base address: 0x20000000 (16-byte aligned)
     // Offset: 0x06 (6), only 2-byte aligned relative to base
     WriteBuffer.AlignedStore<uint4>(0x06, 16, someFloat4);
     // Final address: 0x20000006 (2-byte aligned, but 16-byte alignment required)
-    // V1002 validation error: "Buffer operation at address 0x20000006 violates effective 
-    // alignment of 16 bytes (BaseAlignment: 16, offset_alignment: 16). Address is only 
+    // V1002 validation error: "Buffer operation at address 0x20000006 violates effective
+    // alignment of 16 bytes (BaseAlignment: 16, offset_alignment: 16). Address is only
     // aligned to 2 bytes"
     ```
 
