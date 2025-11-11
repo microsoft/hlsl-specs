@@ -260,9 +260,9 @@ applied to the same source construct are written shall not be significant. When
 parsing attributes any token that satisfies the requirements of an identifier
 shall be treated as an identifier even if it has alternate meaning outside the
 attribute (e.g. keywords). Name lookup is not performed on identifiers within
-attribute-tokens. The attribute-token refers to the attribute being parsed,
+_attribute-token_. The _attribute-token_ refers to the attribute being parsed,
 which determines requirements for parsing the optional
-attribute-argument-clause.
+_attribute-argument-clause_.
 
 If an attribute is applied to an entity or statement for which the attribute is
 not allowed to be applied, the program is ill-formed.
