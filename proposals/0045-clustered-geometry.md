@@ -38,10 +38,22 @@ This isn't an index into the clusters in a given BLAS but rather an ID assigned 
 the user for each cluster in a BLAS.  Different BLASs could reuse simmilar building blocks, and 
 thus share cluster ID.
 
+There also needs to be a way for apps to tell driver shader compilation to expect that 
+acceleration structures being raytraced may contain clusters.  In the API this is a 
+raytracing pipeline flag, `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY`, 
+and this flag needs to be available when raytracing pipeline state subobjects are 
+authored in HLSL, including `RayQuery` objects for inline raytracing.  The reason for
+the flag is in case the possibility of clusters in an acceleration structure requires 
+a different path in the driver/hardware ray traversal algorithm that might incur 
+overhead that can be avoided if it is known clusters will not be used.  In other words, 
+a driver that supports clustered geometry should not regress the performance of applications 
+that choose not to use it, or shipped before clustered geometry existed.
+
 ## HLSL
 
 ### Enums
 
+#### ClusterID invalid
 ```C
 enum CLUSTER_ID_CONSTANTS : uint
 {
@@ -54,6 +66,50 @@ ClusterID values returned by [ClusterID()](#clusterid) with predefined meaning
 Value                | Definition
 -----                | ----
 `CLUSTER_ID_INVALID` | Returned if a BLAS was intersected that was not constructed from CLAS
+
+#### Allow clustered geometry flag
+
+The following constant allows apps to opt in to clustered geometry in [Raytracing pipeline config1](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_config1):
+
+```hlsl
+static const uint RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY = 0x800;
+```
+
+Similarly the following constant allows a [RayQuery](https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery) 
+to opt in to clustered geometry when specified in the `RAYQUERY_FLAG` template 
+argument to `RayQuery`.
+
+```hlsl
+static const uint RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY = 0x2;
+```
+
+These flags cause an availability attribute to be applied, restricting their use
+to shader model 6.10 and above.
+
+> Accessing an acceleration structure that contains clusters without the flag to opt in
+> results in undefined behavior.  Applications need to be careful of forgetting to set
+> the flag, with raytracing seeming to work fine.  The device being tested might
+> happen to not need the flag and ignore it.  Other devices/drivers may need it though.
+
+In DXIL these are defined in `DxilConstants.h`:
+
+```cpp
+enum class RaytracingPipelineFlags : uint32_t {
+  ...
+  // Corresponds to RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY in HLSL  
+  AllowClusteredGeometry = 0x800, 
+};
+
+enum class RayQueryFlag : uint32_t {
+  ...
+// Corresponds to RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY in HLSL
+  AllowClusteredGeometry = 2
+};
+
+Drivers with no support for clustered geometry but otherwise support SM 6.10+
+must ignore the `AllowClusteredGeometry` flag.
+
+```
 
 ### DXR 1.0 System Value Intrinsics
 
@@ -154,7 +210,69 @@ Lowers to [HitObject_ClusterID DXIL Opcode](#hitobject_clusterid-dxil-opcode).
 
 ### Diagnostic Changes
 
-This proposal does not introduce or remove diagnostics or warnings.
+A warning diagnostic (default: warning) will be introduced and emitted when
+a reachable use of new flag is encountered.
+A reachable use is one that is found by traversing AST from active entry and
+export functions, or from subobject declarations when compiling a library.
+Traversal will follow local function calls, as well as traversing referenced
+decls (`DeclRef`s and `DeclRefExpr`s) and initializers.
+
+As an implementation detail, a new custom HLSL-specific availability 
+attribute will be used on these flag definitions: `RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` 
+and `RAYQUERY_FLAG_ALLOW_CLUSTERED_GEOMETRY`.  This restricts their usage to
+shader model 6.10.
+
+This will have implications for uses of these flags outside of the intended
+targets.  Since they are just uint values, it's technically legal to refer to
+them elsewhere, so we will use a DefaultError warning, since this will be the
+only diagnostic used to catch use of these flags in an earlier shader model.
+
+Proposed warning diagnostic:
+
+- `"potential misuse of built-in constant %0 in shader model %1; introduced in shader model %2"`.
+  This warning was added for opacity micromaps and can be applied to the
+  flags for allowing clustered geometry. This new warning will be part of an existing 
+  warning group to allow it to be targeted easily for command-line override: `hlsl-availability-constant`.
+
+#### Runtime information
+
+##### RDAT
+
+In the `RDAT` data for the runtime, a new flag is added to the `Flags` field
+of the `RaytracingPipelineConfig1` subobject type.
+
+In `DxilConstants.h`, the `RaytracingPipelineFlags::AllowClusteredGeometry`
+flag is added.
+
+```cpp
+enum class RaytracingPipelineFlags : uint32_t {
+  ...
+  ValidMask_1_9 = 0x700, // valid mask up through DXIL 1.9
+  AllowClusteredGeometry = 0x800, // Allow Clustered Geometry to be used
+  ValidMask = 0xF00, // current valid mask
+};
+```
+
+In `RDAT_SubobjectTypes.inl`, the enum value is mapped and ValidMask updated.
+
+```cpp
+RDAT_DXIL_ENUM_START(hlsl::DXIL::RaytracingPipelineFlags, uint32_t)
+  ...
+  RDAT_ENUM_VALUE_NODEF(AllowClusteredGeometry)
+#if DEF_RDAT_ENUMS == DEF_RDAT_DUMP_IMPL
+  static_assert((unsigned)hlsl::DXIL::RaytracingPipelineFlags::ValidMask ==
+                    0x700,
+                "otherwise, RDAT_DXIL_ENUM definition needs updating");
+#endif
+RDAT_ENUM_END()\
+```
+
+Since `RaytracingPipelineFlags::AllowClusteredGeometry` is only interpreted in
+the `RaytracingPipelineConfig1` subobject, there is no fixed association with
+any function, and no impact on the DXIL passed to the driver.  Thus it has no
+impact on any `RuntimeDataFunctionInfo::MinShaderTarget`.
+Since this flag may only be included in a shader model 6.10 library, the library
+cannot be used on a device that doesn't support shader model 6.10.
 
 ## Testing
 
@@ -170,6 +288,8 @@ This proposal does not introduce or remove diagnostics or warnings.
 #### Diagnostics Tests
 
 * Expected error when ClusterID builtins called from unsupported shader kinds.
+* Check availability-based diagnostics for each flag, including recursing
+  through DeclRefExprs to Decls and their initializers.
 
 ### DXIL
 
@@ -234,7 +354,13 @@ This proposal does not introduce or remove diagnostics or warnings.
 
 TODO: link the DXR spec proposal when available
 
-Note: No unique raytracing tier is required to use this intrinsic. If the device does not support clustered geometry, it must still support returning `CLUSTER_ID_INVALID` from this intrinsic.
+Note: No unique raytracing tier is required to use the `ClusterID` intrinsic. 
+If the device does not support clustered geometry, it must still support 
+returning `CLUSTER_ID_INVALID` from this intrinsic.
+
+If a raytracing pipeline is created with the 
+`RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY` flag on a device 
+without clustered geometry support, state object creation fails.
 
 ## Testing
 
