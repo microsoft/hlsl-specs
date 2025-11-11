@@ -40,11 +40,12 @@ thus share cluster ID.
 
 There also needs to be a way for apps to tell driver shader compilation to expect that 
 acceleration structures being raytraced may contain clusters.  In the API this is a 
-raytracing pipeline flag, `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY`, 
-and this flag needs to be available when raytracing pipeline state subobjects are 
-authored in HLSL, including `RayQuery` objects for inline raytracing.  The reason for
-the flag is in case the possibility of clusters in an acceleration structure requires 
-a different path in the driver/hardware ray traversal algorithm that might incur 
+raytracing pipeline flag, `D3D12_RAYTRACING_PIPELINE_FLAG_ALLOW_CLUSTERED_GEOMETRY`. 
+This flag needs to be available when raytracing pipeline state subobjects are 
+authored in HLSL, including `RayQuery` objects for inline raytracing.
+
+The reason for the flag is if possibility of clusters in an acceleration structure requires 
+a different path in the driver/hardware ray traversal algorithm.  This path might add 
 overhead that can be avoided if it is known clusters will not be used.  In other words, 
 a driver that supports clustered geometry should not regress the performance of applications 
 that choose not to use it, or shipped before clustered geometry existed.
