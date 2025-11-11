@@ -112,7 +112,7 @@ Below are a few more examples of C++ attributes that we could support:
 
   uint i [[hlsl::system_value(RenderTargetArrayIndex)]]; // applies to `i`.
   [[hlsl::system_value(RenderTargetArrayIndex)]] uint j; // applies to `j`.
-  uint &[[hlsl::AddressSpace(1)]] Ref = ...;  // applies to the type `uint &`.
+  uint &[[hlsl::address_space(1)]] Ref = ...;  // applies to the type `uint &`.
 
   [[hlsl::system_value(Target)]] // applies to the function `fn`.
   float3 fn( ) {
