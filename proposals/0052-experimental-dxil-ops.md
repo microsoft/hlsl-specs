@@ -7,7 +7,7 @@ params:
     - tex3d: Tex Riddell
   sponsors:
     - V-FEXrt: Ashley Coleman
-  status: Under Consideration
+  status: Accepted
 ---
 
 * Planned Version: SM 6.10
@@ -57,9 +57,96 @@ solution. Thus this proposal explicitly avoids addressing these issues:
  * Process development to enable asynchronous non-colliding development
  * Metadata/RDAT/PSV0/Custom lowering are out of scope for this document
 
+## Proposed Solution
 
+The leading proposals and time of writing were:
+ * [Top 1 bit as experimental flag](###Top-1-bit-as-experimental-flag)
+ * [Top 16 bits as opcode partition](###Top-16-bits-as-opcode-partition)
+
+Both proposals use some number of bits from the top portion of the opcode to
+partition the remaining bits into seperate opcode sets. In DXC these sets map
+directly to tables of operations, while in clang individual opcode values are
+arbirarily set very late in lowering.
+
+The team saw notable merits and issues with both solutions such that a trivial
+decision was not possible. Those details are discussed in their respective
+"Alternatives Considered" section.
+
+Implementation complexity is within the same magnetude for both proposals.
+However, the key debate between the proposals is that of
+process complexity. The 16bit proposal introduces a reasonable amount of
+process managment for reserving and retiring feature IDs which may have limited
+utility given the remaining DXIL lifecycle. There is also process costs to
+maintain the list of exprimental feature IDs. Conversely while the 1bit proposal
+lacks process complexity it also lacks flexibility or resolution.
+
+The solution proposed is to implement the Top 16 Bit with the following restriction:
+ * Feature IDs must be either `0x0000` or `0x8000` until an undetermined time in
+   the future where the restriction will either be lifted or permentantly codified.
+
+Feature ID `0x0000` is to be used for stable opcodes that are published as part
+of the retail compiler. Feature ID `0x8000` is to be used for all expirmental
+opcodes. Feature ID `0x0000` must be used for stable opcodes to ensure that
+existing opcodes are not renumbered however the choice of ID `0x80000` may seem
+arbitrary. `0x8000` is selected for one key feature. The set bit is the top
+most bit fo the opcode space. Therefore all opcodes defined with either ID will
+match the underlying values they would have in the Top 1 bit proposal.
+
+With this restriction, the compiled DXIL is proposal agnostic. Either original
+proposal could have reasonably generated it. This is an imperfect compromise
+that has two key features:
+ * it unblocks high priority dependencies of the feature
+ * it cleanly collapses into either original proposal
+
+It is the intent of this proposal to serve as an expirement in its own right.
+At some point in the future this proposal should collapse into one of the above
+proposal in a non-breaking manner. After iterating through a number of
+development cycles, the level of complexity required to serve this feature will
+reveal itself. If the development challenges presented at the top of this
+document are resolved with the restrictions in place then the proposal will
+collapse into the 1bit solution and no further work is needed. However if the
+challenges persist then clearly the restrictions are too constraining. If this
+occurs then a new proposal shall be made to lift the restrictions allowing for
+any feature ID and addressing any required process changes which will collapse
+into the 16bit proposal.
+
+### Implementation Considerations
+
+#### DXC
+DXC has considerable constraints to align implementation with existing
+infrastructure. All of the bit width proposals are reasonable to implement
+but the other proposals are beyond reasonable scope. For the bit width proposals
+the infrastructure needs to be updated to support multiple op code tables. The
+detailed explination of that infrastructure is listed below.
+
+#### Clang
+Clang implementation for bit width proposals are trivial. Clang has a late
+lowering for convering high level notions of the DXIL ops into the specific
+opcode values. That mapping is arbitrary and can be implemented by simply
+setting the correct value for the opcode in `llvm/lib/Target/DirectX/DXIL.td`.
+
+For readabilty, the opcodes can be written in hex instead of the traditional
+decimal value. As an example the 12th experimental op code could be written as
+`0x8000000C` instead of `2147483660`.
+
+#### DXV
+The DXIL Validator should be updated in response to the proposed changes
+presented above. The smallest change with the notable impact would be to detect
+the usage of an experimental opcode (`opcode & 0x80000000`) and automatically
+set the preview hash. A more robust change would be to add a DXIL flag for
+expirmental allowed which is set by a `--hlsl-experimental` flag on the
+compiler. That flag would set the DXIL flag and then the validator will error
+if the flag isn't set but an experimental opcode is used.
+
+There may be changes to IR lowering in experimental compilers that don't result
+in the emission of experimental opcodes. This means that the automatic check may
+miss some experimental uses.
 
 ## Existing DXIL Op and HLSL Intrinsic Infrastructure
+
+The follow details are specific to DXC, clang has a significantly different
+infrastructure. The clang infrastructure for selecting a specific op value is
+an arbitrary mapping so less prose is required to highlight limitations.
 
 In DXC, there exists a large amount of infrastructure for handling DXIL ops as
 special types of functions throughout the compiler. From definition to lowering
@@ -146,7 +233,7 @@ branch as a very first step whenever adding any new HLSL intrinsics.
 
 ### IR Tests
 
-Tests that contain DXIL, will have DXIL operation calls passing a literal `i3`
+Tests that contain DXIL, will have DXIL operation calls passing a literal `i32`
 OpCode value in as the first argument. If these opcodes are to change
 between experimental and final versions, there should be an easy way to update
 the tests accordingly. Same for any high-level IR for the IntrinsicOp numbers.
@@ -176,34 +263,57 @@ first step.
 - Minimal, or ideally no, changes required to source code interacting with or
   consuming DXIL ops when transitioning from experimental to final ops.
 
-## Potential DXIL Op Solutions
+## Alternative DXIL Op Solutions Considered
 
-### Top 1 bit as "is experimental" flag
+### Top 1 bit as experimental flag
 
 The top bit of all opcodes is a flag stating if the opcode is experimental.
 
-No structural or shape changes to the DXIL occur, simply the fact that the opcode
+```
+0b 0000 0000 0000 0000 0000 0000 0000 0000
+    ^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ opcode space
+   ^-------------------------------------- opcode partition
+```
+
+| Partition | Use |
+|-----------|-----|
+| 0 | stable |
+| 1 | experimental |
+
+No structural or shape changes to the DXIL opcode occur, the fact that the opcode
 has the high bit set informs that it is experimental. This makes it very easy
-for the compiler and drivers to detect experimental opcodes. When an opcode is
-transistioned to stable the opcode needs to be assigned a stable number.
+for the validator and drivers to detect experimental opcodes.
+
 This splits the 4 billion opcode space into two 2 billion partions. One for
-stable one for experimental. The proposal results in two separatlye contiguous
+stable one for experimental. The proposal results in two separatly contiguous
 op code tables.
+
+When an opcode is transitioned to stable it must be moved to the stable opcode
+partition. These two tables are completely independent from each other so
+opcode transition will result in a complete renumbering. No assumption may be
+made about how the opcodenumber will change when moving to stable.
+
+As opcodes are moved from expirmental to stable they will introduce holes in the
+expirmental opcode partition. Depending on the feature, the expiremental opcode
+may be retained for long term experiments or it may be changed to reserved.
+Once an opcode has been reserved for an entire shader model lifecycle then
+it may be recycled for future use. Ex: An opcode introduced in 6.8, and marked
+reserved in 6.9 may then be reused in 6.10
 
 This is marginally the simpliest proposal with the least invasive set of changes.
 It is only marginally simpler than other reserved bit proposals.
 
 Pros:
- * Very simple
+ * Fairly simple
  * Quick to implement
- * Could be implemented "by hand" today by hard coding opcodes
+ * Could be implemented "by hand" today by hard coding opcodes in clang,
+   DXC requires some updates to opcode generation code.
 Cons:
  * Not a solution for extensions
- * transistion from experimental to stable isn't just unsetting the bit
-   * other stable ops may have already taken that number
-   * complicates the experimental->stable mapping
+ * transistion from experimental-> stable requires manual renumbering which
+   will change the lowering.
 
-### Top 8 bits as "opcode partition" value
+### Top 8 bits as opcode partition
 This is pretty much identical to the 1 bit flag proposal except there are 256
 partitions with 16 million opcodes each. The key difference is that it unlocks
 extension potential as extension developers such as IHVs could reserve a
@@ -221,16 +331,59 @@ partition for their own use without collision with other opcodes.
 Pros:
  * Fairly simple
  * Quick to implement
+ * Could be implemented "by hand" today by hard coding opcodes in clang,
+   DXC requires some updates to opcode generation code.
  * Enables basic opcodes extension system
 Cons:
- * transistion from experimental to stable isn't just clearing the partition
-   * other stable ops may have already taken that number
-   * significantly complicates the experimental->stable transition
+ * transistion from experimental-> stable requires manual renumbering which
+   will change the lowering.
 
-### Top 16 bits as "opcode partition" value
-Identical concept as above but with 64k partitions, each with 64k opcodes.
+### Top 16 bits as opcode partition
+Identical concept as the 1 bit proposal with a couple key changes.
+
+```
+0b 0000 0000 0000 0000 0000 0000 0000 0000
+                       ^^^^ ^^^^ ^^^^ ^^^^ opcode space
+   ^^^^ ^^^^ ^^^^ ^^^^-------------------- opcode partition
+```
+
+This will create ~64k partitions each with ~64k opcodes.
+
+The opcode partition is now large enough that it earns a special name
+`FeatureID`. Along with this name change, the intended usage also changes.
+Each new feature in development reserves a new FeatureID as the first step
+in the development lifecycle. This enables async work as coordination is only
+required at the FeatureID scope which can be atomically reserved. The one
+exception is FeatureID `0x0000` which is reserved for past stable opcodes to 
+maintain their current value. 
+
+The validator or some other mechanism must maintain a list of experimental
+FeatureIDs. When an experimental FeatureID is used the entire shader must
+be marked as preview.
+
+FeatureIDs may be resued once a FeatureID has been marked reserved for at least
+one shader model. Ex: Feature ID `0xDEADBEEF` is introduced in 6.8 as
+experimental, marked as reserved for 6.9, so it may be recycled in 6.10
+
+Pros:
+ * Could be implemented "by hand" today by hard coding opcodes in clang,
+   DXC requires some updates to opcode generation code.
+ * Enables basic opcodes extension system
+ * Very flexible for opcode asignments
+ * Decreases the occurance of opcode collison merge conflicts
+Cons:
+ * transistion from experimental-> stable may require manual renumbering if
+   opcodes are moved to the stable space
+ * More complex process for managing all the FeatureIDs and upkeeping
+   expermental lists
+ * The remaining lifetime of DXIL makes it difficult to justify the complexity
+   of the feature when there is little reason to believe it'll be used in any
+   real capacity
 
 ### Split the opcode in half
+
+Not a real/reasonable proposal, presented as a technically possible thing.
+
 Lower 16 bits are the core/stable opcodes, Upper 16 bits are the experimental opcodes.
 
 Gives 64k opcodes for stable then the upper 64k can either be chunked manually
