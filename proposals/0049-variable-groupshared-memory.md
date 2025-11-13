@@ -208,15 +208,9 @@ shader-declared group shared memory limit in bytes.
   `MaxGroupSharedMemoryPerGroup[CS/AS/MS]`
 
 This metadata enables the runtime to:
-* Differentiate between shaders targeting legacy limits versus those opting
-into variable limits.
 * Validate that the shader's declared limit is compatible with the device's
 capabilities at pipeline creation time.
-* Provide clear error messages distinguishing between "exceeded declared limit"
-versus "exceeded device capacity" failures.
-
-The existing PSV0 field tracking static group shared usage (in bytes) is
-retained and continues to be populated by the compiler for all shaders.
+* Provide clear error messages when device limits would be exceeded.
 
 ### Validation Changes
 
