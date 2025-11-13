@@ -57,11 +57,39 @@ solution. Thus this proposal explicitly avoids addressing these issues:
  * Process development to enable asynchronous non-colliding development
  * Metadata/RDAT/PSV0/Custom lowering are out of scope for this document
 
-## Proposed Solution
+
+## Accepted Solution
+
+The top 16 bits of the opcode shall be used to partition the opcode into ~64k
+partitions each with ~64k opcodes. The top 16 bits of the opcode are called
+the `FeatureID` and the only valid FeatureIDs are `0x0000` and `0x8000`.
+Within a given partition, opcodes must be contiguous. When opcodes are retired
+or transistioned between FeatureIDs, a reserved opcode must be inserted in its
+place to prevent the introduction of a hole. Once an opcode has been reserved
+for at least one shader model version it may be reused but this is discouraged.
+
+```
+0b 0000 0000 0000 0000 0000 0000 0000 0000
+                       ^^^^ ^^^^ ^^^^ ^^^^ opcode space
+   ^^^^ ^^^^ ^^^^ ^^^^-------------------- opcode partition / FeatureID
+```
+
+FeatureID `0x0000` must be used for stable opcodes released in the retail
+compiler. Any other value would break back compatibility.
+FeatureID `0x8000` is used for experimental opcodes released for preview.
+
+When an opcode introduced as experimental is stablized it must be transitioned
+from FeatureID `0x0000` to `0x8000` which will completely renumber the opcode.
+The opcodes spaces under each FeatureID are independent and no correlation in
+the underlying value may be assumed.
+
+When an experimental FeatureID is used the entire shader must be marked as preview.
+
+### Decision details
 
 The leading proposals and time of writing were:
- * [Top 1 bit as experimental flag](###Top-1-bit-as-experimental-flag)
- * [Top 16 bits as opcode partition](###Top-16-bits-as-opcode-partition)
+ * [Top 1 bit as experimental flag](#top-1-bit-as-experimental-flag)
+ * [Top 16 bits as opcode partition](#top-16-bits-as-opcode-partition)
 
 Both proposals use some number of bits from the top portion of the opcode to
 partition the remaining bits into seperate opcode sets. In DXC these sets map
@@ -84,10 +112,8 @@ The solution proposed is to implement the Top 16 Bit with the following restrict
  * Feature IDs must be either `0x0000` or `0x8000` until an undetermined time in
    the future where the restriction will either be lifted or permentantly codified.
 
-Feature ID `0x0000` is to be used for stable opcodes that are published as part
-of the retail compiler. Feature ID `0x8000` is to be used for all experimental
-opcodes. Feature ID `0x0000` must be used for stable opcodes to ensure that
-existing opcodes are not renumbered however the choice of ID `0x80000` may seem
+Feature ID `0x0000` must be used for stable opcodes to ensure that existing
+opcodes are not renumbered however the choice of ID `0x80000` may seem
 arbitrary. `0x8000` is selected for one key feature. The set bit is the top
 most bit fo the opcode space. Therefore all opcodes defined with either ID will
 match the underlying values they would have in the Top 1 bit proposal.
@@ -114,7 +140,7 @@ into the 16bit proposal.
 
 #### DXC
 DXC has considerable constraints to align implementation with existing
-infrastructure. All of the bit width proposals are reasonable to implement
+infrastructure.  All of the bit width proposals are reasonable to implement
 but the other proposals are beyond reasonable scope. For the bit width proposals
 the infrastructure needs to be updated to support multiple op code tables. The
 detailed explanation of that infrastructure is listed below.
@@ -127,7 +153,7 @@ setting the correct value for the opcode in `llvm/lib/Target/DirectX/DXIL.td`.
 
 For readabilty, the opcodes can be written in hex instead of the traditional
 decimal value. As an example the 12th experimental op code could be written as
-`0x8000000C` instead of `2147483660`.
+`0x8000000C` or `0x80000000 | 12` instead of `2147483660`.
 
 #### DXV
 The DXIL Validator should be updated in response to the proposed changes
