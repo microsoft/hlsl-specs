@@ -11,6 +11,31 @@ params:
 * Planned Version: Shader Model 6.10
 * Issues: (TBD)
 
+## Contents
+
+- [Introduction](#introduction)
+- [Motivation](#motivation)
+- [Proposed Solution](#proposed-solution)
+  - [Examples](#examples)
+    - [Example 1: `GroupSharedLimit` declared but not exceeded](#example-1-groupsharedlimit-declared-but-not-exceeded)
+    - [Example 2: `GroupSharedLimit` declared but exceeded](#example-2-groupsharedlimit-declared-but-exceeded)
+    - [Example 3: `GroupSharedLimit` undeclared and original limit exceeded](#example-3-groupsharedlimit-undeclared-and-original-limit-exceeded)
+- [Detailed Design](#detailed-design)
+  - [Runtime Validation](#runtime-validation)
+  - [HLSL Additions](#hlsl-additions)
+    - [Attribute](#attribute)
+    - [Interaction With Existing Constructs](#interaction-with-existing-constructs)
+  - [Diagnostic Changes](#diagnostic-changes)
+  - [Interchange Format Additions](#interchange-format-additions)
+    - [DXIL Metadata](#dxil-metadata)
+    - [PSV0 (Pipeline State Validation) Metadata](#psv0-pipeline-state-validation-metadata)
+  - [Validation Changes](#validation-changes)
+  - [Runtime Additions](#runtime-additions)
+    - [Capability Bit / Query](#capability-bit--query)
+    - [Pipeline Compilation / Load](#pipeline-compilation--load)
+- [Testing](#testing)
+- [Alternatives Considered](#alternatives-considered)
+
 ## Introduction
 
 Today HLSL (DXIL) validation enforces a fixed upper limit of 32 KB
@@ -91,7 +116,7 @@ void CSMain(uint3 dtid : SV_DispatchThreadID)
 This shader declares a maximum of 64k group shared memory but it's actual usage
 is 4 bytes larger than that which results in a compiler error.
 
-#### Example 2: `GroupSharedLimit` undeclared and original limit exceeded
+#### Example 3: `GroupSharedLimit` undeclared and original limit exceeded
 ```hlsl
 // 64 KB FAIL. (no GroupSharedLimit -> fallback to 32k limit)
 groupshared uint g_BigScratch3[ 16384 ];  
@@ -156,6 +181,43 @@ argument`.
 Validator / pipeline creation errors:
 - `groupshared static usage (<bytes>) exceeds device capacity (<capacity>)`.
 
+### Interchange Format Additions
+
+#### DXIL Metadata
+
+A new entry-point metadata field is added to communicate the `GroupSharedLimit`
+attribute value to the runtime:
+
+* **`kDxilGroupSharedLimitTag`** (constant id TBD): An optional i32 metadata
+node storing the declared limit in bytes.
+  - If the `GroupSharedLimit` attribute is present, this metadata contains the
+  declared byte limit.
+  - If the attribute is absent, this metadata is omitted (or contains a value
+  of 0 to indicate no explicit limit was declared).
+
+#### PSV0 (Pipeline State Validation) Metadata
+
+The PSV0 metadata structure is extended to include:
+
+* **`GroupSharedLimit`**: A 32-bit unsigned integer field indicating the
+shader-declared group shared memory limit in bytes.
+  - **Value = 0**: No `GroupSharedLimit` attribute was specified; runtime
+  validation should enforce the legacy limit (32 KB for CS/AS, 28 KB for MS).
+  - **Value > 0**: The shader explicitly declared a limit; runtime validation
+  must ensure that Static group shared usage ≤ 
+  `MaxGroupSharedMemoryPerGroup[CS/AS/MS]`
+
+This metadata enables the runtime to:
+* Differentiate between shaders targeting legacy limits versus those opting
+into variable limits.
+* Validate that the shader's declared limit is compatible with the device's
+capabilities at pipeline creation time.
+* Provide clear error messages distinguishing between "exceeded declared limit"
+versus "exceeded device capacity" failures.
+
+The existing PSV0 field tracking static group shared usage (in bytes) is
+retained and continues to be populated by the compiler for all shaders.
+
 ### Validation Changes
 
 Validator must:
@@ -165,6 +227,8 @@ today).
 * Ensure attribute appears only in compute/mesh/amplification and SM >= 6.10.
 * Emit / retain static usage metadata (existing) for runtime comparison against
 device capability.
+* Populate the new PSV0 `GroupSharedLimit` field with the attribute value (or 0
+if absent).
 
 ### Runtime Additions
 
