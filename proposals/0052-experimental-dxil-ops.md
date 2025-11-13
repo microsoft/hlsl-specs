@@ -72,10 +72,10 @@ The team saw notable merits and issues with both solutions such that a trivial
 decision was not possible. Those details are discussed in their respective
 "Alternatives Considered" section.
 
-Implementation complexity is within the same magnetude for both proposals.
+Implementation complexity is within the same magnitude for both proposals.
 However, the key debate between the proposals is that of
 process complexity. The 16bit proposal introduces a reasonable amount of
-process managment for reserving and retiring feature IDs which may have limited
+process management for reserving and retiring feature IDs which may have limited
 utility given the remaining DXIL lifecycle. There is also process costs to
 maintain the list of exprimental feature IDs. Conversely while the 1bit proposal
 lacks process complexity it also lacks flexibility or resolution.
@@ -85,7 +85,7 @@ The solution proposed is to implement the Top 16 Bit with the following restrict
    the future where the restriction will either be lifted or permentantly codified.
 
 Feature ID `0x0000` is to be used for stable opcodes that are published as part
-of the retail compiler. Feature ID `0x8000` is to be used for all expirmental
+of the retail compiler. Feature ID `0x8000` is to be used for all experimental
 opcodes. Feature ID `0x0000` must be used for stable opcodes to ensure that
 existing opcodes are not renumbered however the choice of ID `0x80000` may seem
 arbitrary. `0x8000` is selected for one key feature. The set bit is the top
@@ -98,13 +98,13 @@ that has two key features:
  * it unblocks high priority dependencies of the feature
  * it cleanly collapses into either original proposal
 
-It is the intent of this proposal to serve as an expirement in its own right.
+It is the intent of this proposal to serve as an experiment in its own right.
 At some point in the future this proposal should collapse into one of the above
-proposal in a non-breaking manner. After iterating through a number of
+proposals in a non-breaking manner. After iterating through a number of
 development cycles, the level of complexity required to serve this feature will
 reveal itself. If the development challenges presented at the top of this
 document are resolved with the restrictions in place then the proposal will
-collapse into the 1bit solution and no further work is needed. However if the
+collapse into the 1bit solution and no further work is needed. However, if the
 challenges persist then clearly the restrictions are too constraining. If this
 occurs then a new proposal shall be made to lift the restrictions allowing for
 any feature ID and addressing any required process changes which will collapse
@@ -117,7 +117,7 @@ DXC has considerable constraints to align implementation with existing
 infrastructure. All of the bit width proposals are reasonable to implement
 but the other proposals are beyond reasonable scope. For the bit width proposals
 the infrastructure needs to be updated to support multiple op code tables. The
-detailed explination of that infrastructure is listed below.
+detailed explanation of that infrastructure is listed below.
 
 #### Clang
 Clang implementation for bit width proposals are trivial. Clang has a late
@@ -132,7 +132,7 @@ decimal value. As an example the 12th experimental op code could be written as
 #### DXV
 The DXIL Validator should be updated in response to the proposed changes
 presented above. The smallest change with the notable impact would be to detect
-the usage of an experimental opcode (`opcode & 0x80000000`) and automatically
+the usage of an experimental opcodes (`opcode & 0x80000000`) and automatically
 set the preview hash. A more robust change would be to add a DXIL flag for
 expirmental allowed which is set by a `--hlsl-experimental` flag on the
 compiler. That flag would set the DXIL flag and then the validator will error
@@ -144,7 +144,7 @@ miss some experimental uses.
 
 ## Existing DXIL Op and HLSL Intrinsic Infrastructure
 
-The follow details are specific to DXC, clang has a significantly different
+The details below are specific to DXC, clang has a significantly different
 infrastructure. The clang infrastructure for selecting a specific op value is
 an arbitrary mapping so less prose is required to highlight limitations.
 
@@ -285,13 +285,13 @@ has the high bit set informs that it is experimental. This makes it very easy
 for the validator and drivers to detect experimental opcodes.
 
 This splits the 4 billion opcode space into two 2 billion partions. One for
-stable one for experimental. The proposal results in two separatly contiguous
+stable one for experimental. The proposal results in two separately contiguous
 op code tables.
 
 When an opcode is transitioned to stable it must be moved to the stable opcode
 partition. These two tables are completely independent from each other so
 opcode transition will result in a complete renumbering. No assumption may be
-made about how the opcodenumber will change when moving to stable.
+made about how the opcode number will change when moving to stable.
 
 As opcodes are moved from expirmental to stable they will introduce holes in the
 expirmental opcode partition. Depending on the feature, the expiremental opcode
@@ -361,7 +361,7 @@ The validator or some other mechanism must maintain a list of experimental
 FeatureIDs. When an experimental FeatureID is used the entire shader must
 be marked as preview.
 
-FeatureIDs may be resued once a FeatureID has been marked reserved for at least
+FeatureIDs may be reused once a FeatureID has been marked reserved for at least
 one shader model. Ex: Feature ID `0xDEADBEEF` is introduced in 6.8 as
 experimental, marked as reserved for 6.9, so it may be recycled in 6.10
 
