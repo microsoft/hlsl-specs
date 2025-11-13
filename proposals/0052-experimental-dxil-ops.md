@@ -76,10 +76,26 @@ for at least one shader model version it may be reused but this is discouraged.
 
 FeatureID `0x0000` must be used for stable opcodes released in the retail
 compiler. Any other value would break back compatibility.
-FeatureID `0x8000` is used for experimental opcodes released for preview.
+FeatureID `0x8000` is used for all new opcodes not yet finalized for a shader
+model release.
+These opcodes should be added (assigned) and merged into main as early as
+possible, even before they are used or tested. This reserves the opcode so
+subsequent code and tests may avoid opcode collisions with other features.
 
-When an opcode introduced as experimental is stablized it must be transitioned
-from FeatureID `0x0000` to `0x8000` which will completely renumber the opcode.
+During development, if an opcode needs to be changed in any breaking way from
+a version supported by an experimental driver, the opcode should be left behind
+and renamed as necessary to avoid a collision with the new version.
+Then a new opcode should be used to allow an easier transition for experimental
+development, allowing an experimental driver to support both versions for a
+period of time.
+
+When an opcode with FeatureID `0x8000` is finalized for the next DXIL release,
+it should be copied to FeatureID `0x0000` and assigned the next available
+opcode number.
+After the opcode is copied to a final DXIL opcode, the original opcode with
+FeatureID `0x8000` may be kept and renamed for transition compatibility for
+drivers, or it may be replaced with a reserved op to avoid reusing the opcode
+for at least one DXIL release.
 The opcodes spaces under each FeatureID are independent and no correlation in
 the underlying value may be assumed.
 
@@ -110,12 +126,12 @@ lacks process complexity it also lacks flexibility or resolution.
 
 The solution proposed is to implement the Top 16 Bit with the following restriction:
  * Feature IDs must be either `0x0000` or `0x8000` until an undetermined time in
-   the future where the restriction will either be lifted or permentantly codified.
+   the future where the restriction may be lifted if desired.
 
 Feature ID `0x0000` must be used for stable opcodes to ensure that existing
 opcodes are not renumbered however the choice of ID `0x80000` may seem
 arbitrary. `0x8000` is selected for one key feature. The set bit is the top
-most bit fo the opcode space. Therefore all opcodes defined with either ID will
+most bit of the opcode space. Therefore all opcodes defined with either ID will
 match the underlying values they would have in the Top 1 bit proposal.
 
 With this restriction, the compiled DXIL is proposal agnostic. Either original
