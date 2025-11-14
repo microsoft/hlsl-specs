@@ -131,7 +131,7 @@ in undefined behavior.
 
 StructuredBuffers with N-element vectors are declared using the template syntax
  with a long vector type as the template parameter.
-N-element vectors are loaded and stored from ByteAddressBuffers using the templated load and store methods
+N-element vectors are loaded and stored from StructuredBuffers using the templated load and store methods
 with the element index parameters.
 
 ```hlsl
