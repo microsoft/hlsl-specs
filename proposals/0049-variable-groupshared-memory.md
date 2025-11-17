@@ -11,31 +11,6 @@ params:
 * Planned Version: Shader Model 6.10
 * Issues: (TBD)
 
-## Contents
-
-- [Introduction](#introduction)
-- [Motivation](#motivation)
-- [Proposed Solution](#proposed-solution)
-  - [Examples](#examples)
-    - [Example 1: `GroupSharedLimit` declared but not exceeded](#example-1-groupsharedlimit-declared-but-not-exceeded)
-    - [Example 2: `GroupSharedLimit` declared but exceeded](#example-2-groupsharedlimit-declared-but-exceeded)
-    - [Example 3: `GroupSharedLimit` undeclared and original limit exceeded](#example-3-groupsharedlimit-undeclared-and-original-limit-exceeded)
-- [Detailed Design](#detailed-design)
-  - [Runtime Validation](#runtime-validation)
-  - [HLSL Additions](#hlsl-additions)
-    - [Attribute](#attribute)
-    - [Interaction With Existing Constructs](#interaction-with-existing-constructs)
-  - [Diagnostic Changes](#diagnostic-changes)
-  - [Interchange Format Additions](#interchange-format-additions)
-    - [DXIL Metadata](#dxil-metadata)
-    - [PSV0 (Pipeline State Validation) Metadata](#psv0-pipeline-state-validation-metadata)
-  - [Validation Changes](#validation-changes)
-  - [Runtime Additions](#runtime-additions)
-    - [Capability Bit / Query](#capability-bit--query)
-    - [Pipeline Compilation / Load](#pipeline-compilation--load)
-- [Testing](#testing)
-- [Alternatives Considered](#alternatives-considered)
-
 ## Introduction
 
 Today HLSL (DXIL) validation enforces a fixed upper limit of 32 KB
