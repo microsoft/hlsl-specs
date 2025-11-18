@@ -153,17 +153,10 @@ Implementations have flexibility in determining `WaveGetCount()`:
 - The value returned by `WaveGetCount()` must account for all launched waves,
   including any additional ones
 
-**Variability Across Thread Groups**:
+**Consistency Across Thread Groups**:
 
-The number of waves returned by `WaveGetCount()` may vary between different
-thread groups within the same dispatch. Factors that can cause this variability
-include:
-- Hardware scheduling decisions based on resource availability
-- Implementation-specific optimizations that adjust wave count dynamically
-
-Shader code should not assume that `WaveGetCount()` returns the same value for
-all thread groups in a dispatch. Algorithms that need to share information
-across thread groups must account for this potential variability.
+The number of waves returned by `WaveGetCount()` must be the same for all
+thread groups within the same dispatch. 
 
 #### Source Code Compatibility
 
