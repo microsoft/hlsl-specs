@@ -456,11 +456,11 @@ varies by scope. The table below describes the maximums enforced by HLSL and
 DXIL validation.
 
 
-| Matrix Scope | Scalar element dimensions     |
-| ------------ | ----------------------------- |
-| Thread       | Powers of two between [4,128] |
-| Wave         | Powers of two between [4,128] |
-| ThreadGroup  | [1,1024]                      |
+| Matrix Scope | Scalar element dimensions |
+| ------------ | ------------------------- |
+| Thread       | [4,128]                   |
+| Wave         | [4,128]                   |
+| ThreadGroup  | [1,1024]                  |
 
 Sizes for matrices of packed data types are 4 times the valid size for a scalar
 element.
