@@ -200,6 +200,26 @@ No new metadata is required. The use of `GetGroupWaveIndex` and
 `GetGroupWaveCount` is indicated by the presence of the respective `dx.op.*`
 operations in the shader.
 
+#### SPIR-V Support
+
+For SPIR-V targets (Vulkan), these intrinsics map to existing GLSL built-in
+variables and their corresponding SPIR-V built-ins:
+
+**`GetGroupWaveIndex()`** maps to:
+- GLSL: `gl_SubgroupID` 
+- SPIR-V: `BuiltIn SubgroupId`
+- Decoration: `OpDecorate %var BuiltIn SubgroupId`
+
+**`GetGroupWaveCount()`** maps to:
+- GLSL: `gl_NumSubgroups`
+- SPIR-V: `BuiltIn NumSubgroups`
+- Decoration: `OpDecorate %var BuiltIn NumSubgroups`
+
+Both built-ins are part of the Vulkan 1.1 core specification. They provide the
+same semantics as the HLSL intrinsics: `SubgroupId` returns the index of the
+subgroup (wave) within the workgroup (thread group), and `NumSubgroups` returns
+the total number of subgroups executing the workgroup.
+
 ### Diagnostic Changes
 
 #### New Errors
