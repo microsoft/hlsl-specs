@@ -696,9 +696,9 @@ uint Matrix::Length();
 Requires `Wave` or `ThreadGroup` scope matrix.
 
 Returns the number of matrix components accessible to the current thread. If the
-matrix's elements are stored in a packed type `Length` will return the number of
-packed elements (e.g. if a thread has 8 accessible elements of `int8` type which
-are packed into 2 `int8_t4_packed`, `Length` will return 2). The mapping and
+matrix's elements are stored in a packed type, `Length` will return the number of
+packed elements (e.g. if a thread has 8 accessible elements of `int8` type 
+packed into 2 `int8_t4_packed`, `Length` will return 2). The mapping and
 distribution of threads to matrix elements is opaque and
 implementation-specific. The value returned by `Length` may be different for
 each thread. The sum of the values returned by `Length` across all threads must
