@@ -190,42 +190,39 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
-                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+vector<OutputElTy, K> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                               vector<InputElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT,
           MatrixScopeEnum Scope>
-vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
-                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
-                                  vector<BiasElTy, K>);
+vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                                  vector<InputElTy, M>, vector<BiasElTy, K>);
 
-template <typename OutputElTy, typename InputElTy,
-          ComponentEnum InputInterp, typename BiasElTy, SIZE_TYPE M,
-          SIZE_TYPE N, SIZE_TYPE K, ComponentEnum MatrixDT,
-          MatrixScopeEnum Scope>
+template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          ComponentEnum MatrixDT, MatrixScopeEnum Scope>
 typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
-    MultiplyAdd(InterpretedVector<InputElTy, N, InputInterp>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                InterpretedVector<InputElTy, N, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    MultiplyAdd(vector<InputElTy, M>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
-                VectorRef<BiasElTy, K>);
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
-template <typename OutputElTy, typename InputElTy,
-          ComponentEnum InputInterp, ComponentEnum BiasElTy,
-          SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K, ComponentEnum MatrixDT>
+template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          ComponentEnum MatrixDT>
 typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
-    MultiplyAdd(InterpretedVector<InputElTy, N, InputInterp>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                InterpretedVector<InputElTy, N, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
@@ -282,32 +279,30 @@ ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy = Matrix<ComponentType::F16, 16, 16, MatrixUse::B,
-                           MatrixScope::Thread>;
+  using MatrixBTy =
+      Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Thread>;
 
   vector<float16_t, 16> Vec = (vector<float16_t, 16>)0;
   MatrixBTy MatB = MatrixBTy::Load(
       MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
       MatrixLayout::RowMajor);
-  vector<float16_t, 16> Layer1 = Multiply<float16_t>(Vec, MatB);
+  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatB, Vec);
 
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
-  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(Layer1, MatB, NullBias);
+  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatB, Layer1, NullBias);
 
   VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
-                                                         /*start offset*/ 4096};
-  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(Layer2, MatB, MemBias);
+                                                   /*start offset*/ 4096};
+  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatB, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
 #ifdef __hlsl_dx_compiler
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MatB,
-      MemBias);
+      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MatB,
-      NullBias);
+      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 ```
@@ -416,7 +411,7 @@ The following table summarizes the operations supported for each matrix scope:
 | `Matrix::SumAccumulate()` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(vector, Matrix)` | ✓ | ✗ | ✗ |
-| `linalg::MultiplyAdd(vector, Matrix, vector)` | ✓ | ✗ | ✗ |
+| `linalg::MultiplyAdd(Matrix, vector, vector)` | ✓ | ✗ | ✗ |
 | `linalg::OuterProduct(vector, vector)` | ✓ | ✓ | ✓ |
 
 Throughout this document a matrix may be described as having a scope as
@@ -925,21 +920,21 @@ infers the type of the output accumulator to match the input vector element type
 the other overload takes a template parameter for the output matrix element type.
 All matrix scopes are allowed for the output matrix.
 
-#### linalg::MultiplyAdd(vector, Matrix, vector)
+#### linalg::MultiplyAdd(Matrix, vector, vector)
 
 ``` c++
 template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
           uint K, ComponentType MatrixDT>
 vector<OutputElTy, K>
-    linalg::MultiplyAdd(vector<InputElTy, M>,
-                        Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
+    linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                        vector<InputElTy, M>,
                         vector<BiasElTy, K>);
 ```
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
 The `linalg::MultiplyAdd` function has an overload that takes an `M`-element, an
-MxK `B` matrix with `Thread` scope, and a `K`-element vector. The operation
+MxK `A` matrix with `Thread` scope, and a `K`-element vector. The operation
 multiplies the `M`-element vector by the matrix then adds the `K`-element vector
 producing a result `K`-element vector.
 
@@ -1209,37 +1204,37 @@ Must be called from wave-uniform control flow.
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
   immarg i32,           ; opcode
+  %dx.types.MatrixRef,  ; matrix A
   <[NUMi] x [TYi]>,     ; input vector
-  immarg i32,           ; input interpretation type (DXILComponentType)
-  %dx.types.MatrixRef   ; matrix A
+  immarg i32            ; input interpretation type (DXILComponentType)
 )
 ```
 
-This operation implements a row-vector multiplication against a `B` matrix of
+This operation implements a row-vector multiplication against an `A` matrix of
 `Thread` scope.
 
 Validation will enforce that:
 * The input vector length matches the `M` matrix dimension
-* The matrix A is a `B` matrix of `Thread` scope
+* The matrix A is an `A` matrix of `Thread` scope
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi].v[NUMo][TYb](
   immarg i32,            ; opcode
+  %dx.types.MatrixRef,   ; matrix A
   <[NUMi] x [TYi]>,      ; input vector
   immarg i32,            ; input interpretation type (DXILComponentType)
-  %dx.types.MatrixRef,   ; matrix A
   <[NUMo] x [TYb]>,      ; bias vector
   immarg i32             ; bias interpretation type (DXILComponentType)
 )
 ```
 
-This operation implements a row-vector multiplication against a `B` matrix of
+This operation implements a row-vector multiplication against an `A` matrix of
 `Thread` scope with a bias vector added to the result.
 
 Validation will enforce that:
 * The input vector length matches the `M` matrix dimension
 * The bias vector length matches the `N` matrix dimension
-* The matrix A is a `B` matrix of `Thread` scope
+* The matrix A is an `A` matrix of `Thread` scope
 
 ```llvm
 declare void @dx.op.matrixAccumulateToDescriptor(
@@ -1371,7 +1366,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/W5a7zbPr3)
+[Compiler Explorer](https://godbolt.org/z/MG55ahKTE)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1636,15 +1631,14 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-vector<OutputElTy, K> Multiply(vector<InputElTy, M>,
-                               Matrix<MatrixDT, M, K, MatrixUse::B, Scope>);
+vector<OutputElTy, K> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                               vector<InputElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT,
           MatrixScopeEnum Scope>
-vector<OutputElTy, K> MultiplyAdd(vector<InputElTy, M>,
-                                  Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
-                                  vector<BiasElTy, K>);
+vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                                  vector<InputElTy, M>, vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
@@ -1652,16 +1646,15 @@ template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
 typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
-    MultiplyAdd(InterpretedVector<InputElTy, N, InputInterp>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, Scope>,
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                InterpretedVector<InputElTy, N, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    MultiplyAdd(vector<InputElTy, M>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
-                VectorRef<BiasElTy, K>);
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
@@ -1669,8 +1662,8 @@ template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
 typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
-    MultiplyAdd(InterpretedVector<InputElTy, N, InputInterp>,
-                Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                InterpretedVector<InputElTy, N, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
@@ -1720,29 +1713,29 @@ ByteAddressBuffer MBuf : register(t0);
 void CoopVec() {
   using namespace dx::linalg;
   using MatrixBTy =
-      Matrix<ComponentType::F16, 16, 16, MatrixUse::B, MatrixScope::Thread>;
+      Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Thread>;
 
   vector<float16_t, 16> Vec = (vector<float16_t, 16>)0;
   MatrixBTy MatB = MatrixBTy::Load(
       MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
       MatrixLayout::RowMajor);
-  vector<float16_t, 16> Layer1 = Multiply<float16_t>(Vec, MatB);
+  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatB, Vec);
 
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
-  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(Layer1, MatB, NullBias);
+  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatB, Layer1, NullBias);
 
   VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
-  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(Layer2, MatB, MemBias);
+  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatB, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
 #ifdef __hlsl_dx_compiler
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MatB, MemBias);
+      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MatB, NullBias);
+      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 
