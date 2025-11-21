@@ -279,21 +279,21 @@ ByteAddressBuffer B : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy =
+  using MatrixATy =
       Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Thread>;
 
   vector<float16_t, 16> Vec = (vector<float16_t, 16>)0;
-  MatrixBTy MatB = MatrixBTy::Load(
+  MatrixATy MatA = MatrixATy::Load(
       MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
       MatrixLayout::RowMajor);
-  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatB, Vec);
+  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatA, Vec);
 
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
-  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatB, Layer1, NullBias);
+  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
   VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
-  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatB, Layer2, MemBias);
+  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
 #ifdef __hlsl_dx_compiler
@@ -1366,7 +1366,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/MG55ahKTE)
+[Compiler Explorer](https://godbolt.org/z/zfK5WKoYP)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1712,21 +1712,21 @@ ByteAddressBuffer MBuf : register(t0);
 
 void CoopVec() {
   using namespace dx::linalg;
-  using MatrixBTy =
+  using MatrixATy =
       Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Thread>;
 
   vector<float16_t, 16> Vec = (vector<float16_t, 16>)0;
-  MatrixBTy MatB = MatrixBTy::Load(
+  MatrixATy MatA = MatrixATy::Load(
       MBuf, 0, /* Row stride = number of columns * element size */ 16 * 4,
       MatrixLayout::RowMajor);
-  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatB, Vec);
+  vector<float16_t, 16> Layer1 = Multiply<float16_t>(MatA, Vec);
 
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
-  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatB, Layer1, NullBias);
+  vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
   VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
-  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatB, Layer2, MemBias);
+  vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
 #ifdef __hlsl_dx_compiler
