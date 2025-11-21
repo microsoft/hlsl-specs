@@ -131,8 +131,8 @@ in undefined behavior.
 
 StructuredBuffers with N-element vectors are declared using the template syntax
  with a long vector type as the template parameter.
-N-element vectors are loaded and stored from ByteAddressBuffers using the templated load and store methods
-with the element index parameters.
+N-element vectors are loaded and stored from StructuredBuffers using the load and store methods
+or subscript operators with the element index parameters.
 
 ```hlsl
 RWStructuredBuffer< vector<T, N> > myBuffer;
