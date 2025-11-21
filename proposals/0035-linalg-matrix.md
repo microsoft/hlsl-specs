@@ -451,16 +451,16 @@ formula: `MxK * KxN = MxN`
 This restriction impacts the number of rows in an A matrix, and columns in a B
 matrix, but has no impact on an accumulator matrix.
 
-The minimum and maximum `K` dimension for Wave and Thread scope matrices is tied
-to the the minimum and maximum wave size, while the minimum and maximum `K`
-dimension for ThreadGroup matrices is tied to the thread group size.
+The minimum and maximum `K` dimension for matrices is hardware dependent and
+varies by scope. The table below describes the maximums enforced by HLSL and
+DXIL validation.
 
 
-| Matrix Scope | Scalar element dimensions     |
-| ------------ | ----------------------------- |
-| Thread       | Powers of two between [4,128] |
-| Wave         | Powers of two between [4,128] |
-| ThreadGroup  | [1,1024]                      |
+| Matrix Scope | Scalar element dimensions |
+| ------------ | ------------------------- |
+| Thread       | [4,128]                   |
+| Wave         | [4,128]                   |
+| ThreadGroup  | [1,1024]                  |
 
 Sizes for matrices of packed data types are 4 times the valid size for a scalar
 element.
