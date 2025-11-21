@@ -5,7 +5,7 @@ params:
     - llvm-beanz: Chris Bieneman
     - spall: Sarah Spall
   sponsors:
-    - tbd: TBD
+    - spall: Sarah Spall
   status: Under Review
 ---
 
@@ -59,11 +59,9 @@ void fn2() {
 }
 ```
 
-There is a mostly working proof of concept here (does not compile library
-shaders):
-[Proof of Concept](https://github.com/spall/DirectXShaderCompiler/tree/groupsharedParam).
-This proof of concept includes test cases showing valid cases and error cases.
-From my tests on this proof of concept it appears this feature can safely
+There is a mostly working proof of concept which includes test cases showing
+valid cases and error cases. From my tests on this proof of concept it
+appears this feature can safely
 be enabled in all earlier language modes, but a warning should be added to let
 users know they are using a language feature added in a newer language mode and
 it might not be portable to older HLSL compilers.
@@ -84,14 +82,14 @@ this proposal is preferred to waiting until references can be finalized.
 
 ## Detailed Design
 
-Any type which is valid for a `groupshared` variable should be valid as a
+Any type which is valid for a `groupshared` variable is valid as a
 `groupshared` function parameter declaration.
 
 ### Errors and Warnings
 
 The `groupshared` type annotation keyword will be allowed on function parameter
 declarations.  In language modes before HLSL 202x, a warning will be produced,
-but should still be supported if the compiler supports the feature.
+but it should still be supported if the compiler supports the feature.
 
 A function annotated with either `export` or `[noinline]` will not be allowed to
 have function parameter declarations annotated with `groupshared`.  Doing so
