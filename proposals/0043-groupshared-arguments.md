@@ -85,11 +85,44 @@ this proposal is preferred to waiting until references can be finalized.
 Any type which is valid for a `groupshared` variable is valid as a
 `groupshared` function parameter declaration.
 
+### Overloads
+
+```c++
+void fn(groupshared uint shared);
+void fn(inout uint u);
+```
+
+```c++
+void fn(groupshared uint shared);
+void fn(uint u);
+```
+
+The above declaration examples are ambiguous and calling these sets of overloads
+will result in an error that the call is ambiguous.
+
+A new warning will be added and will be emitted when a program calls a function
+with an `inout` arg using a `groupshared` variable.  This warning will alert the
+user to the existence of the new `groupshared` parameter annotation.
+
+```c++
+void fn(inout uint u);
+
+groupshared uint Shared;
+void caller() {
+  fn(Shared); // warning will be produced at this callsite.
+}
+```
+
 ### Errors and Warnings
 
 The `groupshared` type annotation keyword will be allowed on function parameter
 declarations.  In language modes before HLSL 202x, a warning will be produced,
-but it should still be supported if the compiler supports the feature.
+but it should still be supported if the compiler supports the feature.  If the
+compiler does not support the feature an error should be produced.
+
+```
+error: 'groupshared' is not a valid modifier for a parameter
+```
 
 A function annotated with either `export` or `[noinline]` will not be allowed to
 have function parameter declarations annotated with `groupshared`.  Doing so
