@@ -90,15 +90,35 @@ Any type which is valid for a `groupshared` variable is valid as a
 ```c++
 void fn(groupshared uint shared);
 void fn(inout uint u);
+
+groupshared uint Shared;
+
+void caller() {
+  fn(Shared); // ambiguous
+
+  uint Local;
+  fn(Local); // Not ambiguous
+}
 ```
 
 ```c++
 void fn(groupshared uint shared);
 void fn(uint u);
+
+groupshared uint Shared;
+
+void caller() {
+  fn(Shared); // ambiguous
+
+  uint Local;
+  fn(Local); // Not ambiguous
+  fn(5); // Not ambiguous
+}
 ```
 
-The above declaration examples are ambiguous and calling these sets of overloads
-will result in an error that the call is ambiguous.
+The above overload sets will result in an error that the call is ambiguous
+when the call site argument is a `groupshared` variable.  They will not result
+in an error at the call site if the argument is a local varible or a literal value.
 
 A new warning will be added and will be emitted when a program calls a function
 with an `inout` arg using a `groupshared` variable.  This warning will alert the
