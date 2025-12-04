@@ -1009,10 +1009,14 @@ represents other attributes of the created matrix.
 ```llvm
 declare %dx.types.MatrixRef @dx.op.createMatrix(
   immarg i32  ; opcode
+  %dx.types.MatrixRef *,       ; Alloca representing the unique matrix
   )
 ```
 
-Creates a new uninitialized matrix handle.
+Creates a new matrix handle referencing the global or local alloca that uniquely
+represents the matrix. Create calls for globals are found in the entry block of
+the entry function. This handle is to be used by all other operations taking a
+MatrixRef argument. There should only be one create call for each unique matrix.
 
 ```llvm
 declare %dx.types.MatrixRef @dx.op.annotateMatrix(
@@ -1023,7 +1027,8 @@ declare %dx.types.MatrixRef @dx.op.annotateMatrix(
 ```
 
 Defines a matrix as having the specified component type, dimensions, use, and
-scope.
+scope. Global, local, and parameter matrices should be annotated to provide
+this type information in the local scope.
 
 ```llvm
 declare @dx.op.fillMatrix.[TY](
