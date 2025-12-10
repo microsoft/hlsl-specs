@@ -934,9 +934,9 @@ vector<OutputElTy, K>
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
 The `linalg::MultiplyAdd` function has an overload that takes an `M`-element, an
-MxK `A` matrix with `Thread` scope, and a `K`-element vector. The operation
-multiplies the `M`-element vector by the matrix then adds the `K`-element vector
-producing a result `K`-element vector.
+MxK `A` matrix with `Thread` scope, and a `M`-element vector. The operation
+multiplies the `K`-element vector by the matrix then adds the `M`-element vector
+producing a result `M`-element vector.
 
 ### DXIL Types
 
