@@ -190,8 +190,8 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-vector<OutputElTy, K> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
-                               vector<InputElTy, M>);
+vector<OutputElTy, M> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
+                               vector<InputElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT,
