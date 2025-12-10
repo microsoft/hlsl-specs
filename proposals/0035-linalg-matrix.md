@@ -1232,8 +1232,8 @@ This operation implements a row-vector multiplication against an `A` matrix of
 `Thread` scope with a bias vector added to the result.
 
 Validation will enforce that:
-* The input vector length matches the `M` matrix dimension
-* The bias vector length matches the `N` matrix dimension
+* The input vector length matches the `K` matrix dimension
+* The bias vector length matches the `M` matrix dimension
 * The matrix A is an `A` matrix of `Thread` scope
 
 ```llvm
