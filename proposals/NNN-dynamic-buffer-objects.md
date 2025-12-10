@@ -11,44 +11,56 @@ params:
 
 ## Introduction
 
-Dynamic Buffer Objects introduces the ability to create buffer objects directly from GPUVAs. This feature extends the
-flexibility of resource binding by allowing buffer objects to be created and managed in HLSL shader code, similar to the
-approach used in Shader Model 6.6 for descriptors indexed from descriptor heaps. By enabling dynamic buffer object
-creation, this feature provides enhanced flexibility and efficiency in resource management for advanced rendering and
-compute workloads.
+Dynamic Buffer Objects introduces the ability to create buffer objects directly
+from GPUVAs. This feature extends the flexibility of resource binding by
+allowing buffer objects to be created and managed in HLSL shader code, similar
+to the approach used in Shader Model 6.6 for descriptors indexed from descriptor
+heaps. By enabling dynamic buffer object creation, this feature provides
+enhanced flexibility and efficiency in resource management for advanced
+rendering and compute workloads.
 
 ## Motivation
 
-Currently, applications face significant limitations in resource management due to the complexity and constraints of
-root signatures. Root signatures must be carefully designed to accommodate all potential resource binding scenarios,
-leading to complex layouts that are difficult to manage and optimize. The existing API restricts the number of available
-root view slots, which can be a significant limitation for complex shaders requiring numerous resources. When root view
-slots are exhausted, applications must fall back to using root tables, which add additional overhead and complexity that
-is unnecessary for many buffer addressing scenarios.
+Currently, applications face significant limitations in resource management due
+to the complexity and constraints of root signatures. Root signatures must be
+carefully designed to accommodate all potential resource binding scenarios,
+leading to complex layouts that are difficult to manage and optimize. The
+existing API restricts the number of available root view slots, which can be a
+significant limitation for complex shaders requiring numerous resources. When
+root view slots are exhausted, applications must fall back to using root tables,
+which add additional overhead and complexity that is unnecessary for many buffer
+addressing scenarios.
 
-This feature addresses these limitations by reducing dependency on root signatures for buffer object creation, similar
-to how descriptor heap indexing (introduced in Shader Model 6.6) reduced the need for complex root signature layouts
-when accessing descriptor heaps. By enabling dynamic buffer object creation from GPU virtual addresses, applications can
-bypass the root signature bottleneck entirely for many use cases, creating buffer objects on-demand within shaders
-without requiring pre-planned root signature slots.
+This feature addresses these limitations by reducing dependency on root
+signatures for buffer object creation, similar to how descriptor heap indexing
+(introduced in Shader Model 6.6) reduced the need for complex root signature
+layouts when accessing descriptor heaps. By enabling dynamic buffer object
+creation from GPU virtual addresses, applications can bypass the root signature
+bottleneck entirely for many use cases, creating buffer objects on-demand within
+shaders without requiring pre-planned root signature slots.
 
-Furthermore, machine learning developers have specifically complained about the lack of ability to access buffers at
-arbitrary offsets and cast data to arbitrary structures, capabilities that are readily available in other APIs such as
-CUDA. The core limitation is the inability to dynamically create unordered access views for buffers starting at
-arbitrary byte offsets with custom element strides, which is a fundamental requirement for many machine learning
-algorithms that need to reinterpret buffer data in different layouts. This limitation forces developers to use
-workarounds that are less efficient and more complex than necessary, hindering the adoption of DirectX for machine
-learning workloads.
+Furthermore, machine learning developers have specifically complained about the
+lack of ability to access buffers at arbitrary offsets and cast data to
+arbitrary structures, capabilities that are readily available in other APIs such
+as CUDA. The core limitation is the inability to dynamically create unordered
+access views for buffers starting at arbitrary byte offsets with custom element
+strides, which is a fundamental requirement for many machine learning algorithms
+that need to reinterpret buffer data in different layouts. This limitation
+forces developers to use workarounds that are less efficient and more complex
+than necessary, hindering the adoption of DirectX for machine learning
+workloads.
 
 ## Proposed solution
 
-The proposed solution involves extending the HLSL language to support the creation of new buffer objects directly from
-GPUVAs. This is accomplished by loading a `uint64_t` from a buffer and using a new `FromAddress` static function to
-create the buffer object in HLSL shader code.
+The proposed solution involves extending the HLSL language to support the
+creation of new buffer objects directly from GPUVAs. This is accomplished by
+loading a `uint64_t` from a buffer and using a new `FromAddress` static function
+to create the buffer object in HLSL shader code.
 
 ### Example HLSL Compute Shader
 
-Below is an example of an HLSL compute shader that demonstrates the use of Dynamic Buffer Objects:
+Below is an example of an HLSL compute shader that demonstrates the use of
+Dynamic Buffer Objects:
 
 ```cpp
 // Define a structured buffer containing GPUVAs
@@ -68,7 +80,7 @@ void main(uint3 DTid : SV_DispatchThreadID)
         // Increment start address past header
         startAddress += sizeof(MyHeader);
 
-        // Create (pre-thread) raw buffer objects using the calculated GPUVAs
+        // Create (per-thread) raw buffer objects using the calculated GPUVAs
         ByteAddressBuffer MyLocalBuffer = ByteAddressBuffer::FromAddress(startAddress, 4);
 
         // Load data from the raw buffer objects
@@ -86,9 +98,11 @@ void main(uint3 DTid : SV_DispatchThreadID)
 
 #### New Static Methods: `FromAddress`
 
-The `FromAddress` static methods allow the creation of buffer objects directly from GPU virtual addresses. These values
-are initially generated by using the `ID3D12Resource::GetGPUVirtualAddress` method. These values may be modified by
-shader code prior to being used. These methods are used to dynamically create buffer objects within shaders.
+The `FromAddress` static methods allow the creation of buffer objects directly
+from GPU virtual addresses. These values are initially generated by using the
+`ID3D12Resource::GetGPUVirtualAddress` method. These values may be modified by
+shader code prior to being used. These methods are used to dynamically create
+buffer objects within shaders.
 
 **Syntax:**
 
@@ -102,48 +116,60 @@ StructuredBuffer<T> StructuredBuffer<T>::FromAddress(uint64_t address, uint32_t 
 RWStructuredBuffer<T> RWStructuredBuffer<T>::FromAddress(uint64_t address, uint32_t alignment);
 
 // ConstantBuffer creation
-ConstantBuffer<T> ConstantBuffer<T>::FromAddress(uint64_t address); // 256-byte aligned
+ConstantBuffer<T> ConstantBuffer<T>::FromAddress(uint64_t address); // always 256-byte aligned
 ```
 
 **Description:**
 
 * Inputs:
-  * `uint64_t address`: a 64-bit value representing the buffer's starting GPU virtual address.
-  * `uint32_t alignment`: the minimum alignment of the buffer's starting GPU virtual address.
+  * `uint64_t address`: a 64-bit value representing the buffer's starting GPU
+    virtual address.
+  * `uint32_t alignment`: the minimum byte alignment of the buffer's starting
+    GPU virtual address.
 * Returns: a buffer object created using the specified address and alignment.
 
 **Programming Rules:**
 
-* `address` must be a _valid_ GPUVA. If an invalid GPUVA is provided, then the behavior is undefined.
-* `address` is allowed to be either uniform or non-uniform. No explicit declarations are required.
-* For `ByteAddressBuffer` and `StructuredBuffer` types:
-  * `alignment` must be a compile-time literal.
-  * `alignment` must be a power of 2, and `<= 4096`.
-  * For `ByteAddressBuffer`, `alignment` must be `>= 4`.
-  * For `StructuredBuffer`, `alignment` must be `>= 1 << min(ffs(stride), 4)`, where `stride` is the byte size of the structure.
-  * Invalid alignment values will cause compilation errors.
-  * If the actual alignment of `address` does not match the specified `alignment` value, then the behavior is undefined.
-* For `ConstantBuffer` types:
-  * No `alignment` parameter is required; constant buffers use a fixed 256-byte alignment.
-  * The `address` must be 256-byte aligned. If not 256-byte aligned, then the behavior is undefined.
+* `address` must be a valid GPUVA. Invalid GPUVAs cause undefined behavior.
+* `address` may be uniform or non-uniform. No explicit declarations are
+  required.
+* For `[RW]ByteAddressBuffer`:
+  * `alignment` must be a compile-time literal
+  * `alignment` must be power-of-2, `>= 4`, and `<= 4096`
+* For `[RW]StructuredBuffer<T>`:
+  * `alignment` must be a compile-time literal
+  * `alignment` must be power-of-2 and `<= 4096`
+  * `alignment` must be `>= "natural" alignment of T`
+  * The "natural" alignment is the maximum alignment of any field in `T`
+* For `ConstantBuffer<T>`:
+  * No `alignment` parameter is required; constant buffers use a fixed 256-byte
+    alignment.
+* Invalid values for `alignment` will result in compilation errors.
+* Mismatched actual alignment of `address` with the specified or required
+  `alignment` value, will result in undefined behavior.
 
-> **Author's note**: The "power of two" requirement comes from the existing DXIL bitfield definition.  The minimum
-> alignment of `4` maintains the existing requirements for root view GPUVAs.  The maximum alignment of `4096` seems
-> sufficient but can be as high as `32K` if desired.
+> **Author's note**: The "power-of-2" requirement enables efficient encoding.
+> The existing DXIL bitfield definition uses `BaseAlignLog2`.  Minimum alignment
+> of `4B` matches root view GPUVA requirements. Maximum alignment of `4096B` is
+> sufficient for current use cases, but can be as high as `32KB` if desired.
 
 **Additional Notes:**
 
-* Existing "no bounds checking" rules for root views apply to dynamically created buffer objects.
-* Just as "Typed" Buffers cannot be bound as root views, they likewise cannot be created using `FromAddress` methods.
-* ConstantBuffer objects created via `FromAddress` follow the same access rules as traditionally bound constant buffers.
+* Existing "no bounds checking" rules for root views apply to dynamically
+  created buffer objects.
+* Just as "Typed" Buffers cannot be bound as root views, they likewise cannot be
+  created using `FromAddress` methods.
+* ConstantBuffer objects created via `FromAddress` follow the same access rules
+  as traditionally bound constant buffers.
 
 ---
 
 ### Interchange Format Additions
 
-> **Author's note**: While this proposal is strictly for adding byte address buffer object creation, this feature might
-> be extended to other resource objects in the future.  Therefore, the DXIL/SPIR-V details will be defined with this
-> extensibility in mind.
+> **Author's note**: While this proposal is strictly for adding byte address
+> buffer object creation, this feature might be extended to other resource
+> objects in the future.  Therefore, the DXIL/SPIR-V details will be defined
+> with this extensibility in mind.
 
 #### DXIL Changes
 
@@ -153,8 +179,10 @@ The `FromAddress` static methods require the following DXIL additions:
 
 ```llvm
 ; Opcode for FromAddress methods
-; Opcode value: 123 (TBD - needs to be assigned from available opcode range)
-@dx.op.createHandleFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
+; Opcode value: TBD (to be assigned from available range)
+@dx.op.createHandleFromAddress(
+    i32 <opcode>, i64 %address, i32 %alignment,
+    i32 %resourceKind, i1 %isUAV)
 ```
 
 ##### Function Declaration
@@ -162,66 +190,116 @@ The `FromAddress` static methods require the following DXIL additions:
 ```llvm
 ; Function Attrs: nounwind
 declare %dx.types.Handle @dx.op.createHandleFromAddress(
-    i32,                ; opcode (123)
+    i32,                ; opcode (TBD)
     i64,                ; address (GPUVA)
-    i32,                ; alignment
-    i32                 ; buffer type (11=ByteAddressBuffer, 12=StructuredBuffer, 2=ConstantBuffer)
+    i32,                ; alignment (bytes, e.g., 32 for 32-byte)
+    i32,                ; resource kind (11=RawBuffer, 12=Structured, 13=CBuffer)
+    i1                  ; isUAV (false for read-only, true for RW)
 )
 ```
 
 ##### Usage Examples
 
 ```llvm
-; Example of FromAddress usage in DXIL for ByteAddressBuffer
-; %address assumed to be defined earlier (e.g., from structured buffer load)
+; Example 1: ByteAddressBuffer (read-only) with 32-byte alignment
 %bufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
-    i32 123,           ; opcode
-    i64 %address,      ; GPUVA
-    i32 32,            ; alignment (compile-time constant)
-    i32 11             ; buffer type (ByteAddressBuffer)
-)
+    i32 <opcode>,   ; opcode (TBD)
+    i64 %address,   ; GPUVA
+    i32 32,         ; alignment (32 bytes)
+    i32 11,         ; resource kind (RawBuffer)
+    i1 false)       ; isUAV (read-only)
 
-; Annotate the handle for subsequent operations
+; Annotate handle with resource properties
 %annotatedHandle = call %dx.types.Handle @dx.op.annotateHandle(
-    i32 216,           ; opcode for annotateHandle
+    i32 216,        ; annotateHandle opcode
     %dx.types.Handle %bufferHandle,
     %dx.types.ResourceProperties {
-      i32 1035, ; ResourceKind = ByteAddressBuffer(11), BaseAlignLog2 = 5 (alignment = 32)
-      i32 0     ; n/a
-      }
-)
+      i32 1291, ; RawDword0: ResourceKind=11 | (BaseAlignLog2=5 << 8)
+      i32 0     ; RawDword1: unused for RawBuffer
+    })
 
-; Use the buffer for raw buffer operations
+; Use buffer for raw buffer operations
 %data = call i32 @dx.op.rawBufferLoad.i32(
-    i32 139,           ; opcode for rawBufferLoad
+    i32 139,            ; rawBufferLoad opcode
     %dx.types.Handle %annotatedHandle,
-    i32 %offset,       ; byte offset
-    i32 undef,         ; element offset (unused)
-    i8 7,              ; mask
-    i32 4              ; alignment
-)
+    i32 %offset,        ; byte offset
+    i32 undef,          ; element offset (unused)
+    i8 7,               ; mask
+    i32 4)              ; operation alignment
 ```
 
 ```llvm
-; Example of FromAddress usage in DXIL for ConstantBuffer
-%cbufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
-    i32 123,           ; opcode
-    i64 %cbAddress,    ; GPUVA (must be 256-byte aligned)
-    i32 256,           ; alignment (fixed for ConstantBuffer, could be ignored)
-    i32 2              ; buffer type (ConstantBuffer)
-)
+; Example 2: RWByteAddressBuffer with 16-byte alignment
+%rwBufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
+    i32 <opcode>,   ; opcode
+    i64 %rwAddress, ; GPUVA
+    i32 16,         ; alignment (16 bytes)
+    i32 11,         ; resource kind (RawBuffer)
+    i1 true)        ; isUAV (read-write)
 
+%annotatedRWHandle = call %dx.types.Handle @dx.op.annotateHandle(
+    i32 216,
+    %dx.types.Handle %rwBufferHandle,
+    %dx.types.ResourceProperties {
+      i32 1035, ; RawDword0: ResourceKind=11 | (BaseAlignLog2=4 << 8)
+      i32 0     ; RawDword1: unused for RawBuffer
+    })
+```
+
+```llvm
+; Example 3: StructuredBuffer<MyStruct> stride=24, alignment=16
+%structBufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
+    i32 <opcode>,     ; opcode
+    i64 %structAddr,  ; GPUVA
+    i32 16,           ; alignment (16 bytes)
+    i32 12,           ; resource kind (StructuredBuffer)
+    i1 false)         ; isUAV (read-only)
+
+%annotatedStructHandle = call %dx.types.Handle @dx.op.annotateHandle(
+    i32 216,
+    %dx.types.Handle %structBufferHandle,
+    %dx.types.ResourceProperties {
+        i32 1036, ; RawDword0: ResourceKind=12 | (BaseAlignLog2=4 << 8)
+        i32 24    ; RawDword1: structure stride (24 bytes)
+    })
+```
+
+```llvm
+; Example 4: ConstantBuffer (256-byte aligned)
+%cbufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
+    i32 <opcode>,   ; opcode
+    i64 %cbAddress, ; GPUVA (256-byte aligned)
+    i32 256,        ; alignment (256 bytes, fixed)
+    i32 13,         ; resource kind (CBuffer)
+    i1 false)       ; isUAV (always false)
+
+%annotatedCBHandle = call %dx.types.Handle @dx.op.annotateHandle(
+    i32 216,
+    %dx.types.Handle %cbufferHandle,
+    %dx.types.ResourceProperties {
+        i32 2061, ; RawDword0: ResourceKind=13 | (BaseAlignLog2=8 << 8)
+        i32 %size ; RawDword1: cbuffer size in bytes
+    })
 ```
 
 ##### Validation Requirements
 
-* The alignment parameter must be a compile-time literal
-* For ByteAddressBuffer types, the alignment must be a power of 2, >= 4, and <= 4096
-* For StructuredBuffer types, the alignment must be a power of 2, >= 1 << min(ffs(stride), 4), and <= 4096, where stride is the byte size of the structure
-* For ConstantBuffer types, the address must be 256-byte aligned (alignment parameter is not used)
-* The address parameter must be a 64-bit integer value
-* The bufferType parameter must be a valid buffer type identifier (11 for ByteAddressBuffer, 12 for StructuredBuffer,
-  2 for ConstantBuffer)
+* Alignment parameter must be a compile-time literal
+* For RawBuffer (`[RW]ByteAddressBuffer`):
+  * Alignment must be power-of-2, >= 4, and <= 4096
+* For StructuredBuffer (`[RW]StructuredBuffer<T>`):
+  * Alignment must be power-of-2, >= natural alignment of T, and <= 4096
+* For CBuffer (`ConstantBuffer<T>`):
+  * Alignment is 256
+* Address parameter must be a 64-bit integer value
+* ResourceKind parameter must be valid:
+  * `11` for RawBuffer
+  * `12` for StructuredBuffer
+  * `13` for CBuffer
+* isUAV parameter must be:
+  * `false` for read-only buffers
+  * `true` for read-write buffers
+  * Always `false` for CBuffer
 
 #### Metadata Changes
 
@@ -229,15 +307,16 @@ The `FromAddress` feature requires minimal metadata changes:
 
 ##### Shader Flag Addition
 
-A new shader flag bit will be added to indicate Dynamic Buffer Objects usage:
+A new shader flag indicates Dynamic Buffer Objects usage:
 
 ```cpp
-// New shader flag for resource object creation from address usage
+// Shader flag for resource creation from address
 #define D3D_SHADER_FLAG_USES_RESOURCE_FROM_ADDRESS 0x00080000
 ```
 
-This flag is set by the compiler when the shader uses the `FromAddress` static methods and can be checked by the runtime
-for validation and optimization purposes.
+This flag is set by the compiler when the shader uses the `FromAddress` static
+methods and can be checked by the runtime for validation and optimization
+purposes.
 
 #### SPIRV Support
 
@@ -261,51 +340,55 @@ OpCapability ResourceFromAddress
 
 ```spirv
 ; createHandleFromAddress instruction
-%result = OpcreateHandleFromAddress %resultType %address %alignment %bufferType
+%result = OpCreateHandleFromAddress %resultType %address %alignment %resourceKind %isUAV
 ```
 
 ##### SPIRV Instruction Definition
 
-* **Opcode**: New opcode for createHandleFromAddress (TBD)
+* **Opcode**: OpCreateHandleFromAddress (TBD)
 * **Operands**:
-  * `%resultType`: The type of the resulting buffer handle
-  * `%address`: 64-bit integer containing the GPUVA
-  * `%alignment`: 32-bit integer containing the alignment requirement
-  * `%bufferType`: 32-bit integer indicating buffer type (11=ByteAddressBuffer, 12=StructuredBuffer, 2=ConstantBuffer)
-* **Result**: Buffer handle that can be used with existing SPIRV buffer operations
+  * `%resultType`: Buffer handle type
+  * `%address`: 64-bit integer (GPUVA)
+  * `%alignment`: 32-bit integer (alignment in bytes)
+  * `%resourceKind`: 32-bit integer (11=RawBuffer, 12=Structured, 13=CBuffer)
+  * `%isUAV`: Boolean (true for UAV, false for SRV/CBV)
+* **Result**: Buffer handle for SPIRV buffer operations
 
 ##### SPIRV Translation from DXIL
 
 ```spirv
-; Translation of DXIL createHandleFromAddress to SPIRV
-; DXIL: %bufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
-; SPIRV equivalent:
-%bufferHandle = OpCreateHandleFromAddress %HandleType %address %alignment %bufferType
+; DXIL to SPIRV translation
+; DXIL: %bufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(i32 123, i64 %address, i32 %alignment, i32 %resourceKind, i1 %isUAV)
+; SPIRV:
+%h = OpCreateHandleFromAddress %HandleType %address %alignment %resourceKind %isUAV
 ```
 
 ##### SPIRV Validation Rules
 
-* The alignment operand must be a constant instruction
-* For ByteAddressBuffer types, the alignment value must be a power of 2, >= 4, and <= 4096
-* For StructuredBuffer types, the alignment value must be a power of 2, >= 1 << min(ffs(stride), 4), and <= 4096, where stride is the byte size of the structure
-* For ConstantBuffer types, the address must be 256-byte aligned (alignment operand is not used)
-* The address operand must be a 64-bit integer type
-* The bufferType operand must be a valid buffer type constant
-* The result type must be a buffer handle type
+* Alignment operand must be a constant instruction
+* For RawBuffer: alignment power-of-2, >= 4, and <= 4096
+* For StructuredBuffer: alignment power-of-2, >= natural alignment of structure,
+  and <= 4096
+* For CBuffer: alignment must be 256
+* Address operand must be 64-bit integer type
+* ResourceKind operand must be valid constant (11, 12, or 13)
+* isUAV operand must be boolean constant
+* Result type must be buffer handle type
 
 ##### SPIRV Backend Requirements
 
-* Implement translation from DXIL `@dx.op.createHandleFromAddress` to SPIRV `OpCreateHandleFromAddress`
-* Preserve metadata information in SPIRV debug information
-* Ensure proper type checking and validation during translation
-* Support both uniform and non-uniform address operands
+* Translate DXIL `@dx.op.createHandleFromAddress` to SPIRV
+  `OpCreateHandleFromAddress`
+* Preserve metadata in SPIRV debug information
+* Ensure type checking and validation during translation
+* Support uniform and non-uniform address operands
 
 ##### SPIRV Runtime Support
 
-* Runtime must support the new SPIRV extension and capability
-* Hardware drivers must implement the Resource From Address functionality
+* Runtime must support new SPIRV extension and capability
+* Hardware drivers must implement Resource From Address
 * Validation layers must check alignment and GPUVA validity
-* Performance optimization for common FromAddress usage patterns
+* Performance optimization for common usage patterns
 
 ---
 
@@ -319,13 +402,17 @@ The `FromAddress` feature introduces the following new diagnostic messages:
 
 * **E1234: Invalid alignment value for FromAddress**
   * **Trigger**: When `alignment` parameter is not a power of 2
-  * **Example**: `ByteAddressBuffer::FromAddress(address, 3)` // 3 is not a power of 2
+  * **Example**: `ByteAddressBuffer::FromAddress(address, 3)` // 3 is not a
+    power of 2
   * **Message**: "Alignment parameter must be a power of 2 and <= 4096"
 
 * **E1235: Alignment out of range for FromAddress**
-  * **Trigger**: When `alignment` parameter is less than the minimum required for the buffer type or greater than 4096
-  * **Example**: `ByteAddressBuffer::FromAddress(address, 2)` // 2 < 4 (minimum for ByteAddressBuffer)
-  * **Message**: "Alignment parameter must be >= minimum required alignment for buffer type and <= 4096"
+  * **Trigger**: When `alignment` parameter is less than the minimum required
+    for the buffer type or greater than 4096
+  * **Example**: `ByteAddressBuffer::FromAddress(address, 2)` // 2 < 4 (minimum
+    for ByteAddressBuffer)
+  * **Message**: "Alignment parameter must be >= minimum required alignment for
+    buffer type and <= 4096"
 
 * **E1236: Non-literal alignment for FromAddress**
   * **Trigger**: When `alignment` parameter is not a compile-time literal
@@ -334,13 +421,16 @@ The `FromAddress` feature introduces the following new diagnostic messages:
 
 * **E1237: Invalid buffer type for FromAddress**
   * **Trigger**: When attempting to create typed buffers with FromAddress
-  * **Example**: `Buffer<float4> buffer = Buffer<float4>::FromAddress(address, 4)` // Not supported
-  * **Message**: "Typed buffers cannot be created using FromAddress. Use ByteAddressBuffer or StructuredBuffer instead"
+  * **Example**: `Buffer<float4> buffer = Buffer<float4>::FromAddress(address,
+    4)` // Not supported
+  * **Message**: "Typed buffers cannot be created using FromAddress. Use
+    ByteAddressBuffer or StructuredBuffer instead"
 
 * **E1238: Invalid alignment for StructuredBuffer FromAddress**
-  * **Trigger**: When `alignment` parameter for StructuredBuffer does not meet the structure-specific requirement
-  * **Example**: `StructuredBuffer<MyStruct>::FromAddress(address, 2)` // Violates stride-based alignment requirement
-  * **Message**: "StructuredBuffer alignment parameter must be >= 1 << min(ffs(stride), 4), where stride is the structure byte size"
+  * **Trigger**: Alignment parameter less than structure's natural alignment
+  * **Example**: `StructuredBuffer<MyStruct>::FromAddress(address, 2)` where
+    MyStruct has 16-byte natural alignment
+  * **Message**: "StructuredBuffer alignment must be >= natural alignment"
 
 * **E1239: FromAddress requires Shader Model X.Y or higher**
   * **Trigger**: When using FromAddress with an unsupported shader model
@@ -352,11 +442,14 @@ The `FromAddress` feature introduces the following new diagnostic messages:
 * **W1235: Non-uniform FromAddress usage without NonUniformResourceIndex [TBD]**
   * **Trigger**: When address parameter is non-uniform but not explicitly marked
   * **Example**: Using a non-uniform variable directly as address parameter
-  * **Message**: "Consider using NonUniformResourceIndex if address parameter varies across threads"
+  * **Message**: "Consider using NonUniformResourceIndex if address parameter
+    varies across threads"
 
 * **W1236: FromAddress used in potentially divergent control flow**
-  * **Trigger**: When FromAddress is called in conditional blocks that may diverge
-  * **Example**: `if (condition) { ByteAddressBuffer::FromAddress(address, 4); }`
+  * **Trigger**: When FromAddress is called in conditional blocks that may
+    diverge
+  * **Example**: `if (condition) { ByteAddressBuffer::FromAddress(address, 4);
+    }`
   * **Message**: "FromAddress in divergent control flow may impact performance"
 
 ##### GBV Runtime Warnings
@@ -364,37 +457,45 @@ The `FromAddress` feature introduces the following new diagnostic messages:
 * **W1237: Invalid GPUVA provided to FromAddress [GBV]**
   * **Trigger**: When runtime validation detects an invalid GPUVA
   * **Example**: GPUVA points to unmapped memory or invalid resource
-  * **Message**: "Invalid GPUVA provided to FromAddress - undefined behavior may occur"
+  * **Message**: "Invalid GPUVA provided to FromAddress - undefined behavior may
+    occur"
 
 * **W1238: GPUVA alignment mismatch in FromAddress [GBV]**
   * **Trigger**: When GPUVA is not aligned to the specified alignment value
   * **Example**: GPUVA is 0x1001 but alignment is 4
-  * **Message**: "GPUVA alignment does not match specified alignment - undefined behavior may occur"
+  * **Message**: "GPUVA alignment does not match specified alignment - undefined
+    behavior may occur"
 
 * **W1239: ConstantBuffer address not 256-byte aligned [GBV]**
   * **Trigger**: When ConstantBuffer GPUVA is not 256-byte aligned
   * **Example**: ConstantBuffer GPUVA is 0x1008 (not 256-byte aligned)
-  * **Message**: "ConstantBuffer GPUVA must be 256-byte aligned - undefined behavior may occur"
+  * **Message**: "ConstantBuffer GPUVA must be 256-byte aligned - undefined
+    behavior may occur"
 
 #### Existing Errors and Warnings Removed
 
-The `FromAddress` feature does not remove any existing diagnostic messages, but it may modify the context or
-applicability of some existing warnings:
+The `FromAddress` feature does not remove any existing diagnostic messages, but
+it may modify the context or applicability of some existing warnings:
 
 ##### Modified Existing Warnings
 
 * **W1001: Non-uniform resource indexing (Modified Context) [TBD]**
   * **Previous**: Warned about non-uniform indexing into descriptor heaps
-  * **Modified**: Now also applies to non-uniform indexing into buffers containing GPUVAs
-  * **Example**: `MyAddressBuffer[NonUniformResourceIndex(index)]` without NonUniformResourceIndex
-  * **Updated Message**: "Non-uniform indexing detected. Consider using NonUniformResourceIndex for resource heap or
-    GPUVA buffer access"
+  * **Modified**: Now also applies to non-uniform indexing into buffers
+    containing GPUVAs
+  * **Example**: `MyAddressBuffer[NonUniformResourceIndex(index)]` without
+    NonUniformResourceIndex
+  * **Updated Message**: "Non-uniform indexing detected. Consider using
+    NonUniformResourceIndex for resource heap or GPUVA buffer access"
 
 * **W1002: Potential bounds violation (Modified Context)**
   * **Previous**: Warned about potential out-of-bounds access to resources
-  * **Modified**: Now also applies to potential out-of-bounds access to buffers created via FromAddress
-  * **Example**: Accessing beyond the bounds of a buffer created with FromAddress
-  * **Updated Message**: "Potential bounds violation detected. Ensure resource access is within valid range"
+  * **Modified**: Now also applies to potential out-of-bounds access to buffers
+    created via FromAddress
+  * **Example**: Accessing beyond the bounds of a buffer created with
+    FromAddress
+  * **Updated Message**: "Potential bounds violation detected. Ensure resource
+    access is within valid range"
 
 ##### Context Extensions
 
@@ -402,14 +503,15 @@ applicability of some existing warnings:
   * **Previous**: Applied only to traditional resource binding
   * **Extended**: Now also applies to FromAddress buffer creation
   * **Example**: Attempting to use FromAddress with unsupported buffer types
-  * **Extended Message**: "Invalid resource binding or FromAddress usage detected"
+  * **Extended Message**: "Invalid resource binding or FromAddress usage
+    detected"
 
 * **W1003: Performance warning for divergent resource access (Extended Scope)**
   * **Previous**: Warned about divergent access to traditional resources
   * **Extended**: Now also applies to divergent FromAddress usage
   * **Example**: FromAddress called with divergent parameters
-  * **Extended Message**: "Divergent resource access detected. Consider uniform resource access patterns for better
-    performance"
+  * **Extended Message**: "Divergent resource access detected. Consider uniform
+    resource access patterns for better performance"
 
 #### Validation Changes
 
@@ -418,12 +520,16 @@ applicability of some existing warnings:
 The `FromAddress` feature introduces the following new validation failures:
 
 * **V1234: Missing Resource From Address metadata**
-  * **Trigger**: When DXIL/SPIRV validation detects missing Resource From Address metadata
-  * **Example**: Shader uses FromAddress but lacks `D3D_SHADER_FLAG_USES_RESOURCE_FROM_ADDRESS` flag
-  * **Validation**: DXIL/SPIRV validation layer checks for required metadata presence
+  * **Trigger**: When DXIL/SPIRV validation detects missing Resource From
+    Address metadata
+  * **Example**: Shader uses FromAddress but lacks
+    `D3D_SHADER_FLAG_USES_RESOURCE_FROM_ADDRESS` flag
+  * **Validation**: DXIL/SPIRV validation layer checks for required metadata
+    presence
 
 * **V1235: Invalid Resource From Address metadata format**
-  * **Trigger**: When Resource From Address metadata has incorrect format or values
+  * **Trigger**: When Resource From Address metadata has incorrect format or
+    values
   * **Example**: Shader flag is set but no FromAddress calls are present
   * **Validation**: Metadata structure and field value validation
 
@@ -433,10 +539,13 @@ The `FromAddress` feature introduces the following new validation failures:
   * **Validation**: Hardware capability checking during shader execution
 
 * **V1237: Invalid FromAddress alignment validation**
-  * **Trigger**: When alignment parameter violates compile-time or runtime constraints
-  * **Example**: Alignment value not a power of 2, less than minimum required (4 for ByteAddressBuffer,
-    structure-dependent for StructuredBuffer), or greater than 4096; or ConstantBuffer address not 256-byte aligned
-  * **Validation**: Compile-time literal validation and runtime alignment checking
+  * **Trigger**: When alignment parameter violates compile-time or runtime
+    constraints
+  * **Example**: Alignment value not a power of 2, less than minimum required,
+    or greater than 4096; or ConstantBuffer address not 256-byte aligned
+  * **Validation**: Compile-time literal validation and runtime alignment
+    checking (alignment parameter is in bytes: valid range is 4-4096 for buffers,
+    256 for cbuffers)
 
 * **V1238: FromAddress GPUVA validation failure**
   * **Trigger**: When GPUVA is invalid or points to inaccessible memory
@@ -445,8 +554,8 @@ The `FromAddress` feature introduces the following new validation failures:
 
 ##### Existing Validation Failures Removed
 
-The `FromAddress` feature does not remove any existing validation failures, but it may modify the scope or context of
-some existing validations:
+The `FromAddress` feature does not remove any existing validation failures, but
+it may modify the scope or context of some existing validations:
 
 ##### Modified Existing Validations
 
@@ -454,19 +563,23 @@ some existing validations:
   * **Previous**: Validated only traditional resource binding patterns
   * **Modified**: Now also validates FromAddress buffer creation patterns
   * **Example**: Validating that FromAddress creates valid buffer types
-  * **Extended Validation**: Resource type compatibility checking for FromAddress
+  * **Extended Validation**: Resource type compatibility checking for
+    FromAddress
 
 * **V1002: Resource access validation (Extended Scope)**
   * **Previous**: Validated access to traditionally bound resources
   * **Modified**: Now also validates access to resources created via FromAddress
   * **Example**: Bounds checking for buffers created with FromAddress
-  * **Extended Validation**: Access pattern validation for FromAddress-created resources
+  * **Extended Validation**: Access pattern validation for FromAddress-created
+    resources
 
 * **V1003: Uniformity validation (Extended Scope)**
   * **Previous**: Validated uniformity of traditional resource access
   * **Modified**: Now also validates uniformity of FromAddress usage
-  * **Example**: Checking for proper NonUniformResourceIndex usage with FromAddress
-  * **Extended Validation**: Uniformity analysis for FromAddress parameters and usage
+  * **Example**: Checking for proper NonUniformResourceIndex usage with
+    FromAddress
+  * **Extended Validation**: Uniformity analysis for FromAddress parameters and
+    usage
 
 ---
 
@@ -474,93 +587,103 @@ some existing validations:
 
 #### Runtime Information
 
-The compiler must provide the following information to the runtime for proper `FromAddress` support:
+The compiler must provide the following information to the runtime for proper
+`FromAddress` support:
 
 ##### Compiler Requirements
 
-* **Resource From Address Usage Flag**: The compiler must set the `D3D_SHADER_FLAG_USES_RESOURCE_FROM_ADDRESS` shader
-  flag to indicate that the shader uses the `FromAddress` static methods
-  * **Format**: Standard shader flag bit (0x00080000)
-  * **Runtime Usage**: Runtime uses this flag to determine if Resource From Address validation and processing is
-    required
+* **Resource From Address Usage Flag**: Compiler sets
+  `D3D_SHADER_FLAG_USES_RESOURCE_FROM_ADDRESS` (0x00080000)
+  * **Runtime Usage**: Determines if validation/processing required
 
-* **CreateHandleFromAddress Opcode Information**: The compiler must include the CreateHandleFromAddress opcode (123) in
-  the shader's opcode list
-  * **Format**: Standard DXIL opcode metadata  
-  * **Runtime Usage**: Runtime uses this to identify and process CreateHandleFromAddress instructions during shader
-    execution
+* **CreateHandleFromAddress Opcode**: Included in shader's opcode list
+  * **Runtime Usage**: Identifies and processes createHandleFromAddress
+    instructions
 
 ##### Runtime Validation Information
 
-* **Alignment Validation**: Compiler performs compile-time validation of alignment parameters against the fixed
-  constraints (power of 2, >= 4 for ByteAddressBuffer, >= 1 << min(ffs(stride), 4) for StructuredBuffer, and <= 4096
-  for both; 256-byte alignment for ConstantBuffer)
-  * **Runtime Usage**: Runtime can rely on compile-time validation and doesn't need to re-validate alignment constraints
+* **Alignment Validation**: Compiler validates alignment parameters at
+  compile-time
+  * **Runtime Usage**: Runtime relies on compile-time validation
 
-* **Resource Type Compatibility**: Compiler validates that only supported buffer types (ByteAddressBuffer,
-  StructuredBuffer, and ConstantBuffer) are created via FromAddress
-  * **Runtime Usage**: Runtime can assume all FromAddress calls create valid buffer types
+* **Resource Type Compatibility**: Compiler validates only supported buffer
+  types
+  * **Runtime Usage**: Runtime assumes valid buffer types
 
 ##### SPIRV Translation Information
 
-* **SPIRV Extension Requirements**: Compiler must declare the `SPV_KHR_resource_from_address` extension when translating
-  to SPIRV
-  * **Format**: `OpExtension "SPV_KHR_resource_from_address"`
-  * **Runtime Usage**: SPIRV runtime uses this to enable Resource From Address support
+* **Extension**: `OpExtension "SPV_KHR_resource_from_address"`
+  * **Runtime Usage**: Enables Resource From Address support
 
-* **SPIRV Capability Declaration**: Compiler must declare the `ResourceFromAddress` capability
-  * **Format**: `OpCapability ResourceFromAddress`
-  * **Runtime Usage**: SPIRV runtime uses this to verify hardware support
+* **Capability**: `OpCapability ResourceFromAddress`
+  * **Runtime Usage**: Verifies hardware support
 
 #### Device Capability
 
 ##### Shader Model Interaction
 
-* **Shader Model 6.8 Prerequisite**: The bulk of the Dynamic Buffer Objects feature requires Shader Model 6.8 or higher
-  * **Rationale**: Dynamic Buffer Objects builds upon existing root view infrastructure introduced in earlier shader
-    models
-  * **Dependency**: Requires the underlying root view system and GPUVA management capabilities
+* **Shader Model 6.8 Prerequisite**: The bulk of the Dynamic Buffer Objects
+  feature requires Shader Model 6.8 or higher
+  * **Rationale**: Dynamic Buffer Objects builds upon existing root view
+    infrastructure introduced in earlier shader models
+  * **Dependency**: Requires the underlying root view system and GPUVA
+    management capabilities
 
-* **Interaction with Shader Model 6.6**: Dynamic Buffer Objects complements the descriptor heap indexing features
-  introduced in Shader Model 6.6
-  * **Synergy**: Both features provide dynamic resource access, but Dynamic Buffer Objects operates at a lower level
-  * **Coexistence**: Shaders can use both descriptor heap indexing and Dynamic Buffer Objects simultaneously
+* **Interaction with Shader Model 6.6**: Dynamic Buffer Objects complements the
+  descriptor heap indexing features introduced in Shader Model 6.6
+  * **Synergy**: Both features provide dynamic resource access, but Dynamic
+    Buffer Objects operates at a lower level
+  * **Coexistence**: Shaders can use both descriptor heap indexing and Dynamic
+    Buffer Objects simultaneously
 
-* **Backward Compatibility**: Dynamic Buffer Objects does not interfere with existing root view functionality in older
-  shader models
+* **Backward Compatibility**: Dynamic Buffer Objects does not interfere with
+  existing root view functionality in older shader models
   * **Isolation**: Traditional root views continue to work as before
   * **No Breaking Changes**: Existing shaders remain unaffected
 
 ##### Emulation and Fallback Support
 
-* **No Emulation Below Shader Model X.Y**: Dynamic Buffer Objects cannot be emulated in older shader models
+* **No Emulation Below Shader Model X.Y**: Dynamic Buffer Objects cannot be
+  emulated in older shader models
   * **Rationale**: Lacks fundamental infrastructure for dynamic resource binding
-  * **Fallback**: Compiler must generate error messages for unsupported shader models
-  * **User Guidance**: Developers must target appropriate shader model or use alternative approaches
+  * **Fallback**: Compiler must generate error messages for unsupported shader
+    models
+  * **User Guidance**: Developers must target appropriate shader model or use
+    alternative approaches
 
 ##### Hardware Capability Requirements
 
-* **Memory Alignment Support**: Hardware must support the specified alignment requirements for buffer objects
-  * **Requirement**: Hardware must handle memory access with the requested alignment (power of 2, >= 4 for
-    ByteAddressBuffer, >= structure-dependent minimum for StructuredBuffer, and <= 4096 for both)
-  * **Validation**: Runtime validates alignment support against hardware capabilities
+* **Memory Alignment Support**: Hardware must support the specified alignment
+  requirements for buffer objects
+  * **Requirement**: Hardware must handle memory access with the requested
+    alignment (power of 2, >= 4 for ByteAddressBuffer, >= structure-dependent
+    minimum for StructuredBuffer, and <= 4096 for both)
+  * **Validation**: Runtime validates alignment support against hardware
+    capabilities
 
-* **Dynamic Resource Binding**: Hardware must support dynamic creation of resource views
-  * **Requirement**: Hardware must be able to create buffer views from GPUVA at runtime
-  * **Validation**: Runtime tests dynamic resource binding capabilities during device creation
+* **Dynamic Resource Binding**: Hardware must support dynamic creation of
+  resource views
+  * **Requirement**: Hardware must be able to create buffer views from GPUVA at
+    runtime
+  * **Validation**: Runtime tests dynamic resource binding capabilities during
+    device creation
 
 ## Testing
 
-Codegen correctness for both DXIL and SPIRV should be validated through DXC unit-level tests that verify proper
-translation of `FromAddress` static methods to the corresponding `createHandleFromAddress` opcodes with correct metadata
+Codegen correctness for both DXIL and SPIRV should be validated through DXC
+unit-level tests that verify proper translation of `FromAddress` static methods
+to the corresponding `createHandleFromAddress` opcodes with correct metadata
 generation.
 
-Diagnostic validation should include comprehensive testing of all alignment constraint violations, invalid buffer type
-usage, and shader model compatibility checks through automated compiler test suites.
+Diagnostic validation should include comprehensive testing of all alignment
+constraint violations, invalid buffer type usage, and shader model compatibility
+checks through automated compiler test suites.
 
-An HLK test should verify that Dynamic Buffer Objects perform memory reads and writes to the correct GPU virtual
-addresses across all supported buffer types, alignment values, and uniformity scenarios, ensuring hardware-level
-functionality matches the specification requirements for all object creation patterns.
+An HLK test should verify that Dynamic Buffer Objects perform memory reads and
+writes to the correct GPU virtual addresses across all supported buffer types,
+alignment values, and uniformity scenarios, ensuring hardware-level
+functionality matches the specification requirements for all object creation
+patterns.
 
 ## Acknowledgments (Optional)
 
