@@ -102,7 +102,7 @@ StructuredBuffer<T> StructuredBuffer<T>::FromAddress(uint64_t address, uint32_t 
 RWStructuredBuffer<T> RWStructuredBuffer<T>::FromAddress(uint64_t address, uint32_t alignment);
 
 // ConstantBuffer creation
-ConstantBuffer<T> ConstantBuffer<T>::FromAddress(uint64_t address); // 16-byte aligned
+ConstantBuffer<T> ConstantBuffer<T>::FromAddress(uint64_t address); // 256-byte aligned
 ```
 
 **Description:**
@@ -118,11 +118,14 @@ ConstantBuffer<T> ConstantBuffer<T>::FromAddress(uint64_t address); // 16-byte a
 * `address` is allowed to be either uniform or non-uniform. No explicit declarations are required.
 * For `ByteAddressBuffer` and `StructuredBuffer` types:
   * `alignment` must be a compile-time literal.
-  * `alignment` must be a power of 2, ">= 4", and "<= 4096". Invalid alignment values will cause compilation errors.
+  * `alignment` must be a power of 2, and `<= 4096`.
+  * For `ByteAddressBuffer`, `alignment` must be `>= 4`.
+  * For `StructuredBuffer`, `alignment` must be `>= 1 << min(ffs(stride), 4)`, where `stride` is the byte size of the structure.
+  * Invalid alignment values will cause compilation errors.
   * If the actual alignment of `address` does not match the specified `alignment` value, then the behavior is undefined.
 * For `ConstantBuffer` types:
-  * No `alignment` parameter is required; constant buffers use a fixed 16-byte alignment.
-  * The `address` must be 16-byte aligned. If not 16-byte aligned, then the behavior is undefined.
+  * No `alignment` parameter is required; constant buffers use a fixed 256-byte alignment.
+  * The `address` must be 256-byte aligned. If not 256-byte aligned, then the behavior is undefined.
 
 > **Author's note**: The "power of two" requirement comes from the existing DXIL bitfield definition.  The minimum
 > alignment of `4` maintains the existing requirements for root view GPUVAs.  The maximum alignment of `4096` seems
@@ -151,14 +154,14 @@ The `FromAddress` static methods require the following DXIL additions:
 ```llvm
 ; Opcode for FromAddress methods
 ; Opcode value: 123 (TBD - needs to be assigned from available opcode range)
-@dx.op.createBufferFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
+@dx.op.createHandleFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
 ```
 
 ##### Function Declaration
 
 ```llvm
 ; Function Attrs: nounwind
-declare %dx.types.Handle @dx.op.createBufferFromAddress(
+declare %dx.types.Handle @dx.op.createHandleFromAddress(
     i32,                ; opcode (123)
     i64,                ; address (GPUVA)
     i32,                ; alignment
@@ -171,7 +174,7 @@ declare %dx.types.Handle @dx.op.createBufferFromAddress(
 ```llvm
 ; Example of FromAddress usage in DXIL for ByteAddressBuffer
 ; %address assumed to be defined earlier (e.g., from structured buffer load)
-%bufferHandle = call %dx.types.Handle @dx.op.createBufferFromAddress(
+%bufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
     i32 123,           ; opcode
     i64 %address,      ; GPUVA
     i32 32,            ; alignment (compile-time constant)
@@ -201,10 +204,10 @@ declare %dx.types.Handle @dx.op.createBufferFromAddress(
 
 ```llvm
 ; Example of FromAddress usage in DXIL for ConstantBuffer
-%cbufferHandle = call %dx.types.Handle @dx.op.createBufferFromAddress(
+%cbufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(
     i32 123,           ; opcode
-    i64 %cbAddress,    ; GPUVA (must be 16-byte aligned)
-    i32 16,            ; alignment (fixed for ConstantBuffer, could be ignored)
+    i64 %cbAddress,    ; GPUVA (must be 256-byte aligned)
+    i32 256,           ; alignment (fixed for ConstantBuffer, could be ignored)
     i32 2              ; buffer type (ConstantBuffer)
 )
 
@@ -213,8 +216,9 @@ declare %dx.types.Handle @dx.op.createBufferFromAddress(
 ##### Validation Requirements
 
 * The alignment parameter must be a compile-time literal
-* For ByteAddressBuffer and StructuredBuffer types, the alignment must be a power of 2, ">= 4", and "<= 4096"
-* For ConstantBuffer types, the address must be 16-byte aligned
+* For ByteAddressBuffer types, the alignment must be a power of 2, >= 4, and <= 4096
+* For StructuredBuffer types, the alignment must be a power of 2, >= 1 << min(ffs(stride), 4), and <= 4096, where stride is the byte size of the structure
+* For ConstantBuffer types, the address must be 256-byte aligned (alignment parameter is not used)
 * The address parameter must be a 64-bit integer value
 * The bufferType parameter must be a valid buffer type identifier (11 for ByteAddressBuffer, 12 for StructuredBuffer,
   2 for ConstantBuffer)
@@ -256,13 +260,13 @@ OpCapability ResourceFromAddress
 ##### New SPIRV Instruction
 
 ```spirv
-; CreateBufferFromAddress instruction
-%result = OpCreateBufferFromAddress %resultType %address %alignment %bufferType
+; createHandleFromAddress instruction
+%result = OpcreateHandleFromAddress %resultType %address %alignment %bufferType
 ```
 
 ##### SPIRV Instruction Definition
 
-* **Opcode**: New opcode for CreateBufferFromAddress (TBD)
+* **Opcode**: New opcode for createHandleFromAddress (TBD)
 * **Operands**:
   * `%resultType`: The type of the resulting buffer handle
   * `%address`: 64-bit integer containing the GPUVA
@@ -273,24 +277,25 @@ OpCapability ResourceFromAddress
 ##### SPIRV Translation from DXIL
 
 ```spirv
-; Translation of DXIL CreateBufferFromAddress to SPIRV
-; DXIL: %bufferHandle = call %dx.types.Handle @dx.op.createBufferFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
+; Translation of DXIL createHandleFromAddress to SPIRV
+; DXIL: %bufferHandle = call %dx.types.Handle @dx.op.createHandleFromAddress(i32 123, i64 %address, i32 %alignment, i32 %bufferType)
 ; SPIRV equivalent:
-%bufferHandle = OpCreateBufferFromAddress %HandleType %address %alignment %bufferType
+%bufferHandle = OpCreateHandleFromAddress %HandleType %address %alignment %bufferType
 ```
 
 ##### SPIRV Validation Rules
 
 * The alignment operand must be a constant instruction
-* For ByteAddressBuffer and StructuredBuffer types, the alignment value must be a power of 2, ">= 4", and "<= 4096"
-* For ConstantBuffer types, the address must be 16-byte aligned
+* For ByteAddressBuffer types, the alignment value must be a power of 2, >= 4, and <= 4096
+* For StructuredBuffer types, the alignment value must be a power of 2, >= 1 << min(ffs(stride), 4), and <= 4096, where stride is the byte size of the structure
+* For ConstantBuffer types, the address must be 256-byte aligned (alignment operand is not used)
 * The address operand must be a 64-bit integer type
 * The bufferType operand must be a valid buffer type constant
 * The result type must be a buffer handle type
 
 ##### SPIRV Backend Requirements
 
-* Implement translation from DXIL `@dx.op.createBufferFromAddress` to SPIRV `OpCreateBufferFromAddress`
+* Implement translation from DXIL `@dx.op.createHandleFromAddress` to SPIRV `OpCreateHandleFromAddress`
 * Preserve metadata information in SPIRV debug information
 * Ensure proper type checking and validation during translation
 * Support both uniform and non-uniform address operands
@@ -315,12 +320,12 @@ The `FromAddress` feature introduces the following new diagnostic messages:
 * **E1234: Invalid alignment value for FromAddress**
   * **Trigger**: When `alignment` parameter is not a power of 2
   * **Example**: `ByteAddressBuffer::FromAddress(address, 3)` // 3 is not a power of 2
-  * **Message**: "Alignment parameter must be a power of 2, >= 4, and <= 4096"
+  * **Message**: "Alignment parameter must be a power of 2 and <= 4096"
 
 * **E1235: Alignment out of range for FromAddress**
-  * **Trigger**: When `alignment` parameter is less than 4 or greater than 4096
-  * **Example**: `ByteAddressBuffer::FromAddress(address, 2)` // 2 < 4
-  * **Message**: "Alignment parameter must be >= 4 and <= 4096"
+  * **Trigger**: When `alignment` parameter is less than the minimum required for the buffer type or greater than 4096
+  * **Example**: `ByteAddressBuffer::FromAddress(address, 2)` // 2 < 4 (minimum for ByteAddressBuffer)
+  * **Message**: "Alignment parameter must be >= minimum required alignment for buffer type and <= 4096"
 
 * **E1236: Non-literal alignment for FromAddress**
   * **Trigger**: When `alignment` parameter is not a compile-time literal
@@ -332,7 +337,12 @@ The `FromAddress` feature introduces the following new diagnostic messages:
   * **Example**: `Buffer<float4> buffer = Buffer<float4>::FromAddress(address, 4)` // Not supported
   * **Message**: "Typed buffers cannot be created using FromAddress. Use ByteAddressBuffer or StructuredBuffer instead"
 
-* **E1238: FromAddress requires Shader Model X.Y or higher**
+* **E1238: Invalid alignment for StructuredBuffer FromAddress**
+  * **Trigger**: When `alignment` parameter for StructuredBuffer does not meet the structure-specific requirement
+  * **Example**: `StructuredBuffer<MyStruct>::FromAddress(address, 2)` // Violates stride-based alignment requirement
+  * **Message**: "StructuredBuffer alignment parameter must be >= 1 << min(ffs(stride), 4), where stride is the structure byte size"
+
+* **E1239: FromAddress requires Shader Model X.Y or higher**
   * **Trigger**: When using FromAddress with an unsupported shader model
   * **Example**: Using FromAddress in a Shader Model 6.0 shader
   * **Message**: "FromAddress requires Shader Model X.Y or higher"
@@ -361,10 +371,10 @@ The `FromAddress` feature introduces the following new diagnostic messages:
   * **Example**: GPUVA is 0x1001 but alignment is 4
   * **Message**: "GPUVA alignment does not match specified alignment - undefined behavior may occur"
 
-* **W1239: ConstantBuffer address not 16-byte aligned [GBV]**
-  * **Trigger**: When ConstantBuffer GPUVA is not 16-byte aligned
-  * **Example**: ConstantBuffer GPUVA is 0x1008 (not 16-byte aligned)
-  * **Message**: "ConstantBuffer GPUVA must be 16-byte aligned - undefined behavior may occur"
+* **W1239: ConstantBuffer address not 256-byte aligned [GBV]**
+  * **Trigger**: When ConstantBuffer GPUVA is not 256-byte aligned
+  * **Example**: ConstantBuffer GPUVA is 0x1008 (not 256-byte aligned)
+  * **Message**: "ConstantBuffer GPUVA must be 256-byte aligned - undefined behavior may occur"
 
 #### Existing Errors and Warnings Removed
 
@@ -424,8 +434,8 @@ The `FromAddress` feature introduces the following new validation failures:
 
 * **V1237: Invalid FromAddress alignment validation**
   * **Trigger**: When alignment parameter violates compile-time or runtime constraints
-  * **Example**: Alignment value not a power of 2, less than 4, or greater than 4096 for
-    ByteAddressBuffer/StructuredBuffer; or ConstantBuffer address not 16-byte aligned
+  * **Example**: Alignment value not a power of 2, less than minimum required (4 for ByteAddressBuffer,
+    structure-dependent for StructuredBuffer), or greater than 4096; or ConstantBuffer address not 256-byte aligned
   * **Validation**: Compile-time literal validation and runtime alignment checking
 
 * **V1238: FromAddress GPUVA validation failure**
@@ -474,17 +484,17 @@ The compiler must provide the following information to the runtime for proper `F
   * **Runtime Usage**: Runtime uses this flag to determine if Resource From Address validation and processing is
     required
 
-* **CreateBufferFromAddress Opcode Information**: The compiler must include the CreateBufferFromAddress opcode (123) in
+* **CreateHandleFromAddress Opcode Information**: The compiler must include the CreateHandleFromAddress opcode (123) in
   the shader's opcode list
   * **Format**: Standard DXIL opcode metadata  
-  * **Runtime Usage**: Runtime uses this to identify and process CreateBufferFromAddress instructions during shader
+  * **Runtime Usage**: Runtime uses this to identify and process CreateHandleFromAddress instructions during shader
     execution
 
 ##### Runtime Validation Information
 
 * **Alignment Validation**: Compiler performs compile-time validation of alignment parameters against the fixed
-  constraints (power of 2, >= 4, and <= 4096 for ByteAddressBuffer/StructuredBuffer; 16-byte alignment for
-  ConstantBuffer)
+  constraints (power of 2, >= 4 for ByteAddressBuffer, >= 1 << min(ffs(stride), 4) for StructuredBuffer, and <= 4096
+  for both; 256-byte alignment for ConstantBuffer)
   * **Runtime Usage**: Runtime can rely on compile-time validation and doesn't need to re-validate alignment constraints
 
 * **Resource Type Compatibility**: Compiler validates that only supported buffer types (ByteAddressBuffer,
@@ -531,7 +541,8 @@ The compiler must provide the following information to the runtime for proper `F
 ##### Hardware Capability Requirements
 
 * **Memory Alignment Support**: Hardware must support the specified alignment requirements for buffer objects
-  * **Requirement**: Hardware must handle memory access with the requested alignment (power of 2, >= 4, and <= 4096)
+  * **Requirement**: Hardware must handle memory access with the requested alignment (power of 2, >= 4 for
+    ByteAddressBuffer, >= structure-dependent minimum for StructuredBuffer, and <= 4096 for both)
   * **Validation**: Runtime validates alignment support against hardware capabilities
 
 * **Dynamic Resource Binding**: Hardware must support dynamic creation of resource views
@@ -541,11 +552,11 @@ The compiler must provide the following information to the runtime for proper `F
 ## Testing
 
 Codegen correctness for both DXIL and SPIRV should be validated through DXC unit-level tests that verify proper
-translation of `FromAddress` static methods to the corresponding `createBufferFromAddress` opcodes with correct metadata
+translation of `FromAddress` static methods to the corresponding `createHandleFromAddress` opcodes with correct metadata
 generation.
 
 Diagnostic validation should include comprehensive testing of all alignment constraint violations, invalid buffer type
-usage, and shader model compatibility checks through automated compiler test suites. 
+usage, and shader model compatibility checks through automated compiler test suites.
 
 An HLK test should verify that Dynamic Buffer Objects perform memory reads and writes to the correct GPU virtual
 addresses across all supported buffer types, alignment values, and uniformity scenarios, ensuring hardware-level
