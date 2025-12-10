@@ -1214,7 +1214,7 @@ This operation implements a row-vector multiplication against an `A` matrix of
 `Thread` scope.
 
 Validation will enforce that:
-* The input vector length matches the `M` matrix dimension
+* The input vector length matches the `K` matrix dimension
 * The matrix A is an `A` matrix of `Thread` scope
 
 ``` llvm
