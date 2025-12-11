@@ -446,16 +446,16 @@ formula: `MxK * KxN = MxN`
 This restriction impacts the number of rows in an A matrix, and columns in a B
 matrix, but has no impact on an accumulator matrix.
 
-The minimum and maximum `K` dimension for Wave and Thread scope matrices is tied
-to the the minimum and maximum wave size, while the minimum and maximum `K`
-dimension for ThreadGroup matrices is tied to the thread group size.
+The minimum and maximum `K` dimension for matrices is hardware dependent and
+varies by scope. The table below describes the maximums enforced by HLSL and
+DXIL validation.
 
 
-| Matrix Scope | Scalar element dimensions     |
-| ------------ | ----------------------------- |
-| Thread       | Powers of two between [4,128] |
-| Wave         | Powers of two between [4,128] |
-| ThreadGroup  | [1,1024]                      |
+| Matrix Scope | Scalar element dimensions |
+| ------------ | ------------------------- |
+| Thread       | [4,128]                   |
+| Wave         | [4,128]                   |
+| ThreadGroup  | [1,1024]                  |
 
 Sizes for matrices of packed data types are 4 times the valid size for a scalar
 element.
@@ -690,15 +690,18 @@ uint Matrix::Length();
 
 Requires `Wave` or `ThreadGroup` scope matrix.
 
-Returns the number of matrix components accessible to the current thread. The
-mapping and distribution of threads to matrix elements is opaque and
-implementation-specific. The value returned by `Length` may be different
-for each thread. The sum of the values returned by `Length` across all
-threads must be greater than or equal to the total number of matrix elements.
-Some implementations may map multiple threads to the same matrix element.
-Therefore, developers should take this into consideration when programming
-side-effects, such as atomic operations and/or UAV writes, within user-defined
-matrix operations.
+Returns the number of matrix components accessible to the current thread. If the
+matrix's elements are stored in a packed type, `Length` will return the number of
+packed elements (e.g. if a thread has 8 accessible elements of `int8` type 
+packed into 2 `int8_t4_packed`, `Length` will return 2). The mapping and
+distribution of threads to matrix elements is opaque and
+implementation-specific. The value returned by `Length` may be different for
+each thread. The sum of the values returned by `Length` across all threads must
+be greater than or equal to the total number of matrix elements. Some
+implementations may map multiple threads to the same matrix element. Therefore,
+developers should take this into consideration when programming side-effects,
+such as atomic operations and/or UAV writes, within user-defined matrix
+operations.
 
 May be called from non-uniform control flow. However, given the above rules,
 calling `Length` from divergent threads may result in unpredictable behavior.

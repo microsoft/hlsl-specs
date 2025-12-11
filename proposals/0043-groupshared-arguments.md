@@ -3,9 +3,10 @@ title: "0043 - `groupshared` Arguments"
 params:
   authors:
     - llvm-beanz: Chris Bieneman
+    - spall: Sarah Spall
   sponsors:
-    - tbd: TBD
-  status: Under Consideration
+    - spall: Sarah Spall
+  status: Under Review
 ---
 
 * Planned Version: 202x
@@ -29,11 +30,44 @@ parameter declarations. The keyword when applied to a parameter declaration of
 type `T`, alters the qualified type of the parameter to a `groupshared T &`
 (a reference to `groupshared` memory of type `T`).
 
+```c++
+void fn(groupshared uint4 A) {}
+```
+
 No implicit or explicit conversion can change the memory space of an object. To
 perform such a conversion, a user must declare a new object in the destination
 memory space and initialize it appropriately. For overload resolution, the
 parameter type must be an exact match in order for overload resolution to
 succeed since no conversions will be valid.
+
+Allowed:
+```c++
+void fn(groupshared uint4 A) {
+  float4 LocalA = (float4) A;
+  doesSomething(LocalA);
+  A = (uint4) LocalA;
+}
+```
+
+Not Allowed:
+```c++
+void fn(groupshared uint4 A) {}
+void fn2() {
+  float4 B = 1.0.xxxx;
+  fn(B); // Error:
+  fn((uint4)B); // Error:
+}
+```
+
+There is a mostly working proof of concept which includes test cases showing
+valid cases and error cases. From my tests on this proof of concept it
+appears this feature can safely
+be enabled in all earlier language modes, but a warning should be added to let
+users know they are using a language feature added in a newer language mode and
+it might not be portable to older HLSL compilers.
+
+It also looks like all types can be supported as groupshared arguments, including
+user-defined data types.
 
 ## Alternatives considered
 
@@ -46,9 +80,28 @@ This more minimal feature has material benefit today for both DXC and Clang, and
 can avoid Clang requiring special case handling for library functions. As such,
 this proposal is preferred to waiting until references can be finalized.
 
-## Outstanding Questions
+## Detailed Design
 
-* Can we enable this feature in earlier language modes? I think yes, but we
-  should explore.
-* DXC does some odd handling for user-defined data types, does this work in DXC
-  or do we need to limit the types it can apply to?
+Any type which is valid for a `groupshared` variable is valid as a
+`groupshared` function parameter declaration.
+
+### Errors and Warnings
+
+The `groupshared` type annotation keyword will be allowed on function parameter
+declarations.  In language modes before HLSL 202x, a warning will be produced,
+but it should still be supported if the compiler supports the feature.
+
+A function annotated with either `export` or `[noinline]` will not be allowed to
+have function parameter declarations annotated with `groupshared`.  Doing so
+will produce an error.
+
+The argument to a `groupshared` function parameter must be a `groupshared`
+variable.  If it is not, an error will be produced.
+
+The argument to a `groupshared` function parameter must be of the same exact
+type as the function parameter.  No implicit or explicit conversions are
+allowed.  If they are not exactly the same, an error will be produced.
+
+## Open Questions
+
+Can this be supported in SPIRV?
