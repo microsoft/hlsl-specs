@@ -200,13 +200,13 @@ vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
                                   vector<InputElTy, K>, vector<BiasElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
-                InterpretedVector<InputElTy, N, InputInterp>,
+                InterpretedVector<InputElTy, VecK, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
@@ -216,13 +216,13 @@ vector<OutputElTy, K>
                 vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, N, InputInterp>,
+                InterpretedVector<InputElTy, VecK, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
@@ -692,7 +692,7 @@ Requires `Wave` or `ThreadGroup` scope matrix.
 
 Returns the number of matrix components accessible to the current thread. If the
 matrix's elements are stored in a packed type, `Length` will return the number of
-packed elements (e.g. if a thread has 8 accessible elements of `int8` type 
+packed elements (e.g. if a thread has 8 accessible elements of `int8` type
 packed into 2 `int8_t4_packed`, `Length` will return 2). The mapping and
 distribution of threads to matrix elements is opaque and
 implementation-specific. The value returned by `Length` may be different for
@@ -1644,13 +1644,13 @@ vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
                                   vector<InputElTy, K>, vector<BiasElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
-                InterpretedVector<InputElTy, N, InputInterp>,
+                InterpretedVector<InputElTy, VecK, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
@@ -1660,13 +1660,13 @@ vector<OutputElTy, K>
                 vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-typename hlsl::enable_if<InterpretedVector<InputElTy, N, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, N, InputInterp>,
+                InterpretedVector<InputElTy, VecK, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
