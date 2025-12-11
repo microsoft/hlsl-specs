@@ -300,9 +300,9 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 ```
@@ -1366,7 +1366,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/zfK5WKoYP)
+[Compiler Explorer](https://godbolt.org/z/jx9EcjKKr)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1733,9 +1733,9 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatB, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 
