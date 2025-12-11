@@ -991,43 +991,39 @@ enum class DXILComponentType {
 ```
 
 This feature also adds a matrix ref that serves as an opaque type handle to the
-implementation's representation of the matrix and a properties struct that
-represents other attributes of the created matrix.
+implementation's representation of the matrix.
 
 
 ```llvm
   %dx.types.MatrixRef     = type { i8 * }
+```
 
-  %dx.types.MatrixProperties = type {
-  i8,  ; DXILComponentType
-  i32, ; M Dimension
-  i32, ; N Dimension
-  i8,  ; DXILMatrixUse
-  i8,  ; DXILMatrixScope
-  }
+The compiler will also generate a permutation of typed matrix handles with names
+of the format `%dx.types.AttributedMatrixRef<mangling>`. The mangling scheme for
+each type name will capture the type parameterization with the tokens `C`,
+`M`, `N`, `U` and `S` denoting each encoded property.
 
 ```
+  ; Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Wave>
+  %dx.types.AttributedMatrixRefC10M16N16U0S1    = type { i8 * }
+  ; Matrix<ComponentType::F16, 16, 16, MatrixUse::B, MatrixScope::Wave>
+  %dx.types.AttributedMatrixRefC10M16N16U1S1    = type { i8 * }
+  ; Matrix<ComponentType::F32, 16, 16, MatrixUse::Accumulator, MatrixScope::Wave>
+  %dx.types.AttributedMatrixRefC11M16N16U2S1    = type { i8 * }
+```
+
+DXIL validation will enforce that an `AttributedMatrixRef` of any type may be
+bitcast to a `%dx.types.MatrixRef`, but the inverse cast will be disallowed.
 
 ### DXIL Operations
 
 ```llvm
-declare %dx.types.MatrixRef @dx.op.createMatrix(
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.createMatrix<mangling>(
   immarg i32  ; opcode
   )
 ```
 
 Creates a new uninitialized matrix handle.
-
-```llvm
-declare %dx.types.MatrixRef @dx.op.annotateMatrix(
-  immarg i32,                ; opcode
-  %dx.types.MatrixRef,       ; Matrix being annotated
-  %dx.types.MatrixProperties ; Struct containing annotation info
-  )
-```
-
-Defines a matrix as having the specified component type, dimensions, use, and
-scope.
 
 ```llvm
 declare @dx.op.fillMatrix.[TY](
