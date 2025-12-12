@@ -3,7 +3,9 @@ title: 0034 - Vulkan Sampled Textures
 params:
   authors:
   - cassiebeckley: Cassandra Beckley
-  status: Under Review
+  sponsors:
+  - s-perron: Steven Perron
+  status: Approved
 ---
 
 
