@@ -200,13 +200,13 @@ vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
                                   vector<InputElTy, K>, vector<BiasElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecM, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
-                InterpretedVector<InputElTy, VecK, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
@@ -216,13 +216,13 @@ vector<OutputElTy, K>
                 vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecM, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, VecK, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
@@ -936,10 +936,16 @@ vector<OutputElTy, K>
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
-The `linalg::MultiplyAdd` function has an overload that takes an `K`-element vector, an
-MxK `A` matrix with `Thread` scope, and a `M`-element vector. The operation
-multiplies the `K`-element vector by the matrix then adds the `M`-element vector
-producing a result `M`-element vector.
+The `linalg::MultiplyAdd` function has an overload that takes an MxK `A` matrix
+with `Thread` scope, an `M`-element vector, and a `K`-element vector. The operation
+multiplies the `M`-element vector by the matrix then adds the `K`-element vector
+producing a result `K`-element vector.
+
+Either vector may be a native vector or an `InterpretedVector` which combines a
+packed element vector with an interpretation type. The `K`-element vector may
+also be a `VectorRef` which refers to a vector in memory. Using the `VectorRef`
+overload makes it easier for the backend compiler to optimize the bias vector
+loads with the ALU operations.
 
 ### DXIL Types
 
@@ -1369,7 +1375,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 2: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/jx9EcjKKr)
+[Compiler Explorer](https://godbolt.org/z/aPWK1KjeE)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1644,13 +1650,13 @@ vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
                                   vector<InputElTy, K>, vector<BiasElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT, MatrixScopeEnum Scope>
-typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecM, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, Scope>,
-                InterpretedVector<InputElTy, VecK, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
@@ -1660,13 +1666,13 @@ vector<OutputElTy, K>
                 vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-typename hlsl::enable_if<InterpretedVector<InputElTy, VecK, InputInterp>::Size ==
+typename hlsl::enable_if<InterpretedVector<InputElTy, VecM, InputInterp>::Size ==
                              M,
                          vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, VecK, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
