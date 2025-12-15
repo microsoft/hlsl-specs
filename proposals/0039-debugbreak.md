@@ -14,13 +14,11 @@ params:
 
 ## Introduction
 
-This proposal specifies three new HLSL debugging intrinsics:
+This proposal specifies two new HLSL debugging intrinsics:
 
 1. **`DebugBreak()`**: Triggers a breakpoint when a debugger is attached,
    allowing developers to pause execution and inspect shader state.
-2. **`Abort()`**: Terminates shader execution abnormally, signaling an
-   unrecoverable error condition (similar to C's `abort()`).
-3. **`IsDebuggerPresent()`**: Returns whether a graphics debugger is currently
+2. **`IsDebuggerPresent()`**: Returns whether a graphics debugger is currently
    attached to the process, enabling conditional debug-only code paths.
 
 These intrinsics will lower to new DXIL operations for DirectX and to
@@ -36,55 +34,29 @@ millions of times without issue, but in one instance produces a bad result.
 Conditional breakpoints can be a powerful tool for shader authors to narrow down
 and identify these complex rare-occurring problems.
 
-Additionally, shader authors need:
-- A way to terminate execution when an unrecoverable error is detected, matching
-  the behavior of `abort()` in C/C++ for implementing proper `assert()` semantics.
-- A way to conditionally enable expensive debug checks only when a debugger is
-  attached, avoiding runtime overhead in production scenarios.
+Additionally, shader authors need a way to conditionally enable expensive debug
+checks only when a debugger is attached, avoiding runtime overhead in production
+scenarios.
 
-This proposal introduces three intrinsics that together provide a complete
-debugging toolkit for shader development.
+This proposal introduces two intrinsics that together provide a debugging
+toolkit for shader development.
 
 ## Proposed solution
 
-This proposal introduces three new HLSL intrinsics and a new header `assert.h`
-which will define the `assert()` macro in a C-compatible interface.
+This proposal introduces two new HLSL intrinsics for debugging shader code.
 
 ### Intrinsics
 
 ```hlsl
 void DebugBreak();        // Trigger a breakpoint if debugger attached
-void Abort();             // Terminate execution abnormally  
 bool IsDebuggerPresent(); // Query if a debugger is attached
 ```
-
-### assert.h
-
-The `assert.h` header will provide the following definitions:
-
-```c
-#if NDEBUG
-#define assert(cond) do { } while(false)
-#else
-#define assert(cond) do { if (!(cond)) Abort(); } while(false)
-#endif
-```
-
-Note: The `assert()` macro uses `Abort()` rather than `DebugBreak()` to match
-standard C/C++ behavior where a failed assertion terminates the program. Users
-who prefer to break into a debugger on assertion failure can define their own
-macro using `DebugBreak()`.
 
 ### Example Usage
 
 ```hlsl
-#include <assert.h>
-
 [numthreads(8,1,1)]
 void main(uint GI : SV_GroupIndex) {
-    // Standard assertion - aborts if condition fails
-    assert(GI < 8);
-    
     // Conditional expensive debug checks
     if (IsDebuggerPresent()) {
         // Expensive validation only when debugging
@@ -104,7 +76,7 @@ This aligns with C/C++ conventions that our users are already familiar with.
 
 ### HLSL Surface
 
-Three new intrinsic functions are added:
+Two new intrinsic functions are added:
 
 #### `DebugBreak()`
 
@@ -115,22 +87,6 @@ void DebugBreak();
 Triggers a breakpoint if a graphics debugger is attached. If no debugger is
 attached or the runtime does not support this operation, it is treated as a
 no-op. Execution continues after the breakpoint.
-
-#### `Abort()`
-
-```hlsl
-void Abort();
-```
-
-Terminates shader execution abnormally. This function does not return. The
-implementation signals abnormal termination to the runtime, which may:
-- Terminate the dispatch/draw
-- Signal a device removed/lost condition
-- Log diagnostic information
-- Trigger a debugger break before termination (implementation-defined)
-
-The exact behavior is implementation-defined, but the shader must not continue
-execution past this point. This matches the semantics of C's `abort()` function.
 
 #### `IsDebuggerPresent()`
 
@@ -146,7 +102,9 @@ debug validation code only when a debugger is present:
 if (IsDebuggerPresent()) {
     // Expensive bounds checking, validation, etc.
     for (uint i = 0; i < arraySize; ++i) {
-        assert(data[i] >= 0.0f && data[i] <= 1.0f);
+        if (data[i] < 0.0f || data[i] > 1.0f) {
+            DebugBreak();
+        }
     }
 }
 ```
@@ -183,7 +141,9 @@ void ProcessLighting(uint2 pixelCoord, LightData lights[], uint lightCount) {
     if (IsDebuggerPresent()) {
         // Expensive validation only runs when actively debugging
         ValidateLightDataIntegrity(lights, lightCount);
-        assert(all(pixelCoord < screenDimensions));
+        if (any(pixelCoord >= screenDimensions)) {
+            DebugBreak();
+        }
         
         // Debug visualization overlays
         if (showDebugHeatmap) {
@@ -208,7 +168,7 @@ and release builds effectively doubles this cost.
 
 ### DXIL Lowering
 
-This change introduces three new DXIL operations:
+This change introduces two new DXIL operations:
 
 #### `dx.op.debugBreak`
 
@@ -221,18 +181,6 @@ declare void @dx.op.debugBreak(
 Triggers a debugger breakpoint. Must be treated as `convergent` to prevent code
 motion. Should not be marked `readonly` or `readnone`. If no debugger is
 attached, this is a no-op.
-
-#### `dx.op.abort`
-
-```llvm
-declare void @dx.op.abort(
-  immarg i32             ; opcode
-) noreturn convergent
-```
-
-Terminates shader execution abnormally. Marked `noreturn` as control flow does
-not continue past this point. Must be treated as `convergent` to prevent code
-motion. The implementation must signal abnormal termination to the runtime.
 
 #### `dx.op.isDebuggerPresent`
 
@@ -247,10 +195,9 @@ Returns `true` (1) if a debugger is attached, `false` (0) otherwise. Marked
 
 ### Convergence Requirements
 
-`debugBreak` and `abort` operations must be treated as `convergent` to prevent
+`debugBreak` operations must be treated as `convergent` to prevent
 code motion that could change their observable behavior:
 - `debugBreak`: Must break at the exact location specified by the programmer
-- `abort`: Must terminate at the exact location specified
 
 These operations should not be hoisted, sunk, or duplicated by optimizers.
 
@@ -262,109 +209,68 @@ Because `DebugBreak()` and `IsDebuggerPresent()` can be treated as no-ops when
 no debugger is present, they are required supported features and do not require
 capability bits.
 
-`Abort()` requires runtime support for abnormal termination signaling, but as
-all conforming implementations must handle this (even if by treating it as a
-no-op in release drivers), it also does not require a capability bit.
+### D3D12 Runtime Behavior for DebugBreak
 
-### D3D12 Runtime Behavior for Abort
+#### Default Behavior: DebugBreak as No-Op
 
-#### Default Behavior: Abort as No-Op
+By default, when no debugger is attached, `DebugBreak()` is treated as a no-op
+i.e the `dx.op.debugBreak` operation has no effect at runtime.
 
-By default, the D3D12 runtime treats `Abort()` instructions as no-ops. When
-abort is disabled:
+The allows for driver back end compilers to optimize away these instructions
+and any instructions that lead up to them (provided they don't have any visible
+side effects); however, they must retain the ability to re-enable the Debug
+Break behavior in the case of a debugger being attached after pipeline creation.
 
-1. The `dx.op.abort` operation has no effect at runtime
-2. The driver's backend compiler may optimize away:
-   - The abort instruction itself
-   - Any conditional branches leading to the abort
-   - Any instructions computing values used solely to determine whether to abort
-   
-   provided these instructions have no visible side effects.
+While this gives developers confidence that Debug Break operations left
+in retail code will not fire and cause an application to exit unexpectedly
+it does limit the usefulness of Debug Break for tracking down rare/hard to
+reproduce issues.
 
-This default behavior ensures that:
-- Shaders containing assertions have zero runtime overhead in production
-- The same shader binary can be used in both debug and release scenarios
-- Developers can ship shaders with assertions without performance penalty
+To enable that scenario a D3D12 PSO flag is proposed.
 
-#### Enabling Abort via PSO Flag
+#### Enabling DebugBreak via PSO Flag
 
-A new Pipeline State Object (PSO) creation flag is introduced to enable abort
-behavior for specific pipelines:
+A new Pipeline State Object (PSO) creation flag is introduced to enable Debug
+Break without debuggers being attached for specific pipelines:
 
 ```cpp
 typedef enum D3D12_PIPELINE_STATE_FLAGS {
     D3D12_PIPELINE_STATE_FLAG_NONE = 0,
     D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG = 0x1,
     // ... existing flags ...
-    D3D12_PIPELINE_STATE_FLAG_ENABLE_SHADER_ABORT = 0x..., // New flag
+    D3D12_PIPELINE_STATE_FLAG_HALT_ON_DEBUG_BREAK = 0x..., // New flag
 } D3D12_PIPELINE_STATE_FLAGS;
 ```
 
-When `D3D12_PIPELINE_STATE_FLAG_ENABLE_SHADER_ABORT` is set:
-- `Abort()` instructions are active and will terminate shader execution
+When `D3D12_PIPELINE_STATE_FLAG_HALT_ON_DEBUG_BREAK` is set:
+- `DebugBreak()` instructions are active and will halt shader execution
 - The backend compiler must preserve abort instructions and their control flow
-- The runtime will signal abnormal termination when an abort is triggered
+- If no debugger is attached to intercept the shader halt, Timeout Detection 
+and Recovery (TDR) will initiate to indicate that the Debug Break has been hit.
 
-#### Use Cases for Selective Abort Enabling
+#### Use Cases for Selective Debug Break Enabling
 
 This design enables several important scenarios:
 
-1. **Retail Debugging**: Developers can selectively enable assertions for
+1. **Retail Debugging**: Developers can selectively enable debug breaks for
    specific users experiencing rare bugs without requiring a separate debug
    build:
    ```cpp
    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
    // ... configure PSO ...
    if (userOptedIntoDebugMode || detectingRareBug) {
-       psoDesc.Flags |= D3D12_PIPELINE_STATE_FLAG_ENABLE_SHADER_ABORT;
+       psoDesc.Flags |= D3D12_PIPELINE_STATE_FLAG_HALT_ON_DEBUG_BREAK;
    }
    ```
 
-2. **A/B Testing**: Enable assertions for a subset of users to detect issues
+2. **A/B Testing**: Enable debug breaks for a subset of users to detect issues
    in production without impacting all users.
 
-3. **Development Builds**: Always enable abort for internal testing while
+3. **Development Builds**: Always enable debug breaks for internal testing while
    keeping it disabled for public releases.
 
-4. **Per-Pipeline Control**: Enable assertions only for specific shaders that
+4. **Per-Pipeline Control**: Enable debug breaks only for specific shaders that
    are suspected of containing bugs, minimizing performance impact.
-
-#### Backend Compiler Optimization
-
-When abort is disabled (the default), the backend compiler is permitted to
-perform dead code elimination on abort-related code paths. Specifically:
-
-```hlsl
-// Original shader code
-if (someCondition) {
-    // expensive computation only for the abort path
-    uint result = ExpensiveValidation();
-    if (result != EXPECTED_VALUE) {
-        Abort();
-    }
-}
-```
-
-When compiled with abort disabled, the compiler may optimize this to:
-
-```hlsl
-// Optimized: entire block removed if it has no side effects
-// (empty)
-```
-
-The compiler must preserve any code with visible side effects (memory writes,
-atomics, etc.) even if they lead to an abort. Only pure computations and
-control flow leading exclusively to abort may be eliminated.
-
-#### Runtime Signaling
-
-When abort is enabled and triggered, the runtime behavior is:
-- The current dispatch/draw is terminated
-- A debug message is logged (if debug layer is enabled)
-- The application may query for abort occurrences via debug interfaces
-- If a debugger is attached, the shader will be halted for inspection but cannot
-be continued.
-- Device removal is triggered
 
 ### SPIR-V Lowering
 
@@ -379,20 +285,6 @@ Uses the existing `NonSemantic.DebugBreak` instruction:
 
 While this instruction is not widely supported by Vulkan debuggers, it is
 supported by NVIDIA's NSight and can be safely ignored by Vulkan runtimes.
-
-#### Abort
-
-Maps to `OpTerminateInvocation` (SPIR-V 1.6+) or `OpKill` for fragment shaders.
-For compute shaders, this may require vendor-specific extensions or be lowered
-to an infinite loop with side effects that prevents further execution:
-
-```
-; SPIR-V 1.6+ for fragment shaders
-OpTerminateInvocation
-
-; For compute shaders, implementation-defined behavior
-; May use vendor extensions or controlled termination patterns
-```
 
 #### IsDebuggerPresent
 
@@ -413,8 +305,6 @@ There is no direct SPIR-V equivalent. Implementations may:
 
 - Verify correct DXIL generation for all three intrinsics
 - Verify correct SPIR-V generation where applicable
-- Test `assert.h` macro expansion with and without `NDEBUG` defined
-- Verify `Abort()` is marked `noreturn` and affects control flow analysis
 
 ### Validation Testing
 
@@ -426,9 +316,7 @@ There is no direct SPIR-V equivalent. Implementations may:
 
 - Test `DebugBreak()` triggers breakpoint when debugger attached
 - Test `DebugBreak()` is no-op when no debugger present
-- Test `Abort()` terminates execution and signals to runtime
 - Test `IsDebuggerPresent()` returns correct value based on debugger state
-- Test `assert()` macro behavior with passing and failing conditions
 
 ## Open Questions
 
@@ -436,6 +324,3 @@ There is no direct SPIR-V equivalent. Implementations may:
   * This should be "cheap" and would potentially address pre-existing bugs.
   * This would preserve the requirement that these operations not be moved
     during optimization in the final DXIL.
-  
-* For SPIR-V targets without native `Abort()` support, what is the fallback
-  behavior? Infinite loop? Discard? Implementation-defined?
