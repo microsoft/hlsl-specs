@@ -9,7 +9,7 @@ params:
 ---
 
 
- 
+
 * Planned Version: 202y
 
 ## Introduction
@@ -86,7 +86,7 @@ above can be written as:
 
 ```c++
   struct {
-    uint i [[hlsl::SV_RenderTargetArrayIndex]];
+    uint i [[hlsl::system_value(RenderTargetArrayIndex)]];
   }
 ```
 
@@ -110,11 +110,11 @@ Below are a few more examples of C++ attributes that we could support:
 
   Texture2D<float4> Tex [[hlsl::register(1, 0)]]; // applies to `Tex`;
 
-  uint i [[hlsl::SV_RenderTargetArrayIndex]]; // applies to `i`.
-  [[hlsl::SV_RenderTargetArrayIndex]] uint j; // applies to `j`.
-  uint &[[hlsl::AddressSpace(1)]] Ref = ...;  // applies to the type `uint &`.
+  uint i [[hlsl::system_value(RenderTargetArrayIndex)]]; // applies to `i`.
+  [[hlsl::system_value(RenderTargetArrayIndex)]] uint j; // applies to `j`.
+  uint &[[hlsl::address_space(1)]] Ref = ...;  // applies to the type `uint &`.
 
-  [[hlsl::SV_Target]] // applies to the function `fn`.
+  [[hlsl::system_value(Target)]] // applies to the function `fn`.
   float3 fn( ) {
     [[hlsl::fast]] // applies to the compound expression `{...}`.
     {
@@ -233,6 +233,197 @@ following grammar formulations are valid:
   \terminal{using} \textit{identifier} \opt{attribute-specifier-seq} \terminal{=} \textit{type-id} \terminal{;}\br
 \end{grammar}
 ```
-
 ![Latex Rendering](0002-assets/ClassGrammarRender.png)
 
+### Attribute Specification Language
+
+Attributes annotate source constructs with information. An attribute is said to
+be _applied to_ the entity or statement identified by the source construct.
+
+Some attributes may be required by an implementation for correct code
+generation, others may be optionally ignored. An implementation must issue a
+diagnostic on all ignored attributes unless otherwise specified by the
+definition of the attribute behavior.
+
+> Note: an example here would be optimization hint attributes which an
+> implementation is allowed to ignore without diagnosing.
+
+Each attribute may define specific behavior for how its arguments are parsed.
+Attributes that do not define custom parsing behavior shall be parsed according to the general rules outlined here.
+> Note: The clause above enables attributes like the clang availability
+> attribute which supports named parameters (e.g.
+> `[[clang::availability(shadermodel, introduced=6.3)]]`), HLSL has a use for
+> similar functionality.
+
+An empty attribute specifier has no effect. The order in which attributes
+applied to the same source construct are written shall not be significant. When
+parsing attributes any token that satisfies the requirements of an identifier
+shall be treated as an identifier even if it has alternate meaning outside the
+attribute (e.g. keywords). Name lookup is not performed on identifiers within
+_attribute-token_. The _attribute-token_ refers to the attribute being parsed,
+which determines requirements for parsing the optional
+_attribute-argument-clause_.
+
+If an attribute is applied to an entity or statement for which the attribute is
+not allowed to be applied, the program is ill-formed.
+
+The behavior of _attribute-token_ not specified in this specification is
+implementation-defined.
+
+Two consecutive square bracket tokens shall only appear when introducing an
+_attribute-specifier_. Any other occurrence of two consecutive square brackets is
+ill-formed.
+
+### Removal of HLSL Annotation Syntax
+
+With the introduction of C++ attribute syntax the HLSL annotation syntax will be
+removed from the language. In Clang, C++ attribute syntax can be supported in
+both HLSL 202x and 202y language modes with deprecation warnings reported for the old HLSL annotation syntax, including fix-it and
+rewriting tool support in Clang. This will allow easier migration of code from
+HLSL 202x to 202y. This feature will not be supported in DXC.
+
+The following new attributes are introduced to replace HLSL annotations.
+
+#### hlsl::user_value(string[, int=0])
+
+The new `hlsl::user_value` attribute replaces user-defined semantics. The first
+argument to the attribute is a string which can contain any valid C-string. The
+second optional value is an index.
+
+Consider the following valid HLSL:
+
+```hlsl
+struct VSOutput {
+  float2 TexCoord : TEXCOORD;
+};
+
+float4 main(VSOutput input) : SV_TARGET {
+  return input.xyxy;
+}
+```
+
+Under HLSL 202y this code will be rewritten as:
+
+```hlsl
+struct VSOutput {
+  float2 TexCoord [[hlsl::user_value("TEXCOORD")]];
+};
+
+float4 main(VSOutput input) : [[hlsl::system_value(SV_Target)]] {
+  return input.xyxy;
+}
+```
+
+#### hlsl::system_value(enum[, int=0])
+
+The new `hlsl::system_value` attribute replaces system value semantics. The
+first argument is an enumeration which specifies which system value is being
+bound, and the second optional value is an index.
+
+Consider the following valid HLSL:
+
+```hlsl
+float4 main( float4 p : SV_Position ) : SV_Target2 {
+	return p;
+}
+```
+
+Under HLSL 202y this code will be rewritten as:
+
+```hlsl
+float4 main(float4 p [[hlsl::system_value(SV_Position)]]) [[hlsl::system_value(SV_Target, 2)]] {
+	return p;
+}
+```
+
+#### hlsl::packoffset(int[, int=0])
+
+The new `hlsl::packoffset` attribute replaces the `packoffset` HLSL annotation.
+The attribute takes one required and one optional integer arguments. The second
+integer must be greater than or equal to 0 and less than or equal to 3.
+
+The first value specifies the starting row for packing data, and the second
+value specifies the starting column. Existing `packoffset` arguments written
+`c<row>.<column_letter>` map to the new attribute as `hlsl::packoffset(<row>,
+<column_index>)`, where `<column_index>` maps as in the table below.
+
+| column_letter | column_index |
+| ------------- | ------------ |
+| x             | 0            |
+| y             | 1            |
+| z             | 2            |
+| w             | 3            |
+
+Consider the following valid HLSL:
+
+```hlsl
+cbuffer CB {
+  float2 g1 : packoffset(c1);
+  float2 g2 : packoffset(c1.z);
+}
+```
+
+Under HLSL 202y this code will be rewritten as:
+
+```hlsl
+cbuffer CB {
+  float2 g1 [[hlsl::packoffset(1)]];
+  float2 g2 [[hlsl::packoffset(1, 2)]];
+}
+```
+
+#### hlsl::binding(int[, int=0])
+
+The new `hlsl::binding` attribute replaces the `register` HLSL annotation. The
+attribute takes one required and one optional integer arguments. The first
+integer argument specifies the binding index. the second integer specifies
+the binding scope of the binding index. The interpretation of this attribute is
+defined by the target runtime's binding model.
+
+In DirectX, the first value maps as the register value, and the second the
+register space. DirectX scopes bindings by resource class, allowing the same
+register and space assignments to be specified for resources of different types
+(e.g. a UAV and SRV may have the same register and space values without
+aliasing).
+
+In Vulkan, the first value maps as the binding index, and the second maps as the
+descriptor set index.
+
+Consider the following valid HLSL:
+
+```hlsl
+SamplerState samp1 : register(s5);
+Texture2D tex1 : register(t0, space3);
+RWByteAddressBuffer buf1 : register(u4, space1);
+```
+
+Under HLSL 202y this code will be rewritten as:
+
+```hlsl
+SamplerState samp1 [[hlsl::binding(5)]];
+Texture2D tex1 [[hlsl::binding(0, 3)]];
+RWByteAddressBuffer buf1 [[hlsl::binding(4, 1)]];
+```
+
+#### hlsl::payload_access(<enum>, ...)
+
+The new `hlsl::payload_access` attribute replaces the `read` and `write` HLSL
+annotations for raytracing payload access qualifiers. The attribute takes an
+enum value specifying `read` or `write` to denote the type of access and a
+variable argument list of enumeration values specifying the stage that the
+access qualifier applies to. Consider the following currently valid HLSL:
+
+```hlsl
+struct [raypayload] Payload {
+  float f : read(caller, anyhit) : write(caller, anyhit);
+};
+```
+
+Under HLSL 202y this code will be rewritten as:
+
+```hlsl
+using namespace hlsl;
+struct [[raypayload]] Payload {
+  float f [[payload_access(read, caller, anyhit), payload_access(write, caller, anyhit)]];
+};
+```
