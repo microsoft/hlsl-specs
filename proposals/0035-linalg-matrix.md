@@ -1223,7 +1223,7 @@ declare void @dx.op.matrixOp(
   )
 ```
 
-Three opcodes are available for this operation class:
+Two opcodes are available for this operation class:
 * Matrix Matrix Multiply: `C = A * B`
 * Matrix Matrix Multiply with Accumulation: `C += A * B`
 
