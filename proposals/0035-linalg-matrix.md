@@ -1203,7 +1203,7 @@ The validator will ensure that the group shared target memory is large enough
 for the write.
 
 ```llvm
-declare i32 @dx.op.matrixQueryAccumulatorLayout.v[NUM][TY](
+declare i32 @dx.op.matrixQueryAccumulatorLayout(
   immarg i32,            ; opcode
   )
 ```
@@ -1215,7 +1215,7 @@ layout while a return value of `1` will denote that accumulator matrices are `B`
 layout.
 
 ```llvm
-declare void @dx.op.matrixOp(
+declare void @dx.op.matrixMulOp(
   immarg i32,            ; opcode
   %dx.types.MatrixRef,   ; matrix A
   %dx.types.MatrixRef,   ; matrix B
@@ -1241,7 +1241,7 @@ Must be called from wave-uniform control flow.
 
 
 ```llvm
-declare void @dx.op.matrixBinOp(
+declare void @dx.op.matrixAccumulate(
   immarg i32,            ; opcode
   %dx.types.MatrixRef,   ; matrix RHS
   %dx.types.MatrixRef,   ; matrix LHS
@@ -1409,7 +1409,7 @@ struct MatrixUse {
 ```
 
 This object will encode each matrix shape and element type as used by the DXIL
-operations in the `matrixOp` and `matvecmuladd` opcode classes.
+operations in the `matrixMulOp` and `matvecmuladd` opcode classes.
 
 The Scope field will encode one of the values defined in the [`DXILMatrixScope`
 enumeration](#dxil-enumerations).
