@@ -6,7 +6,7 @@ params:
     - spall: Sarah Spall
   sponsors:
     - spall: Sarah Spall
-  status: Under Review
+  status: Accepted
 ---
 
 * Planned Version: 202x
