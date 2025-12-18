@@ -1058,7 +1058,7 @@ declare %dx.types.AttributedMatrixRef<mangling> @dx.op.createMatrix<mangling>(
 Creates a new uninitialized matrix handle.
 
 ```llvm
-declare @dx.op.fillMatrix.[TY](
+declare void @dx.op.fillMatrix.[TY](
   immarg i32,            ; opcode
   %dx.types.MatrixRef,   ; matrix
   [Ty]                   ; fill value
