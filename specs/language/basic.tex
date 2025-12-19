@@ -124,6 +124,44 @@ tbuffer TB {                 // does not declare TB
 
 \Sec{Name Lookup}{Basic.Lookup}
 
+\Sec{Storage Duration}{Basic.Storage}
+
+\p The storage duration of an object is the portion of the program's execution
+time during which the object exists in memory. An object may have one of the
+following storage durations:
+\begin{itemize}
+\item \textit{static storage duration}
+\item \textit{automatic storage duration}
+\item \textit{program storage duration}
+\item \textit{groupshared storage duration}
+\end{itemize}
+
+\Sub{Static Storage Duration}{Basic.Storage.Static}
+
+\p An object whose name is declared with the \texttt{static} storage specifier
+has \textit{static storage duration}. Such an object is created when the thread
+begins execution and destroyed when the thread ends execution.
+
+\Sub{Automatic Storage Duration}{Basic.Storage.Auto}
+
+\p An object whose name is declared in a block (including function parameters)
+without the \texttt{static} storage specifier has \textit{automatic storage
+duration}. Such an object is created when the block in which it is declared is
+entered and destroyed when the block is exited.
+
+\Sub{Program Storage Duration}{Basic.Storage.Program}
+
+\p An object whose name is declared in a global, namespace, or cbuffer scope
+without the \texttt{static} storage specifier has \textit{program storage
+duration}. Such an object is created when the program begins execution and
+destroyed when the program ends execution.
+
+\Sub{Groupshared Storage Duration}{Basic.Storage.Groupshared}
+
+\p An object whose name is declared with the \texttt{groupshared} storage
+specifier has \textit{groupshared storage duration}. Such an object is created
+when the thread group begins execution and destroyed when the thread group ends.
+
 \Sec{Program and linkage}{Basic.Linkage}
 
 \p A translation unit (\ref{Lex.Translation}) is comprised of a sequence of
