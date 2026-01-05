@@ -137,8 +137,8 @@ void caller() {
 
 The `groupshared` type annotation keyword will be allowed on function parameter
 declarations.  In language modes before HLSL 202x, a warning will be produced,
-but it should still be supported if the compiler supports the feature.  If the
-compiler does not support the feature an error should be produced.
+but it should still be supported if the compiler supports HLSL 202x.  If the
+compiler does not support HLSL 202x an error should be produced.
 
 ```
 error: 'groupshared' is not a valid modifier for a parameter
