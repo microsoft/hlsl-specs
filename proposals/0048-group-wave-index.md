@@ -7,7 +7,7 @@ params:
     - JoeCitizen: Jack Elliott
     sponsors:
     - JoeCitizen: Jack Elliott
-    status: Under Consideration
+    status: Accepted
 ---
 
 * Planned Version: Shader Model 6.10
