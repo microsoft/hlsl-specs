@@ -153,38 +153,37 @@ argument`.
 - `groupshared static usage (<bytes>) exceeds declared GroupSharedLimit
 (<limit>)`.
 
-Validator / pipeline creation errors:
+Pipeline creation errors:
 - `groupshared static usage (<bytes>) exceeds device capacity (<capacity>)`.
 
 ### Interchange Format Additions
 
 #### DXIL Metadata
 
-A new entry-point metadata field is added to communicate the `GroupSharedLimit`
-attribute value to the runtime:
+A new entry-point metadata field is added to communicate the group shared
+memory usage to the runtime:
 
-* **`kDxilGroupSharedLimitTag`** (constant id TBD): An optional i32 metadata
-node storing the declared limit in bytes.
-  - If the `GroupSharedLimit` attribute is present, this metadata contains the
-  declared byte limit.
-  - If the attribute is absent, this metadata is omitted (or contains a value
-  of 0 to indicate no explicit limit was declared).
+* **`kDxilGroupSharedUsageTag`** (constant id TBD): An i32 metadata
+node storing the group shared memory usage in bytes.
+  - This metadata contains the computed static group shared memory usage of the
+  shader.
+  - This value is always present and represents the total bytes of group shared
+  memory used by the shader.
 
 #### PSV0 (Pipeline State Validation) Metadata
 
 The PSV0 metadata structure is extended to include:
 
-* **`GroupSharedLimit`**: A 32-bit unsigned integer field indicating the
-shader-declared group shared memory limit in bytes.
-  - **Value = 0**: No `GroupSharedLimit` attribute was specified; runtime
-  validation should enforce the legacy limit (32 KB for CS/AS, 28 KB for MS).
-  - **Value > 0**: The shader explicitly declared a limit; runtime validation
-  must ensure that Static group shared usage ≤ 
+* **`GroupSharedUsage`**: A 32-bit unsigned integer field indicating the
+actual group shared memory usage in bytes.
+  - This value represents the computed static group shared memory usage of the
+  shader.
+  - Runtime validation must ensure that this usage value ≤ 
   `MaxGroupSharedMemoryPerGroup[CS/AS/MS]`
 
 This metadata enables the runtime to:
-* Validate that the shader's declared limit is compatible with the device's
-capabilities at pipeline creation time.
+* Validate that the shader's actual group shared memory usage is compatible
+with the device's capabilities at pipeline creation time.
 * Provide clear error messages when device limits would be exceeded.
 
 ### Validation Changes
@@ -196,8 +195,7 @@ today).
 * Ensure attribute appears only in compute/mesh/amplification and SM >= 6.10.
 * Emit / retain static usage metadata (existing) for runtime comparison against
 device capability.
-* Populate the new PSV0 `GroupSharedLimit` field with the attribute value (or 0
-if absent).
+* Populate the new PSV0 `GroupSharedUsage` field with the computed static usage.
 
 ### Runtime Additions
 
