@@ -22,7 +22,7 @@ The proposal is for two new shader intrinsics:
 
 ## Motivation
 
-Compute, Amplification and Mesh shader workloads consist of some number of 
+Compute, Amplification, Node and Mesh shader workloads consist of some number of 
 thread groups, with each thread group containing some number of waves and there 
 being a number of threads in the wave. Certain algorithms can be accelerated by
  specializing work done by individual waves in a thread group.
@@ -112,9 +112,35 @@ uint GetGroupWaveCount();
 
 #### Shader Stage Compatibility
 
-Both `GetGroupWaveIndex` and `GetGroupWaveCount` are valid in compute, mesh, and
-amplification shaders. Using these intrinsics in any other shader stage will
-result in a compilation error.
+Both `GetGroupWaveIndex` and `GetGroupWaveCount` are valid in compute, mesh,
+Node (see [Node Shader Support](#node-shader-support)) and amplification 
+shaders. Using these intrinsics in any other shader stage will result in a
+compilation error.
+
+#### Library Restrictions
+
+These intrinsics are not valid in exported functions of shader libraries (e.g.,
+DXR raytracing libraries). Raytracing shaders do not have thread group semantics
+and therefore have no meaningful wave index or wave count within a group 
+context. Attempting to use `GetGroupWaveIndex` or `GetGroupWaveCount` in an
+exported library function will result in a compilation error.
+
+#### Node Shader Support
+
+Both intrinsics are valid in node shaders with the exception of Thread Launch
+mode Nodes. In Thread launch mode, each thread executes independently without
+thread group semantics—there is no thread group context, and therefore no
+meaningful wave index or wave count within a group. 
+Attempting to use `GetGroupWaveIndex` or `GetGroupWaveCount` in a Thread launch 
+node shader will result in a compilation error.
+
+#### Feature Flag Requirements
+
+Both `GetGroupWaveIndex` and `GetGroupWaveCount` are classified as wave
+operations. When a shader uses either intrinsic, the compiler must set the
+`WaveOps` feature flag in the shader's feature flags metadata. This ensures
+that the runtime can verify the device supports wave operations before
+attempting to execute the shader.
 
 #### Value Ranges and Guarantees
 
