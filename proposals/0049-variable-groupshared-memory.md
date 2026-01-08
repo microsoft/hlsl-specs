@@ -160,15 +160,15 @@ Pipeline creation errors:
 
 #### DXIL Metadata
 
-A new entry-point metadata field is added to communicate the group shared
-memory usage to the runtime:
+A new entry-point metadata field is added to communicate the `GroupSharedLimit`
+attribute value to the runtime:
 
-* **`kDxilGroupSharedUsageTag`** (constant id TBD): An i32 metadata
-node storing the group shared memory usage in bytes.
-  - This metadata contains the computed static group shared memory usage of the
-  shader.
-  - This value is always present and represents the total bytes of group shared
-  memory used by the shader.
+* **`kDxilGroupSharedLimitTag`** (constant id TBD): An optional i32 metadata
+node storing the declared limit in bytes.
+  - If the `GroupSharedLimit` attribute is present, this metadata contains the
+  declared byte limit.
+  - If the attribute is absent, this metadata is omitted (or contains a value
+  of 0 to indicate no explicit limit was declared).
 
 #### PSV0 (Pipeline State Validation) Metadata
 
@@ -195,7 +195,6 @@ today).
 * Ensure attribute appears only in compute/mesh/amplification and SM >= 6.10.
 * Emit / retain static usage metadata (existing) for runtime comparison against
 device capability.
-* Populate the new PSV0 `GroupSharedUsage` field with the computed static usage.
 
 ### Runtime Additions
 
