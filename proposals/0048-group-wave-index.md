@@ -122,17 +122,14 @@ compilation error.
 These intrinsics are not valid in exported functions of shader libraries (e.g.,
 DXR raytracing libraries). Raytracing shaders do not have thread group semantics
 and therefore have no meaningful wave index or wave count within a group 
-context. Attempting to use `GetGroupWaveIndex` or `GetGroupWaveCount` in an
-exported library function will result in a compilation error.
+context.
 
 #### Node Shader Support
 
 Both intrinsics are valid in node shaders with the exception of Thread Launch
 mode Nodes. In Thread launch mode, each thread executes independently without
 thread group semantics—there is no thread group context, and therefore no
-meaningful wave index or wave count within a group. 
-Attempting to use `GetGroupWaveIndex` or `GetGroupWaveCount` in a Thread launch 
-node shader will result in a compilation error.
+meaningful wave index or wave count within a group.
 
 #### Feature Flag Requirements
 
@@ -253,10 +250,10 @@ the total number of subgroups executing the workgroup.
 The following new compilation errors are introduced:
 
 1. **Invalid Shader Stage**
-   - Error: `error: GetGroupWaveIndex is only valid in compute, mesh, and 
+   - Error: `error: GetGroupWaveIndex is only valid in compute, node, mesh, and 
    amplification shaders`
    - Occurs when: `GetGroupWaveIndex` is called in other shader stages
-   - Error: `error: GetGroupWaveCount is only valid in compute, mesh, and 
+   - Error: `error: GetGroupWaveCount is only valid in compute, node, mesh, and 
    amplification shaders`
    - Occurs when: `GetGroupWaveCount` is called in other shader stages
 
@@ -268,8 +265,12 @@ DXIL validation is updated to verify:
    `dx.op.getGroupWaveCount` operations are only valid in Shader Model 6.10 or
    later.
 
-2. **Shader Stage Check**: Both operations only appear in compute, amplification
-   and mesh shaders.
+2. **Shader Stage Check**: Both operations only appear in compute, node, 
+   amplification and mesh shaders.
+   - Use in VS, GS, HS, PS or in exported library functions will result in a
+   compilation error.
+   - Special case to check for invalid usage in node shaders with thread launch
+   mode.
 
 3. **Well-formed Usage**: Both operations are called with the correct signature
    (single i32 opcode operand, returns i32).
