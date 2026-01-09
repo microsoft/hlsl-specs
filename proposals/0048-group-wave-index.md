@@ -22,7 +22,7 @@ The proposal is for two new shader intrinsics:
 
 ## Motivation
 
-Compute, Amplification and Mesh shader workloads consist of some number of 
+Compute, Amplification, Node and Mesh shader workloads consist of some number of 
 thread groups, with each thread group containing some number of waves and there 
 being a number of threads in the wave. Certain algorithms can be accelerated by
  specializing work done by individual waves in a thread group.
@@ -112,9 +112,32 @@ uint GetGroupWaveCount();
 
 #### Shader Stage Compatibility
 
-Both `GetGroupWaveIndex` and `GetGroupWaveCount` are valid in compute, mesh, and
-amplification shaders. Using these intrinsics in any other shader stage will
-result in a compilation error.
+Both `GetGroupWaveIndex` and `GetGroupWaveCount` are valid in compute, mesh,
+Node (see [Node Shader Support](#node-shader-support)) and amplification 
+shaders. Using these intrinsics in any other shader stage will result in a
+compilation error.
+
+#### Library Restrictions
+
+These intrinsics are not valid in exported functions of shader libraries (e.g.,
+DXR raytracing libraries). Raytracing shaders do not have thread group semantics
+and therefore have no meaningful wave index or wave count within a group 
+context.
+
+#### Node Shader Support
+
+Both intrinsics are valid in node shaders with the exception of Thread Launch
+mode Nodes. In Thread launch mode, each thread executes independently without
+thread group semantics—there is no thread group context, and therefore no
+meaningful wave index or wave count within a group.
+
+#### Feature Flag Requirements
+
+Both `GetGroupWaveIndex` and `GetGroupWaveCount` are classified as wave
+operations. When a shader uses either intrinsic, the compiler must set the
+`WaveOps` feature flag in the shader's feature flags metadata. This ensures
+that the runtime can verify the device supports wave operations before
+attempting to execute the shader.
 
 #### Value Ranges and Guarantees
 
@@ -227,10 +250,10 @@ the total number of subgroups executing the workgroup.
 The following new compilation errors are introduced:
 
 1. **Invalid Shader Stage**
-   - Error: `error: GetGroupWaveIndex is only valid in compute, mesh, and 
+   - Error: `error: GetGroupWaveIndex is only valid in compute, node, mesh, and 
    amplification shaders`
    - Occurs when: `GetGroupWaveIndex` is called in other shader stages
-   - Error: `error: GetGroupWaveCount is only valid in compute, mesh, and 
+   - Error: `error: GetGroupWaveCount is only valid in compute, node, mesh, and 
    amplification shaders`
    - Occurs when: `GetGroupWaveCount` is called in other shader stages
 
@@ -242,8 +265,12 @@ DXIL validation is updated to verify:
    `dx.op.getGroupWaveCount` operations are only valid in Shader Model 6.10 or
    later.
 
-2. **Shader Stage Check**: Both operations only appear in compute, amplification
-   and mesh shaders.
+2. **Shader Stage Check**: Both operations only appear in compute, node, 
+   amplification and mesh shaders.
+   - Use in VS, GS, HS, PS or in exported library functions will result in a
+   compilation error.
+   - Special case to check for invalid usage in node shaders with thread launch
+   mode.
 
 3. **Well-formed Usage**: Both operations are called with the correct signature
    (single i32 opcode operand, returns i32).
