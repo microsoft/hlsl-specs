@@ -192,8 +192,8 @@ Validator must:
 * Sum byte sizes of all groupshared globals (respect alignment / padding like
 today).
 * Check attribute presence & argument correctness.
-* Ensure attribute appears only in compute/node/mesh/amplification and 
-SM >= 6.10.
+* Ensure that `kDxilGroupSharedLimitTag` metadata appears only in
+  compute/node/mesh/amplification and SM >= 6.10.
 * Check that the sum of all groupshared usage is less than or equal to the 
 specified limit (if present) OR the legacy 32k/28k limit (whichever is less).
 
