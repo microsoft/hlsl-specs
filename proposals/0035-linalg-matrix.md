@@ -1022,16 +1022,8 @@ enum class DXILComponentType {
 }
 ```
 
-This feature also adds a matrix ref that serves as an opaque type handle to the
-implementation's representation of the matrix.
-
-
-```llvm
-  %dx.types.MatrixRef     = type { i8 * }
-```
-
-The compiler will also generate a permutation of typed matrix handles with names
-of the format `%dx.types.AttributedMatrixRef<mangling>`. The mangling scheme for
+The compiler will generate a permutation of typed matrix handles with names of
+the format `%dx.types.AttributedMatrixRef<mangling>`. The mangling scheme for
 each type name will capture the type parameterization with the tokens `C`,
 `M`, `N`, `U` and `S` denoting each encoded property.
 
@@ -1044,23 +1036,32 @@ each type name will capture the type parameterization with the tokens `C`,
   %dx.types.AttributedMatrixRefC11M16N16U2S1    = type { i8 * }
 ```
 
-DXIL validation will enforce that an `AttributedMatrixRef` of any type may be
-bitcast to a `%dx.types.MatrixRef`, but the inverse cast will be disallowed.
+DXIL validation will enforce that an `AttributedMatrixRef` of any type may not
+be bitcast to any other type.
+
+#### Type Metadata
+
+A new named metadata `dx.targetTypes` will be added to contain mappings of
+attributed matrix types to their type parameters avoiding needing to parse the
+type mangling. For the given examples above metadata of the form below will be
+generated:
+
+
+```
+!dx.targetTypes = !{!1, !2, !3}
+; Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Wave>
+!1 = !{%dx.types.AttributedMatrixRefC10M16N16U0S1* undef, i32 10, i32 16, i32 0, i32 1 }
+; Matrix<ComponentType::F16, 16, 16, MatrixUse::B, MatrixScope::Wave>
+!2 = !{%dx.types.AttributedMatrixRefC10M16N16U1S1* undef, i32 10, i32 16, i32 16, i32 1, i32 1 }
+; Matrix<ComponentType::F32, 16, 16, MatrixUse::Accumulator, MatrixScope::Wave>
+!3 = !{%dx.types.AttributedMatrixRefC11M16N16U2S1* undef, i32 11, i32 16, i32 16, i32 2, i32 1 }
+```
 
 ### DXIL Operations
 
 ```llvm
-declare %dx.types.AttributedMatrixRef<mangling> @dx.op.createMatrix<mangling>(
-  immarg i32  ; opcode
-  )
-```
-
-Creates a new uninitialized matrix handle.
-
-```llvm
-declare void @dx.op.fillMatrix.[TY](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.fillMatrix.[TY](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
   [Ty]                   ; fill value
   )
 ```
@@ -1070,11 +1071,10 @@ matrix component's type, a type conversion is applied following the rules
 documented in the [Conversions](#conversions) section.
 
 ```llvm
-declare void @dx.op.copyConvertMatrix(
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix destination
-  %dx.types.MatrixRef,   ; matrix source
-  immarg i1,             ; transpose
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.copyConvertMatrix.[MatTy][MatTy](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix source
+  immarg i1,                                 ; transpose
   )
 ```
 
@@ -1084,9 +1084,8 @@ unmodified after this operation is applied. Validation shall enforce that both
 matrices have the same scope and dimensions.
 
 ```llvm
-declare void @dx.op.matrixLoadFromDescriptor(
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixLoadFromDescriptor(
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
   %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
@@ -1106,9 +1105,8 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixLoadFromMemory.p[Ty](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixLoadFromMemory.[MatTy].p[Ty](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
@@ -1121,9 +1119,9 @@ between opaque matrices and groupshared memory are defined in the
 [Conversions](#conversions) section below.
 
 ```llvm
-declare i32 @dx.op.matrixLength(
-  immarg i32,           ; opcode
-  %dx.types.MatrixRef   ; matrix
+declare i32 @dx.op.matrixLength.[MatTy](
+  immarg i32,                               ; opcode
+  %dx.types.AttributedMatrixRef<mangling>   ; matrix
   )
 ```
 
@@ -1131,10 +1129,10 @@ Returns the number of elements stored in thread-local storage on the active
 thread for the provided matrix.
 
 ```llvm
-declare <2 x i32> @dx.op.matrixGetCoordinate(
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  i32                    ; thread-local index
+declare <2 x i32> @dx.op.matrixGetCoordinate.[MatTy](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  i32                                        ; thread-local index
   )
 ```
 
@@ -1142,10 +1140,10 @@ Returns a two element vector containing the column and row of the matrix that
 the thread-local index corresponds to.
 
 ```llvm
-declare [Ty] @dx.op.matrixGetElement.[Ty](
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  i32                    ; thread-local index
+declare [Ty] @dx.op.matrixGetElement.[Ty].[MatTy](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  i32                                        ; thread-local index
   )
 ```
 
@@ -1154,11 +1152,11 @@ If the index is out of range for the values stored in this thread the result is
 0.
 
 ```llvm
-declare void @dx.op.matrixSetElement.[Ty](
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  i32,                   ; thread-local index
-  [Ty]                   ; value
+declare void @dx.op.matrixSetElement.[MatTy].[Ty](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  i32,                                       ; thread-local index
+  [Ty]                                       ; value
   )
 ```
 
@@ -1167,13 +1165,13 @@ to the value provided. If the index is out of range for the values stored in
 this thread the result is a no-op.
 
 ```llvm
-declare void @dx.op.matrixStoreToDescriptor(
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  %dx.types.Handle,      ; ByteAddressBuffer
-  i32,                   ; Offset
-  i32,                   ; Stride
-  i32,                   ; matrix layout
+declare void @dx.op.matrixStoreToDescriptor.[MatTy](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  %dx.types.Handle,                          ; ByteAddressBuffer
+  i32,                                       ; Offset
+  i32,                                       ; Stride
+  i32,                                       ; matrix layout
   )
 ```
 
@@ -1185,13 +1183,13 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixStoreToMemory.p[Ty](
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  [Ty] *,                ; groupshared T[M * N]
-  i32,                   ; Offset
-  i32,                   ; Stride
-  i32,                   ; matrix layout
+declare void @dx.op.matrixStoreToMemory.[MatTy].p[Ty](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  [Ty] *,                                    ; groupshared T[M * N]
+  i32,                                       ; Offset
+  i32,                                       ; Stride
+  i32,                                       ; matrix layout
   )
 ```
 
@@ -1215,11 +1213,10 @@ layout while a return value of `1` will denote that accumulator matrices are `B`
 layout.
 
 ```llvm
-declare void @dx.op.matrixMulOp(
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixMulOp.[MatTyC].[MatTyA].[MatTyB](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix A
-  %dx.types.MatrixRef,   ; matrix B
-  %dx.types.MatrixRef    ; matrix C
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix A
+  %dx.types.AttributedMatrixRef<mangling>   ; matrix B
   )
 ```
 
@@ -1230,7 +1227,7 @@ Two opcodes are available for this operation class:
 Validation rules will enforce that:
 * argument A is an `A` matrix
 * argument B is a `B` matrix
-* argument C is an `Accumulator` matrix
+* return value (C) is an `Accumulator` matrix
 * All three matrices have the same scope (Wave or ThreadGroup)
 * Matrix A's dimensions shall be M x K
 * Matrix B's dimensions shall be K x N
@@ -1241,19 +1238,20 @@ Must be called from wave-uniform control flow.
 
 
 ```llvm
-declare void @dx.op.matrixAccumulate(
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixAccumulate.[MatTyC].[MatTyA].[MatTyB](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix RHS
-  %dx.types.MatrixRef,   ; matrix LHS
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix LHS
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix RHS
   )
 ```
 
 This operation accumulates an `A` or `B` matrix into an accumulator following
-the form `LHS += RHS`.
+the form `LHS = LHS + RHS`.
 
 Validation rules will enforce that:
 * Argument RHS is an `A` or `B` matrix
 * Argument LHS is an `Accumulator` matrix
+* Type of LHS is the same as the return type
 * Both matrices have the same scope (Wave or ThreadGroup)
 * Both matrices have the same dimensions
 * The element types are compatible
@@ -1261,11 +1259,11 @@ Validation rules will enforce that:
 Must be called from wave-uniform control flow.
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].v[NUMi][TYi](
-  immarg i32,           ; opcode
-  %dx.types.MatrixRef,  ; matrix A
-  <[NUMi] x [TYi]>,     ; input vector
-  immarg i32            ; input interpretation type (DXILComponentType)
+declare <[NUMo] x [TYo]> @dx.op.matvecmul.[MatTy].v[NUMo][TYo].v[NUMi][TYi](
+  immarg i32,                               ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,  ; matrix A
+  <[NUMi] x [TYi]>,                         ; input vector
+  immarg i32                                ; input interpretation type (DXILComponentType)
 )
 ```
 
@@ -1277,13 +1275,13 @@ Validation will enforce that:
 * The matrix A is an `A` matrix of `Thread` scope
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].v[NUMi][TYi].v[NUMo][TYb](
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix A
-  <[NUMi] x [TYi]>,      ; input vector
-  immarg i32,            ; input interpretation type (DXILComponentType)
-  <[NUMo] x [TYb]>,      ; bias vector
-  immarg i32             ; bias interpretation type (DXILComponentType)
+declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.[MatTy].v[NUMo][TYo].v[NUMi][TYi].v[NUMo][TYb](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix A
+  <[NUMi] x [TYi]>,                          ; input vector
+  immarg i32,                                ; input interpretation type (DXILComponentType)
+  <[NUMo] x [TYb]>,                          ; bias vector
+  immarg i32                                 ; bias interpretation type (DXILComponentType)
 )
 ```
 
@@ -1296,13 +1294,13 @@ Validation will enforce that:
 * The matrix A is an `A` matrix of `Thread` scope
 
 ```llvm
-declare void @dx.op.matrixAccumulateToDescriptor(
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  %dx.types.Handle,      ; RWByteAddressBuffer
-  i32,                   ; Offset
-  i32,                   ; Stride
-  i32                    ; matrix layout
+declare void @dx.op.matrixAccumulateToDescriptor.[MatTy](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  %dx.types.Handle,                          ; RWByteAddressBuffer
+  i32,                                       ; Offset
+  i32,                                       ; Stride
+  i32                                        ; matrix layout
   )
 ```
 
@@ -1320,13 +1318,13 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixAccumulateToMemory.p[Ty](
-  immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
-  [Ty] *,                ; groupshared T[M * N]
-  i32,                   ; Offset
-  i32,                   ; Stride
-  i32                    ; matrix layout
+declare void @dx.op.matrixAccumulateToMemory.[MatTy].p[Ty](
+  immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>,   ; matrix
+  [Ty] *,                                    ; groupshared T[M * N]
+  i32,                                       ; Offset
+  i32,                                       ; Stride
+  i32                                        ; matrix layout
   )
 ```
 
@@ -1339,9 +1337,8 @@ The validator will ensure that the group shared target memory is large enough
 for the write.
 
 ```llvm
-declare void @dx.op.matrixOuterProduct.v[M][TY].v[N][TY](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixOuterProduct.[MatTy].v[M][TY].v[N][TY](
   immarg i32,            ; opcode
-  %dx.types.MatrixRef,   ; matrix
   <[M] x [Ty]>,          ; vector A
   <[N] x [Ty]>           ; vector B
   )
@@ -1520,7 +1517,7 @@ struct MatrixLayout {
     RowMajor = 0,
     ColMajor = 1,
     MulOptimal = 2,
-    OuterProductOptimal = 3,
+    OuterProductOptimal = 3
   };
 };
 using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
