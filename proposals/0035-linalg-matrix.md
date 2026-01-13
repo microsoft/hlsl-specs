@@ -1084,7 +1084,7 @@ unmodified after this operation is applied. Validation shall enforce that both
 matrices have the same scope and dimensions.
 
 ```llvm
-declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixLoadFromDescriptor(
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixLoadFromDescriptor.[MatTy](
   immarg i32,            ; opcode
   %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
