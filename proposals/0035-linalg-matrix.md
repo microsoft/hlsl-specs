@@ -1182,7 +1182,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixStoreToMemory.[MatTy].p[Ty](
+declare void @dx.op.matrixStoreToMemory.[MatTy].[Ty](
   immarg i32,                                ; opcode
   %dx.types.AttributedMatrixRef<mangling>,   ; matrix
   [Ty] *,                                    ; groupshared T[M * N]
