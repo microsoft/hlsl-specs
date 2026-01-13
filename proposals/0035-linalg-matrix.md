@@ -1237,7 +1237,7 @@ Must be called from wave-uniform control flow.
 
 
 ```llvm
-declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixAccumulate.[MatTyC].[MatTyA].[MatTyB](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixAccumulate.[MatTyC].[MatTyLHS].[MatTyRHS](
   immarg i32,            ; opcode
   %dx.types.AttributedMatrixRef<mangling>,   ; matrix LHS
   %dx.types.AttributedMatrixRef<mangling>,   ; matrix RHS
