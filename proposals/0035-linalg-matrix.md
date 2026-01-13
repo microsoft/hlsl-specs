@@ -1060,7 +1060,7 @@ generated:
 ### DXIL Operations
 
 ```llvm
-declare %dx.types.AttributedMatrixRef<mangling> @dx.op.fillMatrix.[TY](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.fillMatrix.[MatTy].[TY](
   immarg i32,            ; opcode
   [Ty]                   ; fill value
   )
