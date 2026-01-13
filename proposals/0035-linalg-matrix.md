@@ -1274,7 +1274,7 @@ Validation will enforce that:
 * The matrix A is an `A` matrix of `Thread` scope
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.[MatTy].v[NUMo][TYo].v[NUMi][TYi].v[NUMo][TYb](
+declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
   immarg i32,                                ; opcode
   %dx.types.AttributedMatrixRef<mangling>,   ; matrix A
   <[NUMi] x [TYi]>,                          ; input vector
