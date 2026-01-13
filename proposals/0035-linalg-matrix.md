@@ -1354,6 +1354,7 @@ Validation will ensure that:
 * The element type of the matrix argument matches the element type of the input
   vectors, or the input vectors are `i32` if the matrix uses types not directly
   representable in DXIL.
+* The element type of vector A and vector B must be the same.
 
 #### DXIL Validation
 
