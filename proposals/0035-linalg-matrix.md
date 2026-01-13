@@ -1258,7 +1258,7 @@ Validation rules will enforce that:
 Must be called from wave-uniform control flow.
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmul.[MatTy].v[NUMo][TYo].v[NUMi][TYi](
+declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].[MatTy].v[NUMi][TYi](
   immarg i32,                               ; opcode
   %dx.types.AttributedMatrixRef<mangling>,  ; matrix A
   <[NUMi] x [TYi]>,                         ; input vector
