@@ -1517,7 +1517,7 @@ struct MatrixLayout {
     RowMajor = 0,
     ColMajor = 1,
     MulOptimal = 2,
-    OuterProductOptimal = 3
+    OuterProductOptimal = 3,
   };
 };
 using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
