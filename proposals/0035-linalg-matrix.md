@@ -1071,7 +1071,7 @@ matrix component's type, a type conversion is applied following the rules
 documented in the [Conversions](#conversions) section.
 
 ```llvm
-declare %dx.types.AttributedMatrixRef<mangling> @dx.op.copyConvertMatrix.[MatTy][MatTy](
+declare %dx.types.AttributedMatrixRef<mangling> @dx.op.copyConvertMatrix.[MatTy].[MatTy](
   immarg i32,                                ; opcode
   %dx.types.AttributedMatrixRef<mangling>,   ; matrix source
   immarg i1,                                 ; transpose
