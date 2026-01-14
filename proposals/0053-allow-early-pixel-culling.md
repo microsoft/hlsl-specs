@@ -1,6 +1,5 @@
 ---
-title: "NNNN - Allow Early Pixel Culling"
-draft: true
+title: "0053 - Allow Early Pixel Culling"
 params:
   authors:
     - mapodaca-nv: Mike Apodaca
