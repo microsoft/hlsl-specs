@@ -246,13 +246,13 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | ✅ | ceil      | Round_pi | | Unary | |
 | ✅ | exp       | Exp | | Unary | |
 | ✅ | floor     | Round_ni | | Unary | |
-|   | fma       | Fma | | Ternary | All three inputs are of the same type. Any inputs that are long vectors must have the same number of dimensions. |
+| ✅ | fma       | Fma | | Ternary | All three inputs are of the same type. Any inputs that are long vectors must have the same number of dimensions. |
 | ✅ | frac      | rc | | Unary | |
-|   | frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | Unary | Has a return value in addition to an output parameter. |
+| ✅ | frexp     | | FCmpUNE, SExt, BitCast, And, Add, AShr, SIToFP, Store, And, Or | Unary | Has a return value in addition to an output parameter. |
 | ☑️ | ldexp     | Exp | FMul | Binary | Not required. Covered by floating point multiplication and exp. |
 | ☑️ | lerp      | | FSub, FMul, FAdd | Ternary | Not required. FSub, FMul, and FAdd are all well covered. |
 | ✅ | log       | Log | FMul | Unary | All three inputs are of the same type. Any inputs that are long vectors must have the same number of dimensions. |
-|   | mad       | IMad | | Ternary | |
+| ✅ | mad       | IMad | | Ternary | |
 | ✅ | max       | IMax | | Binary | |
 | ✅ | min       | IMin | | Binary | |
 | ☑️ | pow       | [Log, Exp] | [FMul] , [FDiv] | Binary | Not required. Ops well covered by other tests. |
@@ -260,90 +260,90 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | ✅ | round     | Round_ne | | Unary | |
 | ✅ | rsqrt     | Rsqrt | | Unary | |
 | ✅ | sign      | | ZExt, Sub, [ICmpSLT], [FCmpOLT] | Unary | |
-|   | smoothstep| Saturate | FMul, FSub, FDiv | Ternary | |
+| ☑️ | smoothstep| Saturate | FMul, FSub, FDiv | Ternary | |
 | ✅ | sqrt      | Sqrt | | Unary | |
-| ☑️ | step      | | FCmpOLT, Select | Binary | Not required. FCmpOLT covered by atan2 and sign. Select covered by explicit select test. |
+| ☑️ | step      | | FCmpOLT, Select | Binary | |
 | ✅ | trunc     | Round_z | | Unary | |
-| ☑️ | clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Ternary | Not required. Covered by min and max. |
+| ☑️ | clamp     | FMax, FMin, [UMax, UMin] , [IMax, Imin] | | Ternary | |
 | ☑️ | exp2      | Exp | | Unary | Not required. Covered by exp. |
-| ☑️ | log10     | Log | FMul | Unary | Not required. Covered by log.|
-| ☑️ | log2      | Log | | Unary | Not required. Covered by log.|
+| ☑️ | log10     | Log | FMul | Unary | Not required. Covered by log. |
+| ☑️ | log2      | Log | | Unary | Not required. Covered by log. |
 
 ### Float Ops
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | f16tof32  | LegacyF16ToF32 | | | Unary |
-|   | f32tof16  | LegacyF32ToF16 | | | Unary |
-|   | isfinite  | IsFinite | | | Unary |
-|   | isinf     | IsInf | | | Unary |
-|   | isnan     | IsNan | | | Unary |
-|   | modf      | Round_z | FSub, Store | Has a return value and an ouput value. | Unary |
-|   | fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, Select, FMul | | Binary |
+| ✅ | f16tof32  | LegacyF16ToF32 | | | Unary. N/A. Legacy ops omitted from long vector support. |
+| ✅ | f32tof16  | LegacyF32ToF16 | | | Unary. N/A. Legacy ops omitted from long vector support. |
+| ✅ | isfinite  | IsFinite | | | Unary |
+| ️✅ | isinf     | IsInf | | | Unary |
+| ✅ | isnan     | IsNan | | | Unary |
+| ✅ | modf      | Round_z | FSub, Store | Has a return value and an ouput value. | Unary |
+| ☑️ | fmod      | FAbs, Frc | FDiv, FNeg, FCmpOGE, Select, FMul | | Binary |
 
 ### Bitwise Ops
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | saturate  | Saturate | | | Unary |
-|   | reversebits| Bfrev | | | Unary |
-|   | countbits | Countbits | | | Unary |
-|   | firstbithigh| FirstbitSHi | | | Unary |
-|   | firstbitlow| FirstbitLo | | | Unary |
+| ✅ | saturate  | Saturate | | | Unary |
+| ✅ | reversebits| Bfrev | | | Unary |
+| ✅ | countbits | Countbits | | | Unary |
+| ✅ | firstbithigh| FirstbitSHi | | | Unary |
+| ✅ | firstbitlow| FirstbitLo | | | Unary |
 
 ### Logic Ops
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | select    | | Select, [ExtractElement, InsertElement] | | Ternary |
-|   | and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. | Binary |
-|   | or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. | Binary |
+| ✅ | select    | | Select, [ExtractElement, InsertElement] | | Ternary |
+| ✅ | and       | | And, [ExtractElement, InsertElement] | Not required. Covered by select. | Binary |
+| ✅ | or        | | Or, [ExtractElement, InsertElement] | Not required. Covered by select. | Binary |
 
 ### Reductions
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | all       | | [FCmpUNE], [ICmpNE] , [ExtractElement, And] | | Unary |
-|   | any       | | [FCmpUNE], [ICmpNE] , [ExtractElement, Or] | | Unary |
-|   | dot       | | ExtractElement, Mul | | Binary |
+| ✅ | all       | | [FCmpUNE], [ICmpNE] , [ExtractElement, And] | | Unary |
+| ✅ | any       | | [FCmpUNE], [ICmpNE] , [ExtractElement, Or] | | Unary |
+| ✅ | dot       | | ExtractElement, Mul | | Binary |
 
 ### Derivative and Quad Operations
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | ddx       | DerivCoarseX | | | Unary |
-|   | ddx_fine  | DerivFineX | | | Unary |
-|   | ddy       | DerivCoarseY | | | Unary |
-|   | ddy_fine  | DerivFineY | | | Unary |
-|   | fwidth    | QuadReadLaneAt | | | Unary |
-|   | QuadReadLaneAcrossX | QuadOp | | | Unary |
-|   | QuadReadLaneAcrossY | QuadOp | | Uses different QuadOp parameters leading to different behavior. | Unary |
-|   | QuadReadLaneAcrossDiagonal | QuadOp | | Uses different QuadOp parameters leading to different behavior. | Unary |
-|   | ddx_coarse| DerivCoarseX | | Not required. Covered by ddx | Unary |
-|   | ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy | Unary |
+| ✅ | ddx       | DerivCoarseX | | | Unary |
+| ✅ | ddx_fine  | DerivFineX | | | Unary |
+| ✅ | ddy       | DerivCoarseY | | | Unary |
+| ✅ | ddy_fine  | DerivFineY | | | Unary |
+| ☑️ | fwidth    | QuadReadLaneAt | | | Unary |
+| ✅ | QuadReadLaneAcrossX | QuadOp | | | Unary |
+| ✅ | QuadReadLaneAcrossY | QuadOp | | Uses different QuadOp parameters leading to different behavior. | Unary |
+| ✅ | QuadReadLaneAcrossDiagonal | QuadOp | | Uses different QuadOp parameters leading to different behavior. | Unary |
+| ☑️ | ddx_coarse| DerivCoarseX | | Not required. Covered by ddx | Unary |
+| ☑️ | ddy_coarse| DerivCoarseY | | Not requried. Covered by ddy | Unary |
 
 ### WaveOps
 
 | Completed  | Intrinsic | DXIL OpCode | LLVM Instruction | Basic Op Type | Notes |
 |---|-----------|--------------|------------------|----------------|-----------|
-|   | WaveActiveBitAnd      | WaveActiveBit | | | Binary |
-|   | WaveActiveBitOr       | WaveActiveBit | | | Binary |
-|   | WaveActiveBitXor      | WaveActiveBit | | | Binary |
-|   | WaveActiveProduct     | WaveActiveOp | | | Binary |
-|   | WaveActiveSum         | WaveActiveOp | | | Binary |
-|   | WaveActiveMin         | WaveActiveOp | | | Binary |
-|   | WaveActiveMax         | WaveActiveOp | | | Binary |
-|   | WaveMultiPrefixBitAnd | WaveMultiPrefixOp | | | Binary |
-|   | WaveMultiPrefixBitOr  | WaveMultiPrefixOp | | | Binary |
-|   | WaveMultiPrefixBitXor | WaveMultiPrefixOp | | | Binary |
-|   | WaveMultiPrefixProduct| WaveMultiPrefixOp | | | Binary |
-|   | WaveMultiPrefixSum    | WaveMultiPrefixOp | | | Binary |
-|   | WavePrefixSum         | WavePrefixOp | | | Binary |
-|   | WavePrefixProduct     | WavePrefixOp | | | Binary |
-|   | WaveReadLaneAt        | WaveReadLaneAt | | | Binary |
-|   | WaveReadLaneFirst     | WaveReadLaneFirst | | | Unary |
-|   | WaveActiveAllEqual    | WaveActiveAllEqual | | | Unary |
-|   | WaveMatch             | WaveMatch | | | Unary |
+| ✅ | WaveActiveBitAnd      | WaveActiveBit | | | Binary |
+| ✅ | WaveActiveBitOr       | WaveActiveBit | | | Binary |
+| ✅ | WaveActiveBitXor      | WaveActiveBit | | | Binary |
+| ✅ | WaveActiveProduct     | WaveActiveOp | | | Binary |
+| ✅ | WaveActiveSum         | WaveActiveOp | | | Binary |
+| ✅ | WaveActiveMin         | WaveActiveOp | | | Binary |
+| ✅ | WaveActiveMax         | WaveActiveOp | | | Binary |
+| ✅ | WaveMultiPrefixBitAnd | WaveMultiPrefixOp | | | Binary |
+| ✅ | WaveMultiPrefixBitOr  | WaveMultiPrefixOp | | | Binary |
+| ✅ | WaveMultiPrefixBitXor | WaveMultiPrefixOp | | | Binary |
+| ✅ | WaveMultiPrefixProduct| WaveMultiPrefixOp | | | Binary |
+| ✅ | WaveMultiPrefixSum    | WaveMultiPrefixOp | | | Binary |
+| ✅ | WavePrefixSum         | WavePrefixOp | | | Binary |
+| ✅ | WavePrefixProduct     | WavePrefixOp | | | Binary |
+| ✅ | WaveReadLaneAt        | WaveReadLaneAt | | | Binary |
+| ✅ | WaveReadLaneFirst     | WaveReadLaneFirst | | | Unary |
+| ✅ | WaveActiveAllEqual    | WaveActiveAllEqual | | | Unary |
+| ✅ | WaveMatch             | WaveMatch | | | Unary |
 
 ### Type Casting Operations
 
