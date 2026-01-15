@@ -14,7 +14,7 @@ params:
 ## Introduction
 
 Today HLSL (DXIL) validation enforces a fixed upper limit of 32 KB
-of group shared memory per thread group for Compute, and Amplification
+of group shared memory per thread group for Compute, Node, and Amplification
 Shaders with Mesh shaders being limited to 28 KB. Modern GPU architectures
 often expose substantially larger physically
 available shared memory, and practical algorithms (e.g. large tile / cluster
@@ -45,7 +45,7 @@ Introduce two core pieces:
 
 1. A runtime API query returning `MaxGroupSharedMemoryPerGroup` (in bytes).
     - This will return a value at minimum equal to the existing limits in SM 6.9
-    and prior i.e. 32k for CS and AS and 28k for Mesh Shaders.
+    and prior i.e. 32k for CS, NS and AS and 28k for Mesh Shaders.
     - There is no defined maximum value.
     - Values must be 4 byte aligned.
 2. A new optional entry-point attribute allowing a shader author to declare the
@@ -108,7 +108,7 @@ actual usage exceeds that.
 
 ## Detailed Design
 
-### Runtime Validation
+### Validation
 * If `GroupSharedLimit` is omitted, validation will fall back to the original
 32k limit (28k for MS). The error message will be updated to indicate that the
 limit may be raised with the caveat that hardware support must be checked.
@@ -132,7 +132,7 @@ Rules:
 be a multiple of 4.
 * At most one `GroupSharedLimit` attribute per entry point; duplicates are an
 error.
-* Applies only to compute, mesh, amplification shaders.
+* Applies only to compute, node, mesh, amplification shaders.
 * The attribute does NOT itself reserve memory; it constrains static usage.
 i.e. the calculated shared memory usage of the shader must always be <= this
 value.
@@ -149,11 +149,11 @@ argument`.
 - `GroupSharedLimit attribute argument must be a multiple of 4`.
 - `Duplicate GroupSharedLimit attribute on entry point`.
 - `GroupSharedLimit attribute not allowed on this shader stage`
-(non compute/mesh/amplification).
+(non compute/node/mesh/amplification).
 - `groupshared static usage (<bytes>) exceeds declared GroupSharedLimit
 (<limit>)`.
 
-Validator / pipeline creation errors:
+Pipeline creation errors:
 - `groupshared static usage (<bytes>) exceeds device capacity (<capacity>)`.
 
 ### Interchange Format Additions
@@ -174,17 +174,16 @@ node storing the declared limit in bytes.
 
 The PSV0 metadata structure is extended to include:
 
-* **`GroupSharedLimit`**: A 32-bit unsigned integer field indicating the
-shader-declared group shared memory limit in bytes.
-  - **Value = 0**: No `GroupSharedLimit` attribute was specified; runtime
-  validation should enforce the legacy limit (32 KB for CS/AS, 28 KB for MS).
-  - **Value > 0**: The shader explicitly declared a limit; runtime validation
-  must ensure that Static group shared usage ≤ 
-  `MaxGroupSharedMemoryPerGroup[CS/AS/MS]`
+* **`GroupSharedUsage`**: A 32-bit unsigned integer field indicating the
+actual group shared memory usage in bytes.
+  - This value represents the computed static group shared memory usage of the
+  shader.
+  - Runtime validation must ensure that this usage value ≤ 
+  `MaxGroupSharedMemoryPerGroup[CS/NS/AS/MS]`
 
 This metadata enables the runtime to:
-* Validate that the shader's declared limit is compatible with the device's
-capabilities at pipeline creation time.
+* Validate that the shader's actual group shared memory usage is compatible
+with the device's capabilities at pipeline creation time.
 * Provide clear error messages when device limits would be exceeded.
 
 ### Validation Changes
@@ -193,11 +192,10 @@ Validator must:
 * Sum byte sizes of all groupshared globals (respect alignment / padding like
 today).
 * Check attribute presence & argument correctness.
-* Ensure attribute appears only in compute/mesh/amplification and SM >= 6.10.
-* Emit / retain static usage metadata (existing) for runtime comparison against
-device capability.
-* Populate the new PSV0 `GroupSharedLimit` field with the attribute value (or 0
-if absent).
+* Ensure that `kDxilGroupSharedLimitTag` metadata appears only in
+  compute/node/mesh/amplification and SM >= 6.10.
+* Check that the sum of all groupshared usage is less than or equal to the 
+specified limit (if present) OR the legacy 32k/28k limit (whichever is less).
 
 ### Runtime Additions
 
@@ -206,7 +204,7 @@ if absent).
 Add a new feature query (illustrative naming):
 * D3D12: `D3D12_FEATURE_DATA_D3D12_OPTIONS_XX::MaxGroupSharedMemoryPerGroupCSAS`
     - Value declares the maximum group shared memory in bytes per thread group
-    for Compute and Amplification Shaders.
+    for Compute, Node and Amplification Shaders.
     - Must be >= 32,768 and 4 byte aligned
 * D3D12: `D3D12_FEATURE_DATA_D3D12_OPTIONS_XX::MaxGroupSharedMemoryPerGroupMS`
     - Value declares the maximum group shared memory in bytes per thread group
@@ -220,7 +218,7 @@ Add a new feature query (illustrative naming):
 ## Testing
 
 Testing matrix axes:
-* Stages: compute, mesh, amplification.
+* Stages: compute, node, mesh, amplification.
 * Capacities: 0 - 32/28 KB, 48 KB, 64 KB, 96 KB, 128 KB.
 * Attribute: absent vs present (below, equal, above static usage; above
 capacity).
