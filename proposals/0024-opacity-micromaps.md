@@ -375,7 +375,7 @@ reachable in the current compilation.
 
 <!-- External References -->
 
-[dxr-omm]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#opacity-micromaps> "Opacity Micromaps (internal only)"
+[dxr-omm]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#opacity-micromaps> "Opacity Micromaps"
 [pipeline-config]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_config1> "RaytracingPipelineConfig1"
 [trace-ray]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#traceray> "TraceRay"
 [rq-trace]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-tracerayinline> "RayQuery::TraceRayInline"
