@@ -380,7 +380,7 @@ reachable in the current compilation.
 [trace-ray]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#traceray> "TraceRay"
 [rq-trace]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-tracerayinline> "RayQuery::TraceRayInline"
 [ray-query]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery> "RayQuery"
-[dxr-flags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS  (internal only)"
+[dxr-flags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS"
 [rayflags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayflags> "RayFlags()"
 
 
