@@ -6,7 +6,7 @@ params:
     - rasmusnv: Rasmus Barringer
     sponsors:
     - tex3d: Tex Riddell
-    status: Accepted
+    status: Completed
 ---
 
  

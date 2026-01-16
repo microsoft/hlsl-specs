@@ -5,7 +5,7 @@ params:
   - pow2clk: Greg Roth
   sponsors:
   - llvm-beanz: Chris Bieneman
-  status: Accepted
+  status: Completed
 ---
 
 
