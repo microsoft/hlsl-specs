@@ -7,7 +7,7 @@ params:
   - amarpMSFT: Amar Patel
   sponsors:
   - jenatali: Jesse Natalie
-  status: Under Review
+  status: Accepted
 ---
 
 ## Introduction

@@ -5,7 +5,7 @@ params:
   - jackell: Jack Elliott
   sponsors:
   - jackell: Jack Elliott
-  status: Under Consideration
+  status: Accepted
 ---
 
 * Planned Version: Shader Model 6.10
