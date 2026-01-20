@@ -1,4 +1,3 @@
-
 \Ch{Declarations}{Decl}
 \Sec{Preamble}{Decl.Pre}
 \p Declarations generally specify how names are to be interpreted. Declarations have the form
@@ -53,7 +52,7 @@
 
 \begin{grammar}
   \define{function-specifier}\br
-  \texttt{export}\br
+  export
 \end{grammar}
 
 \p The \texttt{export} specifier denotes that the function has program linkage (\ref{Basic.Linkage.Program}).
@@ -77,7 +76,7 @@
   \define{declarator}\br
   declarator-id \opt{attribute-specifier-seq}\br
   declarator parameters-and-qualifiers\br
-  declarator \terminal{[} \opt{constant-expression} \terminal{]} \opt{attribute-specifier-seq}\br
+  declarator \terminal{\lbrack} \opt{constant-expression} \terminal{\rbrack} \opt{attribute-specifier-seq}\br
 
   \define{parameters-and-qualifiers}\br
   \terminal{(} parameter-declaration-clause \terminal{)} \opt{cv-qualifier-seq} \opt{attribute-specifier-seq}\br
@@ -89,55 +88,11 @@
   \terminal{const}\br
 
   \define{declarator-id}\br
-  id-expression\br
+  id-expression
 
 \end{grammar}
 
-\Sub{Arrays}{Decl.arrays}
-% This might need to nest deeper as we flesh out the sections.
 
-\p A declaration \textit{T D} where \textit{D} is of the form
-
-\begin{grammar}
-\textit{D`} \terminal{[} \textit{N} \terminal{]} \opt{attribute-specifier-seq}\br
-\end{grammar}
-
-declares an array of \textit{N} \textit{T`}, where \textit{N} is the
-\textit{array bound}, and \textit{T`} is the derived type of the declarator
-\textit{D`} and is called the \textit{contained type} of the array. \textit{N}
-shall be a constant expression converted to unsigned integer type and shall have
-a value greater than zero.
-
-\p A declaration \textit{T D} where \textit{D} is of the form
-
-\begin{grammar}
-\textit{D`} \terminal{[} \terminal{]} \opt{attribute-specifier-seq}\br
-\end{grammar}
-
-declares an array of unknown bound, except when the bound is implicitly derived
-as described below. A declaration may only declare an array of unknown bound for
-global declarations of resource objects (\ref{Resources}).
-
-\p Array declarations may be nested to form multidimensional arrays. When
-declaring a multidimensional array, only the first (outermost) dimension may
-have an unknown bound; all inner dimensions must have known bounds.
-
-\begin{note}
-  For example the declaration \texttt{int A[3][4];} declares \texttt{A} as an
-  array of 3 elements, each of which is an array of 4 integers.
-
-  Applying this example to the above grammar, \texttt{T} is \texttt{int},
-  \texttt{D} is \texttt{A[3][4]}, \texttt{D'} is \texttt{A[3]}, \texttt{N} is 3,
-  and \texttt{T'} is \texttt{int[4]}.
-\end{note}
-
-\p The contained type of an array of any form shall be a complete type.
-
-\p A declarator with an omitted array bound is valid when declaring an object of
-array type which is not a non-static data member and is initialized with an
-initializer that follows the declarator. In this case the array bound is implied
-by the number of elements provided by the initializer list following the rules
-described in \ref{Decl.Init}.
 
 \Sec{Initializers}{Decl.Init}
 
