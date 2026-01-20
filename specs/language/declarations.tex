@@ -179,9 +179,9 @@ referenced from within the translation unit, nor is it required to be unique.
 Each cbuffer declaration refers to a unique constant buffer resource
 (\ref{Resources.cnbuf}).
 
-\p Declarations within a cbuffer declaration that declare names, declare their
-names in the scope containing the cbuffer declaration. The cbuffer declaration
-itself does not declare a declaration scope. A cbuffer declaration may not
+\p The cbuffer declaration itself does not declare a declaration scope.
+Declarations within a cbuffer declaration that declare names, declare their names 
+in the scope containing the cbuffer declaration. A cbuffer declaration may not
 contain a \textit{namespace-declaration} or \textit{cbuffer-declaration}.
 \footnote{These declarations were previously allowed in HLSL reference compilers
 but are not supported in this specification.}
