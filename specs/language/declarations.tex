@@ -68,28 +68,28 @@
 
 \begin{grammar}
   \define{init-declarator-list}\br
-  \textit{init-declarator}\br
-  \textit{init-declarator-list} \terminal{,} \textit{init-declarator}\br
+  init-declarator\br
+  init-declarator-list \terminal{,} init-declarator\br
 
   \define{init-declarator}\br
-  \textit{declarator} \opt{initializer}\br
+  declarator \opt{initializer}\br
 
   \define{declarator}\br
-  \textit{declarator-id} \opt{attribute-specifier-seq}\br
-  \textit{declarator} \textit{parameters-and-qualifiers}\br
-  \textit{declarator} \terminal{[} \opt{constant-expression} \terminal{]} \opt{attribute-specifier-seq}\br
+  declarator-id \opt{attribute-specifier-seq}\br
+  declarator parameters-and-qualifiers\br
+  declarator \terminal{[} \opt{constant-expression} \terminal{]} \opt{attribute-specifier-seq}\br
 
   \define{parameters-and-qualifiers}\br
-  \terminal{(} \textit{parameter-declaration-clause} \terminal{)} \opt{cv-qualifier-seq} \opt{attribute-specifier-seq}\br
+  \terminal{(} parameter-declaration-clause \terminal{)} \opt{cv-qualifier-seq} \opt{attribute-specifier-seq}\br
 
   \define{cv-qualifier-seq}\br
-  \textit{cv-qualifier} \opt{cv-qualifier-seq}\br
+  cv-qualifier \opt{cv-qualifier-seq}\br
 
   \define{cv-qualifier}\br
   \terminal{const}\br
 
   \define{declarator-id}\br
-  \textit{id-expression}\br
+  id-expression\br
 
 \end{grammar}
 
