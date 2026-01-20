@@ -6,7 +6,7 @@ params:
     - joecitizen: Jack Elliott
     sponsors:
     - llvm-beanz: Chris Bieneman
-    status: Under Consideration
+    status: Under Review
 ---
 
  
