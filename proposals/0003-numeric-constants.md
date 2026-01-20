@@ -5,9 +5,8 @@ params:
   - llvm-beanz: Chris Bieneman
   sponsors:
   - llvm-beanz: Chris Bieneman
-  status: Under Review
+  status: Under Consideration
 ---
-
  
 * Planned Version: 202x
 

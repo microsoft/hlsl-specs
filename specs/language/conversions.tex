@@ -150,14 +150,15 @@ type \texttt{T[M]}, if \texttt{N} is greater than or equal to \texttt{M}.
 prvalue of type \texttt{vector<T,x>}. The destination value is the source value
 replicated into each element of the destination.
 
+\p A prvalue of type \texttt{vector<T,1>} can be converted
+to a prvalue of type \texttt{vector<T,x>}. The destination value is the value in
+the source vector replicated into each element of the destination.
+
+\Sec{Matrix splat conversion}{Conv.msplat}
 \p A glvalue of type \texttt{T} can be converted to a cxvalue of type
 \texttt{matrix<T,x,y>} or a prvalue of type \texttt{T} can be converted to a
 prvalue of type \texttt{matrix<T,x,y>}. The destination value is the source
 value replicated into each element of the destination.
-
-\p A prvalue of type \texttt{vector<T,1>} can be converted
-to a prvalue of type \texttt{vector<T,x>}. The destination value is the value in
-the source vector replicated into each element of the destination.
 
 \Sec{Array and Class splat conversion}{Conv.asplat}
 

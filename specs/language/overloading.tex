@@ -271,8 +271,11 @@ below:
           & \ref{Conv.array} \\ \cline{1-2}\cline{4-4}
     Qualification & Qualification Adjustment & & \ref{Conv.qual} \\ \cline{1-4}
 
-    Scalar splat (without conversion) & Scalar Extension & Extension
-          & \ref{Conv.vsplat} \\ \cline{1-4}
+    Vector Scalar splat conversion & Scalar Extension Conversion & Conversion Extension
+      & \ref{Conv.vsplat} \\ \cline{1-4}
+
+    Matrix Scalar splat conversion & Scalar Extension Conversion & Conversion Extension
+          & \ref{Conv.msplat} \\ \cline{1-4}
 
     Integral promotion & &
           & \ref{Conv.iconv} \& \ref{Conv.rank.int} \\ \cline{1-1}\cline{4-4}
@@ -300,6 +303,15 @@ below:
           & Promotion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
 
     Vector truncation conversion & Dimensionality Reduction Conversion
+          & Conversion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
+
+    Matrix truncation (without conversion) & Dimensionality Reduction
+          & Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
+
+    Matrix truncation promotion & Dimensionality Reduction Promotion
+          & Promotion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
+
+    Matrix truncation conversion & Dimensionality Reduction Conversion
           & Conversion Truncation & \ref{Conv.vtrunc} \\ \cline{1-4}
     \hline
   \end{tabular}

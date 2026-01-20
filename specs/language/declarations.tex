@@ -1,31 +1,40 @@
+
 \Ch{Declarations}{Decl}
 \Sec{Preamble}{Decl.Pre}
 \p Declarations generally specify how names are to be interpreted. Declarations have the form
 \begin{grammar}
   \define{declaration-seq}\br
-  \textit{declaration}\br
-  \textit{declaration-seq declaration}
+  declaration\br
+  declaration-seq declaration\br
 
   \define{declaration}\br
-  \textit{name-declaration}\br
-  \textit{special-declaration}\br
-  \textit{empty-declaration}
+  name-declaration\br
+  special-declaration\br
 
   \define{name-declaration}\br
-  \textit{variable-declaration}\br
-  \textit{function-declaration}\br
-  \textit{namespace-declaration}\br
-  \textit{record-declaration}\br
-  \textit{template-declaration}\br
-  \textit{type-alias-declaration}\br
-  ...
+  block-declaration\br
+  function-definition\br
+  template-declaration\br
+  namespace-definition\br
+  empty-declaration\br
+  attribute-declaration\br
+  cbuffer-declaration\br
 
   \define{special-declaration}\br
-  \textit{export-declaration-group}\br
-  \textit{cbuffer-declaration-group}\br
-  ...
+  export-declaration-group\br
+  cbuffer-member-declaration\br
 
-  \define{empty-declaration} \terminal{;}
+  \define{block-declaration}\br
+  simple-declaration\br
+  namespace-alias-definition\br
+  using-declaration\br
+  using-directive\br
+  static\_assert-declaration\br
+  alias-declaration\br
+  opaque-enum-declaration\br
+
+  \define{empty-declaration}\br
+  \terminal{;}
 
 \end{grammar}
 
@@ -220,3 +229,41 @@ initializer \(I_n\) cannot be implicitly converted to the corresponding element
 \p Functions with \textit{external linkage} can also be declared with an \texttt{export} specifier (\ref{Decl.Spec.Fct}).
 
 \p If a function is part of an \textit{export-declaration-group} then all redeclarations of the same function must also be part on a \textit{export-declaration-group} or be declared with an \texttt{export} specifier (\ref{Decl.Spec.Fct}).
+
+\Sec{Constant Buffer Declarations}{Decl.cbuffer}
+
+\begin{grammar}
+  \define{cbuffer-declaration}\br
+  \terminal{cbuffer} name \opt{resource-binding} \terminal{\{}
+    \opt{cbuffer-member-seq} \terminal {\}}\br
+
+  \define{cbuffer-member-seq}\br
+  cbuffer-member-declaration\br
+  cbuffer-member-seq cbuffer-member-declaration\br
+
+  \define{cbuffer-member-declaration}\br
+  block-declaration\br
+  function-definition\br
+  template-declaration\br
+  empty-declaration
+\end{grammar}
+
+\p A \textit{cbuffer declaration} is declared with the \texttt{cbuffer} keyword.
+The name of the cbuffer declaration does not declare a name, and cannot be
+referenced from within the translation unit, nor is it required to be unique.
+Each cbuffer declaration refers to a unique constant buffer resource
+(\ref{Resources.cnbuf}).
+
+\p The cbuffer declaration itself does not declare a declaration scope.
+Declarations within a cbuffer declaration that declare names, declare their names
+in the scope containing the cbuffer declaration. A cbuffer declaration may not
+contain a \textit{namespace-declaration} or \textit{cbuffer-declaration}.
+\footnote{These declarations were previously allowed in HLSL reference compilers
+but are not supported in this specification.}
+
+\p Variable declarations with program storage duration
+(\ref{Basic.Storage.Program}) in the cbuffer declaration are called
+\textit{shader constants}. Shader constants are implicitly \texttt{const} and
+cannot be modified in program code.\footnote{A future version of this
+specification will likely disallow variable declarations with storage durations
+other than program storage duration in cbuffer declarations.}

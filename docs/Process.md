@@ -110,12 +110,21 @@ proposal header should be updated to include a link to the Discord post.
 
 #### Merging a New Proposal
 
-The bar for a proposal to be merged should be kept low. Ideally a PR introducing
-a new proposal should be reviewed for obvious mistakes (typos, grammar, etc),
-and general alignment with project goals and direction. If the proposal aligns
-with the goals and direction, it should be merged as **Under Consideration**,
-and the authors should file issues tracking the work to flesh out and complete
-the detailed design.
+The bar for a proposal to be merged should be kept low. The proposal must have a
+sponsor prior to being merged, and must be approved by the sponsor. A PR
+introducing a new proposal should be reviewed for obvious mistakes (typos,
+grammar, etc). Reviewers may provide feedback on aspects of the design, however
+the author(s) need not address all feedback in the PR before merging. Filing an
+issue to follow-up on comments from the initial PR is an acceptable response to
+feedback and should be done by the author(s) when resolving comments on the PR.
+
+New proposals should be merged as **Under Consideration**. After assigning a
+number and merging the PR the author(s) should file issues tracking the work to
+flesh out and complete the detailed design.
+
+PRs introducing new proposals for language features will be reviewed at the
+[Design Meeting](/docs/DesignMeeting.md). PRs introducing new proposals for
+DirectX or DXIL features will be reviewed by Microsoft on a regular cadence.
 
 #### Completing the Detailed Design
 

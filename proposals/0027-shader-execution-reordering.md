@@ -194,12 +194,14 @@ This function introduces [Reorder Points](#reorder-points).
 
 #### HitObject::FromRayQuery
 
-Construct a `HitObject` representing the committed hit in a `RayQuery`. It is
-not bound to a shader table record and behaves as a NOP-HitObject if invoked.
+Construct a `HitObject` representing the committed hit in a `RayQuery`.
+If there is no committed hit in the RayQuery, the HitObject returned is the
+NOP-HitObject.
+Regardless whether it is a hit, miss or nop, the resulting `HitObject` is not
+bound to a shader table record and behaves as a NOP-HitObject if invoked.
 It can be used for reordering based on hit information.
-If no hit is committed in the RayQuery,
-the HitObject returned is a NOP-HitObject. A shader table record can be assigned
-separately, which in turn allows invoking a shader.
+A shader table record can be assigned separately, which in turn allows invoking
+a shader.
 
 An overload takes a user-defined hit kind and custom attributes associated with
 COMMITTED_PROCEDURAL_PRIMITIVE_HIT.
@@ -248,6 +250,7 @@ Parameter                           | Definition
 `Return: HitObject` | The `HitObject` that contains the result of the initialization operation.
 `uint RayFlags` | Valid combination of Ray flags as specified by `TraceRay`. Only defined ray flags are propagated by the system.
 `uint MissShaderIndex` | The miss shader index, used to calculate the address of the shader table record. The miss shader index must reference a valid shader table record. Only the least significant 16 bits of this value are used.
+`RayDesc Ray` | Ray for the miss.
 
 ---
 
