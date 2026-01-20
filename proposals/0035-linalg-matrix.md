@@ -1154,6 +1154,7 @@ If the index is out of range for the values stored in this thread the result is
 ```llvm
 declare %dx.types.AttributedMatrixRef<mangling> @dx.op.matrixSetElement.[MatTy].[Ty](
   immarg i32,                                ; opcode
+  %dx.types.AttributedMatrixRef<mangling>    ; input matrix
   i32,                                       ; thread-local index
   [Ty]                                       ; value
   )
