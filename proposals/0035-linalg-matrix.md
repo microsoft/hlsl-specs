@@ -1076,9 +1076,9 @@ documented in the [Conversions](#conversions) section.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.copyConvertMatrix.[MatTy].[MatTy](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix source
-  immarg i1,                                 ; transpose
+  immarg i1,                          ; transpose
   )
 ```
 
@@ -1124,7 +1124,7 @@ between opaque matrices and groupshared memory are defined in the
 
 ```llvm
 declare i32 @dx.op.matrixLength.[MatTy](
-  immarg i32,                               ; opcode
+  immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>   ; matrix
   )
 ```
@@ -1134,9 +1134,9 @@ thread for the provided matrix.
 
 ```llvm
 declare <2 x i32> @dx.op.matrixGetCoordinate.[MatTy](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  i32                                        ; thread-local index
+  i32                                 ; thread-local index
   )
 ```
 
@@ -1145,9 +1145,9 @@ the thread-local index corresponds to.
 
 ```llvm
 declare [Ty] @dx.op.matrixGetElement.[Ty].[MatTy](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  i32                                        ; thread-local index
+  i32                                 ; thread-local index
   )
 ```
 
@@ -1157,10 +1157,10 @@ If the index is out of range for the values stored in this thread the result is
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixSetElement.[MatTy].[Ty](
-  immarg i32,                                ; opcode
-  %dx.types.AttributedMatrixRef<mangling>    ; input matrix
-  i32,                                       ; thread-local index
-  [Ty]                                       ; value
+  immarg i32,                         ; opcode
+  %dx.types.LinAlgMatrix<mangling>    ; input matrix
+  i32,                                ; thread-local index
+  [Ty]                                ; value
   )
 ```
 
@@ -1170,12 +1170,12 @@ this thread the result is a no-op.
 
 ```llvm
 declare void @dx.op.matrixStoreToDescriptor.[MatTy](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  %dx.types.Handle,                          ; ByteAddressBuffer
-  i32,                                       ; Offset
-  i32,                                       ; Stride
-  i32,                                       ; matrix layout
+  %dx.types.Handle,                   ; ByteAddressBuffer
+  i32,                                ; Offset
+  i32,                                ; Stride
+  i32,                                ; matrix layout
   )
 ```
 
@@ -1188,12 +1188,12 @@ Validation rules will enforce that:
 
 ```llvm
 declare void @dx.op.matrixStoreToMemory.[MatTy].[Ty](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] *,                                    ; groupshared T[M * N]
-  i32,                                       ; Offset
-  i32,                                       ; Stride
-  i32,                                       ; matrix layout
+  [Ty] *,                             ; groupshared T[M * N]
+  i32,                                ; Offset
+  i32,                                ; Stride
+  i32,                                ; matrix layout
   )
 ```
 
@@ -1218,8 +1218,8 @@ layout.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixMulOp.[MatTyC].[MatTyA].[MatTyB](
-  immarg i32,            ; opcode
-  %dx.types.LinAlgMatrix<mangling>,   ; matrix A
+  immarg i32,                        ; opcode
+  %dx.types.LinAlgMatrix<mangling>,  ; matrix A
   %dx.types.LinAlgMatrix<mangling>   ; matrix B
   )
 ```
@@ -1243,7 +1243,7 @@ Must be called from wave-uniform control flow.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixAccumulate.[MatTyC].[MatTyLHS].[MatTyRHS](
-  immarg i32,            ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix LHS
   %dx.types.LinAlgMatrix<mangling>,   ; matrix RHS
   )
@@ -1264,10 +1264,10 @@ Must be called from wave-uniform control flow.
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].[MatTy].v[NUMi][TYi](
-  immarg i32,                               ; opcode
+  immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
-  <[NUMi] x [TYi]>,                         ; input vector
-  immarg i32                                ; input interpretation type (DXILComponentType)
+  <[NUMi] x [TYi]>,                  ; input vector
+  immarg i32                         ; input interpretation type (DXILComponentType)
 )
 ```
 
@@ -1280,12 +1280,12 @@ Validation will enforce that:
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix A
-  <[NUMi] x [TYi]>,                          ; input vector
-  immarg i32,                                ; input interpretation type (DXILComponentType)
-  <[NUMo] x [TYb]>,                          ; bias vector
-  immarg i32                                 ; bias interpretation type (DXILComponentType)
+  <[NUMi] x [TYi]>,                   ; input vector
+  immarg i32,                         ; input interpretation type (DXILComponentType)
+  <[NUMo] x [TYb]>,                   ; bias vector
+  immarg i32                          ; bias interpretation type (DXILComponentType)
 )
 ```
 
@@ -1299,12 +1299,12 @@ Validation will enforce that:
 
 ```llvm
 declare void @dx.op.matrixAccumulateToDescriptor.[MatTy](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  %dx.types.Handle,                          ; RWByteAddressBuffer
-  i32,                                       ; Offset
-  i32,                                       ; Stride
-  i32                                        ; matrix layout
+  %dx.types.Handle,                   ; RWByteAddressBuffer
+  i32,                                ; Offset
+  i32,                                ; Stride
+  i32                                 ; matrix layout
   )
 ```
 
@@ -1323,12 +1323,12 @@ Validation rules will enforce that:
 
 ```llvm
 declare void @dx.op.matrixAccumulateToMemory.[MatTy].p[Ty](
-  immarg i32,                                ; opcode
+  immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] *,                                    ; groupshared T[M * N]
-  i32,                                       ; Offset
-  i32,                                       ; Stride
-  i32                                        ; matrix layout
+  [Ty] *,                             ; groupshared T[M * N]
+  i32,                                ; Offset
+  i32,                                ; Stride
+  i32                                 ; matrix layout
   )
 ```
 
