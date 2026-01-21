@@ -1050,12 +1050,16 @@ generated:
 ```
 !dx.targetTypes = !{!1, !2, !3}
 ; Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Wave>
-!1 = !{%dx.types.AttributedMatrixRefC10M16N16U0S1* undef, i32 10, i32 16, i32 0, i32 1 }
+!1 = !{%dx.types.AttributedMatrixRefC10M16N16U0S1 undef, i32 10, i32 16, i32 0, i32 1 }
 ; Matrix<ComponentType::F16, 16, 16, MatrixUse::B, MatrixScope::Wave>
-!2 = !{%dx.types.AttributedMatrixRefC10M16N16U1S1* undef, i32 10, i32 16, i32 16, i32 1, i32 1 }
+!2 = !{%dx.types.AttributedMatrixRefC10M16N16U1S1 undef, i32 10, i32 16, i32 16, i32 1, i32 1 }
 ; Matrix<ComponentType::F32, 16, 16, MatrixUse::Accumulator, MatrixScope::Wave>
-!3 = !{%dx.types.AttributedMatrixRefC11M16N16U2S1* undef, i32 11, i32 16, i32 16, i32 2, i32 1 }
+!3 = !{%dx.types.AttributedMatrixRefC11M16N16U2S1 undef, i32 11, i32 16, i32 16, i32 2, i32 1 }
 ```
+
+> Note: to ease compatability with modern LLVM we want the metadata to avoid
+> encoding pointers since modern LLVM will convert pointers to opaque pointers
+> losing the type information.
 
 ### DXIL Operations
 
