@@ -1,9 +1,14 @@
-# Wave Size Range
+---
+title: 0013 - Wave Size Range
+params:
+  authors:
+  - pow2clk: Greg Roth
+  sponsors:
+  - pow2clk: Greg Roth
+  status: Completed
+---
 
-* Proposal: [0013](0013-wave-size-range.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: Completed
+ 
 * Version: SM 6.8
 
 ## Introduction

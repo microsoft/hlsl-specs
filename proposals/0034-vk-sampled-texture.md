@@ -1,11 +1,16 @@
-<!-- {% raw %} -->
+---
+title: 0034 - Vulkan Sampled Textures
+params:
+  authors:
+  - cassiebeckley: Cassandra Beckley
+  sponsors:
+  - s-perron: Steven Perron
+  status: Approved
+---
 
-# Vulkan Sampled Textures
 
-* Proposal: [0034](0034-vk-sampled-texture.md)
-* Author(s): [Cassandra Beckley](https://github.com/cassiebeckley)
-* Sponsor: [Steven Perron](https://github.com/s-perron) and TBD
-* Status: **Under Review**
+
+ 
 * Required Version: HLSL 2021
 <!--
 * PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
@@ -187,4 +192,4 @@ variable of the class holding the low-level inline SPIR-V representation. We
 decided that such a mechanism would be too general, as new resource types in
 HLSL are rare and users should not have the ability to create them themselves.
 
-<!-- {% endraw %} -->
+

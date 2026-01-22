@@ -1,16 +1,16 @@
-<!-- {% raw %} -->
+---
+title: 0024 - Opacity Micromaps
+params:
+  authors:
+  - tex3d: Tex Riddell
+  sponsors:
+  - tex3d: Tex Riddell
+  status: Completed
+---
 
-# Opacity Micromaps
 
-* Proposal: [0024](0024-opacity-micromaps.md)
-* Author(s): [Tex Riddell](https://github.com/tex3d)
-* Sponsor: [Tex Riddell](https://github.com/tex3d)
-* Status: **Accepted**
+ 
 * Planned Version: SM 6.9
-
-> NOTE: some links in this document are to internal documents that are not
-> currently publically available. This file will be updated once they are
-> published.
 
 ## Introduction
 
@@ -375,12 +375,12 @@ reachable in the current compilation.
 
 <!-- External References -->
 
-[dxr-omm]: <https://dev.azure.com/cga-exchange/_git/docs?path=/d3d/Raytracing.md&_a=preview&anchor=opacity-micromaps> "Opacity Micromaps (internal only)"
+[dxr-omm]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#opacity-micromaps> "Opacity Micromaps"
 [pipeline-config]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_config1> "RaytracingPipelineConfig1"
 [trace-ray]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#traceray> "TraceRay"
 [rq-trace]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery-tracerayinline> "RayQuery::TraceRayInline"
 [ray-query]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayquery> "RayQuery"
-[dxr-flags]: <https://dev.azure.com/cga-exchange/_git/docs?path=/d3d/Raytracing.md&_a=preview&anchor=d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS  (internal only)"
+[dxr-flags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#d3d12_raytracing_pipeline_flags> "D3D12_RAYTRACING_PIPELINE_FLAGS"
 [rayflags]: <https://github.com/microsoft/DirectX-Specs/blob/master/d3d/Raytracing.md#rayflags> "RayFlags()"
 
-<!-- {% endraw %} -->
+

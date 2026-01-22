@@ -1,11 +1,17 @@
-<!-- {% raw %} -->
+---
+title: 0018 - Work Graphs
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  - pow2clk: Greg Roth
+  sponsors:
+  - pow2clk: Greg Roth
+  - tex3d: Tex Riddell
+  status: Completed
+---
 
-# Work Graphs
 
-* Proposal: [0018](0018-work-graphs.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz), [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk), [Tex Riddell](https://github.com/tex3d)
-* Status: Completed
+ 
 * Planned Version: SM 6.8
 
 ## Introduction
@@ -585,4 +591,3 @@ teams and IHV partners.
 
 Special thanks to Claire Andrews, Amar Patel, and Tex Riddell
 
-<!-- {% endraw %} -->

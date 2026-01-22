@@ -1,9 +1,14 @@
-# Long Vector Execution Test Plan
+---
+title: "INF-0006 - Long Vector Execution Test Plan"
+params:
+  authors:
+    - alsepkow: Alex Sepkowski
+  sponsors:
+    - alsepkow: Alex Sepkowski
+  status: Accepted
+---
 
-* Proposal: [0006](INF-0006-Long-Vector-ExecutionTest-Plan.md)
-* Author(s): [Alex Sepkowski](https://github.com/alsepkow)
-* Sponsor: [Alex Sepkowski](https://github.com/alsepkow)
-* Status: **Accepted**
+ 
 * Impacted Projects: DXC
 
 ## Introduction
@@ -196,9 +201,10 @@ considered completed.
    waiting for an OS/HLK release.
 
 ## HLSL-Operators
+
 ✅ - Means there was an explicit test case implemented for the intrinsic.
 ☑️ - Means the intrinsic gets coverage via other intrinsics. For example 'exp2'
-just uses the DXIL Opcode for Exp. 
+just uses the DXIL Opcode for Exp.
 
 ### HLSL Operators
 

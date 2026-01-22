@@ -1,11 +1,13 @@
-<!-- {% raw %} -->
+---
+title: 0023 - Adopt C++11 Base
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Consideration
+---
 
-# Adopt C++11 Base
 
-* Proposal: [0023](0023-cxx11-base.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: TBD
-* Status: **Under Review**
+ 
 * Planned Version: 202y
 
 ## Introduction
@@ -53,4 +55,4 @@ configuring language features and supporting language modes. To restore those
 parts of clang sufficiently to support a C++11 base in DXC would be non-trivial.
 For that reason this is proposed as a Clang-only HLSL 202y feature.
 
-<!-- {% endraw %} -->
+

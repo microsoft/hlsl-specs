@@ -1,12 +1,17 @@
-<!-- {% raw %} -->
+---
+title: 0031 - HLSL Vector Matrix Operations
+params:
+  authors:
+  - damyanp: Damyan Pepper
+  - llvm-beanz: Chris Bieneman
+  - anupamachandra: Anupama Chandrasekhar
+  sponsors:
+  - damyanp: Damyan Pepper
+  status: Rejected
+---
 
-# HLSL Vector Matrix Operations
 
-* Proposal: [0031](0031-hlsl-vector-matrix-operations.md)
-* Author(s): [Damyan Pepper][damyanp], [Chris Bieneman][llvm-beanz],
-  [Anupama Chandrasekhar][anupamachandra]
-* Sponsor: [Damyan Pepper][damyanp]
-* Status: **Under Review**
+ 
 * Planned Version: SM 6.9
 
 [damyanp]: https://github.com/damyanp
@@ -731,4 +736,4 @@ TBD
 
 We would like to thank Jeff Bolz for his contribution to this spec.
 
-<!-- {% endraw %} -->
+

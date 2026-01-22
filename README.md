@@ -1,6 +1,8 @@
-<img src="https://microsoft.github.io/hlsl-specs/resources/HLSL.png" width="128">
+<img src="resources/HLSL.png" width="128">
 
 # HLSL Specifications
+
+[![Documentation Build Status](https://github.com/microsoft/hlsl-specs/actions/workflows/hugo.yml/badge.svg)](https://github.com/microsoft/hlsl-specs/actions/workflows/hugo.yml)
 
 This repository contains documentation for HLSL feature proposals and specifications. Please see the documentation for
 the HLSL Feature [Proposal Process](docs/Process.md) for more information on proposals.

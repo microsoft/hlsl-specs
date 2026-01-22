@@ -1,13 +1,15 @@
-<!-- {% raw %} -->
-
-# DXIL Vectors
-
+---
+title: 0030 - DXIL Vectors
+params:
+  authors:
+  - pow2clk: Greg Roth
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Completed
 ---
 
-* Proposal: [0030](0030-dxil-vectors.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
+
+ 
 * Planned Version: SM 6.9
 
 ## Introduction
@@ -134,47 +136,66 @@ This means that the same language-level vector (of any length) could be used
 
 ### New DXIL Intrinsics
 
+#### `VectorReduce` OpCodeClass
+
+A new generic OpCodeClass `VectorReduce` is introduced for usage in new operations
+below. `VectorReduce` combines a vector of elements into a single element with
+the same type as the vector element type. The elements are combined using an
+operation specified by the opcode parameter.
+
 #### Boolean Vector Reduction Intrinsics
 
 **VectorReduceAnd**
 
 Bitwise AND reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceAnd = 309
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](309, <[NUM] x [TYPE]> operand)
 ```
 
 **VectorReduceOr**
 
 Bitwise OR reduction of the vector returning a scalar. Return type matches vector element type.
 
+The scalar type may be `i1`, `i8`, `i16,` `i32`, or `i64`.
+
 ```C++
 DXIL::OpCode::VectorReduceOr = 310
 ```
 
 ```asm
- [TYPE] @dx.op.unary.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
+ [TYPE] @dx.op.vectorReduce.v[NUM][TY](310, <[NUM] x [TYPE]> operand)
 ```
 
 #### Vectorized Dot
 
-**VectorDotProduct**
+A new OpCodeClass `dot` is introduced. The return type matches the vector element
+return type. The 2nd and 3rd parameters are two vectors of the same dimention and
+element type. The 1st parameter is an opcode that specifies what type of dot
+operation to calculate. The only supported opcode as of this proposal is floating
+point dot.
+
+**FDot**
 
 Current `dot` intrinsics are scalarized and limited to 2/3/4 vectors. With support for
-native vectors in DXIL `dot` can now be treated as a normal binary operation.
+native vectors in DXIL `dot` can now be treated similarly to a binary operation.
 
 Returns `op1[0] * op2[0] + op1[1] * op2[1] + ... + op1[NUM - 1] * op2[NUM - 1]`
 
+The scalar type for `FDot` may be `half` or `float`.
+
 ```C++
-DXIL::OpCode::VectorDotProduct = 311
+DXIL::OpCode::FDot = 311
 ```
 
 ```asm
- [TYPE] @dx.op.binary.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
+ [TYPE] @dx.op.dot.v[NUM][TY](311, <[NUM] x [TYPE]> operand1, <[NUM] x [TYPE]> operand2)
 ```
 
 ### Validation Changes
@@ -231,68 +252,61 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 ## Appendix 1: New Elementwise Overloads
 
-| Opcode |  Name                   | Class                   |
-| ------ | --------------          | --------                |
-| 6      | FAbs                    | Unary                   |
-| 7      | Saturate                | Unary                   |
-| 8      | IsNaN                   | IsSpecialFloat          |
-| 9      | IsInf                   | IsSpecialFloat          |
-| 10     | IsFinite                | IsSpecialFloat          |
-| 11     | IsNormal                | IsSpecialFloat          |
-| 12     | Cos                     | Unary                   |
-| 13     | Sin                     | Unary                   |
-| 14     | Tan                     | Unary                   |
-| 15     | Acos                    | Unary                   |
-| 16     | Asin                    | Unary                   |
-| 17     | Atan                    | Unary                   |
-| 18     | Hcos                    | Unary                   |
-| 19     | Hsin                    | Unary                   |
-| 20     | Htan                    | Unary                   |
-| 21     | Exp                     | Unary                   |
-| 22     | Frc                     | Unary                   |
-| 23     | Log                     | Unary                   |
-| 24     | Sqrt                    | Unary                   |
-| 25     | Rsqrt                   | Unary                   |
-| 26     | Round_ne                | Unary                   |
-| 27     | Round_ni                | Unary                   |
-| 28     | Round_pi                | Unary                   |
-| 29     | Round_z                 | Unary                   |
-| 30     | Bfrev                   | Unary                   |
-| 31     | Countbits               | UnaryBits               |
-| 32     | FirstBitLo              | UnaryBits               |
-| 33     | FirstBitHi              | UnaryBits               |
-| 34     | FirstBitSHi             | UnaryBits               |
-| 35     | FMax                    | Binary                  |
-| 36     | FMin                    | Binary                  |
-| 37     | IMax                    | Binary                  |
-| 38     | IMin                    | Binary                  |
-| 39     | UMax                    | Binary                  |
-| 40     | UMin                    | Binary                  |
-| 46     | FMad                    | Tertiary                |
-| 47     | Fma                     | Tertiary                |
-| 48     | IMad                    | Tertiary                |
-| 49     | UMad                    | Tertiary                |
-| 83     | DerivCoarseX            | Unary                   |
-| 84     | DerivCoarseY            | Unary                   |
-| 85     | DerivFineX              | Unary                   |
-| 86     | DerivFineY              | Unary                   |
-| 113    | WaveAnyTrue             | WaveAnyTrue             |
-| 114    | WaveAllTrue             | WaveAllTrue             |
-| 115    | WaveActiveAllEqual      | WaveActiveAllEqual      |
-| 116    | WaveActiveBallot        | WaveActiveBallot        |
-| 117    | WaveReadLaneAt          | WaveReadLaneAt          |
-| 118    | WaveReadLaneFirst       | WaveReadLaneFirst       |
-| 119    | WaveActiveOp            | WaveActiveOp            |
-| 120    | WaveActiveBit           | WaveActiveBit           |
-| 121    | WavePrefixOp            | WavePrefixOp            |
-| 122    | QuadReadLaneAt          | QuadReadLaneAt          |
-| 123    | QuadOp                  | QuadOp                  |
-| 135    | WaveAllBitCount         | WaveAllBitCount         |
-| 136    | WavePrefixBitCount      | WavePrefixBitCount      |
-| 165    | WaveMatch               | WaveMatch               |
-| 166    | WaveMultiPrefixOp       | WaveMultiPrefixOp       |
-| 167    | WaveMultiPrefixBitCount | WaveMultiPrefixBitCount |
-| 222    | QuadVote                | QuadVote                |
+| Opcode |  Name              | Class              |
+| ------ | --------------     | --------           |
+| 6      | FAbs               | Unary              |
+| 7      | Saturate           | Unary              |
+| 8      | IsNaN              | IsSpecialFloat     |
+| 9      | IsInf              | IsSpecialFloat     |
+| 10     | IsFinite           | IsSpecialFloat     |
+| 11     | IsNormal           | IsSpecialFloat     |
+| 12     | Cos                | Unary              |
+| 13     | Sin                | Unary              |
+| 14     | Tan                | Unary              |
+| 15     | Acos               | Unary              |
+| 16     | Asin               | Unary              |
+| 17     | Atan               | Unary              |
+| 18     | Hcos               | Unary              |
+| 19     | Hsin               | Unary              |
+| 20     | Htan               | Unary              |
+| 21     | Exp                | Unary              |
+| 22     | Frc                | Unary              |
+| 23     | Log                | Unary              |
+| 24     | Sqrt               | Unary              |
+| 25     | Rsqrt              | Unary              |
+| 26     | Round_ne           | Unary              |
+| 27     | Round_ni           | Unary              |
+| 28     | Round_pi           | Unary              |
+| 29     | Round_z            | Unary              |
+| 30     | Bfrev              | Unary              |
+| 31     | Countbits          | UnaryBits          |
+| 32     | FirstBitLo         | UnaryBits          |
+| 33     | FirstBitHi         | UnaryBits          |
+| 34     | FirstBitSHi        | UnaryBits          |
+| 35     | FMax               | Binary             |
+| 36     | FMin               | Binary             |
+| 37     | IMax               | Binary             |
+| 38     | IMin               | Binary             |
+| 39     | UMax               | Binary             |
+| 40     | UMin               | Binary             |
+| 46     | FMad               | Tertiary           |
+| 47     | Fma                | Tertiary           |
+| 48     | IMad               | Tertiary           |
+| 49     | UMad               | Tertiary           |
+| 83     | DerivCoarseX       | Unary              |
+| 84     | DerivCoarseY       | Unary              |
+| 85     | DerivFineX         | Unary              |
+| 86     | DerivFineY         | Unary              |
+| 115    | WaveActiveAllEqual | WaveActiveAllEqual |
+| 117    | WaveReadLaneAt     | WaveReadLaneAt     |
+| 118    | WaveReadLaneFirst  | WaveReadLaneFirst  |
+| 119    | WaveActiveOp       | WaveActiveOp       |
+| 120    | WaveActiveBit      | WaveActiveBit      |
+| 121    | WavePrefixOp       | WavePrefixOp       |
+| 122    | QuadReadLaneAt     | QuadReadLaneAt     |
+| 123    | QuadOp             | QuadOp             |
+| 165    | WaveMatch          | WaveMatch          |
+| 166    | WaveMultiPrefixOp  | WaveMultiPrefixOp  |
 
 
 
@@ -300,4 +314,3 @@ In practice, this testing will largely represent verifying correct intrinsic out
 
 * [Anupama Chandrasekhar](https://github.com/anupamachandra) and [Tex Riddell](https://github.com/tex3d) for foundational contributions to the design.
 
-<!-- {% endraw %} -->

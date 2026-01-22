@@ -1,12 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0038 - 16 bit isSpecialFloat DXIL Op
+params:
+  authors:
+  - spall: Sarah Spall
+  sponsors:
+  - spall: Sarah Spall
+  status: Completed
+---
 
-# 16 bit isSpecialFloat DXIL Op
 
-* Proposal: [0038](0038-16bit-isspecialfloat.md)
-* Author(s): [Sarah Spall](https://github.com/spall)
-* Sponsor: [Sarah Spall](https://github.com/spall)
-* Status: **Under Consideration**
-
+ 
 * Planned Version: Shader Model 6.9
 * PRs:
 * Issues: [#521](https://github.com/microsoft/hlsl-specs/issues/521)
@@ -135,4 +138,4 @@ An open question is if we should always
 generate the 16 bit version of the relevant SPIRV ops for the 16 bit overloads,
 or if their generation should be gatekept behind some not yet determined condition.
 
-<!-- {% endraw %} -->
+
