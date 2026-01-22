@@ -1050,7 +1050,7 @@ generated:
 ```
 !dx.targetTypes = !{!1, !2, !3}
 ; Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Wave>
-!1 = !{%dx.types.LinAlgMatrixC10M16N16U0S1 undef, i32 10, i32 16, i32 16, 32 0, i32 1 }
+!1 = !{%dx.types.LinAlgMatrixC10M16N16U0S1 undef, i32 10, i32 16, i32 16, i32 0, i32 1 }
 ; Matrix<ComponentType::F16, 16, 16, MatrixUse::B, MatrixScope::Wave>
 !2 = !{%dx.types.LinAlgMatrixC10M16N16U1S1 undef, i32 10, i32 16, i32 16, i32 1, i32 1 }
 ; Matrix<ComponentType::F32, 16, 16, MatrixUse::Accumulator, MatrixScope::Wave>
