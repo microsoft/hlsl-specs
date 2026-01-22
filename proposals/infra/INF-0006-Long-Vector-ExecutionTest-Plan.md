@@ -211,15 +211,16 @@ Operator table from [Microsoft HLSL Operators](https://learn.microsoft.com/en-us
 | ✅ | Addition | + | |
 | ✅ | Subtraction | - | |
 | ✅ | Multiplication | * | |
-|   | Additive and Multiplicative Operators | +, -, *, /, % | |
-|   | Array Operator | [i] | llvm:ExtractElementInst OR llvm:InsertElemtInst |
-|   | Assignment Operators | =, +=, -=, *=, /=, %= | |
-|   | Bitwise Operators | ~, <<, >>, &, \|, ^, <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors |
-|   | Boolean Math Operators | & &, \|\| , ?: | |
-|   | Cast Operator | (type) | No direct operator, difference in GetElementPointer  or load type |
-|   | Comparison Operators | <, >, ==, !=, <=, >= | |
-|   | Prefix or Postfix Operators | ++, -- | |
-|   | Unary Operators | !, -, + | |
+| ✅ | Additive and Multiplicative Operators | +, -, *, /, % | |
+| ✅ | Array Operator | [i] | llvm:ExtractElementInst OR llvm:InsertElemtInst |
+| ☑️ | Assignment Operators | =, +=, -=, *=, /=, %= | |
+| ✅ | Bitwise Operators | ~, <<, >>, &, \|, ^, | Only valid on int and uint vectors |
+| ☑️ | Bitwise Assignment Operators | <<=, >>=, &=, \|=, ^= | Only valid on int and uint vectors |
+| ✅ | Boolean Math Operators | & &, \|\| , ?: | |
+| ✅ | Cast Operator | (type) | No direct operator, difference in GetElementPointer  or load type |
+| ✅ | Comparison Operators | <, >, ==, !=, <=, >= | |
+| ☑️ | Prefix or Postfix Operators | ++, -- | |
+| ☑️ | Unary Operators | !, -, + | |
 
 ## Mappings of HLSL Intrinsics to DXIL OpCodes or LLVM Instructions
 
