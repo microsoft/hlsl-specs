@@ -339,8 +339,8 @@ void OuterProdAccum() {
 ### HLSL API Concepts
 
 The new HLSL API introduces a new `linalg::Matrix` type which represents an
-opaque matrix object, and contains an intangible handle that refers to the
-allocated matrix.
+opaque matrix object, and contains an intangible value object that refers to the
+matrix.
 
 The `linalg::Matrix` template type is parameterized based on the matrix
 component data type, dimensions, use, and scope. These parameters restrict where
@@ -443,7 +443,10 @@ In HLSL, matrix objects are intangible objects so they do not have defined size
 or memory layout. When in use, implementations are expected to distribute the
 storage of matrices across the thread-local storage for all threads in a SIMD
 unit. An implementation may also utilize caches or other memory regions as
-appropriate. At the DXIL level a matrix is represented as a handle object.
+appropriate. At the DXIL level a matrix is represented as a value object.
+Because LLVM 3.7 doesn't allow value objects of opaque types, the matrix object
+stores a pointer in the IR, but implementations will replace this with an
+implementation-defined object.
 
 An A matrix is a collection of per-thread vectors representing matrix rows,
 while a B matrix is a collection of per-thread vectors representing matrix
