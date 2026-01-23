@@ -1039,7 +1039,7 @@ each type name will capture the type parameterization with the tokens `C`,
   %dx.types.LinAlgMatrixC11M16N16U2S1    = type { i8 * }
 ```
 
-DXIL validation will enforce that an `LinAlgMatrix` of any type may not
+DXIL validation will enforce that a `LinAlgMatrix` of any type may not
 be bitcast to any other type.
 
 #### Type Metadata
@@ -1112,7 +1112,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixLoadFromMemory.[MatTy].p[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixLoadFromMemory.[MatTy].[Ty](
   immarg i32,            ; opcode
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
@@ -1161,7 +1161,7 @@ If the index is out of range for the values stored in this thread the result is
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixSetElement.[MatTy].[Ty](
   immarg i32,                         ; opcode
-  %dx.types.LinAlgMatrix<mangling>    ; input matrix
+  %dx.types.LinAlgMatrix<mangling>,   ; input matrix
   i32,                                ; thread-local index
   [Ty]                                ; value
   )
