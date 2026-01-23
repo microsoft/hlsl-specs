@@ -1361,14 +1361,6 @@ Validation will ensure that:
   representable in DXIL.
 * The element type of vector A and vector B must be the same.
 
-#### DXIL Validation
-
-Each use of a `MatrixRef` argument to a DXIL operation must be tracable to a
-single `LinAlgMatrix` object returned from a unique `createMatrix`
-operation. This validation rule is similar to the rules enforced for local
-resource objects, and allows trivial identification of the lifetime of any
-matrix (from `createMatrix` to its last use).
-
 #### Bounds Checking Behavior
 
 The `@dx.op.matrixLoadFromDescriptor` operation loads data from a descriptor.
