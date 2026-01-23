@@ -276,11 +276,14 @@ ill-formed.
 
 With the introduction of C++ attribute syntax the HLSL annotation syntax will be
 removed from the language. In Clang, C++ attribute syntax can be supported in
-both HLSL 202x and 202y language modes with deprecation warnings reported for the old HLSL annotation syntax, including fix-it and
-rewriting tool support in Clang. This will allow easier migration of code from
-HLSL 202x to 202y. This feature will not be supported in DXC.
+both HLSL 202x and 202y language modes with deprecation warnings reported for
+the old HLSL annotation syntax, including fix-it and rewriting tool support in
+Clang. This will allow easier migration of code from HLSL 202x to 202y. This
+feature will not be supported in DXC.
 
-The following new attributes are introduced to replace HLSL annotations.
+The following new attributes are introduced to replace HLSL annotations. These
+attribute formations are not final and may change as the proposal moves through
+implementation.
 
 #### hlsl::user_value(string[, int=0])
 
