@@ -121,17 +121,6 @@ prvalue of arithmetic or unscoped enumeration type can be converted to a prvalue
 of boolean type. A zero value is converted to \texttt{false}; all other values
 are converted to \texttt{true}.
 
-\Sec{Bit-field conversion}{Conv.bitfield}
-
-\p A glvalue of a named bit-field with underlying type \texttt{T} can be converted
-to a cxvalue of type \texttt{T$^\prime$} if there exists an implicit conversion
-from \texttt{T} to \texttt{T$^\prime$}.
-
-\p A glvalue or a prvalue of a type \texttt{T} can be converted to a glvalue
-of a named bit-field of type \texttt{T$^\prime$} if there exists an implicit
-conversion from \texttt{T} to \texttt{T$^\prime$}.  After the conversion from
-\texttt{T} to \texttt{T$^\prime$} the value is truncated to the size of the bit-field.
-
 \Sec{Elementwise conversion}{Conv.flat}
 
 \p For a given aggregate \texttt{A}, there is a flattened order of subojects, \texttt{A$^\prime$},
