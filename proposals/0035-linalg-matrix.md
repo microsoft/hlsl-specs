@@ -1066,8 +1066,12 @@ generated:
 
 ### DXIL Operations
 
+A new overload shape `[MatTy]` is introduced in the signatures below. This
+shall be the `<mangling>` part of `%dx.types.LinAlgMatrix<mangling>` preceded
+by the letter `m`.
+
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.fillMatrix.[MatTy].[TY](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgFillMatrix.[MatTy].[TY](
   immarg i32,            ; opcode
   [Ty]                   ; fill value
   )
@@ -1078,20 +1082,20 @@ matrix component's type, a type conversion is applied following the rules
 documented in the [Conversions](#conversions) section.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.copyConvertMatrix.[MatTy1].[MatTy2](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix source
   immarg i1,                          ; transpose
   )
 ```
 
-Converts the element and use type of the source matrix to the destination
-matrix, and optionally transpose the matrix. The source matrix remains valid and
-unmodified after this operation is applied. Validation shall enforce that both
-matrices have the same scope and dimensions.
+Returns a new matrix which is a copy of the source matrix where the element and
+use type of the returned matrix have been converted to `MatTy1` from `MatTy2`.
+The source matrix remains valid and unmodified after this operation is applied.
+Validation shall enforce that both matrices have the same scope and dimensions.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixLoadFromDescriptor.[MatTy](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromDescriptor.[MatTy](
   immarg i32,            ; opcode
   %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
@@ -1112,7 +1116,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixLoadFromMemory.[MatTy].[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
   immarg i32,            ; opcode
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
@@ -1126,7 +1130,7 @@ between opaque matrices and groupshared memory are defined in the
 [Conversions](#conversions) section below.
 
 ```llvm
-declare i32 @dx.op.matrixLength.[MatTy](
+declare i32 @dx.op.linAlgMatrixLength.[MatTy](
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>   ; matrix
   )
@@ -1136,7 +1140,7 @@ Returns the number of elements stored in thread-local storage on the active
 thread for the provided matrix.
 
 ```llvm
-declare <2 x i32> @dx.op.matrixGetCoordinate.[MatTy](
+declare <2 x i32> @dx.op.linAlgMatrixGetCoordinate.[MatTy](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   i32                                 ; thread-local index
@@ -1147,7 +1151,7 @@ Returns a two element vector containing the column and row of the matrix that
 the thread-local index corresponds to.
 
 ```llvm
-declare [Ty] @dx.op.matrixGetElement.[Ty].[MatTy](
+declare [Ty] @dx.op.linAlgMatrixGetElement.[Ty].[MatTy](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   i32                                 ; thread-local index
@@ -1159,7 +1163,7 @@ If the index is out of range for the values stored in this thread the result is
 0.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixSetElement.[MatTy].[MatTy].[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixSetElement.[MatTy].[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; input matrix
   i32,                                ; thread-local index
@@ -1172,7 +1176,7 @@ to the value provided. If the index is out of range for the values stored in
 this thread the result is a no-op.
 
 ```llvm
-declare void @dx.op.matrixStoreToDescriptor.[MatTy](
+declare void @dx.op.linAlgMatrixStoreToDescriptor.[MatTy](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   %dx.types.Handle,                   ; ByteAddressBuffer
@@ -1190,7 +1194,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixStoreToMemory.[MatTy].[Ty](
+declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   [Ty] *,                             ; groupshared T[M * N]
@@ -1208,7 +1212,7 @@ The validator will ensure that the group shared target memory is large enough
 for the write.
 
 ```llvm
-declare i32 @dx.op.matrixQueryAccumulatorLayout(
+declare i32 @dx.op.linAlgMatrixQueryAccumulatorLayout(
   immarg i32,            ; opcode
   )
 ```
@@ -1220,7 +1224,7 @@ layout while a return value of `1` will denote that accumulator matrices are `B`
 layout.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixMulOp.[MatTyC].[MatTyA].[MatTyB](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMulOp.[MatTyC].[MatTyA].[MatTyB](
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
   %dx.types.LinAlgMatrix<mangling>   ; matrix B
@@ -1245,7 +1249,7 @@ Must be called from wave-uniform control flow.
 
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixAccumulate.[MatTyC].[MatTyLHS].[MatTyRHS](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixAccumulate.[MatTyC].[MatTyLHS].[MatTyRHS](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix LHS
   %dx.types.LinAlgMatrix<mangling>,   ; matrix RHS
@@ -1266,7 +1270,7 @@ Validation rules will enforce that:
 Must be called from wave-uniform control flow.
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmul.v[NUMo][TYo].[MatTy].v[NUMi][TYi](
+declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMul.v[NUMo][TYo].[MatTy].v[NUMi][TYi](
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
   <[NUMi] x [TYi]>,                  ; input vector
@@ -1282,7 +1286,7 @@ Validation will enforce that:
 * The matrix A is an `A` matrix of `Thread` scope
 
 ``` llvm
-declare <[NUMo] x [TYo]> @dx.op.matvecmuladd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
+declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMulAdd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix A
   <[NUMi] x [TYi]>,                   ; input vector
@@ -1301,7 +1305,7 @@ Validation will enforce that:
 * The matrix A is an `A` matrix of `Thread` scope
 
 ```llvm
-declare void @dx.op.matrixAccumulateToDescriptor.[MatTy](
+declare void @dx.op.linAlgMatrixAccumulateToDescriptor.[MatTy](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   %dx.types.Handle,                   ; RWByteAddressBuffer
@@ -1325,7 +1329,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.matrixAccumulateToMemory.[MatTy].p[Ty](
+declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].p[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   [Ty] *,                             ; groupshared T[M * N]
@@ -1344,7 +1348,7 @@ The validator will ensure that the group shared target memory is large enough
 for the write.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixOuterProduct.[MatTy].v[M][TY].v[N][TY](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixOuterProduct.[MatTy].v[M][TY].v[N][TY](
   immarg i32,            ; opcode
   <[M] x [Ty]>,          ; vector A
   <[N] x [Ty]>           ; vector B
@@ -1366,20 +1370,20 @@ Validation will ensure that:
 
 #### Bounds Checking Behavior
 
-The `@dx.op.matrixLoadFromDescriptor` operation loads data from a descriptor.
-For load operations a default element value of zero casted to the element type
-is substituted for out of bounds reads. An implementation may either perform
-bounds checking on the full bounds of the load initializing the full matrix to
-the default element value if any element is out of bounds, or it may perform
-per-element bounds checking initializing only the out of bounds elements to the
-default value.
+The `@dx.op.linAlgMatrixLoadFromDescriptor` operation loads data from a
+descriptor. For load operations a default element value of zero casted to the
+element type is substituted for out of bounds reads. An implementation may
+either perform bounds checking on the full bounds of the load initializing the
+full matrix to the default element value if any element is out of bounds, or it
+may perform per-element bounds checking initializing only the out of bounds
+elements to the default value.
 
-The `@dx.op.matrixStoreToDescriptor` and `@dx.op.matrixAccumulateToDescriptor`
-operations write data to a descriptor. Writes to out of bounds memory are a
-no-op. An implementation may either perform bounds checking on the full bounds
-of the store converting the whole store to a no-op if any elelemt is out of
-bounds, or it may perform per-element bounds checking only converting the out of
-bounds stores to no-ops.
+The `@dx.op.linAlgMatrixStoreToDescriptor` and
+`@dx.op.linAlgMatrixAccumulateToDescriptor` operations write data to a
+descriptor. Writes to out of bounds memory are a no-op. An implementation may
+either perform bounds checking on the full bounds of the store converting the
+whole store to a no-op if any elelemt is out of bounds, or it may perform
+per-element bounds checking only converting the out of bounds stores to no-ops.
 
 > Note: bounds checking is not required for reads and writes to root descriptors
 > as D3D does not attach dimensions to root descriptors.
@@ -1406,7 +1410,7 @@ struct MatrixUse {
 ```
 
 This object will encode each matrix shape and element type as used by the DXIL
-operations in the `matrixMulOp` and `matvecmuladd` opcode classes.
+operations in the `linAlgMatrixMulOp` and `linAlgMatVecMulAdd` opcode classes.
 
 The Scope field will encode one of the values defined in the [`DXILMatrixScope`
 enumeration](#dxil-enumerations).
