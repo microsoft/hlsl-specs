@@ -1159,7 +1159,7 @@ If the index is out of range for the values stored in this thread the result is
 0.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixSetElement.[MatTy].[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.matrixSetElement.[MatTy].[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; input matrix
   i32,                                ; thread-local index
