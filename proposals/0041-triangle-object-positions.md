@@ -139,6 +139,17 @@ triangle for a hit.  The hit is the current hit inside an
 the candidate or committed hit state of a RayQuery object, or the
 committed hit state of a HitObject.
 
+Returned position values exactly match what the user provided as input 
+during acceleration structure build, albeit as float32 regardless of what 
+the input vertex format was (potentially lower precision).
+
+The exception is if the user includes a nonidentity transform along with 
+input positions at build, which the driver immediately applies to those 
+positions before storing them in the acceleration structure. In this case 
+the position values in the acceleration structure, and thus what 
+`TriangleObjectPositions` returns, may not exactly match the values the user 
+would get if they tried transforming their input positions manually.
+
 May only be used if the hit BLAS was built with
 `D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_DATA_ACCESS`
 (See [build flags defined here][dxr-build-flags]),
