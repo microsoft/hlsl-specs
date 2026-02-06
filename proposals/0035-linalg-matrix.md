@@ -1224,16 +1224,15 @@ layout while a return value of `1` will denote that accumulator matrices are `B`
 layout.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMulOp.[MatTyC].[MatTyA].[MatTyB](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMultiply.[MatTyC].[MatTyA].[MatTyB](
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
   %dx.types.LinAlgMatrix<mangling>   ; matrix B
   )
 ```
 
-Two opcodes are available for this operation class:
-* Matrix Matrix Multiply: `C = A * B`
-* Matrix Matrix Multiply with Accumulation: `C += A * B`
+This operation multiplies an A matrix and B matrix into new accumulator matrix
+following the form `C = A * B`.
 
 Validation rules will enforce that:
 * argument A is an `A` matrix
@@ -1265,6 +1264,32 @@ Validation rules will enforce that:
 * Type of LHS is the same as the return type
 * Both matrices have the same scope (Wave or ThreadGroup)
 * Both matrices have the same dimensions
+* The element types are compatible
+
+Must be called from wave-uniform control flow.
+
+```llvm
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMultiplyAccumulate.[MatTyR].[MatTyA].[MatTyB].[MatTyC](
+  immarg i32,                        ; opcode
+  %dx.types.LinAlgMatrix<mangling>,  ; matrix A
+  %dx.types.LinAlgMatrix<mangling>   ; matrix B
+  %dx.types.LinAlgMatrix<mangling>   ; matrix C
+  )
+```
+
+This operation multiplies an A matrix and B matrix and accumlates it into an
+accumulator matrix following the form `R = C + (A * B)`.
+
+Validation rules will enforce that:
+* argument A is an `A` matrix
+* argument B is a `B` matrix
+* argument C is an `Accumulator` matrix
+* return value (R) is an `Accumulator` matrix
+* All four matrices have the same scope (Wave or ThreadGroup)
+* Matrix A's dimensions shall be M x K
+* Matrix B's dimensions shall be K x N
+* Matrix C's dimensions shall be M x N
+* Matrix R's dimensions shall be M x N
 * The element types are compatible
 
 Must be called from wave-uniform control flow.
