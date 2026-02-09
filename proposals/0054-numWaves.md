@@ -359,8 +359,6 @@ Pre-requisites for this feature are:
 - [GroupWaveIndex](https://microsoft.github.io/hlsl-specs/proposals/0048-group-wave-index/),
   (accepted) which adds GetGroupWaveIndex and GetGroupWaveCount
 
-GroupWaveIndex is currently slated for SM 6.10, so the shader version for this
-feature needs to be at least 6.10.
 
 ## Testing
 
