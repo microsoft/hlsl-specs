@@ -3,7 +3,7 @@
 title: "0054 - numWaves shader intrinstic"
 params:
   authors:
-    - mafuller: Martin Fuller
+    - MartinAtXbox: Martin Fuller
   sponsors:
     - tbd: TBD
   status: Under Consideration
