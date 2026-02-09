@@ -1,7 +1,6 @@
 
 ---
 title: "0054 - numWaves shader intrinstic"
-draft: true
 params:
   authors:
     - mafuller: Martin Fuller
