@@ -31,6 +31,9 @@ prvalue is of type \texttt{T}.
 \p If the glvalue refers to an array of type \texttt{T}, the prvalue will refer
 to a copy of the array, not memory referred to by the glvalue.
 
+\p If the glvalue refers to a bit-field of type \texttt{T}, the conversion
+produces an object of the underlying type of the bit-field.
+
 \Sec{Array-to-pointer conversion}{Conv.array}
 
 \p An lvalue or rvalue of type \texttt{T[]} (unsized array), can be converted to
