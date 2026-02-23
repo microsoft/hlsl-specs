@@ -54,12 +54,12 @@ on a base set of functionality for inclusion in the `hlsl` namespace.
 namespace dx {
 namespace linalg {
 
-template <ComponentEnum ElementType, uint DimA> struct LinAlgVectorRef {
+template <ComponentEnum ElementType, uint DimA> struct VectorRef {
   ByteAddressBuffer Buf;
   uint Offset;
 };
 
-template <typename T, int N, ComponentEnum DT> struct LinAlgInterpretedVector {
+template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
   vector<T, N> Data;
   static const ComponentEnum Interpretation = DT;
   static const SIZE_TYPE Size =
@@ -67,8 +67,8 @@ template <typename T, int N, ComponentEnum DT> struct LinAlgInterpretedVector {
 };
 
 template <ComponentEnum DT, typename T, int N>
-LinAlgInterpretedVector<T, N, DT> MakeLinAlgInterpretedVector(vector<T, N> Vec) {
-  LinAlgInterpretedVector<T, N, DT> IV = {Vec};
+InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
+  InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
@@ -202,34 +202,34 @@ vector<OutputElTy, M> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope:
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                                  vector<InputElTy, K>, vector<BiasElTy, M>);
+vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                                  vector<InputElTy, M>, vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    LinAlgInterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
+    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                LinAlgInterpretedVector<InputElTy, VecM, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                vector<InputElTy, M>, LinAlgVectorRef<BiasElTy, K>);
+                vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    LinAlgInterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
+    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                LinAlgInterpretedVector<InputElTy, VecM, InputInterp>,
-                LinAlgVectorRef<BiasElTy, K>);
+                InterpretedVector<InputElTy, VecM, InputInterp>,
+                VectorRef<BiasElTy, K>);
 
 // Outer product functions
 template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
@@ -296,7 +296,7 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  LinAlgVectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
+  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
@@ -305,9 +305,9 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeLinAlgInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeLinAlgInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 ```
@@ -486,24 +486,19 @@ encode the dimensions and input and output data types used by each shader in the
 struct ComponentType {
   enum ComponentEnum {
     Invalid = 0,
-    I1 = 1,
-    I8 = 2,
-    U8 = 3,
-    I16 = 4,
-    U16 = 5,
-    I32 = 6,
-    U32 = 7,
-    I64 = 8,
-    U64 = 9,
-    F16 = 10,
-    F32 = 11,
-    F64 = 12,
-    SNormF16 = 13,
-    UNormF16 = 14,
-    SNormF32 = 15,
-    UNormF32 = 16,
-    SNormF64 = 17,
-    UNormF64 = 18,
+    I16 = 2,
+    U16 = 3,
+    I32 = 4,
+    U32 = 5,
+    I64 = 6,
+    U64 = 7,
+    F16 = 8,
+    F32 = 9,
+    F64 = 10,
+    PackedS8x32 = 17,
+    PackedU8x32 = 18,
+    U8 = 19,
+    I8 = 20,
     F8_E4M3 = 21,
     F8_E5M2 = 22,
   };
@@ -971,9 +966,9 @@ with `Thread` scope, an `M`-element vector, and a `K`-element vector. The operat
 multiplies the `M`-element vector by the matrix then adds the `K`-element vector
 producing a result `K`-element vector.
 
-Either vector may be a native vector or an `LinAlgInterpretedVector` which combines a
+Either vector may be a native vector or an `InterpretedVector` which combines a
 packed element vector with an interpretation type. The `K`-element vector may
-also be a `LinAlgVectorRef` which refers to a vector in memory. Using the `LinAlgVectorRef`
+also be a `VectorRef` which refers to a vector in memory. Using the `VectorRef`
 overload makes it easier for the backend compiler to optimize the bias vector
 loads with the ALU operations.
 
@@ -997,24 +992,19 @@ enum class DXILMatrixScope {
 
 enum class DXILComponentType {
   Invalid = 0,
-  I1 = 1,
-  I8 = 2,
-  U8 = 3,
-  I16 = 4,
-  U16 = 5,
-  I32 = 6,
-  U32 = 7,
-  I64 = 8,
-  U64 = 9,
-  F16 = 10,
-  F32 = 11,
-  F64 = 12,
-  SNormF16 = 13,
-  UNormF16 = 14,
-  SNormF32 = 15,
-  UNormF32 = 16,
-  SNormF64 = 17,
-  UNormF64 = 18,
+  I16 = 2,
+  U16 = 3,
+  I32 = 4,
+  U32 = 5,
+  I64 = 6,
+  U64 = 7,
+  F16 = 8,
+  F32 = 9,
+  F64 = 10,
+  PackedS8x32 = 17,
+  PackedU8x32 = 18,
+  U8 = 19,
+  I8 = 20,
   F8_E4M3 = 21,
   F8_E5M2 = 22,
 }
@@ -1080,7 +1070,7 @@ documented in the [Conversions](#conversions) section.
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix source
-  immarg i1,                          ; transpose
+  immarg i1                           ; transpose
   )
 ```
 
@@ -1095,7 +1085,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromDescriptor.[
   %dx.types.Handle,      ; ByteAddressBuffer
   i32,                   ; Offset
   i32,                   ; Stride
-  i32,                   ; matrix layout
+  i32                    ; matrix layout
   )
 ```
 
@@ -1111,12 +1101,12 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].p[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
   immarg i32,            ; opcode
   [Ty] * addrspace(4),   ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
-  i32,                   ; matrix layout
+  i32                    ; matrix layout
   )
 ```
 
@@ -1158,7 +1148,7 @@ If the index is out of range for the values stored in this thread the result is
 0.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixSetElement.[MatTy].[Ty](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixSetElement.[MatTy].[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; input matrix
   i32,                                ; thread-local index
@@ -1189,13 +1179,13 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].p[Ty](
+declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   [Ty] *,                             ; groupshared T[M * N]
   i32,                                ; Offset
   i32,                                ; Stride
-  i32,                                ; matrix layout
+  i32                                 ; matrix layout
   )
 ```
 
@@ -1208,7 +1198,7 @@ for the write.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixQueryAccumulatorLayout(
-  immarg i32,            ; opcode
+  immarg i32             ; opcode
   )
 ```
 
@@ -1243,10 +1233,10 @@ Must be called from wave-uniform control flow.
 
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixAccumulate.[MatTyLHS].[MatTyRHS](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixAccumulate.[MatTyC].[MatTyLHS].[MatTyRHS](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix LHS
-  %dx.types.LinAlgMatrix<mangling>,   ; matrix RHS
+  %dx.types.LinAlgMatrix<mangling>    ; matrix RHS
   )
 ```
 
@@ -1264,11 +1254,11 @@ Validation rules will enforce that:
 Must be called from wave-uniform control flow.
 
 ```llvm
-declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMultiplyAccumulate.[MatTyC].[MatTyA].[MatTyB](
+declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixMultiplyAccumulate.[MatTyR].[MatTyA].[MatTyB].[MatTyC](
   immarg i32,                        ; opcode
-  %dx.types.LinAlgMatrix<mangling>   ; matrix C
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
-  %dx.types.LinAlgMatrix<mangling>   ; matrix B
+  %dx.types.LinAlgMatrix<mangling>,  ; matrix B
+  %dx.types.LinAlgMatrix<mangling>   ; matrix C
   )
 ```
 
@@ -1349,7 +1339,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 
 ```llvm
-declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].p[Ty](
+declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
   [Ty] *,                             ; groupshared T[M * N]
@@ -1495,24 +1485,19 @@ namespace linalg {
 struct ComponentType {
   enum ComponentEnum {
     Invalid = 0,
-    I1 = 1,
-    I8 = 2,
-    U8 = 3,
-    I16 = 4,
-    U16 = 5,
-    I32 = 6,
-    U32 = 7,
-    I64 = 8,
-    U64 = 9,
-    F16 = 10,
-    F32 = 11,
-    F64 = 12,
-    SNormF16 = 13,
-    UNormF16 = 14,
-    SNormF32 = 15,
-    UNormF32 = 16,
-    SNormF64 = 17,
-    UNormF64 = 18,
+    I16 = 2,
+    U16 = 3,
+    I32 = 4,
+    U32 = 5,
+    I64 = 6,
+    U64 = 7,
+    F16 = 8,
+    F32 = 9,
+    F64 = 10,
+    PackedS8x32 = 17,
+    PackedU8x32 = 18,
+    U8 = 19,
+    I8 = 20,
     F8_E4M3 = 21,
     F8_E5M2 = 22,
   };
@@ -1574,12 +1559,12 @@ __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::F64, double)
 
 } // namespace __detail
 
-template <ComponentEnum ElementType, uint DimA> struct LinAlgVectorRef {
+template <ComponentEnum ElementType, uint DimA> struct VectorRef {
   ByteAddressBuffer Buf;
   uint Offset;
 };
 
-template <typename T, int N, ComponentEnum DT> struct LinAlgInterpretedVector {
+template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
   vector<T, N> Data;
   static const ComponentEnum Interpretation = DT;
   static const SIZE_TYPE Size =
@@ -1587,8 +1572,8 @@ template <typename T, int N, ComponentEnum DT> struct LinAlgInterpretedVector {
 };
 
 template <ComponentEnum DT, typename T, int N>
-LinAlgInterpretedVector<T, N, DT> MakeLinAlgInterpretedVector(vector<T, N> Vec) {
-  LinAlgInterpretedVector<T, N, DT> IV = {Vec};
+InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
+  InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
@@ -1716,39 +1701,39 @@ Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, M> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                               vector<InputElTy, K>);
+vector<OutputElTy, K> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                               vector<InputElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, M> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                                  vector<InputElTy, K>, vector<BiasElTy, M>);
+vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                                  vector<InputElTy, M>, vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    LinAlgInterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
+    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                LinAlgInterpretedVector<InputElTy, VecM, InputInterp>,
+                InterpretedVector<InputElTy, VecM, InputInterp>,
                 vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                vector<InputElTy, M>, LinAlgVectorRef<BiasElTy, K>);
+                vector<InputElTy, M>, VectorRef<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    LinAlgInterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
+    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
     MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                LinAlgInterpretedVector<InputElTy, VecM, InputInterp>,
-                LinAlgVectorRef<BiasElTy, K>);
+                InterpretedVector<InputElTy, VecM, InputInterp>,
+                VectorRef<BiasElTy, K>);
 
 // Outer product functions
 template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
@@ -1807,7 +1792,7 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  LinAlgVectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
+  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
@@ -1816,9 +1801,9 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeLinAlgInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeLinAlgInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
 #endif
 }
 
