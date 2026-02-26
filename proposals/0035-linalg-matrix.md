@@ -702,7 +702,7 @@ scope matrix, and must be called in uniform control flow when loading a wave
 scope matrix.
 
 This operation permits loads from `RowMajor`, `ColumMajor` and `Optimal` layouts
-for Thread scope matrices, with an option to traspose the matrix by setting the
+for Thread scope matrices, with an option to transpose the matrix by setting the
 `Layout` parameter to `MulOptimalTranspose` or `OuterProductOptimalTranspose`.
 Not all component types support transposing, it is implementation specific.
 Applications need to query the driver to determine if a matrix transpose is
