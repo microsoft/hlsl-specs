@@ -141,13 +141,13 @@ void fnT(T A, T B) {
   A = B;
 }
 ```
+
 In Clang, given the above template, the following explicit instantiation should produce
 a template instantiation with groupshared uint for both parameters.
 In DXC, `groupshared` is not currently treated as a type qualifier in all situations
 making the below example ignore the `groupshared` annotation on `uint`. DXC produces
 this warning:
 "warning: 'groupshared' attribute ignored when parsing type [-Wignored-attributes]".
-
 
 ```c++
 groupshared uint Shared;
