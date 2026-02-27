@@ -4,7 +4,7 @@
 \usepackage{nameref}
 \usepackage[acronym,numberedsection=nameref,toc]{glossaries}
 \usepackage{multicol}
-\usepackage[marginparwidth=75pt, margin=2cm]{geometry}
+\usepackage[marginparwidth=20pt, margin=2cm]{geometry}
 \usepackage{listings}
 \usepackage{marginnote}
 \usepackage{parskip}
@@ -14,17 +14,11 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows,automata,positioning}
 
+\renewcommand{\familydefault}{\sfdefault}
+
 \titleformat{\chapter}
   {\LARGE\bfseries}{\thechapter}{10pt}{}
 \titlespacing{\chapter}{0pt}{0pt}{10pt}
-
-\renewcommand{\familydefault}{\sfdefault}
-
-\setcounter{secnumdepth}{3} % number subsections
-\newcommand{\Ch}[2]{\chapter[#1]{#1\hfill[#2]}\label{#2}}
-\newcommand{\Sec}[2]{\section[#1]{#1\hfill[#2]}\label{#2}}
-\newcommand{\Sub}[2]{\subsection[#1]{#1\hfill[#2]}\label{#2}}
-\newcommand{\SubSub}[2]{\subsubsection[#1]{#1\hfill[#2]}\label{#2}}
 
 \input{glossary}
 
@@ -51,30 +45,8 @@
 \pagestyle{body}
 
 \setcounter{secnumdepth}{3}
-\newcommand{\parnum}{\textbf{\arabic{parcount}}}
 
 \setlength\parindent{0cm}
-
-\newcommand{\newparcounter}[1]{
-\newcounter{#1}
-\counterwithin{#1}{chapter}
-\counterwithin{#1}{section}
-\counterwithin{#1}{subsection}
-\counterwithin{#1}{subsubsection}
-}
-
-\newparcounter{parcount}
-\newcommand\p{%
-    \stepcounter{parcount}%
-    \parnum \hspace{1em}%
-}
-
-\newenvironment{parnumbers}{%
-   \par%
-   \everypar{\noindent \stepcounter{parcount}\parnum \hspace{1em}}%
-}{}
-
-\newcommand{\Par}[2]{\paragraph[#1]{#1\hfill[#2]\\}\label{#2}\p}
 
 \begin{document}
 \input{macros}
