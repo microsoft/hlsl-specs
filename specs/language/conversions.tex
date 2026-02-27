@@ -32,7 +32,7 @@ prvalue is of type \texttt{T}.
 to a copy of the array, not memory referred to by the glvalue.
 
 \p If the glvalue refers to a bit-field of type \texttt{T}, the conversion
-produces an object of the underlying type of the bit-field.
+produces an object of the underlying type of the bit-field and not a prvalue.
 
 \Sec{Array-to-pointer conversion}{Conv.array}
 
@@ -87,6 +87,12 @@ the source value, the result is implementation-defined.
 
 \p If the source type is \texttt{bool}, the values \texttt{true} and
 \texttt{false} are converted to one and zero respectively.
+
+\Sec{Bit-field conversion}{Conv.bitfield}
+
+\p A glvalue of a named bit-field with underlying integer type \texttt{T} can be
+converted to a cxvalue of type \texttt{T$^\prime$} if there exists an implicit
+conversion from \texttt{T} to \texttt{T$^\prime$}.
 
 \Sec{Floating point conversion}{Conv.fconv}
 
