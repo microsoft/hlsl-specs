@@ -58,3 +58,9 @@ add_custom_target(html
                   COMMENT "Generating HTML"
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries ${PROJECT_NAME}-dirs)
+
+add_custom_target(html-chunked
+                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t chunkedhtml --table-of-contents=true -s -o ${CMAKE_BINARY_DIR}/html/hlsl.zip
+                  COMMENT "Generating HTML"
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries ${PROJECT_NAME}-dirs)
