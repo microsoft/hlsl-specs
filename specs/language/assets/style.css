@@ -1,0 +1,152 @@
+/* Sidebar */
+#toc {
+  width: 20rem;
+  background: #d9d9d9;
+  padding: 0; /* reduced left/right gutter */
+  position: sticky;
+  top: 0; /* sticks to the top of the viewport as you scroll */
+  height: calc(100vh - 0px);
+  overflow: auto;
+}
+
+div#toc ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+div#toc li {
+  padding: 0 0 0 1rem;
+}
+
+/* Main content wrapper */
+#content {
+  position: static;
+  overflow: visible;
+  margin-left: 0;
+  width: auto;
+  padding: 0 1rem;
+}
+
+img, canvas, iframe, video, svg, select, textarea {
+  max-width: 100%;
+}
+
+img { margin: 0; }
+
+h2 { margin: 0; font-size: 2em; font-weight: bold; text-decoration: none; }
+h3 { font-size: 1.56em; }
+h4 { font-size: 1.25em; }
+h5 { font-size: 1.11em; margin-bottom: -1em; }
+h6 { font-size: 1em; }
+
+body {
+  font-size: 18px;
+  line-height: 1.5;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 0;
+  margin: 0;
+  color: #111;
+}
+
+code {
+  font-weight: bold;
+  font-family: Consolas, Monaco, monospace;
+  white-space: pre;
+}
+
+pre code { font-weight: inherit; margin: 0; padding: 0; }
+pre { background-color: #fafafa; padding: 1rem; text-align: left; }
+
+blockquote {
+  margin: 0;
+  border-left: 5px solid #83D652;
+  padding: 0.1em 1.33em;
+  text-align: left;
+  background-color: #EDF9E9;
+}
+
+table { margin: 0 1.5em; border-collapse: collapse; }
+thead { background-color: #eeeeee; }
+td, th { border: 1px solid black; padding: 0.4em; vertical-align: baseline; }
+
+a, a:visited { color: #2A6AA0; text-decoration: none; }
+a:hover, a:focus, a:active { color: #2A6AA0; text-decoration: underline; }
+
+@media print {
+  #toc { display: none; width: 0; }
+  #content { width: 100%; margin: 0; padding: 0 1em; }
+}
+
+/* Customizations */
+.doc-title {
+  float: left;
+  display: block;
+  padding: 8px 12px 8px;
+  margin-left: -8px; /* smaller offset to reduce left white space */
+  font-size: 20px;
+  font-weight: 200;
+  color: #777777;
+  text-shadow: 0 1px 0 #ffffff;
+}
+.doc-info .navbar-text { padding: 0 15px; }
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { color: #333; }
+h1:hover a, h2:hover a, h3:hover a, h4:hover a, h5:hover a, h6:hover a { color: #333; }
+.toc, .toc ul { padding: 0; }
+.toc ul { margin-left: 0; margin-bottom: 20px; list-style: none; }
+.toc li > a { display: inline-block; padding: 6px 8px; vertical-align: middle; }
+.toc li > a:hover, .toc li > a:focus { text-decoration: none; background-color: #eeeeee; }
+
+/* Ensure TOC container scrolls internally when long; allow horizontal scrolling for long links */
+#TOC, #toc {
+  max-height: calc(100vh - 0px);
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent TOC link text from wrapping; enable horizontal scroll instead */
+.toc li, .toc li > a {
+  white-space: nowrap;
+}
+.toc ul ul { white-space: nowrap; }
+
+/* Reduce overall container page padding to shrink left/right white gutter */
+.container {
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Remove default negative row gutters so content reaches the left edge */
+.row { margin-left: 0; margin-right: 0; }
+
+/* Reduce column side-padding to shrink internal gutters further */
+.col-md-3, .col-md-9 { padding-left: 0.25rem; padding-right: 0.25rem; }
+
+/* Collapsible TOC rules */
+.toc ul ul { display: none; }
+.toc li.expanded > ul { display: block; }
+.toc-toggle { cursor: pointer; margin-right: 6px; padding: 0; border: 0; background: transparent; font-size: 0.9em; line-height: 1; display: inline-flex; align-items: center; vertical-align: middle; transition: transform .12s ease; }
+.toc-toggle[aria-expanded="true"] { transform: rotate(90deg); }
+
+/* Grammar style */
+.grammarlist {
+  border: 1px solid #000;
+  background: #ffffff;
+	font-family: 'Noto Sans';
+	font-size: 10pt;
+	font-style: italic;
+	margin-left: 25pt;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	text-indent: -2em;
+	padding-left: 3em;
+	line-height: 1.5;
+  list-style-type: none;
+}
+
+div.grammarlist span.texttt { font-family: 'Noto Sans Mono'; font-style: normal; }

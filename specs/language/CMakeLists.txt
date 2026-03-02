@@ -20,6 +20,8 @@ set(intermediate_dir ${CMAKE_BINARY_DIR}/tmp/)
 
 message(STATUS "Generating targets for: ${PROJECT_NAME}")
 set(main_file ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.tex)
+set(assets_dir ${CMAKE_CURRENT_SOURCE_DIR}/assets)
+set(css_file ${assets_dir}/style.css)
 set(out_dir ${CMAKE_BINARY_DIR})
 
 add_custom_target(${PROJECT_NAME}-dirs
@@ -53,14 +55,17 @@ add_custom_target(pdf
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries)
 
+
+set(html_format_options --number-sections --table-of-contents=true --template=${CMAKE_CURRENT_SOURCE_DIR}/template.html --css=${css_file})
+
 add_custom_target(html
-                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t html --table-of-contents=true -s -o ${CMAKE_BINARY_DIR}/html/hlsl.html
+                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t html ${html_format_options} -s -o ${CMAKE_BINARY_DIR}/html/hlsl.html
                   COMMENT "Generating HTML"
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries ${PROJECT_NAME}-dirs)
 
 add_custom_target(html-chunked
-                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t chunkedhtml --table-of-contents=true -s -o ${CMAKE_BINARY_DIR}/html/hlsl.zip
+                  COMMAND ${PANDOC_COMPILER} ${main_file} -f latex -t chunkedhtml ${html_format_options} -s -o ${CMAKE_BINARY_DIR}/html/hlsl.zip
                   COMMENT "Generating HTML"
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                   DEPENDS ${main_file} ${PROJECT_NAME}-prebuild ${PROJECT_NAME}-glossaries ${PROJECT_NAME}-dirs)
