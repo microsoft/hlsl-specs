@@ -11,7 +11,7 @@ A listing of the active proposals is available [here](proposals/).
 
 This repository also contains specifications for the HLSL language. The draft
 HLSL specification is available in
-[HTML](https://microsoft.github.io/hlsl-specs/specs/hlsl.html) and
+[HTML](https://microsoft.github.io/hlsl-specs/specs/index.html) and
 [PDF](https://microsoft.github.io/hlsl-specs/specs/hlsl.pdf).
 
 ## Contributing
