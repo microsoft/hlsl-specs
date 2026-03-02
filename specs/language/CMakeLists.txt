@@ -21,7 +21,7 @@ set(intermediate_dir ${CMAKE_BINARY_DIR}/tmp/)
 message(STATUS "Generating targets for: ${PROJECT_NAME}")
 set(main_file ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.tex)
 set(assets_dir ${CMAKE_CURRENT_SOURCE_DIR}/assets)
-set(css_file ${assets_dir}/style.css)
+set(css_file assets/style.css) # this must be a relative path for the final generation to work.
 set(out_dir ${CMAKE_BINARY_DIR})
 
 add_custom_target(${PROJECT_NAME}-dirs
