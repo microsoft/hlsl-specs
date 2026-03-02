@@ -72,6 +72,8 @@ jobs:
           cmake --build build --target html-chunked
           cmake --build build --target pdf
           mkdir -p ${{github.workspace}}/website/public/specs/
+          mkdir -p ${{github.workspace}}/website/public/specs/assets
+          cp specs/language/assets/* ${{github.workspace}}/website/public/specs/assets/
           cp build/hlsl.pdf ${{github.workspace}}/website/public/specs/
           unzip build/html/hlsl.zip -d ${{github.workspace}}/website/public/specs/
       - name: Upload artifact
