@@ -143,15 +143,15 @@ class Matrix {
   InterlockedAccumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
-  template <ComponentEnum T, MatrixUseEnum UseLocal = Use>
+  template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<T, M, N, MatrixUse::A, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::A, Scope>);
 
-  template <ComponentEnum T, MatrixUseEnum UseLocal = Use>
+  template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<T, M, N, MatrixUse::B, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::B, Scope>);
 
   template <ComponentEnum LHSTy, ComponentEnum RHSTy, SIZE_TYPE K,
             MatrixUseEnum UseLocal = Use>
@@ -185,10 +185,10 @@ Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
-template <ComponentEnum T, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
-         const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave>,
+         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
 template <ComponentEnum OutTy, ComponentEnum ATy,
           ComponentEnum BTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
@@ -196,10 +196,10 @@ Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
-template <ComponentEnum T, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
-         const Matrix<T, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
@@ -641,7 +641,7 @@ namespace.
 
 ```c++
 namespace __detail {
-template <ComponentEnum T> struct ComponentTypeTraits {
+template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
   static const uint ElementsPerScalar = 4;
 };
@@ -954,13 +954,13 @@ optimizing control flow and dead code elimination.
 template <ComponentType OutTy, ComponentType ATy,
           ComponentType BTy, uint M, uint N, uint K, MatrixScope Scope>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
-linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, Scope>,
-                 const Matrix<T, K, N, MatrixUse::B, Scope>);
+linalg::Multiply(const Matrix<ATy, M, K, MatrixUse::A, Scope>,
+                 const Matrix<BTy, K, N, MatrixUse::B, Scope>);
 
-template <ComponentType T, uint M, uint N, uint K>
-Matrix<T, M, N, MatrixUse::Accumulator, Scope>
-linalg::Multiply(const Matrix<T, M, K, MatrixUse::A, Scope>,
-                 const Matrix<T, K, N, MatrixUse::B, Scope>);
+template <ComponentType CompTy, uint M, uint N, uint K>
+Matrix<CompTy, M, N, MatrixUse::Accumulator, Scope>
+linalg::Multiply(const Matrix<CompTy, M, K, MatrixUse::A, Scope>,
+                 const Matrix<CompTy, K, N, MatrixUse::B, Scope>);
 ```
 
 Requires `Wave` or `ThreadGroup` scope matrix inputs and output, and must be
@@ -1193,7 +1193,7 @@ Validation rules will enforce that:
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
   immarg i32,            ; opcode
-  [Ty] addrspace(3)*,    ; groupshared T[M * N]
+  [Ty] addrspace(3)*,    ; groupshared Ty[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
   i32                    ; matrix layout
@@ -1273,7 +1273,7 @@ Validation rules will enforce that:
 declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] addrspace(3)*,                 ; groupshared T[M * N]
+  [Ty] addrspace(3)*,                 ; groupshared Ty[M * N]
   i32,                                ; Offset
   i32,                                ; Stride
   i32                                 ; matrix layout
@@ -1440,7 +1440,7 @@ Validation rules will enforce that:
 declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] addrspace(3)*,                 ; groupshared T[M * N]
+  [Ty] addrspace(3)*,                 ; groupshared Ty[M * N]
   i32,                                ; Offset
   i32,                                ; Stride
   i32                                 ; matrix layout
@@ -1536,7 +1536,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/MsKxn6zej)
+[Compiler Explorer](https://godbolt.org/z/9bM85rPEa)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1674,7 +1674,7 @@ struct MatrixLayout {
 using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
 
 namespace __detail {
-template <ComponentEnum T> struct ComponentTypeTraits {
+template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
   static const uint ElementsPerScalar = 4;
 };
@@ -1789,15 +1789,15 @@ class Matrix {
   InterlockedAccumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
-  template <ComponentEnum T, MatrixUseEnum UseLocal = Use>
+  template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<T, M, N, MatrixUse::A, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::A, Scope>);
 
-  template <ComponentEnum T, MatrixUseEnum UseLocal = Use>
+  template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<T, M, N, MatrixUse::B, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::B, Scope>);
 
   template <ComponentEnum LHSTy, ComponentEnum RHSTy, SIZE_TYPE K,
             MatrixUseEnum UseLocal = Use>
@@ -1831,10 +1831,10 @@ Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
-template <ComponentEnum T, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::Wave>,
-         const Matrix<T, K, N, MatrixUse::B, MatrixScope::Wave>);
+template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
+Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave>,
+         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
 template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
           SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
@@ -1842,10 +1842,10 @@ Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
-template <ComponentEnum T, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<T, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<T, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
-         const Matrix<T, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
+Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
+         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against B
