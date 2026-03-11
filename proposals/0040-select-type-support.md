@@ -52,7 +52,7 @@ This proposal does not suggest making similar changes to DXC, as DXC’s ternary
 operator intentionally limits its supported types. Clang’s divergence here is
 justified by its alignment with C++ semantics.
 
-## Alternatives
+## Alternatives considered
 An alternative approach would be to restrict Clang's `select` to value types
 only, rather than supporting more general types. Since `select`'s main purpose
 was to support vector selection of components, extending it to other types (like
