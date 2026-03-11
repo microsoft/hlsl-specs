@@ -235,9 +235,8 @@ typename hlsl::enable_if<
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
-template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
-          SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
 
 } // namespace linalg
@@ -328,9 +327,9 @@ void OuterProdAccum() {
   vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc =
-      OuterProduct<ComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+      OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0);
+  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
 
@@ -1451,7 +1450,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/habj4EnaW)
+[Compiler Explorer](https://godbolt.org/z/8YejPKEnh)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1691,6 +1690,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
                      uint Align = sizeof(ElementType));
 
   void InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
+                             uint Stride, MatrixLayoutEnum Layout,
                              uint Align = sizeof(ElementType));
 };
 
@@ -1760,9 +1760,8 @@ typename hlsl::enable_if<
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
-template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
-          SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
 
 } // namespace linalg
@@ -1841,7 +1840,7 @@ void OuterProdAccum() {
   vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc =
-      OuterProduct<ComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+      OuterProduct<ComponentType::F16>(VecA, VecB);
 
   MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
