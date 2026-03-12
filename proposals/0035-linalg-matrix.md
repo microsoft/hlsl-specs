@@ -1101,6 +1101,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromDescriptor.[
   i32,                   ; Offset
   i32,                   ; Stride
   i32,                   ; matrix layout
+  i32                    ; alignment
   )
 ```
 
@@ -1183,6 +1184,7 @@ declare void @dx.op.linAlgMatrixStoreToDescriptor.[MatTy](
   i32,                                ; Offset
   i32,                                ; Stride
   i32,                                ; matrix layout
+  i32                                 ; alignment
   )
 ```
 
@@ -1336,7 +1338,8 @@ declare void @dx.op.linAlgMatrixAccumulateToDescriptor.[MatTy](
   %dx.types.Handle,                   ; RWByteAddressBuffer
   i32,                                ; Offset
   i32,                                ; Stride
-  i32                                 ; matrix layout
+  i32,                                ; matrix layout
+  i32                                 ; alignment
   )
 ```
 
