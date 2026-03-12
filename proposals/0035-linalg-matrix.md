@@ -235,9 +235,8 @@ typename hlsl::enable_if<
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
-template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
-          SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
 
 } // namespace linalg
@@ -328,9 +327,9 @@ void OuterProdAccum() {
   vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc =
-      OuterProduct<ComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+      OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0);
+  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
 
@@ -426,7 +425,7 @@ The following table summarizes the operations supported for each matrix scope:
 | `linalg::Multiply(Matrix, Matrix)` | ✗ | ✓ | ✓ |
 | `linalg::Multiply(vector, Matrix)` | ✓ | ✗ | ✗ |
 | `linalg::MultiplyAdd(Matrix, vector, vector)` | ✓ | ✗ | ✗ |
-| `linalg::OuterProduct(vector, vector)` | ✓ | ✓ | ✓ |
+| `linalg::OuterProduct(vector, vector)` | ✓ | ✗ | ✗ |
 
 Throughout this document a matrix may be described as having a scope as
 specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
@@ -945,18 +944,16 @@ vector.
 #### linalg::OuterProduct(vector, vector)
 
 ```c++
-template <ComponentType OutTy, MatrixScope Scope, typename InputElTy,
+template <ComponentType OutTy, typename InputElTy,
           uint M, uint N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     linalg::OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
 ```
 
-The `linalg::OuterProduct` function has two overloads that take an M-element vector
-and an N-element vector and yield an MxN `Accumulator` matrix with the specified
-scope initialized with the outer product of the two input vectors. One overload
-infers the type of the output accumulator to match the input vector element type,
-the other overload takes a template parameter for the output matrix element type.
-All matrix scopes are allowed for the output matrix.
+The `linalg::OuterProduct` function takes an M-element vector and an N-element
+vector and yield an MxN `Accumulator` matrix with `Thread` scope initialized
+with the outer product of the two input vectors. The function takes a template
+parameter for the output matrix element type.
 
 #### linalg::MultiplyAdd(Matrix, vector, vector)
 
@@ -1381,7 +1378,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixOuterProduct.[MatTy]
 ```
 
 Writes the outer product of the two input vectors into the provided matrix.
-The matrix scope can be `Thread`, `Wave`, or `ThreadGroup`.
+The matrix scope must be `Thread`.
 
 Validation will ensure that:
 * The `M` dimension of the matrix matches the length of vector `A`, or 1/4th the
@@ -1392,6 +1389,7 @@ Validation will ensure that:
   vectors, or the input vectors are `i32` if the matrix uses types not directly
   representable in DXIL.
 * The element type of vector A and vector B must be the same.
+* The matrix output type must be `Thread` scope.
 
 #### Bounds Checking Behavior
 
@@ -1451,7 +1449,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/habj4EnaW)
+[Compiler Explorer](https://godbolt.org/z/8YejPKEnh)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1691,6 +1689,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
                      uint Align = sizeof(ElementType));
 
   void InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
+                             uint Stride, MatrixLayoutEnum Layout,
                              uint Align = sizeof(ElementType));
 };
 
@@ -1760,9 +1759,8 @@ typename hlsl::enable_if<
                 VectorRef<BiasElTy, K>);
 
 // Outer product functions
-template <ComponentEnum OutTy, MatrixScopeEnum Scope, typename InputElTy,
-          SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, Scope>
+template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
 
 } // namespace linalg
@@ -1841,7 +1839,7 @@ void OuterProdAccum() {
   vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc =
-      OuterProduct<ComponentType::F16, MatrixScope::Thread>(VecA, VecB);
+      OuterProduct<ComponentType::F16>(VecA, VecB);
 
   MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
