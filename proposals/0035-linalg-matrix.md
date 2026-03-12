@@ -1118,7 +1118,7 @@ Validation rules will enforce that:
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
   immarg i32,            ; opcode
-  [Ty] * addrspace(3),   ; groupshared T[M * N]
+  [Ty] addrspace(3)*,    ; groupshared T[M * N]
   i32,                   ; Offset
   i32,                   ; Stride
   i32,                   ; matrix layout
@@ -1197,7 +1197,7 @@ Validation rules will enforce that:
 declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] * addrspace(3),                ; groupshared T[M * N]
+  [Ty] addrspace(3)*,                 ; groupshared T[M * N]
   i32,                                ; Offset
   i32,                                ; Stride
   i32,                                ; matrix layout
@@ -1357,7 +1357,7 @@ Validation rules will enforce that:
 declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].p[Ty](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix
-  [Ty] * addrspace(3),                ; groupshared T[M * N]
+  [Ty] addrspace(3)*,                 ; groupshared T[M * N]
   i32,                                ; Offset
   i32,                                ; Stride
   i32                                 ; matrix layout
