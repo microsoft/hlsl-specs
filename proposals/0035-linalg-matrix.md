@@ -80,6 +80,8 @@ class Matrix {
   // packed in each scalar value.
   static const uint ElementsPerScalar =
       __detail::ComponentTypeTraits<ComponentTy>::ElementsPerScalar;
+  static const bool IsNativeScalar =
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar;
 
   template <ComponentEnum NewCompTy, MatrixUseEnum NewUse = Use,
             bool Transpose = false>
@@ -100,13 +102,21 @@ class Matrix {
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
 
-  uint Length();
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint>::type
+  Length();
 
-  uint2 GetCoordinate(uint);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint2>::type
+  GetCoordinate(uint);
 
-  ElementType Get(uint);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, ElementType>::type
+  Get(uint);
 
-  void Set(uint, ElementType);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, void>::type
+  Set(uint, ElementType);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
@@ -485,29 +495,70 @@ encode the dimensions and input and output data types used by each shader in the
 
 #### HLSL Enumerations
 ```c++
+// Put this in a dxil constants header.
+namespace dxil {
+
+// This enum is _exactly_ the DXIL constants.
+enum class ComponentType : uint32_t {
+  Invalid = 0,
+  I1 = 1,
+  I16 = 2,
+  U16 = 3,
+  I32 = 4,
+  U32 = 5,
+  I64 = 6,
+  U64 = 7,
+  F16 = 8,
+  F32 = 9,
+  F64 = 10,
+  SNormF16 = 11,
+  UNormF16 = 12,
+  SNormF32 = 13,
+  UNormF32 = 14,
+  SNormF64 = 15,
+  UNormF64 = 16,
+  PackedS8x32 = 17,
+  PackedU8x32 = 18,
+
+  // BEGIN NEW FOR SM 6.10
+  I8 = 19,
+  U8 = 20,
+  F8_E4M3 = 21,
+  F8_E5M2 = 22,
+  // END
+
+  LastEntry
+};
+}
+
+namespace dx {
+
+namespace linalg {
+
+#define __COMPONENT_TYPE(type) type = (uint)dxil::ComponentType::type
+
+// This enum only defines values that are valid for Matrix component types.
+// Each enumeration's value matches the cooresponding DXIL constant.
 struct ComponentType {
   enum ComponentEnum {
-    Invalid = 0,
-    I1 = 1,
-    I8 = 2,
-    U8 = 3,
-    I16 = 4,
-    U16 = 5,
-    I32 = 6,
-    U32 = 7,
-    I64 = 8,
-    U64 = 9,
-    F16 = 10,
-    F32 = 11,
-    F64 = 12,
-    SNormF16 = 13,
-    UNormF16 = 14,
-    SNormF32 = 15,
-    UNormF32 = 16,
-    SNormF64 = 17,
-    UNormF64 = 18,
-    F8_E4M3 = 19,
-    F8_E5M2 = 20,
+    // Signed integers.
+    __COMPONENT_TYPE(I8),
+    __COMPONENT_TYPE(I16),
+    __COMPONENT_TYPE(I32),
+    __COMPONENT_TYPE(I64),
+
+    // Unsigned integers.
+    __COMPONENT_TYPE(U8),
+    __COMPONENT_TYPE(U16),
+    __COMPONENT_TYPE(U32),
+    __COMPONENT_TYPE(U64),
+
+    // Floating point types.
+    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E5M2),
+    __COMPONENT_TYPE(F16),
+    __COMPONENT_TYPE(F32),
+    __COMPONENT_TYPE(F64),
   };
 };
 using ComponentEnum = ComponentType::ComponentEnum;
@@ -712,10 +763,10 @@ uint Matrix::Length();
 Requires `Wave` or `ThreadGroup` scope matrix.
 
 Returns the number of matrix components accessible to the current thread. If the
-matrix's elements are stored in a packed type, `Length` will return the number of
-packed elements (e.g. if a thread has 8 accessible elements of `int8` type
-packed into 2 `int8_t4_packed`, `Length` will return 2). The mapping and
-distribution of threads to matrix elements is opaque and
+matrix's element type does not have a native HLSL representation this function
+may not be used.
+
+The mapping and distribution of threads to matrix elements is opaque and
 implementation-specific. The value returned by `Length` may be different for
 each thread. The sum of the values returned by `Length` across all threads must
 be greater than or equal to the total number of matrix elements. Some
@@ -735,7 +786,8 @@ inconsistent across different implementations.
 uint2 Matrix::GetCoordinate(uint);
 ```
 
-Requires `Wave` or `ThreadGroup` scope matrix.
+Requires `Wave` or `ThreadGroup` scope matrix. If the matrix's element type does
+not have a native HLSL representation this function may not be used.
 
 Converts a specified index into row and column coordinates. The valid range of
 `Index` is `[0, Length()-1]`. If the value of `Index` is out of
@@ -748,7 +800,8 @@ matrix coordinates is implementation-specific.
 ElementType Matrix::Get(uint);
 ```
 
-Requires `Wave` or `ThreadGroup` scope matrix.
+Requires `Wave` or `ThreadGroup` scope matrix. If the matrix's element type does
+not have a native HLSL representation this function may not be used.
 
 Retrieves the value of a matrix component at the specified index.  The valid
 range of `Index` is `[0, Length()-1]`. If the value of `Index` is out of range,
@@ -760,7 +813,8 @@ then the result value zero casted to the `ElementType`.
 void Matrix::Set(uint, ElementType);
 ```
 
-Requires `Wave` or `ThreadGroup` scope matrix.
+Requires `Wave` or `ThreadGroup` scope matrix. If the matrix's element type does
+not have a native HLSL representation this function may not be used.
 
 Sets the value of a matrix component at the specified index.  The valid
 range of `Index` is `[0, Length()-1]`.  If the value of `Index` is out of range,
@@ -985,40 +1039,49 @@ This feature adds the following new DXIL enumerations, which used as immediate
 arguments to the new operations.
 
 ```c++
-enum class DXILMatrixUse {
+namespace DXIL {
+enum class MatrixUse : unit32_t {
   A = 0,
   B = 1,
   Accumulator = 2,
 };
 
-enum class DXILMatrixScope {
-  Thread = 0,
+enum class UniformityScope : uint32_t {
+  Thread = 0, // should we reserve Quad even though we don't need it?
   Wave = 1,
   ThreadGroup = 2,
 };
 
-enum class DXILComponentType {
+enum class ComponentType : uint32_t {
   Invalid = 0,
   I1 = 1,
-  I8 = 2,
-  U8 = 3,
-  I16 = 4,
-  U16 = 5,
-  I32 = 6,
-  U32 = 7,
-  I64 = 8,
-  U64 = 9,
-  F16 = 10,
-  F32 = 11,
-  F64 = 12,
-  SNormF16 = 13,
-  UNormF16 = 14,
-  SNormF32 = 15,
-  UNormF32 = 16,
-  SNormF64 = 17,
-  UNormF64 = 18,
-  F8_E4M3 = 19,
-  F8_E5M2 = 20,
+  I16 = 2,
+  U16 = 3,
+  I32 = 4,
+  U32 = 5,
+  I64 = 6,
+  U64 = 7,
+  F16 = 8,
+  F32 = 9,
+  F64 = 10,
+  SNormF16 = 11,
+  UNormF16 = 12,
+  SNormF32 = 13,
+  UNormF32 = 14,
+  SNormF64 = 15,
+  UNormF64 = 16,
+  PackedS8x32 = 17,
+  PackedU8x32 = 18,
+
+  // BEGIN NEW FOR SM 6.10
+  I8 = 19,
+  U8 = 20,
+  F8_E4M3 = 21,
+  F8_E5M2 = 22,
+  // END
+
+  LastEntry
+};
 }
 ```
 
@@ -1038,6 +1101,25 @@ each type name will capture the type parameterization with the tokens `C`,
 
 DXIL validation will enforce that a `LinAlgMatrix` of any type may not
 be bitcast to any other type.
+
+### LinAlg Component Types
+
+DXIL validation will enforce that `ComponentType` for matrix types must be one
+of the valid linalg component types listed below:
+
+* `ComponentType::I8`
+* `ComponentType::I16`
+* `ComponentType::I32`
+* `ComponentType::I64`
+* `ComponentType::U8`
+* `ComponentType::U16`
+* `ComponentType::U32`
+* `ComponentType::U64`
+* `ComponentType::F8_E4M3`
+* `ComponentType::F8_E5M2`
+* `ComponentType::F16`
+* `ComponentType::F32`
+* `ComponentType::F64`
 
 #### Type Metadata
 
@@ -1298,7 +1380,7 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMul.v[NUMo][TYo].[MatTy].v[NUMi][TYi
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
   <[NUMi] x [TYi]>,                  ; input vector
-  immarg i32                         ; input interpretation type (DXILComponentType)
+  immarg i32                         ; input interpretation type (DXIL::ComponentType)
 )
 ```
 
@@ -1308,15 +1390,18 @@ This operation implements a row-vector multiplication against an `A` matrix of
 Validation will enforce that:
 * The input vector length matches the `K` matrix dimension
 * The matrix A is an `A` matrix of `Thread` scope
+* The input interpretation type must be one of the valid linalg component types
+  specified in the list in the [LinAlg Component Types](#linalg-component-types)
+  section.
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMulAdd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix A
   <[NUMi] x [TYi]>,                   ; input vector
-  immarg i32,                         ; input interpretation type (DXILComponentType)
+  immarg i32,                         ; input interpretation type (DXIL::ComponentType)
   <[NUMo] x [TYb]>,                   ; bias vector
-  immarg i32                          ; bias interpretation type (DXILComponentType)
+  immarg i32                          ; bias interpretation type (DXIL::ComponentType)
 )
 ```
 
@@ -1327,6 +1412,9 @@ Validation will enforce that:
 * The input vector length matches the `K` matrix dimension
 * The bias vector length matches the `M` matrix dimension
 * The matrix A is an `A` matrix of `Thread` scope
+* The input and bias interpretation type must be one of the valid linalg
+  component types specified in the list in the
+  [LinAlg Component Types](#linalg-component-types) section.
 
 ```llvm
 declare void @dx.op.linAlgMatrixAccumulateToDescriptor.[MatTy](
@@ -1442,7 +1530,7 @@ The Scope field will encode one of the values defined in the [`DXILMatrixScope`
 enumeration](#dxil-enumerations).
 
 The `OperandType` and `ResultType` fields will encode one of the values defined
-in the [`DXILComponentType` enumeration](#dxil-enumerations).
+in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 > Open questions:
 > 1) Do we need the M and N dimensions or just the K dimension?
@@ -1452,7 +1540,7 @@ in the [`DXILComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/8YejPKEnh)
+[Compiler Explorer](https://godbolt.org/z/MsKxn6zej)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1493,33 +1581,70 @@ template <typename T> struct enable_if<true, T> {
 
 } // namespace hlsl
 
+// Put this in a dxil constants header.
+namespace dxil {
+
+// This enum is _exactly_ the DXIL constants.
+enum class ComponentType : uint32_t {
+  Invalid = 0,
+  I1 = 1,
+  I16 = 2,
+  U16 = 3,
+  I32 = 4,
+  U32 = 5,
+  I64 = 6,
+  U64 = 7,
+  F16 = 8,
+  F32 = 9,
+  F64 = 10,
+  SNormF16 = 11,
+  UNormF16 = 12,
+  SNormF32 = 13,
+  UNormF32 = 14,
+  SNormF64 = 15,
+  UNormF64 = 16,
+  PackedS8x32 = 17,
+  PackedU8x32 = 18,
+
+  // BEGIN NEW FOR SM 6.10
+  I8 = 19,
+  U8 = 20,
+  F8_E4M3 = 21,
+  F8_E5M2 = 22,
+  // END
+
+  LastEntry
+};
+}
+
 namespace dx {
 
 namespace linalg {
 
+#define __COMPONENT_TYPE(type) type = (uint)dxil::ComponentType::type
+
+// This enum only defines values that are valid for Matrix component types.
+// Each enumeration's value matches the cooresponding DXIL constant.
 struct ComponentType {
   enum ComponentEnum {
-    Invalid = 0,
-    I1 = 1,
-    I8 = 2,
-    U8 = 3,
-    I16 = 4,
-    U16 = 5,
-    I32 = 6,
-    U32 = 7,
-    I64 = 8,
-    U64 = 9,
-    F16 = 10,
-    F32 = 11,
-    F64 = 12,
-    SNormF16 = 13,
-    UNormF16 = 14,
-    SNormF32 = 15,
-    UNormF32 = 16,
-    SNormF64 = 17,
-    UNormF64 = 18,
-    F8_E4M3 = 19,
-    F8_E5M2 = 20,
+    // Signed integers.
+    __COMPONENT_TYPE(I8),
+    __COMPONENT_TYPE(I16),
+    __COMPONENT_TYPE(I32),
+    __COMPONENT_TYPE(I64),
+
+    // Unsigned integers.
+    __COMPONENT_TYPE(U8),
+    __COMPONENT_TYPE(U16),
+    __COMPONENT_TYPE(U32),
+    __COMPONENT_TYPE(U64),
+
+    // Floating point types.
+    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E5M2),
+    __COMPONENT_TYPE(F16),
+    __COMPONENT_TYPE(F32),
+    __COMPONENT_TYPE(F64),
   };
 };
 using ComponentEnum = ComponentType::ComponentEnum;
@@ -1607,6 +1732,8 @@ class Matrix {
   // packed in each scalar value.
   static const uint ElementsPerScalar =
       __detail::ComponentTypeTraits<ComponentTy>::ElementsPerScalar;
+  static const bool IsNativeScalar =
+      __detail::ComponentTypeTraits<ComponentTy>::IsNativeScalar;
 
   template <ComponentEnum NewCompTy, MatrixUseEnum NewUse = Use,
             bool Transpose = false>
@@ -1627,13 +1754,21 @@ class Matrix {
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
 
-  uint Length();
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint>::type
+  Length();
 
-  uint2 GetCoordinate(uint);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint2>::type
+  GetCoordinate(uint);
 
-  ElementType Get(uint);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, ElementType>::type
+  Get(uint);
 
-  void Set(uint, ElementType);
+  template<ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, void>::type
+  Set(uint, ElementType);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
