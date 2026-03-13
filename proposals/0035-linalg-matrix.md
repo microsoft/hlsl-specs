@@ -66,9 +66,28 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
 };
 
+template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
+vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+       __detail::DstN<DestTy, OriginTy, N>::Value>
+Convert(vector<T, N> Vec) {
+  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+         __detail::DstN<DestTy, OriginTy, N>::Value>
+      Result;
+  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  return Result;
+}
+
 template <ComponentEnum DT, typename T, int N>
 InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
+  return IV;
+}
+
+template <ComponentEnum DT, ComponentEnum OriginTy, typename T, int N>
+InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT>
+MakeInterpretedVector(vector<T, N> Vec) {
+  InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT> IV = {
+      Convert<DT, OriginTy>(Vec)};
   return IV;
 }
 
@@ -320,6 +339,18 @@ void CoopVec() {
       MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
       MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+
+  vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+
+  // This example creates an interpreted vector where the data needs to be
+  // converted from a source type to a destination type.
+  vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
+  vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
+      MatA,
+      MakeInterpretedVector<ComponentType::F8_E4M3, ComponentType::U32>(
+          SomeData2),
+      MemBias);
 #endif
 }
 ```
@@ -670,6 +701,12 @@ __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::I64, int64_t)
 __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::U64, uint64_t)
 __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::F64, double)
 
+template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
+  static const int Value =
+      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar) /
+      ComponentTypeTraits<DstTy>::ElementsPerScalar;
+};
+
 } // namespace __detail
 ```
 
@@ -677,6 +714,23 @@ The `linalg::__detail::ComponentTypeTraits` struct is provided as an
 implementation detail to enable mapping `ComponentType` values to their
 native HLSL element types and differentiating between types that have native
 scalar support.
+
+#### linalg::Convert
+
+```c++
+template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
+vector<typename __detail::ComponentTypeTraits<DT>::Type,
+       __detail::DstN<DT, OriginTy, N>::Value>
+linalg::Convert(vector<T, N> Vec);
+```
+
+Converts a vector of date interpreted as the `OriginTy` to a vector of data in
+the `DestTy`. If the `OriginTy` is a native HLSL type, it must match the type of
+the input vector.
+
+The conversions are applied following the documented [conversion
+rules](#data-conversion-rules). **These rules are different** from the standard
+HLSL type casting rules, and they apply to native and non-native types.
 
 #### Matrix::Cast
 
@@ -1482,6 +1536,43 @@ Validation will ensure that:
 * The element type of vector A and vector B must be the same.
 * The matrix output type must be `Thread` scope.
 
+```llvm
+declare <[NUMo] x [TYo]> @dx.op.linAlgConvert.v[NUMo][TYo].v[NUMi][TYi](
+  immarg i32,                         ; opcode
+  <[NUMi] x [TYi]>,                   ; input vector
+  immarg i32,                         ; input interpretation type (DXIL::ComponentType)
+  immarg i32                          ; output interpretation type (DXIL::ComponentType)
+)
+```
+
+Converts an input vector containing data of the input interpretation type to a
+vector containing data of the output interpretation type following the
+documented [conversion rules](#data-conversion-rules).
+
+#### Data Conversion Rules
+
+All APIs introduced in this specification which may apply conversions shall obey
+these conversion rules.
+
+If the source and destination types are integer types, and the destination type
+can exactly represent the source value, the value is preserved; otherwise the
+result is saturated.
+
+> Note: this is different from the normal conversion rules for HLSL native data
+> types!
+
+If the source and destination types are floating point types, and the
+destination type can exactly represent the source value, the result is the exact
+value; otherwise the conversion is a best-approximation of the source value and
+is implementaiton-defined.
+
+If the source is an integer type and the destination is a floating point type
+the result is a _round to nearest ties to even_ (RTNE) conversion.
+
+If the source type is a floating point type and the destination is an integer
+type the conversion is a _round to nearest ties to even_ (RTNE) saturating
+conversion.
+
 #### Bounds Checking Behavior
 
 The `@dx.op.linAlgMatrixLoadFromDescriptor` operation loads data from a
@@ -1540,7 +1631,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/MsKxn6zej)
+[Compiler Explorer](https://godbolt.org/z/qcevqz1z8)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1615,7 +1706,7 @@ enum class ComponentType : uint32_t {
 
   LastEntry
 };
-}
+} // namespace dxil
 
 namespace dx {
 
@@ -1704,6 +1795,12 @@ __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::I64, int64_t)
 __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::U64, uint64_t)
 __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::F64, double)
 
+template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
+  static const int Value =
+      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar) /
+      ComponentTypeTraits<DstTy>::ElementsPerScalar;
+};
+
 } // namespace __detail
 
 template <ComponentEnum ElementType, uint DimA> struct VectorRef {
@@ -1718,9 +1815,28 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
 };
 
+template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
+vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+       __detail::DstN<DestTy, OriginTy, N>::Value>
+Convert(vector<T, N> Vec) {
+  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+         __detail::DstN<DestTy, OriginTy, N>::Value>
+      Result;
+  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  return Result;
+}
+
 template <ComponentEnum DT, typename T, int N>
 InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
+  return IV;
+}
+
+template <ComponentEnum DT, ComponentEnum OriginTy, typename T, int N>
+InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT>
+MakeInterpretedVector(vector<T, N> Vec) {
+  InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT> IV = {
+      Convert<DT, OriginTy>(Vec)};
   return IV;
 }
 
@@ -1754,21 +1870,22 @@ class Matrix {
   Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint>::type
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           uint>::type
   Length();
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint2>::type
-  GetCoordinate(uint);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           uint2>::type GetCoordinate(uint);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, ElementType>::type
-  Get(uint);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           ElementType>::type Get(uint);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, void>::type
-  Set(uint, ElementType);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           void>::type Set(uint, ElementType);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
@@ -1964,6 +2081,18 @@ void CoopVec() {
       MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
       MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+
+  vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+
+  // This example creates an interpreted vector where the data needs to be
+  // converted from a source type to a destination type.
+  vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
+  vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
+      MatA,
+      MakeInterpretedVector<ComponentType::F8_E4M3, ComponentType::U32>(
+          SomeData2),
+      MemBias);
 #endif
 }
 
@@ -1976,8 +2105,7 @@ void OuterProdAccum() {
 
   vector<float16_t, 16> VecA = (vector<float16_t, 16>)0;
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
-  MatrixAccumTy MatAcc =
-      OuterProduct<ComponentType::F16>(VecA, VecB);
+  MatrixAccumTy MatAcc = OuterProduct<ComponentType::F16>(VecA, VecB);
 
   MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
