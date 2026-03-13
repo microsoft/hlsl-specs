@@ -403,9 +403,14 @@ There are three supported matrix scopes: `Thread`, `Wave`, and `ThreadGroup`.
 
 Operations are categorized by their scope requirements. Some operations require
 uniform scope matrices (`Wave` or`ThreadGroup`), while others can operate on
-non-uniform (`Thread`) scope matrices. Operations that support non-uniform
-scope also support uniform scopes.  There may be significant performance
-benefits when using uniform scope matrices.
+non-uniform (`Thread`) scope matrices. Operations must be called from HLSL under
+control flow that is _at least_ as uniform as the matrix scope. `Thread`-scope
+may be called in non-uniform control flow, `Wave`-scope operations must be
+called in `Wave`-uniform control flow, and `ThreadGroup`-scope operations must
+be called in `ThreadGroup`-uniform control flow. Operations implicitly
+synchronize execution across all threads in the matrix's scope. Calling an
+operation from control flow that is not uniform across all participating threads
+is undefined behavior.
 
 When using `ThreadGroup` scope matrices, explicit barriers are required only when
 there are actual cross-thread dependencies, such as when multiple threads
@@ -754,6 +759,9 @@ represents the row or column stride in bytes. For the `Load` operations on
 `groupshared` arrays, the `Stride` argument is the count of elements in the
 `groupshared` array.
 
+Reads from memory through `Load` functions are not atomic and may require
+explicit synchronization.
+
 #### Matrix::Length
 
 ```c++
@@ -854,6 +862,9 @@ For the `Store` operations on `[RW]ByteAddressBuffers`, the `Stride` argument
 represents the row or column stride in bytes. For the `Store` operations on
 `groupshared` arrays, the `Stride` argument is the count of elements in the
 `groupshared` array.
+
+Writes to memory through `Store` functions are not atomic and may require
+explicit synchronization.
 
 #### Matrix::InterlockedAccumulate
 
