@@ -643,12 +643,14 @@ namespace.
 namespace __detail {
 template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
+  static const bool IsNativeScalar = false;
   static const uint ElementsPerScalar = 4;
 };
 
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
   template <> struct ComponentTypeTraits<enum_val> {                           \
     using Type = type;                                                         \
+    static const bool IsNativeScalar = true;                                   \
     static const uint ElementsPerScalar = 1;                                   \
   };
 
@@ -1536,7 +1538,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/9bM85rPEa)
+[Compiler Explorer](https://godbolt.org/z/Ynon66b9T)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1676,12 +1678,14 @@ using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
 namespace __detail {
 template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
+  static const bool IsNativeScalar = false;
   static const uint ElementsPerScalar = 4;
 };
 
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
   template <> struct ComponentTypeTraits<enum_val> {                           \
     using Type = type;                                                         \
+    static const bool IsNativeScalar = true;                                   \
     static const uint ElementsPerScalar = 1;                                   \
   };
 
@@ -1970,6 +1974,6 @@ void OuterProdAccum() {
   MatrixAccumTy MatAcc =
       OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0);
+  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
 }
 ```
