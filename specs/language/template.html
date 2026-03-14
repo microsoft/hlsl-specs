@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en-GB-oxendict"></html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+
+    <!-- <link rel="stylesheet" type="text/css" href="template.css" /> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <meta name="generator" content="pandoc" />
+
+  <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+$for(css)$
+  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+$endfor$
+$if(math)$
+  $math$
+$endif$
+
+<a href="$top.url$" accesskey="t" rel="top">
+<img
+  src="https://microsoft.github.io/hlsl-specs/resources/HLSL.png"
+  class="logo"
+  width="128"
+/>
+</a>
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+
+  $if(title)$
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <span class="doc-title">$title$</span>
+    </div>
+  </nav>
+  $endif$
+  <div class="container">
+    <div class="row">
+
+      <div id="$idprefix$toc" class="col-md-3">
+        <div class="well toc">
+
+        $table-of-contents$
+
+        </div>
+      </div>
+
+      <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var toc = document.querySelector('.toc');
+        if(!toc) return;
+        toc.querySelectorAll('li').forEach(function(li){
+          var childUL = li.querySelector('ul');
+          if(childUL){
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'toc-toggle';
+            toggle.setAttribute('aria-expanded','false');
+            toggle.innerHTML = '\u25B8';
+            toggle.addEventListener('click', function(e){
+              e.preventDefault();
+              li.classList.toggle('expanded');
+              var expanded = li.classList.contains('expanded');
+              toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            });
+            var firstLink = li.querySelector('a');
+            if(firstLink) li.insertBefore(toggle, firstLink);
+            else li.insertBefore(toggle, li.firstChild);
+          }
+        });
+      });
+      </script>
+
+      <div id="content" class="col-md-9">
+
+      $for(include-before)$
+      $include-before$
+      $endfor$
+
+      <nav id="sitenav">
+      <div class="sitenav">
+      <span class="navlink">
+      $if(next.url)$
+      <span class="navlink-label">Next:</span> <a href="$next.url$" accesskey="n" rel="next">$next.title$</a>
+      $endif$
+      </span>
+      <span class="navlink">
+      $if(previous.url)$
+      <span class="navlink-label">Previous:</span> <a href="$previous.url$" accesskey="p" rel="previous">$previous.title$</a>
+      $endif$
+      </span>
+      </div>
+      </nav>
+
+      $if(body)$
+      $body$
+      $else$
+      <!--- The text below shows on the main index page, but not any of the
+        chapters. -->
+      <h1 class="title">$title$</h1>
+      <h2 class="subtitle">Produced by Ecma International TC57</h2>
+      $if(date)$
+      Generated on $date$.
+      $endif$
+
+      <div id="metadata-block">
+  <h3>About this Specification</h3>
+  <p>This site contains the current working draft of the specification for the
+  High Level Shading Language (HLSL). This site is built from the development
+  sources in the <a href="https://github.com/hlsl-tc57/tc57">TC57 GitHub
+  repository</a>, which includes all specification text proposed for the next
+  edition of the specification.</p>
+  </div>
+
+      $endif$
+      $for(include-after)$
+      $include-after$
+      $endfor$
+      </div>
+    </div>
+  </div>
+</body>
+</html>
