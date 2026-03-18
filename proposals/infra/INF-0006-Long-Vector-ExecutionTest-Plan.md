@@ -92,7 +92,7 @@ We break coverage down into five test categories.
 Testing will cover the following vector element data types:
 
 * bool, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float16_t,
-float32_t, float64_t, packed_int16_t, and packed_uint16_t.
+float32_t, and float64_t.
 
 **Note on packed data types:** `packed_int16_t` and `packed_uint16_t` do not
 require HLK coverage. Although tests for these types were originally planned
