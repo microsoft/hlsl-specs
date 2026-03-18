@@ -724,7 +724,7 @@ vector<typename __detail::ComponentTypeTraits<DT>::Type,
 linalg::Convert(vector<T, N> Vec);
 ```
 
-Converts a vector of date interpreted as the `OriginTy` to a vector of data in
+Converts a vector of data interpreted as the `OriginTy` to a vector of data in
 the `DestTy`. If the `OriginTy` is a native HLSL type, it must match the type of
 the input vector.
 
