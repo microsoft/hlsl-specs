@@ -66,29 +66,21 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
 };
 
-template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-       __detail::DstN<DestTy, OriginTy, N>::Value>
-Convert(vector<T, N> Vec) {
-  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-         __detail::DstN<DestTy, OriginTy, N>::Value>
-      Result;
-  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
-  return Result;
-}
-
 template <ComponentEnum DT, typename T, int N>
 InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
-template <ComponentEnum DT, ComponentEnum OriginTy, typename T, int N>
-InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT>
-MakeInterpretedVector(vector<T, N> Vec) {
-  InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT> IV = {
-      Convert<DT, OriginTy>(Vec)};
-  return IV;
+template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
+InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
+Convert(vector<T, N> Vec) {
+  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+         __detail::DstN<DestTy, OriginTy, N>::Value>
+      Result;
+  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  return MakeInterpretedVector<DestTy>(Result);
 }
 
 template <ComponentEnum ComponentTy, SIZE_TYPE M, SIZE_TYPE N,
@@ -198,8 +190,8 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
 
 MatrixUseEnum AccumulatorLayout();
 
-template <ComponentEnum OutTy, ComponentEnum ATy,
-          ComponentEnum BTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
+          SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
@@ -209,8 +201,8 @@ Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
 Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave>,
          const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::Wave>);
 
-template <ComponentEnum OutTy, ComponentEnum ATy,
-          ComponentEnum BTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
+template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
+          SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
 Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
          const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
@@ -226,13 +218,15 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, M> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                               vector<InputElTy, K>);
+vector<OutputElTy, K>
+    Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+             vector<InputElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                                  vector<InputElTy, M>, vector<BiasElTy, K>);
+vector<OutputElTy, K>
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                vector<InputElTy, M>, vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
@@ -344,9 +338,7 @@ void CoopVec() {
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA,
-      MakeInterpretedVector<ComponentType::F8_E4M3, ComponentType::U32>(
-          SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
@@ -1033,11 +1025,11 @@ type and takes arguments with potentially mismatched element types.
 #### linalg::Multiply(Matrix, vector)
 
 ``` c++
-template <typename OutputElTy, typename InputElTy, uint M, uint K,
-          ComponentType MatrixDT>
+template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
+          ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    linalg::Multiply(Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread>,
-                     vector<InputElTy, M>);
+linalg::Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                 vector<InputElTy, M>);
 ```
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
@@ -1063,12 +1055,11 @@ parameter for the output matrix element type.
 #### linalg::MultiplyAdd(Matrix, vector, vector)
 
 ``` c++
-template <typename OutputElTy, typename InputElTy, typename BiasElTy, uint M,
-          uint K, ComponentType MatrixDT>
+template <typename OutputElTy, typename InputElTy, typename BiasElTy,
+          SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                        vector<InputElTy, M>,
-                        vector<BiasElTy, K>);
+linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                    vector<InputElTy, M>, vector<BiasElTy, K>);
 ```
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
@@ -1813,29 +1804,21 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
 };
 
-template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-       __detail::DstN<DestTy, OriginTy, N>::Value>
-Convert(vector<T, N> Vec) {
-  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-         __detail::DstN<DestTy, OriginTy, N>::Value>
-      Result;
-  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
-  return Result;
-}
-
 template <ComponentEnum DT, typename T, int N>
 InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
-template <ComponentEnum DT, ComponentEnum OriginTy, typename T, int N>
-InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT>
-MakeInterpretedVector(vector<T, N> Vec) {
-  InterpretedVector<T, __detail::DstN<DT, OriginTy, N>::Value, DT> IV = {
-      Convert<DT, OriginTy>(Vec)};
-  return IV;
+template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
+InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
+Convert(vector<T, N> Vec) {
+  vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+         __detail::DstN<DestTy, OriginTy, N>::Value>
+      Result;
+  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  return MakeInterpretedVector<DestTy>(Result);
 }
 
 template <ComponentEnum ComponentTy, SIZE_TYPE M, SIZE_TYPE N,
@@ -1974,13 +1957,15 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, K> Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                               vector<InputElTy, M>);
+vector<OutputElTy, K>
+    Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+             vector<InputElTy, M>);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K> MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                                  vector<InputElTy, M>, vector<BiasElTy, K>);
+vector<OutputElTy, K>
+    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
+                vector<InputElTy, M>, vector<BiasElTy, K>);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
@@ -2084,9 +2069,7 @@ void CoopVec() {
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA,
-      MakeInterpretedVector<ComponentType::F8_E4M3, ComponentType::U32>(
-          SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
