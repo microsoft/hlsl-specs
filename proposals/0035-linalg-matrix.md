@@ -213,7 +213,7 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
          const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
 // Cooperative Vector Replacement API
-// Cooperative Vector operates on per-thread vectors multiplying against B
+// Cooperative Vector operates on per-thread vectors multiplying against A
 // matrices with thread scope.
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
