@@ -2,7 +2,7 @@
 
 ## Proposals & Specs
 
-Most of the proposals in this repo are be candidates for standardization. For
+Most of the proposals in this repo are candidates for standardization. For
 this reason, the proposal / specification content in this repo need to conform
 to the [Guidance on use of AI for ISO
 committees](https://www.iso.org/files/live/sites/isoorg/files/developing_standards/who_develops_standards/docs/use
