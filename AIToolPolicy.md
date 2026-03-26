@@ -2,11 +2,11 @@
 
 ## Proposals & Specs
 
-Most of the proposals in this repo are candidates for standardization. For
-this reason, the proposal / specification content in this repo needs to conform
-to the [Guidance on use of AI for ISO
-committees](https://www.iso.org/files/live/sites/isoorg/files/developing_standards/who_develops_standards/docs/use
-of AI.pdf).  In particular: 
+Most of the proposals in this repo are candidates for standardization. For this
+reason, the proposal / specification content in this repo needs to conform to
+the [Guidance on use of AI for ISO
+committees](https://www.iso.org/files/live/sites/isoorg/files/developing_standards/who_develops_standards/docs/use%20of%20AI.pdf).
+In particular: 
 
 * Do not use images or text created by generative AI in any ISO content, either
 internally or externally.
@@ -67,7 +67,7 @@ opened to merge it into upstream. Rationale:
   repo, agents are no different. 
 * We shouldn't be spamming people watching the main repo with the agent's work.
 * As you're responsible for the work copilot is doing, the PR into upstream
-  should come from you, not from copilot. 
+  must come from you, not from copilot. 
 
 Note that cloud agents are only able to build and test on Linux, and this
 affects the sort of work an agent can do.
