@@ -1701,42 +1701,367 @@ per-element bounds checking only converting the out of bounds stores to no-ops.
 > Note: bounds checking is not required for reads and writes to root descriptors
 > as D3D does not attach dimensions to root descriptors.
 
-#### Pipeline State Validation Metadata
+### Dxil Runtime Metadata
 
-Shader Model 6.10 will introduce a version 4 of the Pipeline
-State Validation RuntimeInfo structure. A new 32-bit unsigned integer
-`LinalgMatrixUses` will count the number of `MatrixUse` objects appended after
-the signature output vectors (presently the last data at the end of `PSV0` for
-version 3).
+A new feature info flag is added to SFI0:
 
-The `MatrixUse` object is defined:
+| Tag           | Bit | Value       | Description                     |
+|---------------|-----|-------------|---------------------------------|
+| LinearAlgebra | 33  | 0x200000000 | Indicates use of linalg feature |
 
-```c
-struct MatrixUse {
-  uint32_t Dimensions[3]; // M, N, K
-  uint8_t Scope;
-  uint8_t OperandType;
-  uint8_t ResultType;
-  uint8_t RESERVED; // unused but reserved for padding/alignment.
-  uint32_t Flags; // do we need this?
+In DxilConstants.h:
+
+```cpp
+const uint64_t ShaderFeatureInfo_LinearAlgebra = 0x200000000;
+```
+
+In addition to the feature flag, detailed information about the usage of linalg
+matrix types and operations is gathered if the program uses linalg matrix types
+or operations outside of the required Tier 1 feature set.
+
+This information is required by the runtime to verify compatibility with a given
+device. Depending on whether the target is a shader or a library,  this
+information is encoded in either the Pipeline State Validation (PSV0) or the
+Dxil Library Runtime Data (RDAT) DXIL container part. The following sections
+describe the proposed encoding of this information for each of these container
+parts.
+
+For each of these parts, usage information is gathered in a similar way, so this
+common gathering process is described first.
+
+This extended usage information is only captured for usage outside the required
+Tier 1 feature set.
+
+Basic process:
+
+* Iterate over specific LinAlg DXIL op calls.
+* If operation is outside minimum requirements, gather and merge detailed usage
+  information.
+
+Extended usage information is gathered for the following operation groups:
+
+* `ThreadVectorMatrixMultiply`
+  * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather shapes and
+    types.
+  * Matrix operand must be `MatrixLoadFromDescriptor` for transposed flag.
+* `WaveMatrixMultiply`/`ThreadGroupMatrixMultiply`
+  * Iterate `LinAlgMatrixMultiply`/`LinAlgMatrixMultiplyAccumulate` calls and
+    gather shapes and types.
+* `OuterProduct`
+  * Iterate `LinAlgMatrixOuterProduct` calls and gather types.
+* `AccumulateStore`
+  * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather type and
+    layout for transposed flag.
+
+Shape merging rules:
+
+* A shape can be merged with an existing shape if all but one dimension matches,
+  and the differing dimension is a factor of the existing shape's corresponding
+  dimension. For example, a 32x24x16 shape can be merged with an existing
+  32x8x16 shape. Only the smaller shape needs to be recorded.
+* Merging can only occur within the same operation, scope, and component type
+  combination.
+* If, according to Tier 1 requirements, the shape merges with the minimum
+  required shape for a required operation/scope/type combination, it can be
+  considered as fitting within the minimum requirements, and need not be
+  recorded into extended usage data.
+
+Open questions:
+
+1. Do we need to gather more usage information for operations other than the
+   ones listed above when the matrix isn't captured by one of these operations?
+2. Do we need to capture component conversions with CopyConvertMatrix?
+
+#### Pipeline State Validation (PSV0)
+
+> As with all PSV0 content, values are stored in Little Endian format, and
+> record structure sizes and strides are 4-byte aligned.
+
+Shader Model 6.10 will introduce a version 4 of the Pipeline State Validation
+RuntimeInfo structure. The structure layout will extend the previous main
+structure, with the following new fields:
+
+```cpp
+enum class PSVRuntimeInfo4Flag : uint32_t {
+  None = 0x00000000,
+  // Indicates use of LinAlg operations beyond the Tier 1 required set, thus
+  // the presence of the PSVLinAlgRuntimeInfo structure with usage details.
+  LinAlgRuntimeInfoPresent = 0x00000001,
+};
+
+struct PSVRuntimeInfo4 : public PSVRuntimeInfo3 {
+  ... // previous fields added in SM 6.10
+  uint32_t Flags; // PSVRuntimeInfo4Flag
 };
 ```
 
-This object will encode each matrix shape and element type as used by the DXIL
-operations in the `linAlgMatrixMultiply`, `linAlgMatrixMultiplyAccumulate` and
-`linAlgMatVecMulAdd` opcode classes.
+Extended usage information structures and enums:
 
-The Scope field will encode one of the values defined in the [`DXILMatrixScope`
-enumeration](#dxil-enumerations).
+```cpp
+struct PSVLinAlgRuntimeInfo0 {
+  // Presence of each table indicated by non-zero count.
+  // Tables are serialized in this order, with each starting with the record
+  // stride in bytes, followed by the records.
+  uint32_t MatrixOperationShapeCount;
+  uint32_t ThreadVectorMatrixMultiplyCount;
+  uint32_t WaveMatrixMultiplyCount;
+  uint32_t ThreadGroupMatrixMultiplyCount;
+  uint32_t OuterProductCount;
+  uint32_t AccumulateStoreCount;
+};
 
-The `OperandType` and `ResultType` fields will encode one of the values defined
-in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
+struct PSVLinAlgMatrixOperationShape0 {
+  uint32_t M; // Rows in matrix A
+  uint32_t N; // Columns in matrix B
+  uint32_t K; // Columns in matrix A / Rows in matrix B / Unused (0)
+};
 
-> Open questions:
-> 1) Do we need the M and N dimensions or just the K dimension?
-> 2) Do we need both operand types, or should we expect the operands to be the
->    same type?
-> 3) What flags do we need?
+struct PSVLinAlgMatrixShapeArrayReference {
+  uint32_t ShapesIndex; // Index into SemanticIndexTable where array of indexes
+                        // into LinAlgMatrixOperationShape table is located
+  uint32_t Count;
+};
+
+enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
+  None = 0x00000000,
+  // Whether the matrix operand is loaded as transposed:
+  MatrixTransposed = 0x00000001,
+};
+
+struct PSVLinAlgThreadVectorMatrixMultiply0 {
+  // Do we need shapes? If so, K would be unused (0)
+  PSVLinAlgMatrixShapeArrayReference OperationShapes;
+  uint8_t ResultType;
+  uint8_t MatrixType;
+  uint8_t VectorInputType;
+  // For Bias, 0 could mean unused or same as ResultType, since bias is
+  // optional, and supporting a bias type that's the same as a supported
+  // ResultType is required.
+  uint8_t BiasInputType;
+  uint8_t Flags; // PSVLinAlgThreadVectorMatrixMultiplyFlag
+  uint8_t Reserved[3];
+};
+
+struct PSVLinAlgWaveMatrixMultiply0 {
+  PSVLinAlgMatrixShapeArrayReference OperationShapes;
+  uint8_t AccumulatorType;
+  uint8_t MatrixAType;
+  uint8_t MatrixBType;
+  uint8_t Reserved;
+};
+
+// Since ThreadGroup structure matches Wave structure, these could be shared if
+// we want, but would rather do that after eliminating the possibility that they
+// could differ for final structures.
+struct PSVLinAlgThreadGroupMatrixMultiply0 {
+  PSVLinAlgMatrixShapeArrayReference OperationShapes;
+  uint8_t AccumulatorType;
+  uint8_t MatrixAType;
+  uint8_t MatrixBType;
+  uint8_t Reserved;
+};
+
+struct PSVLinAlgOuterProduct0 {
+  uint8_t ResultType;
+  uint8_t VectorInputType;
+  uint8_t Reserved[2];
+};
+
+enum class PSVLinAlgAccumulateStoreFlag : uint8_t {
+  None = 0x00000000,
+  // Whether matrix is stored as transposed in an accumulate-store operation:
+  MatrixTransposed = 0x00000001,
+};
+
+struct PSVLinAlgAccumulateStore0 {
+  uint8_t AccumulatorType;
+  uint8_t Flags; // PSVLinAlgAccumulateStoreFlag
+  uint8_t Reserved[2];
+};
+```
+
+The following pseudocode describes the layout of additional PSV version 4 data
+following the end of the PSV version 3 data.
+
+This follows common PSV0 conventions. The `N` at the end of record names denotes
+a record version (starting at `0`), that fits in the specified record size.
+Records may be extended in the future by adding fields to the end if needed. The
+size used by each record instance is indicated by a separate size field
+preceding instances of the record. Record counts come from the
+PSVLinAlgRuntimeInfo0 record.
+
+* If PSV version 4 and `LinAlgRuntimeInfoPresent` flag set:
+  * `uint32_t LinAlgRuntimeInfoSize`
+  * `(PSVLinAlgRuntimeInfoN) char[LinAlgRuntimeInfoSize]`
+  * If `MatrixOperationShapeCount > 0`:
+    * `uint32_t LinAlgMatrixOperationShapeSize`
+    * `{ (PSVLinAlgMatrixOperationShapeN) char[LinAlgMatrixOperationShapeSize] } * LinAlgMatrixOperationShapeCount`
+  * If `ThreadVectorMatrixMultiplyCount > 0`:
+    * `uint32_t LinAlgThreadVectorMatrixMultiplySize`
+    * `{ (PSVLinAlgThreadVectorMatrixMultiplyN) char[LinAlgThreadVectorMatrixMultiplySize] } * ThreadVectorMatrixMultiplyCount`
+  * If `WaveMatrixMultiplyCount > 0`:
+    * `uint32_t LinAlgWaveMatrixMultiplySize`
+    * `{ (PSVLinAlgWaveMatrixMultiplyN) char[LinAlgWaveMatrixMultiplySize] } * WaveMatrixMultiplyCount`
+  * If `ThreadGroupMatrixMultiplyCount > 0`:
+    * `uint32_t LinAlgThreadGroupMatrixMultiplySize`
+    * `{ (PSVLinAlgThreadGroupMatrixMultiplyN) char[LinAlgThreadGroupMatrixMultiplySize] } * ThreadGroupMatrixMultiplyCount`
+  * If `OuterProductCount > 0`:
+    * `uint32_t LinAlgOuterProductSize`
+    * `{ (PSVLinAlgOuterProductN) char[LinAlgOuterProductSize] } * OuterProductCount`
+  * If `AccumulateStoreCount > 0`:
+    * `uint32_t LinAlgAccumulateStoreSize`
+    * `{ (PSVLinAlgAccumulateStoreN) char[LinAlgAccumulateStoreSize] } * AccumulateStoreCount`
+
+> TBD: Describe ordering and deduplication requirements for these PSV0 records.
+
+#### Dxil Library Runtime Data (RDAT)
+
+> As with all RDAT content, values are stored in Little Endian format, and
+> record structure sizes and strides are 4-byte aligned.
+
+The following part types are added to RDAT:
+
+```cpp
+enum class RuntimeDataPartType : uint32_t {
+  ...
+  ExtendedFunctionPropertiesTable = 12,
+  LinAlgMatrixOperationShapeTable = 13,
+  LinAlgThreadVectorMatrixMultiplyTable = 14,
+  LinAlgWaveMatrixMultiplyTable = 15,
+  LinAlgThreadGroupMatrixMultiplyTable = 16,
+  LinAlgOuterProductTable = 17,
+  LinAlgAccumulateStoreTable = 18,
+  ...
+};
+```
+
+Each new part type content follows the RDAT record table pattern, starting with
+`RecordCount`, then `RecordStride`, then the records, which take
+`RecordCount * RecordStride` bytes in total. `RecordStride` is 4-byte aligned
+and at least the size of the record structure defined.
+
+The following are record definitions associated with each new table type. Each
+record definition corresponds to the record format used in the associated PSV
+structure, with some adjustments to fit RDAT patterns.
+
+```cpp
+RDAT_ENUM_START(LinAlgThreadVectorMatrixMultiplyFlag, uint8_t)
+  RDAT_ENUM_VALUE(None, 0)
+  // The matrix operand is loaded as transposed:
+  RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
+RDAT_ENUM_END()
+
+RDAT_ENUM_START(LinAlgAccumulateStoreFlag, uint8_t)
+  RDAT_ENUM_VALUE(None, 0)
+  // The matrix is stored in transposed layout:
+  RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
+RDAT_ENUM_END()
+
+RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
+                  LinAlgMatrixOperationShapeTable)
+  RDAT_VALUE(uint32_t, M) // Rows in matrix A
+  RDAT_VALUE(uint32_t, N) // Columns in matrix B
+  RDAT_VALUE(uint32_t, K) // Columns in matrix A / Rows in matrix B
+RDAT_STRUCT_END()
+
+RDAT_STRUCT_TABLE(LinAlgThreadVectorMatrixMultiply,
+                  LinAlgThreadVectorMatrixMultiplyTable)
+  // Do we need shapes? If so, K would be unused (0)
+  RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, ResultType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, VectorInputType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, BiasInputType)
+  RDAT_FLAGS(uint8_t, LinAlgThreadVectorMatrixMultiplyFlag, Flags)
+RDAT_STRUCT_END()
+
+RDAT_STRUCT_TABLE(LinAlgWaveMatrixMultiply, LinAlgWaveMatrixMultiplyTable)
+  RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, AccumulatorType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixAType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixBType)
+RDAT_STRUCT_END()
+
+// Since ThreadGroup structure matches Wave structure, these could be shared if
+// we want, but would rather do that after eliminating the possibility that they
+// could differ for final structures.
+RDAT_STRUCT_TABLE(LinAlgThreadGroupMatrixMultiply,
+                  LinAlgThreadGroupMatrixMultiplyTable)
+  RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, AccumulatorType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixAType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixBType)
+RDAT_STRUCT_END()
+
+RDAT_STRUCT_TABLE(LinAlgOuterProduct, LinAlgOuterProductTable)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, ResultType)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, VectorInputType)
+RDAT_STRUCT_END()
+
+RDAT_STRUCT_TABLE(LinAlgAccumulateStore, LinAlgAccumulateStoreTable)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, AccumulatorType)
+  RDAT_FLAGS(uint8_t, LinAlgAccumulateStoreFlag, Flags)
+RDAT_STRUCT_END()
+
+// ------------ RuntimeDataFunctionInfo3 dependencies ------------
+
+RDAT_ENUM_START(FunctionPropertyType, uint32_t)
+  RDAT_ENUM_VALUE(Flags, 0)
+  RDAT_ENUM_VALUE(LinAlgThreadVectorMatrixMultiply, 1)
+#ifdef UNIFY_MATRIX_MULTIPLY_STRUCTURES
+  RDAT_ENUM_VALUE(LinAlgMatrixMultiply, 2)
+#else
+  RDAT_ENUM_VALUE(LinAlgWaveMatrixMultiply, 2)
+  RDAT_ENUM_VALUE(LinAlgThreadGroupMatrixMultiply, 3)
+#endif // UNIFY_MATRIX_MULTIPLY_STRUCTURES
+  RDAT_ENUM_VALUE(LinAlgOuterProduct, 4)
+  RDAT_ENUM_VALUE(LinAlgAccumulateStore, 5)
+RDAT_ENUM_END()
+
+RDAT_STRUCT_TABLE(ExtendedFunctionProperties, ExtendedFunctionPropertiesTable)
+  RDAT_ENUM(uint32_t, FunctionPropertyType, PropertyType)
+
+  RDAT_UNION()
+    RDAT_UNION_IF(Flags, getPropertyType() == FunctionPropertyType::Flags)
+      RDAT_VALUE(uint32_t, Flags)
+      RDAT_UNION_ELIF(
+          LinAlgThreadVectorMatrixMultiply,
+          getPropertyType() ==
+              FunctionPropertyType::LinAlgThreadVectorMatrixMultiply)
+      RDAT_RECORD_ARRAY_REF(LinAlgThreadVectorMatrixMultiply,
+                            LinAlgThreadVectorMatrixMultiplyArray)
+      RDAT_UNION_ELIF(LinAlgWaveMatrixMultiply,
+                      getPropertyType() ==
+                          FunctionPropertyType::LinAlgWaveMatrixMultiply)
+      RDAT_RECORD_ARRAY_REF(LinAlgWaveMatrixMultiply,
+                            LinAlgWaveMatrixMultiplyArray)
+      RDAT_UNION_ELIF(LinAlgThreadGroupMatrixMultiply,
+                      getPropertyType() ==
+                          FunctionPropertyType::LinAlgThreadGroupMatrixMultiply)
+      RDAT_RECORD_ARRAY_REF(LinAlgThreadGroupMatrixMultiply,
+                            LinAlgThreadGroupMatrixMultiplyArray)
+      RDAT_UNION_ELIF(LinAlgOuterProduct,
+                      getPropertyType() ==
+                          FunctionPropertyType::LinAlgOuterProduct)
+      RDAT_RECORD_ARRAY_REF(LinAlgOuterProduct, LinAlgOuterProductArray)
+      RDAT_UNION_ELIF(LinAlgAccumulateStore,
+                      getPropertyType() ==
+                          FunctionPropertyType::LinAlgAccumulateStore)
+      RDAT_RECORD_ARRAY_REF(LinAlgAccumulateStore, LinAlgAccumulateStoreArray)
+    RDAT_UNION_ENDIF()
+  RDAT_UNION_END()
+
+RDAT_STRUCT_END()
+
+// ------------ RuntimeDataFunctionInfo3 ------------
+
+RDAT_STRUCT_TABLE_DERIVED(RuntimeDataFunctionInfo3,
+                          RuntimeDataFunctionInfo2, FunctionTable)
+RDAT_RECORD_ARRAY_REF(ExtendedFunctionProperties, ExtendedProperties)
+RDAT_STRUCT_END()
+```
+
+> TBD: Describe ordering and deduplication requirements for these RDAT records.
 
 ## Appendix 1: HLSL Header
 
