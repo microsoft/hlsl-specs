@@ -79,7 +79,7 @@ Convert(vector<T, N> Vec) {
   vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
          __detail::DstN<DestTy, OriginTy, N>::Value>
       Result;
-  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  /* Do conversion somehow... */
   return MakeInterpretedVector<DestTy>(Result);
 }
 
@@ -708,8 +708,8 @@ scalar support.
 
 ```c++
 template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-vector<typename __detail::ComponentTypeTraits<DT>::Type,
-       __detail::DstN<DT, OriginTy, N>::Value>
+InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
 linalg::Convert(vector<T, N> Vec);
 ```
 
@@ -1537,6 +1537,20 @@ Converts an input vector containing data of the input interpretation type to a
 vector containing data of the output interpretation type following the
 documented [conversion rules](#data-conversion-rules).
 
+Validation will ensure that:
+* If the input interpretation type enum refers to a type that has a native DXIL
+  scalar representation the input vector type matches that scalar type,
+  ohterwise the input vector type should be `i32` as if storing 32-bit opaque
+  values.
+* If the output interpretation type enum refers to a type that has a native DXIL
+  scalar representation the output vector type matches that scalar type,
+  ohterwise the output vector type should be `i32` as if storing 32-bit opaque
+  values.
+* The output vector lenght must be equal to `NUMi` multiplied by number of
+  elements per scalar in the input interpretatation divided by the number of
+  elements per scalar in the output interpretation (see the `__detail::DstN`
+  template).
+
 #### Data Conversion Rules
 
 All APIs introduced in this specification which may apply conversions shall obey
@@ -1620,7 +1634,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/YqTvhhqar)
+[Compiler Explorer](https://godbolt.org/z/EWTrP56zj)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1817,7 +1831,7 @@ Convert(vector<T, N> Vec) {
   vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
          __detail::DstN<DestTy, OriginTy, N>::Value>
       Result;
-  /*__builtin_convert(Result, Vec, OriginTy, DestTy);*/
+  /* Do conversion somehow... */
   return MakeInterpretedVector<DestTy>(Result);
 }
 
