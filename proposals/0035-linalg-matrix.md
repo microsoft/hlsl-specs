@@ -1421,6 +1421,7 @@ Must be called from wave-uniform control flow.
 declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMul.v[NUMo][TYo].[MatTy].v[NUMi][TYi](
   immarg i32,                        ; opcode
   %dx.types.LinAlgMatrix<mangling>,  ; matrix A
+  immarg i1,                         ; is output signed
   <[NUMi] x [TYi]>,                  ; input vector
   immarg i32                         ; input interpretation type (DXIL::ComponentType)
 )
@@ -1435,11 +1436,14 @@ Validation will enforce that:
 * The input interpretation type must be one of the valid linalg component types
   specified in the list in the [LinAlg Component Types](#linalg-component-types)
   section.
+* The sign bit for output types should always be true if the output type is
+  a vector of native floating point types.
 
 ``` llvm
 declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMulAdd.v[NUMo][TYo].[MatTy].v[NUMi][TYi].v[NUMo][TYb](
   immarg i32,                         ; opcode
   %dx.types.LinAlgMatrix<mangling>,   ; matrix A
+  immarg i1,                          ; is output signed
   <[NUMi] x [TYi]>,                   ; input vector
   immarg i32,                         ; input interpretation type (DXIL::ComponentType)
   <[NUMo] x [TYb]>,                   ; bias vector
@@ -1457,6 +1461,8 @@ Validation will enforce that:
 * The input and bias interpretation type must be one of the valid linalg
   component types specified in the list in the
   [LinAlg Component Types](#linalg-component-types) section.
+* The sign bit for output types should always be true if the output type is
+  a vector of native floating point types.
 
 ```llvm
 declare void @dx.op.linAlgMatrixAccumulateToDescriptor.[MatTy](
