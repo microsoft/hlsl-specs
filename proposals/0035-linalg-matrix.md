@@ -64,17 +64,24 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
   static const ComponentEnum Interpretation = DT;
   static const SIZE_TYPE Size =
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
+  _Static_assert(!__detail::ComponentTypeTraits<DT>::EmulationAllowed,
+                 "Interpreted vectors may not be emulatable types");
 };
 
 template <ComponentEnum DT, typename T, int N>
-InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
+typename hlsl::enable_if<!__detail::ComponentTypeTraits<DT>::EmulationAllowed,
+                         InterpretedVector<T, N, DT> >::type
+MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
 template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
+typename hlsl::enable_if<
+    !__detail::ComponentTypeTraits<DestTy>::EmulationAllowed &&
+        !__detail::ComponentTypeTraits<OriginTy>::EmulationAllowed,
+    InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                      __detail::DstN<DestTy, OriginTy, N>::Value, DestTy> >::type
 Convert(vector<T, N> Vec) {
   vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
          __detail::DstN<DestTy, OriginTy, N>::Value>
@@ -673,6 +680,8 @@ template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
   static const bool IsNativeScalar = false;
   static const uint ElementsPerScalar = 4;
+  static const bool EmulationAllowed = CompTy == ComponentType::SoftF8_E4M3 ||
+                                       CompTy == ComponentType::SoftF8_E5M2;
 };
 
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
@@ -680,6 +689,7 @@ template <ComponentEnum CompTy> struct ComponentTypeTraits {
     using Type = type;                                                         \
     static const bool IsNativeScalar = true;                                   \
     static const uint ElementsPerScalar = 1;                                   \
+    static const bool EmulationAllowed = false;                                \
   };
 
 #if __HLSL_ENABLE_16_BIT
@@ -713,8 +723,11 @@ scalar support.
 
 ```c++
 template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
+typename hlsl::enable_if<
+    !__detail::ComponentTypeTraits<DestTy>::EmulationAllowed &&
+        !__detail::ComponentTypeTraits<OriginTy>::EmulationAllowed,
+    InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                      __detail::DstN<DestTy, OriginTy, N>::Value, DestTy> >::type
 linalg::Convert(vector<T, N> Vec);
 ```
 
@@ -1170,9 +1183,17 @@ of the valid linalg component types listed below:
 * `ComponentType::U64`
 * `ComponentType::F8_E4M3`
 * `ComponentType::F8_E5M2`
+* `ComponentType::SoftF8_E4M3` (allowed for `Thread`-scope only)
+* `ComponentType::SoftF8_E5M2` (allowed for `Thread`-scope only)
 * `ComponentType::F16`
 * `ComponentType::F32`
 * `ComponentType::F64`
+
+#### SoftF8 Types
+
+The new `SoftF8` types are fp8 in memory, but allow a driver to up-convert to
+higher precision types (generally fp16) for exectuion. These types are only
+valid as component types for thread scope matrices.
 
 #### Type Metadata
 
@@ -1567,6 +1588,8 @@ Validation will ensure that:
   elements per scalar in the input interpretatation divided by the number of
   elements per scalar in the output interpretation (see the `__detail::DstN`
   template).
+* Neither the input interpretation type nor the output interpretation type may
+  be `SoftF8_E4M3` or `SoftF8_E5M2`.
 
 #### Data Conversion Rules
 
@@ -1722,6 +1745,9 @@ enum class ComponentType : uint32_t {
   U8 = 20,
   F8_E4M3 = 21,
   F8_E5M2 = 22,
+  // Emulation-allowed FP8 types.
+  SoftF8_E4M3 = 23,
+  SoftF8_E5M2 = 24,
   // END
 
   LastEntry
@@ -1753,6 +1779,8 @@ struct ComponentType {
     // Floating point types.
     __COMPONENT_TYPE(F8_E4M3),
     __COMPONENT_TYPE(F8_E5M2),
+    __COMPONENT_TYPE(SoftF8_E4M3),
+    __COMPONENT_TYPE(SoftF8_E5M2),
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
     __COMPONENT_TYPE(F64),
@@ -1793,6 +1821,8 @@ template <ComponentEnum CompTy> struct ComponentTypeTraits {
   using Type = uint;
   static const bool IsNativeScalar = false;
   static const uint ElementsPerScalar = 4;
+  static const bool EmulationAllowed = CompTy == ComponentType::SoftF8_E4M3 ||
+                                       CompTy == ComponentType::SoftF8_E5M2;
 };
 
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
@@ -1800,6 +1830,7 @@ template <ComponentEnum CompTy> struct ComponentTypeTraits {
     using Type = type;                                                         \
     static const bool IsNativeScalar = true;                                   \
     static const uint ElementsPerScalar = 1;                                   \
+    static const bool EmulationAllowed = false;                                \
   };
 
 #if __HLSL_ENABLE_16_BIT
@@ -1833,17 +1864,24 @@ template <typename T, int N, ComponentEnum DT> struct InterpretedVector {
   static const ComponentEnum Interpretation = DT;
   static const SIZE_TYPE Size =
       __detail::ComponentTypeTraits<DT>::ElementsPerScalar * N;
+  _Static_assert(!__detail::ComponentTypeTraits<DT>::EmulationAllowed,
+                 "Interpreted vectors may not be emulatable types");
 };
 
 template <ComponentEnum DT, typename T, int N>
-InterpretedVector<T, N, DT> MakeInterpretedVector(vector<T, N> Vec) {
+typename hlsl::enable_if<!__detail::ComponentTypeTraits<DT>::EmulationAllowed,
+                         InterpretedVector<T, N, DT> >::type
+MakeInterpretedVector(vector<T, N> Vec) {
   InterpretedVector<T, N, DT> IV = {Vec};
   return IV;
 }
 
 template <ComponentEnum DestTy, ComponentEnum OriginTy, typename T, int N>
-InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
-                  __detail::DstN<DestTy, OriginTy, N>::Value, DestTy>
+typename hlsl::enable_if<
+    !__detail::ComponentTypeTraits<DestTy>::EmulationAllowed &&
+        !__detail::ComponentTypeTraits<OriginTy>::EmulationAllowed,
+    InterpretedVector<typename __detail::ComponentTypeTraits<DestTy>::Type,
+                      __detail::DstN<DestTy, OriginTy, N>::Value, DestTy> >::type
 Convert(vector<T, N> Vec) {
   vector<typename __detail::ComponentTypeTraits<DestTy>::Type,
          __detail::DstN<DestTy, OriginTy, N>::Value>
