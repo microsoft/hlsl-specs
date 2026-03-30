@@ -1546,13 +1546,13 @@ documented [conversion rules](#data-conversion-rules).
 Validation will ensure that:
 * If the input interpretation type enum refers to a type that has a native DXIL
   scalar representation the input vector type matches that scalar type,
-  ohterwise the input vector type should be `i32` as if storing 32-bit opaque
+  otherwise the input vector type should be `i32` as if storing 32-bit opaque
   values.
 * If the output interpretation type enum refers to a type that has a native DXIL
   scalar representation the output vector type matches that scalar type,
-  ohterwise the output vector type should be `i32` as if storing 32-bit opaque
+  otherwise the output vector type should be `i32` as if storing 32-bit opaque
   values.
-* The output vector lenght must be equal to `NUMi` multiplied by number of
+* The output vector length must be equal to `NUMi` multiplied by number of
   elements per scalar in the input interpretatation divided by the number of
   elements per scalar in the output interpretation (see the `__detail::DstN`
   template).
