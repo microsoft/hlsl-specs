@@ -1660,7 +1660,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/d3dsczPMj)
+[Compiler Explorer](https://godbolt.org/z/dGrfY1T69)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
