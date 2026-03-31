@@ -223,7 +223,7 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
          const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
 
 // Cooperative Vector Replacement API
-// Cooperative Vector operates on per-thread vectors multiplying against B
+// Cooperative Vector operates on per-thread vectors multiplying against A
 // matrices with thread scope.
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
@@ -621,7 +621,9 @@ struct MatrixLayout {
     RowMajor = 0,
     ColMajor = 1,
     MulOptimal = 2,
-    OuterProductOptimal = 3,
+    MulOptimalTranspose = 3,
+    OuterProductOptimal = 4,
+    OuterProductOptimalTranspose = 5,
   };
 };
 using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
@@ -808,6 +810,13 @@ type of the matrix a data conversion is applied on load.
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
 scope matrix.
+
+This operation permits loads from `RowMajor`, `ColumMajor` and `Optimal` layouts
+for Thread scope matrices, with an option to transpose the matrix by setting the
+`Layout` parameter to `MulOptimalTranspose` or `OuterProductOptimalTranspose`.
+Not all component types support transposing, it is implementation specific.
+Applications need to query the driver to determine if a matrix transpose is
+supported.
 
 For the `Load` operations on `[RW]ByteAddressBuffers`, the `Stride` argument
 represents the row or column stride in bytes. For the `Load` operations on
@@ -1669,7 +1678,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/EWTrP56zj)
+[Compiler Explorer](https://godbolt.org/z/dGrfY1T69)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1801,7 +1810,9 @@ struct MatrixLayout {
     RowMajor = 0,
     ColMajor = 1,
     MulOptimal = 2,
-    OuterProductOptimal = 3,
+    MulOptimalTranspose = 3,
+    OuterProductOptimal = 4,
+    OuterProductOptimalTranspose = 5,
   };
 };
 using MatrixLayoutEnum = MatrixLayout::MatrixLayoutEnum;
