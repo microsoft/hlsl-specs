@@ -150,7 +150,7 @@ class Matrix {
                         uint Align = sizeof(ElementType));
 
   template <typename T, MatrixUseEnum UseLocal = Use,
-            MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
+            MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
   typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
@@ -943,7 +943,7 @@ Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                               uint Align = sizeof(ElementType));
 
 template <typename T, MatrixUseEnum UseLocal = Use, 
-          MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
+          MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
 typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
@@ -1678,7 +1678,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/dGrfY1T69)
+[Compiler Explorer](https://godbolt.org/z/Peh4jxrx3)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1949,7 +1949,7 @@ class Matrix {
                         uint Align = sizeof(ElementType));
 
   template <typename T, MatrixUseEnum UseLocal = Use,
-            MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
+            MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
   typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
