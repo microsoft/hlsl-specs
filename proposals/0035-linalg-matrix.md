@@ -97,9 +97,11 @@ class Matrix {
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
 
-  template <typename T>
-  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
-  Load(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
+  template <typename T, SIZE_TYPE Size>
+  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
+                                 (M * N / ElementsPerScalar <= Size),
+                                 Matrix>::type
+  Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
 
   template<ComponentEnum LocalComp = ComponentTy>
@@ -136,12 +138,15 @@ class Matrix {
                         MatrixLayoutEnum Layout,
                         uint Align = sizeof(ElementType));
 
-  template <typename T, MatrixUseEnum UseLocal = Use>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               Use == MatrixUse::Accumulator && UseLocal == Use,
+  template <typename T, MatrixUseEnum UseLocal = Use,
+            MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
+  typename hlsl::enable_if<
+      hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
+          UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
+          Scope == MatrixScope::Wave && ScopeLocal == Scope,
                            void>::type
-  InterlockedAccumulate(/*groupshared*/ T Arr[], uint StartIdx, uint Stride,
-                        MatrixLayoutEnum Layout);
+  Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
+                              uint Stride, MatrixLayoutEnum Layout);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
@@ -168,11 +173,16 @@ template <ComponentEnum ComponentTy, SIZE_TYPE M, SIZE_TYPE N,
 class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
 
-  template <MatrixLayoutEnum Layout>
-  static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     uint Align = sizeof(ElementType));
+  template <MatrixLayoutEnum Layout, MatrixUseEnum UseLocal = Use>
+  static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
+                                  Matrix>::type
+  Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
+                              uint Align = sizeof(ElementType));
 
-  void InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
+  template <MatrixUseEnum UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                           void>::type
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                              uint Stride, MatrixLayoutEnum Layout,
                              uint Align = sizeof(ElementType));
 };
@@ -720,10 +730,10 @@ static Matrix Matrix::Load(RWByteAddressBuffer Res, uint StartOffset,
 // Not available on Thread scope matrices.
 template <typename T, SIZE_TYPE Size>
 static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                    (M * N / ElementsPerScalar <= Size),
+                                (M * N / ElementsPerScalar <= Size),
                                 Matrix>::type
-  Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
-       MatrixLayoutEnum Layout);
+Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
+      MatrixLayoutEnum Layout);
 ```
 
 The following table specifies the valid values for the `Layout` parameter
@@ -866,16 +876,21 @@ Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                               uint Stride, MatrixLayoutEnum Layout,
                               uint Align = sizeof(ElementType));
 
-template <typename T, MatrixUseEnum UseLocal = Use>
-  typename hlsl::enable_if<
+template <typename T, MatrixUseEnum UseLocal = Use, 
+          MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
+typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
-          UseLocal == Use && (M * N / ElementsPerScalar <= Size),
+          UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
+          Scope == MatrixScope::Wave && ScopeLocal == Scope,
                          void>::type
 Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
                               uint Stride, MatrixLayoutEnum Layout);
 
 // When Scope == Thread, the following overload is available:
-void Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
+template <MatrixUseEnum UseLocal = Use>
+typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                         void>::type
+Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                                    uint Align = sizeof(ElementType));
 ```
 
@@ -1752,7 +1767,7 @@ class Matrix {
 
   template <typename T, SIZE_TYPE Size>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                      (M * N / ElementsPerScalar <= Size),
+                                  (M * N / ElementsPerScalar <= Size),
                                   Matrix>::type
   Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
@@ -1791,13 +1806,15 @@ class Matrix {
                         MatrixLayoutEnum Layout,
                         uint Align = sizeof(ElementType));
 
-  template <typename T, MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
+  template <typename T, MatrixUseEnum UseLocal = Use,
+            MatrixScopeEnum ScopeLocal = Scope, SIZE_T Size>
   typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
-          UseLocal == Use && (M * N / ElementsPerScalar <= Size),
+          UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
+          Scope == MatrixScope::Wave && ScopeLocal == Scope,
                            void>::type
-  InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
-                        MatrixLayoutEnum Layout);
+  Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
+                              uint Stride, MatrixLayoutEnum Layout);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
@@ -1824,11 +1841,16 @@ template <ComponentEnum ComponentTy, SIZE_TYPE M, SIZE_TYPE N,
 class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   using ElementType = typename __detail::ComponentTypeTraits<ComponentTy>::Type;
 
-  template <MatrixLayoutEnum Layout>
-  static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     uint Align = sizeof(ElementType));
+  template <MatrixLayoutEnum Layout, MatrixUseEnum UseLocal = Use>
+  static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
+                                  Matrix>::type
+  Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
+                              uint Align = sizeof(ElementType));
 
-  void InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
+  template <MatrixUseEnum UseLocal = Use>
+  typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
+                           void>::type
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                              uint Stride, MatrixLayoutEnum Layout,
                              uint Align = sizeof(ElementType));
 };
@@ -1858,13 +1880,13 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> Matr
          const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
 
 // Cooperative Vector Replacement API
-// Cooperative Vector operates on per-thread vectors multiplying against B
+// Cooperative Vector operates on per-thread vectors multiplying against A
 // matrices with thread scope.
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, vector<OutputElTy, K> >::type
-Multiply(Matrix<MatrixDT, M, K, MatrixUse::B, MatrixScope::Thread> MatrixB,
+Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
          vector<InputElTy, K> Vec);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
