@@ -1192,7 +1192,7 @@ of the valid linalg component types listed below:
 #### SoftF8 Types
 
 The new `SoftF8` types are fp8 in memory, but allow a driver to up-convert to
-higher precision types (generally fp16) for exectuion. These types are only
+higher precision types (generally fp16) for execution. These types are only
 valid as component types for thread scope matrices.
 
 #### Type Metadata
