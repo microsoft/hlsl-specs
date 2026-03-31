@@ -145,8 +145,8 @@ class Matrix {
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
                            void>::type
-  Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
-                              uint Stride, MatrixLayoutEnum Layout);
+  InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
+                        MatrixLayoutEnum Layout);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
@@ -732,7 +732,7 @@ template <typename T, SIZE_TYPE Size>
 static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
                                 (M * N / ElementsPerScalar <= Size),
                                 Matrix>::type
-Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
+Matrix::Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
       MatrixLayoutEnum Layout);
 ```
 
@@ -1813,8 +1813,8 @@ class Matrix {
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
                            void>::type
-  Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
-                              uint Stride, MatrixLayoutEnum Layout);
+  InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
+                        MatrixLayoutEnum Layout);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
@@ -1845,7 +1845,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                              uint Align = sizeof(ElementType));
+                     uint Align = sizeof(ElementType));
 
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
