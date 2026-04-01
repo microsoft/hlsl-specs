@@ -328,7 +328,7 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
+  VectorRef<ComponentType::F8_E4M3FN, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
@@ -337,18 +337,18 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), NullBias);
 
   vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
 
   // This example creates an interpreted vector where the data needs to be
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
@@ -558,7 +558,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -589,7 +589,7 @@ struct ComponentType {
     __COMPONENT_TYPE(U64),
 
     // Floating point types.
-    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E4M3FN),
     __COMPONENT_TYPE(F8_E5M2),
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
@@ -1156,7 +1156,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -1195,7 +1195,7 @@ of the valid linalg component types listed below:
 * `ComponentType::U16`
 * `ComponentType::U32`
 * `ComponentType::U64`
-* `ComponentType::F8_E4M3`
+* `ComponentType::F8_E4M3FN`
 * `ComponentType::F8_E5M2`
 * `ComponentType::F16`
 * `ComponentType::F32`
@@ -1622,18 +1622,18 @@ conversion.
 #### FP8 Types
 
 This specification introduces two FP8 data formats which may be used with linear
-algebra objects. They are `F8_E4M3` and `F8_E5M2`, and they identify floating
+algebra objects. They are `F8_E4M3FN` and `F8_E5M2`, and they identify floating
 point formats composed of 8 bits with 4 exponent and 3 mantissa bits and 5
 exponent and 2 mantissa bits coorespondingly.
 
-|              | E4M3              | E5M2               |
-|--------------|-------------------|--------------------|
-|Exponent Bias | 7                 | 15                 |
-|Infinity      | N/A               | S.11111.00         |
-|NaN           | S.1111.111        | S.11111.{01,10,11} |
-|Zero          | S.0000.000        | S.00000.00         |
-|Max           | S.1111.110 (448)  | S.11110.11 (57344) |
-|Min           | S.0000.001 (2^-9) | S.00000.01 (2^-16) |
+|               | E4M3FN (finite)   | E5M2               |
+|---------------|-------------------|--------------------|
+| Exponent Bias | 7                 | 15                 |
+| Infinity      | N/A               | S.11111.00         |
+| NaN           | S.1111.111        | S.11111.{01,10,11} |
+| Zero          | S.0000.000        | S.00000.00         |
+| Max           | S.1111.110 (448)  | S.11110.11 (57344) |
+| Min           | S.0000.001 (2^-9) | S.00000.01 (2^-16) |
 
 ##### Emulating FP
 
@@ -1713,7 +1713,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/Peh4jxrx3)
+[Compiler Explorer](https://godbolt.org/z/qfWcWGzW8)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1782,7 +1782,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -1813,7 +1813,7 @@ struct ComponentType {
     __COMPONENT_TYPE(U64),
 
     // Floating point types.
-    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E4M3FN),
     __COMPONENT_TYPE(F8_E5M2),
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
@@ -2154,7 +2154,7 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
+  VectorRef<ComponentType::F8_E4M3FN, 16> MemBias = {MBuf,
                                                    /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
@@ -2163,18 +2163,18 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), NullBias);
 
   vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
 
   // This example creates an interpreted vector where the data needs to be
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
