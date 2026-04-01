@@ -942,7 +942,7 @@ Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                               uint Stride, MatrixLayoutEnum Layout,
                               uint Align = sizeof(ElementType));
 
-template <typename T, MatrixUseEnum UseLocal = Use, 
+template <typename T, MatrixUseEnum UseLocal = Use,
           MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
 typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
@@ -1238,7 +1238,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgFillMatrix.[MatTy].[TY](
 
 Fills a matrix with a scalar value. The scalar's type does not need to match the
 matrix component's type, a type conversion is applied following the rules
-documented in the [Conversions](#conversions) section.
+documented in the [Conversions](#data-conversion-rules) section.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
@@ -1287,7 +1287,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 
 Populates a matrix with data from a `groupshared` array. Data conversions
 between opaque matrices and groupshared memory are defined in the
-[Conversions](#conversions) section below.
+[Conversions](#data-conversion-rules) section below.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
@@ -1366,7 +1366,7 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
 ```
 
 Store a matrix to groupshared memory. Data conversions between opaque matrices
-and groupshared memory are defined in the [Conversions](#conversions) section
+and groupshared memory are defined in the [Conversions](#data-conversion-rules) section
 below.
 
 The validator will ensure that the group shared target memory is large enough
@@ -1541,7 +1541,7 @@ declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
 Accumulates a matrix to groupshared memory. This operation is only available for
 matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
 conversions between opaque matrices and groupshared memory are defined in the
-[Conversions](#conversions) section below.
+[Conversions](#data-conversion-rules) section below.
 
 The validator will ensure that the group shared target memory is large enough
 for the write.
@@ -1618,6 +1618,41 @@ the result is a _round to nearest ties to even_ (RTNE) conversion.
 If the source type is a floating point type and the destination is an integer
 type the conversion is a _round to nearest ties to even_ (RTNE) saturating
 conversion.
+
+#### FP8 Types
+
+This specification introduces two FP8 data formats which may be used with linear
+algebra objects. They are `F8_E4M3` and `F8_E5M2`, and they identify floating
+point formats composed of 8 bits with 4 exponent and 3 mantissa bits and 5
+exponent and 2 mantissa bits coorespondingly.
+
+|              | E4M3              | E5M2               |
+|--------------|-------------------|--------------------|
+|Exponent Bias | 7                 | 15                 |
+|Infinity      | N/A               | S.11111.00         |
+|NaN           | S.1111.111        | S.11111.{01,10,11} |
+|Zero          | S.0000.000        | S.00000.00         |
+|Max           | S.1111.110 (448)  | S.11110.11 (57344) |
+|Min           | S.0000.001 (2^-9) | S.00000.01 (2^-16) |
+
+##### Emulating FP
+
+The DirectX API specification requires that all implementations support both FP8
+formats for matrices, bias, and input vectors. If the target hardware does not
+support the used F8 type an implementation is allowed to convert to any other
+floating point format as long as the destination format can accurately represent
+all values of the format used in the shader's DXIL.
+
+If the driver sees a conversion to an F8 type that is not supported, and the
+result of that conversion is only used by linear algebra operations, the driver
+may eliminate the conversion or replace it with a conversion to any other
+floating point format as long as the new destination format can accurately
+represent all values of the format used in the shader's DXIL.
+
+> Note: Under emulation if a source value would be converted to a saturated
+> infinity (see: [conversion rules](#data-conversion-rules)) when converting to
+> an F8 type, but the source value can be represented accurately in the emulated
+> FP type, this may cause expected behavior differences.
 
 #### Bounds Checking Behavior
 
@@ -2065,7 +2100,7 @@ MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
 
 // Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread> 
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
     OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 } // namespace linalg
