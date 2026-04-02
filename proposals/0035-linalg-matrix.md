@@ -110,33 +110,37 @@ class Matrix {
 
   template <typename T, SIZE_TYPE Size>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                 (M * N / ElementsPerScalar <= Size),
-                                 Matrix>::type
+                                      (M * N / ElementsPerScalar <= Size),
+                                  Matrix>::type
   Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint>::type
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           uint>::type
   Length();
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, uint2>::type
-  GetCoordinate(uint);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           uint2>::type
+  GetCoordinate(uint Index);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, ElementType>::type
-  Get(uint);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           ElementType>::type
+  Get(uint Index);
 
-  template<ComponentEnum LocalComp = ComponentTy>
-  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar, void>::type
-  Set(uint, ElementType);
+  template <ComponentEnum LocalComp = ComponentTy>
+  typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
+                           void>::type
+  Set(uint Index, ElementType Value);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
 
   template <typename T, SIZE_TYPE Size>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               (M * N / ElementsPerScalar >= Size),
+                               (M * N / ElementsPerScalar <= Size),
                            void>::type
   Store(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
@@ -155,26 +159,26 @@ class Matrix {
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
-                           void>::type
+      void>::type
   InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<CompTy, M, N, MatrixUse::A, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::A, Scope> MatrixA);
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  Accumulate(const Matrix<CompTy, M, N, MatrixUse::B, Scope>);
+  Accumulate(const Matrix<CompTy, M, N, MatrixUse::B, Scope> MatrixB);
 
   template <ComponentEnum LHSTy, ComponentEnum RHSTy, SIZE_TYPE K,
             MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope>,
-                     const Matrix<RHSTy, K, N, MatrixUse::B, Scope>);
+  MultiplyAccumulate(const Matrix<LHSTy, M, K, MatrixUse::A, Scope> MatrixA,
+                     const Matrix<RHSTy, K, N, MatrixUse::B, Scope> MatrixB);
 };
 
 // Thread-scope Matrices are read-only. Using a template partial specialization
@@ -188,14 +192,14 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                              uint Align = sizeof(ElementType));
+       uint Align = sizeof(ElementType));
 
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
-                             uint Stride, MatrixLayoutEnum Layout,
-                             uint Align = sizeof(ElementType));
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+                        MatrixLayoutEnum Layout,
+                        uint Align = sizeof(ElementType));
 };
 
 MatrixUseEnum AccumulatorLayout();
@@ -203,24 +207,24 @@ MatrixUseEnum AccumulatorLayout();
 template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
           SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave>,
-         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave>);
+Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::Wave> MatrixA,
+         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::Wave> MatrixB);
 
 template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
 Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::Wave>
-Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave>,
-         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::Wave>);
+Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave> MatrixA,
+         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::Wave> MatrixB);
 
 template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
           SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
-         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
+    const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
+    const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
 
 template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
-         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup>);
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
+    const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
+    const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against A
@@ -229,14 +233,14 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup>,
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-             vector<InputElTy, M>);
+Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+         vector<InputElTy, M> Vec);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                vector<InputElTy, M>, vector<BiasElTy, K>);
+MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+            vector<InputElTy, M>, vector<BiasElTy, K> Vec);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
@@ -244,15 +248,16 @@ template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
 typename hlsl::enable_if<
     InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
-    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, VecM, InputInterp>,
-                vector<BiasElTy, K>);
+MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
+            vector<BiasElTy, K> Bias);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K>
-    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                vector<InputElTy, M>, VectorRef<BiasElTy, K>);
+typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
+                         vector<OutputElTy, K> >::type
+MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+            vector<InputElTy, M> Vec, VectorRef<BiasElTy, K> BiasRef);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
@@ -260,14 +265,14 @@ template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
 typename hlsl::enable_if<
     InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
     vector<OutputElTy, K> >::type
-    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread>,
-                InterpretedVector<InputElTy, VecM, InputInterp>,
-                VectorRef<BiasElTy, K>);
+MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
+            VectorRef<BiasElTy, K> BiasRef);
 
 // Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
-    OuterProduct(vector<InputElTy, M>, vector<InputElTy, N>);
+OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 } // namespace linalg
 } // namespace dx
@@ -328,8 +333,8 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
-                                                   /*start offset*/ 4096};
+  VectorRef<ComponentType::F8_E4M3FN, 16> MemBias = {MBuf,
+                                                     /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
@@ -337,18 +342,19 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData),
+      NullBias);
 
   vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
 
   // This example creates an interpreted vector where the data needs to be
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
@@ -558,7 +564,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -589,7 +595,7 @@ struct ComponentType {
     __COMPONENT_TYPE(U64),
 
     // Floating point types.
-    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E4M3FN),
     __COMPONENT_TYPE(F8_E5M2),
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
@@ -942,7 +948,7 @@ Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                               uint Stride, MatrixLayoutEnum Layout,
                               uint Align = sizeof(ElementType));
 
-template <typename T, MatrixUseEnum UseLocal = Use, 
+template <typename T, MatrixUseEnum UseLocal = Use,
           MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
 typename hlsl::enable_if<
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
@@ -1156,7 +1162,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -1195,7 +1201,7 @@ of the valid linalg component types listed below:
 * `ComponentType::U16`
 * `ComponentType::U32`
 * `ComponentType::U64`
-* `ComponentType::F8_E4M3`
+* `ComponentType::F8_E4M3FN`
 * `ComponentType::F8_E5M2`
 * `ComponentType::F16`
 * `ComponentType::F32`
@@ -1238,7 +1244,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgFillMatrix.[MatTy].[TY](
 
 Fills a matrix with a scalar value. The scalar's type does not need to match the
 matrix component's type, a type conversion is applied following the rules
-documented in the [Conversions](#conversions) section.
+documented in the [Conversions](#data-conversion-rules) section.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
@@ -1287,7 +1293,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 
 Populates a matrix with data from a `groupshared` array. Data conversions
 between opaque matrices and groupshared memory are defined in the
-[Conversions](#conversions) section below.
+[Conversions](#data-conversion-rules) section below.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
@@ -1366,7 +1372,7 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
 ```
 
 Store a matrix to groupshared memory. Data conversions between opaque matrices
-and groupshared memory are defined in the [Conversions](#conversions) section
+and groupshared memory are defined in the [Conversions](#data-conversion-rules) section
 below.
 
 The validator will ensure that the group shared target memory is large enough
@@ -1541,7 +1547,7 @@ declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
 Accumulates a matrix to groupshared memory. This operation is only available for
 matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
 conversions between opaque matrices and groupshared memory are defined in the
-[Conversions](#conversions) section below.
+[Conversions](#data-conversion-rules) section below.
 
 The validator will ensure that the group shared target memory is large enough
 for the write.
@@ -1619,6 +1625,41 @@ If the source type is a floating point type and the destination is an integer
 type the conversion is a _round to nearest ties to even_ (RTNE) saturating
 conversion.
 
+#### FP8 Types
+
+This specification introduces two FP8 data formats which may be used with linear
+algebra objects. They are `F8_E4M3FN` and `F8_E5M2`, and they identify floating
+point formats composed of 8 bits with 4 exponent and 3 mantissa bits and 5
+exponent and 2 mantissa bits coorespondingly.
+
+|               | E4M3FN (finite)   | E5M2               |
+|---------------|-------------------|--------------------|
+| Exponent Bias | 7                 | 15                 |
+| Infinity      | N/A               | S.11111.00         |
+| NaN           | S.1111.111        | S.11111.{01,10,11} |
+| Zero          | S.0000.000        | S.00000.00         |
+| Max           | S.1111.110 (448)  | S.11110.11 (57344) |
+| Min           | S.0000.001 (2^-9) | S.00000.01 (2^-16) |
+
+##### Emulating FP
+
+The DirectX API specification requires that all implementations support both FP8
+formats for matrices, bias, and input vectors. If the target hardware does not
+support the used F8 type an implementation is allowed to convert to any other
+floating point format as long as the destination format can accurately represent
+all values of the format used in the shader's DXIL.
+
+If the driver sees a conversion to an F8 type that is not supported, and the
+result of that conversion is only used by linear algebra operations, the driver
+may eliminate the conversion or replace it with a conversion to any other
+floating point format as long as the new destination format can accurately
+represent all values of the format used in the shader's DXIL.
+
+> Note: Under emulation if a source value would be converted to a saturated
+> infinity (see: [conversion rules](#data-conversion-rules)) when converting to
+> an F8 type, but the source value can be represented accurately in the emulated
+> FP type, this may cause expected behavior differences.
+
 #### Bounds Checking Behavior
 
 The `@dx.op.linAlgMatrixLoadFromDescriptor` operation loads data from a
@@ -1678,7 +1719,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/Peh4jxrx3)
+[Compiler Explorer](https://godbolt.org/z/ajGbYbMP8)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1747,7 +1788,7 @@ enum class ComponentType : uint32_t {
   // BEGIN NEW FOR SM 6.10
   I8 = 19,
   U8 = 20,
-  F8_E4M3 = 21,
+  F8_E4M3FN = 21,
   F8_E5M2 = 22,
   // END
 
@@ -1778,7 +1819,7 @@ struct ComponentType {
     __COMPONENT_TYPE(U64),
 
     // Floating point types.
-    __COMPONENT_TYPE(F8_E4M3),
+    __COMPONENT_TYPE(F8_E4M3FN),
     __COMPONENT_TYPE(F8_E5M2),
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
@@ -1908,7 +1949,7 @@ class Matrix {
 
   template <typename T, SIZE_TYPE Size>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                  (M * N / ElementsPerScalar <= Size),
+                                      (M * N / ElementsPerScalar <= Size),
                                   Matrix>::type
   Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
@@ -1920,15 +1961,18 @@ class Matrix {
 
   template <ComponentEnum LocalComp = ComponentTy>
   typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
-                           uint2>::type GetCoordinate(uint Index);
+                           uint2>::type
+  GetCoordinate(uint Index);
 
   template <ComponentEnum LocalComp = ComponentTy>
   typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
-                           ElementType>::type Get(uint Index);
+                           ElementType>::type
+  Get(uint Index);
 
   template <ComponentEnum LocalComp = ComponentTy>
   typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
-                           void>::type Set(uint Index, ElementType Value);
+                           void>::type
+  Set(uint Index, ElementType Value);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
@@ -1954,7 +1998,7 @@ class Matrix {
       hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
           UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
-                           void>::type
+      void>::type
   InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
@@ -1987,14 +2031,14 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     uint Align = sizeof(ElementType));
+       uint Align = sizeof(ElementType));
 
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
-                             uint Stride, MatrixLayoutEnum Layout,
-                             uint Align = sizeof(ElementType));
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
+                        MatrixLayoutEnum Layout,
+                        uint Align = sizeof(ElementType));
 };
 
 MatrixUseEnum AccumulatorLayout();
@@ -2012,14 +2056,14 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::Wave> MatrixA,
 
 template <ComponentEnum OutTy, ComponentEnum ATy, ComponentEnum BTy,
           SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
-         const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
+    const Matrix<ATy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
+    const Matrix<BTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
 
 template <ComponentEnum CompTy, SIZE_TYPE M, SIZE_TYPE N, SIZE_TYPE K>
-Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup>
-Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
-         const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
+Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
+    const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> MatrixA,
+    const Matrix<CompTy, K, N, MatrixUse::B, MatrixScope::ThreadGroup> MatrixB);
 
 // Cooperative Vector Replacement API
 // Cooperative Vector operates on per-thread vectors multiplying against A
@@ -2028,14 +2072,14 @@ Multiply(const Matrix<CompTy, M, K, MatrixUse::A, MatrixScope::ThreadGroup> Matr
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-             vector<InputElTy, M> Vec);
+Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+         vector<InputElTy, M> Vec);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 vector<OutputElTy, K>
-    MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-                vector<InputElTy, M>, vector<BiasElTy, K> Vec);
+MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
+            vector<InputElTy, M>, vector<BiasElTy, K> Vec);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
           typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
@@ -2049,7 +2093,8 @@ MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, vector<OutputElTy, K> >::type
+typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
+                         vector<OutputElTy, K> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
             vector<InputElTy, M> Vec, VectorRef<BiasElTy, K> BiasRef);
 
@@ -2065,8 +2110,8 @@ MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
 
 // Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
-Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread> 
-    OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
+Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
+OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 } // namespace linalg
 } // namespace dx
@@ -2119,8 +2164,8 @@ void CoopVec() {
   vector<float16_t, 16> NullBias = (vector<float16_t, 16>)0;
   vector<float16_t, 16> Layer2 = MultiplyAdd<float16_t>(MatA, Layer1, NullBias);
 
-  VectorRef<ComponentType::F8_E4M3, 16> MemBias = {MBuf,
-                                                   /*start offset*/ 4096};
+  VectorRef<ComponentType::F8_E4M3FN, 16> MemBias = {MBuf,
+                                                     /*start offset*/ 4096};
   vector<float16_t, 16> Layer3 = MultiplyAdd<float16_t>(MatA, Layer2, MemBias);
 
   // Clang doesn't yet support packed types.
@@ -2128,18 +2173,19 @@ void CoopVec() {
   vector<uint8_t4_packed, 4> SomeData = (vector<uint8_t4_packed, 4>)0;
 
   vector<float16_t, 16> Layer4 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
   vector<float16_t, 16> Layer5 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), NullBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData),
+      NullBias);
 
   vector<float16_t, 16> Layer6 = MultiplyAdd<float16_t>(
-      MatA, MakeInterpretedVector<ComponentType::F8_E4M3>(SomeData), MemBias);
+      MatA, MakeInterpretedVector<ComponentType::F8_E4M3FN>(SomeData), MemBias);
 
   // This example creates an interpreted vector where the data needs to be
   // converted from a source type to a destination type.
   vector<uint, 16> SomeData2 = (vector<uint, 16>)0;
   vector<float16_t, 16> Layer7 = MultiplyAdd<float16_t>(
-      MatA, Convert<ComponentType::F8_E4M3, ComponentType::U32>(SomeData2),
+      MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
 }
