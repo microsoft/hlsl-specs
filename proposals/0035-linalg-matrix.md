@@ -1078,9 +1078,9 @@ linalg::Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> Matri
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
-The `linalg::Multiply` function has an takes an MxK `A` matrix with `Thread`
-scope, an `K`-element vector `Vec`. The operation multiplies the matrix by the
-`K`-element vector `Vec` producing a result `M`-element vector.
+The `linalg::Multiply` function has an overload that takes an MxK `A` matrix
+with `Thread` scope, a `K`-element vector `Vec`. The operation multiplies the
+matrix by the `K`-element vector `Vec` producing a result `M`-element vector.
 
 #### linalg::OuterProduct(vector, vector)
 
@@ -1109,7 +1109,7 @@ linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> Ma
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
 The `linalg::MultiplyAdd` function has an overload that takes an MxK `A` matrix
-with `Thread` scope, an `K`-element vector `Vec`, and a `M`-element vector
+with `Thread` scope, a `K`-element vector `Vec`, and a `M`-element vector
 `Bias`. The operation multiplies the matrix by the `K`-element vector `Vec` and
 then adds the `M`-element vector `Bias` producing a result `M`-element vector.
 
