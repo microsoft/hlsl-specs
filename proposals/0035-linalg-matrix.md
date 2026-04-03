@@ -234,42 +234,42 @@ Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-         vector<InputElTy, M> Vec);
+         vector<InputElTy, K> Vec);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            vector<InputElTy, M>, vector<BiasElTy, K> Vec);
+            vector<InputElTy, K>, vector<BiasElTy, M> Vec);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
-    vector<OutputElTy, K> >::type
+    InterpretedVector<InputElTy, VecK, InputInterp>::Size == K,
+    vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
-            vector<BiasElTy, K> Bias);
+            InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
+            vector<BiasElTy, M> Bias);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
-                         vector<OutputElTy, K> >::type
+                         vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            vector<InputElTy, M> Vec, VectorRef<BiasElTy, K> BiasRef);
+            vector<InputElTy, K> Vec, VectorRef<BiasElTy, M> BiasRef);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
-    vector<OutputElTy, K> >::type
+    InterpretedVector<InputElTy, VecK, InputInterp>::Size == K,
+    vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
-            VectorRef<BiasElTy, K> BiasRef);
+            InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
+            VectorRef<BiasElTy, M> BiasRef);
 
 // Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
@@ -1086,16 +1086,16 @@ type and takes arguments with potentially mismatched element types.
 ``` c++
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 linalg::Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-                 vector<InputElTy, M> Vec);
+                 vector<InputElTy, K> Vec);
 ```
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
-The `linalg::Multiply` function has an overload that takes an `M`-element vector
-and an MxK `A` matrix with `Thread` scope. The function returns a `K`-element
-vector.
+The `linalg::Multiply` function has an overload that takes an MxK `A` matrix
+with `Thread` scope, a `K`-element vector `Vec`. The operation multiplies the
+matrix by the `K`-element vector `Vec` producing a result `M`-element vector.
 
 #### linalg::OuterProduct(vector, vector)
 
@@ -1116,23 +1116,23 @@ parameter for the output matrix element type.
 ``` c++
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-                    vector<InputElTy, M> Vec, vector<BiasElTy, K> Bias);
+                    vector<InputElTy, K> Vec, vector<BiasElTy, M> Bias);
 ```
 
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
 The `linalg::MultiplyAdd` function has an overload that takes an MxK `A` matrix
-with `Thread` scope, an `M`-element vector, and a `K`-element vector. The operation
-multiplies the `M`-element vector by the matrix then adds the `K`-element vector
-producing a result `K`-element vector.
+with `Thread` scope, a `K`-element vector `Vec`, and a `M`-element vector
+`Bias`. The operation multiplies the matrix by the `K`-element vector `Vec` and
+then adds the `M`-element vector `Bias` producing a result `M`-element vector.
 
 Either vector may be a native vector or an `InterpretedVector` which combines a
-packed element vector with an interpretation type. The `K`-element vector may
-also be a `VectorRef` which refers to a vector in memory. Using the `VectorRef`
-overload makes it easier for the backend compiler to optimize the bias vector
-loads with the ALU operations.
+packed element vector with an interpretation type. The `M`-element vector `Bias`
+may also be a `VectorRef` which refers to a vector in memory. Using the
+`VectorRef` overload makes it easier for the backend compiler to optimize the
+bias vector loads with the ALU operations.
 
 ### DXIL Types
 
@@ -1492,8 +1492,8 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMul.v[NUMo][TYo].[MatTy].v[NUMi][TYi
 )
 ```
 
-This operation implements a row-vector multiplication against an `A` matrix of
-`Thread` scope.
+This operation implements a column-vector multiplication against an `A` matrix
+of `Thread` scope.
 
 Validation will enforce that:
 * The input vector length matches the `K` matrix dimension
@@ -1516,8 +1516,8 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMulAdd.v[NUMo][TYo].[MatTy].v[NUMi][
 )
 ```
 
-This operation implements a row-vector multiplication against an `A` matrix of
-`Thread` scope with a bias vector added to the result.
+This operation implements a column-vector multiplication against an `A` matrix
+of `Thread` scope with a bias vector added to the result.
 
 Validation will enforce that:
 * The input vector length matches the `K` matrix dimension
@@ -2104,42 +2104,42 @@ Matrix<CompTy, M, N, MatrixUse::Accumulator, MatrixScope::ThreadGroup> Multiply(
 
 template <typename OutputElTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE K,
           ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 Multiply(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-         vector<InputElTy, M> Vec);
+         vector<InputElTy, K> Vec);
 
 template <typename OutputElTy, typename InputElTy, typename BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
-vector<OutputElTy, K>
+vector<OutputElTy, M>
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            vector<InputElTy, M>, vector<BiasElTy, K> Vec);
+            vector<InputElTy, K> Vec, vector<BiasElTy, M> Vec);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
+          typename BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
-    vector<OutputElTy, K> >::type
+    InterpretedVector<InputElTy, VecK, InputInterp>::Size == K,
+    vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
-            vector<BiasElTy, K> Bias);
+            InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
+            vector<BiasElTy, M> Bias);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum BiasElTy,
           SIZE_TYPE M, SIZE_TYPE K, ComponentEnum MatrixDT>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
-                         vector<OutputElTy, K> >::type
+                         vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            vector<InputElTy, M> Vec, VectorRef<BiasElTy, K> BiasRef);
+            vector<InputElTy, K> Vec, VectorRef<BiasElTy, M> BiasRef);
 
 template <typename OutputElTy, typename InputElTy, ComponentEnum InputInterp,
-          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecM, SIZE_TYPE K,
+          ComponentEnum BiasElTy, SIZE_TYPE M, SIZE_TYPE VecK, SIZE_TYPE K,
           ComponentEnum MatrixDT>
 typename hlsl::enable_if<
-    InterpretedVector<InputElTy, VecM, InputInterp>::Size == M,
-    vector<OutputElTy, K> >::type
+    InterpretedVector<InputElTy, VecK, InputInterp>::Size == K,
+    vector<OutputElTy, M> >::type
 MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
-            InterpretedVector<InputElTy, VecM, InputInterp> InterpVec,
-            VectorRef<BiasElTy, K> BiasRef);
+            InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
+            VectorRef<BiasElTy, M> BiasRef);
 
 // Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
