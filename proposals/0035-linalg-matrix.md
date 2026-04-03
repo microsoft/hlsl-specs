@@ -394,8 +394,8 @@ and how a matrix can be used.
 ### Stage Availability
 
 All operations on `Thread` scope matrices are available in all shader stages.
-Operations on `Wave` and `ThreadGroup` scope matrices are available in compute,
-mesh, and amplification shaders.
+Operations on `Wave` and `ThreadGroup` scope matrices are available in compute
+shaders.
 
 #### Matrix Use
 
