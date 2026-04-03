@@ -96,7 +96,9 @@ class Matrix {
 
   template <ComponentEnum NewCompTy, MatrixUseEnum NewUse = Use,
             bool Transpose = false>
-  Matrix<NewCompTy, M, N, NewUse, Scope> Cast();
+  Matrix<NewCompTy, __detail::DimMN<M, N, Transpose>::M,
+         __detail::DimMN<M, N, Transpose>::N, NewUse, Scope>
+  Cast();
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
@@ -719,6 +721,16 @@ template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
       ComponentTypeTraits<DstTy>::ElementsPerScalar;
 };
 
+template <SIZE_TYPE MVal, SIZE_TYPE NVal, bool Transposed> struct DimMN {
+  static const SIZE_TYPE M = MVal;
+  static const SIZE_TYPE N = NVal;
+};
+
+template <SIZE_TYPE MVal, SIZE_TYPE NVal> struct DimMN<MVal, NVal, true> {
+  static const SIZE_TYPE M = NVal;
+  static const SIZE_TYPE N = MVal;
+};
+
 } // namespace __detail
 ```
 
@@ -747,8 +759,11 @@ HLSL type casting rules, and they apply to native and non-native types.
 #### Matrix::Cast
 
 ```c++
-template <ComponentType NewCompTy, MatrixUse NewUse = Use>
-Matrix<NewCompTy, M, N, NewUse, Scope> Matrix::Cast();
+template <ComponentEnum NewCompTy, MatrixUseEnum NewUse = Use,
+          bool Transpose = false>
+Matrix<NewCompTy, __detail::DimMN<M, N, Transpose>::M,
+       __detail::DimMN<M, N, Transpose>::N, NewUse, Scope>
+Matrix::Cast();
 ```
 
 Requires `Wave` or `ThreadGroup` scope input and output matrices.
@@ -1719,7 +1734,7 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/ajGbYbMP8)
+[Compiler Explorer](https://godbolt.org/z/5qzYaosf1)
 > Note: this mostly works with Clang, but has some issues to work out still.
 
 ```cpp
@@ -1891,6 +1906,16 @@ template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
       ComponentTypeTraits<DstTy>::ElementsPerScalar;
 };
 
+template <SIZE_TYPE MVal, SIZE_TYPE NVal, bool Transposed> struct DimMN {
+  static const SIZE_TYPE M = MVal;
+  static const SIZE_TYPE N = NVal;
+};
+
+template <SIZE_TYPE MVal, SIZE_TYPE NVal> struct DimMN<MVal, NVal, true> {
+  static const SIZE_TYPE M = NVal;
+  static const SIZE_TYPE N = MVal;
+};
+
 } // namespace __detail
 
 template <ComponentEnum ElementType, uint DimA> struct VectorRef {
@@ -1935,7 +1960,9 @@ class Matrix {
 
   template <ComponentEnum NewCompTy, MatrixUseEnum NewUse = Use,
             bool Transpose = false>
-  Matrix<NewCompTy, M, N, NewUse, Scope> Cast();
+  Matrix<NewCompTy, __detail::DimMN<M, N, Transpose>::M,
+         __detail::DimMN<M, N, Transpose>::N, NewUse, Scope>
+  Cast();
 
   template <typename T>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
