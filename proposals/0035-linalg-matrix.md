@@ -1272,7 +1272,13 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1]
 Returns a new matrix which is a copy of the source matrix where the element and
 use type of the returned matrix have been converted to `MatTy1` from `MatTy2`.
 The source matrix remains valid and unmodified after this operation is applied.
-Validation shall enforce that both matrices have the same scope and dimensions.
+
+Validation shall enforce that:
+* Both matrix types have the same scope
+* If the transpose argument is `0` both matrices must have the same dimensions.
+* If the transpose argument is `1` the dimensions of `MatTy1` and `MatTy2` are
+  swapped (the `M` dimension of `MatTy2` will match the `N` dimension of
+  `MatTy1`, and the `N` Dimension of `MatTy2` will match the `M` dimension of `MatTy1`).
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromDescriptor.[MatTy](
