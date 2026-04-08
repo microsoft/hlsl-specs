@@ -111,8 +111,7 @@ class Matrix {
                      MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
 
   template <typename T, SIZE_TYPE Size>
-  static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                                      (M * N / ElementsPerScalar <= Size),
+  static typename hlsl::enable_if<M * N / ElementsPerScalar <= Size,
                                   Matrix>::type
   Load(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
@@ -141,8 +140,7 @@ class Matrix {
              MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
 
   template <typename T, SIZE_TYPE Size>
-  typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
-                               (M * N / ElementsPerScalar <= Size),
+  typename hlsl::enable_if<M * N / ElementsPerScalar <= Size,
                            void>::type
   Store(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
@@ -158,8 +156,7 @@ class Matrix {
   template <typename T, MatrixUseEnum UseLocal = Use,
             MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
   typename hlsl::enable_if<
-      hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
-          UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
+      UseLocal == Use && (M * N / ElementsPerScalar <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
       void>::type
   InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx, uint Stride,
@@ -827,8 +824,9 @@ can only be read from `ByteAddressBuffer` objects. Wave scope matrices can be
 read from `[RW]ByteAddressBuffer` objects or `groupshared` arrays. When read
 from `[RW]ByteAddressBuffer` objects the data is assumed to already be in the
 expected target data format. When read from `groupshared` memory, the data may
-be in any arithmetic type. If the type mismatches the target data type of the
-matrix a data conversion is applied on load.
+expected target data format. When read from `groupshared` memory, the data may
+be in any arithmetic or packed data type. If the type mismatches the target data
+type of the matrix a data conversion is applied on load.
 
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
@@ -942,7 +940,8 @@ The matrix `Store` methods store the matrix data to a target
 `RWByteAddressBuffer` or `groupshared` array. When storing to
 `RWByteAddressBuffer` objects the data is stored in the component type of the
 matrix object. When storing to `groupshared` memory, the matrix component data
-is converted to the target arithmetic type if the data types do not match.
+is converted to the target arithmetic or packed data type if the data types do
+not match.
 
 For the `Store` operations on `[RW]ByteAddressBuffers`, the `Stride` argument
 represents the row or column stride in bytes. For the `Store` operations on
@@ -998,8 +997,9 @@ available for matrices with `MatrixUse::Accumulator` use. The
 When accumulating to `RWByteAddressBuffer` objects, the accumulation is
 performed on the component type of the matrix object. When accumulating to
 `groupshared` memory, the matrix component data is converted to the target
-arithmetic type before atomic arithmetic is performed. No conversion is
-performed if the target arithmetic type matches the matrix component type.
+arithmetic or packed data type before atomic arithmetic is performed. No
+conversion is performed if the target arithmetic type matches the matrix
+component type.
 
 #### Matrix::MultiplyAccumulate(Matrix, Matrix)
 
