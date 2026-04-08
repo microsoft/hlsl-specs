@@ -824,7 +824,6 @@ can only be read from `ByteAddressBuffer` objects. Wave scope matrices can be
 read from `[RW]ByteAddressBuffer` objects or `groupshared` arrays. When read
 from `[RW]ByteAddressBuffer` objects the data is assumed to already be in the
 expected target data format. When read from `groupshared` memory, the data may
-expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. If the type mismatches the target data
 type of the matrix a data conversion is applied on load.
 
@@ -1128,7 +1127,7 @@ linalg::MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> Ma
 Requires `Thread` scope matrix input, may be called from divergent control flow.
 
 The `linalg::MultiplyAdd` function has an overload that takes an MxK `A` matrix
-with `Thread` scope, a `K`-element vector `Vec`, and an `M`-element vector
+with `Thread` scope, a `K`-element vector `Vec`, and a `M`-element vector
 `Bias`. The operation multiplies the matrix by the `K`-element vector `Vec` and
 then adds the `M`-element vector `Bias` producing a result `M`-element vector.
 
