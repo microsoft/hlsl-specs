@@ -2232,6 +2232,6 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
+  MatAcc.InterlockedAccumulate(Buf, 0);
 }
 ```
