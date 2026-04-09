@@ -1797,9 +1797,11 @@ struct PSVLinAlgRuntimeInfo0 {
 };
 
 struct PSVLinAlgMatrixOperationShape0 {
-  uint32_t M; // Rows in matrix A
-  uint32_t N; // Columns in matrix B
-  uint32_t K; // Columns in matrix A / Rows in matrix B / Unused (0)
+  // For each dimension, Unused == 0
+  // For MatrixConstruction, Unused dim depends on matrix Use.
+  uint32_t M; // Rows in matrix A / Accumulator
+  uint32_t N; // Columns in matrix B / Accumulator
+  uint32_t K; // Columns in matrix A / Rows in matrix B
 };
 
 struct PSVLinAlgMatrixShapeArrayReference {
@@ -2054,9 +2056,10 @@ RDAT_ENUM_END()
 
 RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
                   LinAlgMatrixOperationShapeTable)
-  // Unused dimensions stored as 0.
-  RDAT_VALUE(uint32_t, M) // Rows in matrix A
-  RDAT_VALUE(uint32_t, N) // Columns in matrix B
+  // For each dimension, Unused == 0
+  // For MatrixConstruction, Unused dim depends on matrix Use.
+  RDAT_VALUE(uint32_t, M) // Rows in matrix A / Accumulator
+  RDAT_VALUE(uint32_t, N) // Columns in matrix B / Accumulator
   RDAT_VALUE(uint32_t, K) // Columns in matrix A / Rows in matrix B
 RDAT_STRUCT_END()
 
