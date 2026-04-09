@@ -1720,11 +1720,10 @@ matrix types and operations is gathered if the program uses linalg matrix types
 or operations outside of the required Tier 1 feature set.
 
 This information is required by the runtime to verify compatibility with a given
-device. Depending on whether the target is a shader or a library,  this
-information is encoded in either the Pipeline State Validation (PSV0) or the
-Dxil Library Runtime Data (RDAT) DXIL container part. The following sections
-describe the proposed encoding of this information for each of these container
-parts.
+device. It is stored in a separate DXIL container part from the DXIL IR. For
+library targets, it's in the DXIL Library Runtime Data (RDAT) part, otherwise,
+it's stored in the Pipeline State Validation (PSV0) part. The following sections
+describe the encoding of this information for each of these container parts.
 
 For each of these parts, usage information is gathered in a similar way, so this
 common gathering process is described first.
@@ -1738,12 +1737,14 @@ Basic process:
 * If operation is outside minimum requirements, gather and merge detailed usage
   information.
 
-Extended usage information is gathered for the following operation groups:
+Extended usage information is gathered for the following operation groups, where
+"shapes" refer to (M,N,K) operation shapes, and "types" refer to the element
+types of the matrices and vectors.
 
 * `ThreadVectorMatrixMultiply`
-  * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather shapes and
-    types.
-  * Matrix operand must be `MatrixLoadFromDescriptor` for transposed flag.
+  * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather types.
+  * Matrix operand must be traced to `MatrixLoadFromDescriptor` to determine the
+    transposed flag from the layout.
 * `WaveMatrixMultiply`/`ThreadGroupMatrixMultiply`
   * Iterate `LinAlgMatrixMultiply`/`LinAlgMatrixMultiplyAccumulate` calls and
     gather shapes and types.
