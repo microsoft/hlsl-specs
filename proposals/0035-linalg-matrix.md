@@ -1734,7 +1734,7 @@ Tier 1 feature set.
 Basic process:
 
 * Iterate over specific LinAlg DXIL op calls.
-* If operation is outside minimum requirements, gather and merge detailed usage
+* If operation is outside minimum requirements, gather detailed usage
   information.
 
 Extended usage information is gathered for the following operation groups, where
@@ -1751,27 +1751,11 @@ types of the matrices and vectors.
 * `OuterProduct`
   * Iterate `LinAlgMatrixOuterProduct` calls and gather types.
 * `AccumulateStore`
-  * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather type and
-    layout for transposed flag.
-
-Shape merging rules:
-
-* A shape can be merged with an existing shape if all but one dimension matches,
-  and the differing dimension is a factor of the existing shape's corresponding
-  dimension. For example, a 32x24x16 shape can be merged with an existing
-  32x8x16 shape. Only the smaller shape needs to be recorded.
-* Merging can only occur within the same operation, scope, and component type
-  combination.
-* If, according to Tier 1 requirements, the shape merges with the minimum
-  required shape for a required operation/scope/type combination, it can be
-  considered as fitting within the minimum requirements, and need not be
-  recorded into extended usage data.
-
-Open questions:
-
-1. Do we need to gather more usage information for operations other than the
-   ones listed above when the matrix isn't captured by one of these operations?
-2. Do we need to capture component conversions with CopyConvertMatrix?
+  * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather types and
+    layout for transposed flag, when thread scope.
+  * Iterate `VectorAccumulate` calls and gather types.
+* `MatrixConstruction`
+  * Iterate all other wave/group scope matrix calls and gather shapes and types.
 
 #### Pipeline State Validation (PSV0)
 
