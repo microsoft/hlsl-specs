@@ -2173,6 +2173,40 @@ RDAT_STRUCT_END()
 
 > TBD: Describe ordering and deduplication requirements for these RDAT records.
 
+#### Open questions for PSV0 and RDAT
+
+Do we need to capture component conversions with CopyConvertMatrix?
+
+Should we collect usages inside the required Tier 1 feature set?
+
+* It's not necessary, and omitting it reduces some extraneous container size and
+  runtime overhead.
+* If we keep it, it will be required by DXIL Validation unless the validation
+  approach is made significantly more sophisticated.
+
+Should shapes be merged to reduce extra shapes which must be supported based on
+a smaller shape already recorded.
+
+* Not for now, as potential for ambiguious cases have not been eliminated.
+
+Should overall structure be changed to a single record with a typed union of
+structs, instead of separate records per operation?
+
+* Current preference is to keep separate records and tables for each operation,
+  as it is simpler to implement and maintain, and allows for standard record
+  versioning through extension without issues with unions getting in the way.
+
+* Another approach coulld be to follow the RDAT pattern where we have a list of
+  parts with IDs that define the record tables, and when a table would be empty,
+  the part is simply omitted. We could use the same part IDs as we do for RDAT,
+  and even the same record definitions, making this a single extension point in
+  PSV0 for RDAT formatted records. The existing string and SemanticIndex buffers
+  can be used as the shared RDAT buffers as well, though that wouldn't be
+  strictly necessary. The RDAT class could have an InitFromPSV0 method to make
+  it easy to load any RDAT formatted data from the PSV0 part. The definitions in
+  PSV0 would then become an RDAT offset table and a starting point for the RDAT
+  part data.
+
 ## Appendix 1: HLSL Header
 
 [Compiler Explorer](https://godbolt.org/z/5qzYaosf1)
