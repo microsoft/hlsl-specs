@@ -2069,8 +2069,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-                        MatrixLayoutEnum Layout,
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                         uint Align = sizeof(ElementType));
 };
 
