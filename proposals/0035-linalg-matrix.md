@@ -1788,6 +1788,7 @@ struct PSVLinAlgRuntimeInfo0 {
   // Tables are serialized in this order, with each starting with the record
   // stride in bytes, followed by the records.
   uint32_t MatrixOperationShapeCount;
+  uint32_t MatrixConstructionCount;
   uint32_t ThreadVectorMatrixMultiplyCount;
   uint32_t WaveMatrixMultiplyCount;
   uint32_t ThreadGroupMatrixMultiplyCount;
@@ -1807,10 +1808,15 @@ struct PSVLinAlgMatrixShapeArrayReference {
   uint32_t Count;
 };
 
+struct PSVLinAlgMatrixConstruction0 {
+  PSVLinAlgMatrixShapeArrayReference OperationShapes;
+  uint8_t MatrixType;
+};
+
 enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
-  None = 0x00000000,
-  // Whether the matrix operand is loaded as transposed:
-  MatrixTransposed = 0x00000001,
+  None = 0,
+  // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
+  MatrixTransposed = 1 << 0,
 };
 
 struct PSVLinAlgThreadVectorMatrixMultiply0 {
@@ -1853,9 +1859,14 @@ struct PSVLinAlgOuterProduct0 {
 };
 
 enum class PSVLinAlgAccumulateStoreFlag : uint8_t {
-  None = 0x00000000,
-  // Whether matrix is stored as transposed in an accumulate-store operation:
-  MatrixTransposed = 0x00000001,
+  None = 0,
+  // MatrixTransposed: Accumulate to OuterProductOptimalTranspose layout,
+  // thread-scope only.
+  MatrixTransposed = 1 << 0,
+  // RawBuffer: Accumulate is to a raw buffer, all scopes.
+  RawBuffer = 1 << 1,
+  // GroupShared: Accumulate to GroupShared memory, wave/group scope only.
+  GroupShared = 1 << 2,
 };
 
 struct PSVLinAlgAccumulateStore0 {
@@ -1881,6 +1892,9 @@ PSVLinAlgRuntimeInfo0 record.
   * If `MatrixOperationShapeCount > 0`:
     * `uint32_t LinAlgMatrixOperationShapeSize`
     * `{ (PSVLinAlgMatrixOperationShapeN) char[LinAlgMatrixOperationShapeSize] } * LinAlgMatrixOperationShapeCount`
+  * If `ThreadMatrixConstructionCount > 0`:
+    * `uint32_t LinAlgThreadMatrixConstructionSize`
+    * `{ (PSVLinAlgThreadMatrixConstructionN) char[LinAlgThreadMatrixConstructionSize] } * ThreadMatrixConstructionCount`
   * If `ThreadVectorMatrixMultiplyCount > 0`:
     * `uint32_t LinAlgThreadVectorMatrixMultiplySize`
     * `{ (PSVLinAlgThreadVectorMatrixMultiplyN) char[LinAlgThreadVectorMatrixMultiplySize] } * ThreadVectorMatrixMultiplyCount`
@@ -1911,11 +1925,12 @@ enum class RuntimeDataPartType : uint32_t {
   ...
   ExtendedFunctionPropertiesTable = 12,
   LinAlgMatrixOperationShapeTable = 13,
-  LinAlgThreadVectorMatrixMultiplyTable = 14,
-  LinAlgWaveMatrixMultiplyTable = 15,
-  LinAlgThreadGroupMatrixMultiplyTable = 16,
-  LinAlgOuterProductTable = 17,
-  LinAlgAccumulateStoreTable = 18,
+  LinAlgMatrixConstructionTable = 14,
+  LinAlgThreadVectorMatrixMultiplyTable = 15,
+  LinAlgWaveMatrixMultiplyTable = 16,
+  LinAlgThreadGroupMatrixMultiplyTable = 17,
+  LinAlgOuterProductTable = 18,
+  LinAlgAccumulateStoreTable = 19,
   ...
 };
 ```
@@ -1929,30 +1944,132 @@ The following are record definitions associated with each new table type. Each
 record definition corresponds to the record format used in the associated PSV
 structure, with some adjustments to fit RDAT patterns.
 
+RDAT macro form from DXC is used because it encodes all information required to
+implement serialization, deserialization, reader helpers, dumping, validation,
+and so on, based on the meaning of the RDAT macros and the supplied parameters.
+Here, basic definitions are provided for serialization format with comments for
+semantic meanings.
+
 ```cpp
+// Basic RDAT enum definitions stored as sTy, accessed as eTy.
+// eTy defined under hlsl::RDAT namespace (in DXC)
+
+#define RDAT_ENUM_START(eTy, sTy)           enum class eTy : sTy {
+#define RDAT_ENUM_VALUE(name, value)        name = value,
+#define RDAT_ENUM_VALUE_ALIAS(name, value)  name = value,
+#define RDAT_ENUM_VALUE_NODEF(name)         name,
+#define RDAT_ENUM_END()                     };
+
+// Basic RDAT struct definitions define the stored record in little-endian.
+// Comments for semantic meanings used in RDAT system.
+
+// type defined under hlsl::RDAT namespace (in DXC)
+#define RDAT_STRUCT(type)                 struct type {
+// Derivation extends a record for versioning.
+#define RDAT_STRUCT_DERIVED(type, base)   struct type : public base {
+#define RDAT_STRUCT_END()                 };
+
+// RDAT_STRUCT_TABLE[_DERIVED]: Struct record stored in record table.
+// Derivation is used for versioning, table is the same for a chain of record
+// versions. Record stride is used to determine the version stored in the record
+// table. 
+#define RDAT_STRUCT_TABLE(type, table) RDAT_STRUCT(type)
+#define RDAT_STRUCT_TABLE_DERIVED(type, base, table)                           \
+  RDAT_STRUCT_DERIVED(type, base)
+
+// INDEX_ARRAY_REF is an offset into the uint32_t index buffer which starts with
+// the array length and is followed by uint32_t array elements
+#define RDAT_INDEX_ARRAY_REF(name)        uint32_t name;
+
+// RDAT_RECORD_REF is an index into the record table defined for the record type
+// by RDAT_STRUCT_TABLE, which may be extended by RDAT_STRUCT_TABLE_DERIVED.
+// Available version is determined by the record stride in the table header.
+#define RDAT_RECORD_REF(type, name)       uint32_t name;
+// RDAT_RECORD_ARRAY_REF is an array of indexes like RDAT_INDEX_ARRAY_REF, but
+// each index is treated as an index into the record table associated with type,
+// like RDAT_RECORD_REF.
+#define RDAT_RECORD_ARRAY_REF(type, name) uint32_t name;
+
+// By-value record stored in-place. Record version is fixed by 'type' used.
+#define RDAT_RECORD_VALUE(type, name)     type name;
+
+// byte offset into the shared utf-8 null-terminated string buffer
+#define RDAT_STRING(name)                 uint32_t name;
+
+// RDAT_STRING_ARRAY_REF is the index into the index buffer like
+// RDAT_INDEX_ARRAY_REF, but each index is treated as a byte offset into the
+// shared string buffer containing null-terminated utf-8 strings.
+#define RDAT_STRING_ARRAY_REF(name)       uint32_t name;
+
+// Arbirary type stored inline by-value (always little-endian)
+#define RDAT_VALUE(type, name)            type name;
+
+// ENUM/FLAGS stored as sTy, with associated enum type eTy for accessors.
+#define RDAT_ENUM(sTy, eTy, name)         sTy name;
+#define RDAT_FLAGS(sTy, eTy, name)        sTy name;
+
+// Raw bytes as an offset into the shared byte buffer, and a size in bytes.
+#define RDAT_BYTES(name)                                                       \
+  uint32_t name;                                                               \
+  uint32_t name##_Size;
+#define RDAT_ARRAY_VALUE(type, count, type_name, name) type_name name;
+
+// RDAT_UNION should wrap a set of RDAT_UNION_IF/RDAT_UNION_ELIF expressions,
+// each containing a single element, only valid when the expression is true.
+#define RDAT_UNION()                      union {
+#define RDAT_UNION_END()                  };
+
+// UNION IF/ELIF creates bool has##name() accessors in reader based on expr.
+// Wraps a union member (typically of the same name) that is only accessed when
+// expr is true.
+#define RDAT_UNION_IF(name, expr)                                              \
+  bool GLUE(RECORD_TYPE, _Reader)::has##name() const {                         \
+    if (auto *pRecord = asRecord())                                            \
+      return !!(expr);                                                         \
+    return false;                                                              \
+  }
+#define RDAT_UNION_ELIF(name, expr) RDAT_UNION_IF(name, expr)
+
+// expr example: getPropertyType() == FunctionPropertyType::Flags
+// getPropertyType() calls the generated reader accessor for PropertyType that
+// returns the FunctionPropertyType, and compares this with
+// FunctionPropertyType::Flags defined in the enum below.
+
 RDAT_ENUM_START(LinAlgThreadVectorMatrixMultiplyFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
-  // The matrix operand is loaded as transposed:
+  // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
   RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
 RDAT_ENUM_END()
 
 RDAT_ENUM_START(LinAlgAccumulateStoreFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
-  // The matrix is stored in transposed layout:
+  // MatrixTransposed: Accumulate to OuterProductOptimalTranspose layout,
+  // thread-scope only.
   RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
+  // RawBuffer: Accumulate is to a raw buffer, all scopes.
+  RDAT_ENUM_VALUE(RawBuffer, 1 << 1)
+  // GroupShared: Accumulate to GroupShared memory, wave/group scope only.
+  RDAT_ENUM_VALUE(GroupShared, 1 << 2)
 RDAT_ENUM_END()
 
 RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
                   LinAlgMatrixOperationShapeTable)
+  // Unused dimensions stored as 0.
   RDAT_VALUE(uint32_t, M) // Rows in matrix A
   RDAT_VALUE(uint32_t, N) // Columns in matrix B
   RDAT_VALUE(uint32_t, K) // Columns in matrix A / Rows in matrix B
 RDAT_STRUCT_END()
 
+// In the following, an unused ComponentType would be stored as
+// hlsl::DXIL::ComponentType::Invalid, aka: 0.
+
+RDAT_STRUCT_TABLE(LinAlgMatrixConstruction, LinAlgMatrixConstructionTable)
+  RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
+  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
+RDAT_STRUCT_END()
+
 RDAT_STRUCT_TABLE(LinAlgThreadVectorMatrixMultiply,
                   LinAlgThreadVectorMatrixMultiplyTable)
-  // Do we need shapes? If so, K would be unused (0)
-  RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, ResultType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, VectorInputType)
@@ -1990,17 +2107,22 @@ RDAT_STRUCT_END()
 
 // ------------ RuntimeDataFunctionInfo3 dependencies ------------
 
+// RuntimeDataFunctionInfo3 adds an extended property list. Each extended
+// property has a FunctionPropertyType and a 32-bit field for the property.
+// For LinAlg properties, the field is always a REF of some kind (index or
+// offset into some other table). Currently, these are RDAT_RECORD_ARRAY_REF
+// which are an index into the index table, which starts with an array size (in
+// elements), followed by values interpreted as indexes into record tables
+// associated with the specified type defined with RDAT_STRUCT_TABLE.
+
 RDAT_ENUM_START(FunctionPropertyType, uint32_t)
   RDAT_ENUM_VALUE(Flags, 0)
-  RDAT_ENUM_VALUE(LinAlgThreadVectorMatrixMultiply, 1)
-#ifdef UNIFY_MATRIX_MULTIPLY_STRUCTURES
-  RDAT_ENUM_VALUE(LinAlgMatrixMultiply, 2)
-#else
-  RDAT_ENUM_VALUE(LinAlgWaveMatrixMultiply, 2)
-  RDAT_ENUM_VALUE(LinAlgThreadGroupMatrixMultiply, 3)
-#endif // UNIFY_MATRIX_MULTIPLY_STRUCTURES
-  RDAT_ENUM_VALUE(LinAlgOuterProduct, 4)
-  RDAT_ENUM_VALUE(LinAlgAccumulateStore, 5)
+  RDAT_ENUM_VALUE(LinAlgMatrixConstruction, 1)
+  RDAT_ENUM_VALUE(LinAlgThreadVectorMatrixMultiply, 2)
+  RDAT_ENUM_VALUE(LinAlgWaveMatrixMultiply, 3)
+  RDAT_ENUM_VALUE(LinAlgThreadGroupMatrixMultiply, 4)
+  RDAT_ENUM_VALUE(LinAlgOuterProduct, 5)
+  RDAT_ENUM_VALUE(LinAlgAccumulateStore, 6)
 RDAT_ENUM_END()
 
 RDAT_STRUCT_TABLE(ExtendedFunctionProperties, ExtendedFunctionPropertiesTable)
@@ -2009,30 +2131,33 @@ RDAT_STRUCT_TABLE(ExtendedFunctionProperties, ExtendedFunctionPropertiesTable)
   RDAT_UNION()
     RDAT_UNION_IF(Flags, getPropertyType() == FunctionPropertyType::Flags)
       RDAT_VALUE(uint32_t, Flags)
+      RDAT_UNION_ELIF(LinAlgMatrixConstruction, getPropertyType() ==
+                      FunctionPropertyType::LinAlgMatrixConstruction)
+        RDAT_RECORD_ARRAY_REF(LinAlgMatrixConstruction, MatrixConstructionArray)
       RDAT_UNION_ELIF(
           LinAlgThreadVectorMatrixMultiply,
           getPropertyType() ==
               FunctionPropertyType::LinAlgThreadVectorMatrixMultiply)
-      RDAT_RECORD_ARRAY_REF(LinAlgThreadVectorMatrixMultiply,
-                            LinAlgThreadVectorMatrixMultiplyArray)
+        RDAT_RECORD_ARRAY_REF(LinAlgThreadVectorMatrixMultiply,
+                              LinAlgThreadVectorMatrixMultiplyArray)
       RDAT_UNION_ELIF(LinAlgWaveMatrixMultiply,
                       getPropertyType() ==
                           FunctionPropertyType::LinAlgWaveMatrixMultiply)
-      RDAT_RECORD_ARRAY_REF(LinAlgWaveMatrixMultiply,
-                            LinAlgWaveMatrixMultiplyArray)
+        RDAT_RECORD_ARRAY_REF(LinAlgWaveMatrixMultiply,
+                              LinAlgWaveMatrixMultiplyArray)
       RDAT_UNION_ELIF(LinAlgThreadGroupMatrixMultiply,
                       getPropertyType() ==
                           FunctionPropertyType::LinAlgThreadGroupMatrixMultiply)
-      RDAT_RECORD_ARRAY_REF(LinAlgThreadGroupMatrixMultiply,
-                            LinAlgThreadGroupMatrixMultiplyArray)
+        RDAT_RECORD_ARRAY_REF(LinAlgThreadGroupMatrixMultiply,
+                              LinAlgThreadGroupMatrixMultiplyArray)
       RDAT_UNION_ELIF(LinAlgOuterProduct,
                       getPropertyType() ==
                           FunctionPropertyType::LinAlgOuterProduct)
-      RDAT_RECORD_ARRAY_REF(LinAlgOuterProduct, LinAlgOuterProductArray)
+        RDAT_RECORD_ARRAY_REF(LinAlgOuterProduct, LinAlgOuterProductArray)
       RDAT_UNION_ELIF(LinAlgAccumulateStore,
                       getPropertyType() ==
                           FunctionPropertyType::LinAlgAccumulateStore)
-      RDAT_RECORD_ARRAY_REF(LinAlgAccumulateStore, LinAlgAccumulateStoreArray)
+        RDAT_RECORD_ARRAY_REF(LinAlgAccumulateStore, LinAlgAccumulateStoreArray)
     RDAT_UNION_ENDIF()
   RDAT_UNION_END()
 
