@@ -1751,8 +1751,10 @@ types of the matrices and vectors.
 * `OuterProduct`
   * Iterate `LinAlgMatrixOuterProduct` calls and gather types.
 * `AccumulateStore`
-  * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather types and
-    layout for transposed flag, when thread scope.
+  * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather types with raw
+    buffer flag.
+  * Iterate `linAlgMatrixAccumulateToMemory` calls and gather types with
+    groupshared flag.
   * Iterate `VectorAccumulate` calls and gather types.
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
@@ -1862,13 +1864,10 @@ struct PSVLinAlgOuterProduct0 {
 
 enum class PSVLinAlgAccumulateStoreFlag : uint8_t {
   None = 0,
-  // MatrixTransposed: Accumulate to OuterProductOptimalTranspose layout,
-  // thread-scope only.
-  MatrixTransposed = 1 << 0,
   // RawBuffer: Accumulate is to a raw buffer, all scopes.
-  RawBuffer = 1 << 1,
+  RawBuffer = 1 << 0,
   // GroupShared: Accumulate to GroupShared memory, wave/group scope only.
-  GroupShared = 1 << 2,
+  GroupShared = 1 << 1,
 };
 
 struct PSVLinAlgAccumulateStore0 {
@@ -2045,13 +2044,10 @@ RDAT_ENUM_END()
 
 RDAT_ENUM_START(LinAlgAccumulateStoreFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
-  // MatrixTransposed: Accumulate to OuterProductOptimalTranspose layout,
-  // thread-scope only.
-  RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
   // RawBuffer: Accumulate is to a raw buffer, all scopes.
-  RDAT_ENUM_VALUE(RawBuffer, 1 << 1)
+  RDAT_ENUM_VALUE(RawBuffer, 1 << 0)
   // GroupShared: Accumulate to GroupShared memory, wave/group scope only.
-  RDAT_ENUM_VALUE(GroupShared, 1 << 2)
+  RDAT_ENUM_VALUE(GroupShared, 1 << 1)
 RDAT_ENUM_END()
 
 RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
