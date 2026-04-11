@@ -199,8 +199,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-                        MatrixLayoutEnum Layout,
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                         uint Align = sizeof(ElementType));
 };
 
@@ -2069,8 +2068,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-                        MatrixLayoutEnum Layout,
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                         uint Align = sizeof(ElementType));
 };
 
@@ -2234,6 +2232,6 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
+  MatAcc.InterlockedAccumulate(Buf, 0);
 }
 ```
