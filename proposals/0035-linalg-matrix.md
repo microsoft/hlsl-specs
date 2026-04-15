@@ -199,8 +199,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
-                        uint Align = sizeof(ElementType));
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
 };
 
 MatrixUseEnum AccumulatorLayout();
@@ -376,7 +375,7 @@ void OuterProdAccum() {
   MatrixAccumTy MatAcc =
       OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0, 0, MatrixLayout::OuterProductOptimal);
+  MatAcc.InterlockedAccumulate(Buf, 0);
 }
 ```
 
@@ -976,8 +975,7 @@ Matrix::InterlockedAccumulate(/*groupshared*/ T Arr[Size], uint StartIdx,
 template <MatrixUseEnum UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                          void>::type
-Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
-                                   uint Align = sizeof(ElementType));
+Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
 ```
 
 Matrices with `Wave` and `ThreadGroup` scope support a `Layout` parameter which
@@ -2068,8 +2066,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
-  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
-                        uint Align = sizeof(ElementType));
+  InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
 };
 
 MatrixUseEnum AccumulatorLayout();
