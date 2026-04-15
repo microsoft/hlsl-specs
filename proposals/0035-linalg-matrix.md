@@ -105,10 +105,10 @@ class Matrix {
   Splat(T Val);
 
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+                     MatrixLayoutEnum Layout, uint Align = 128);
 
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+                     MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
@@ -138,7 +138,7 @@ class Matrix {
   Set(uint Index, ElementType Value);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-             MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+             MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
@@ -153,7 +153,7 @@ class Matrix {
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                         MatrixLayoutEnum Layout,
-                        uint Align = sizeof(ElementType));
+                        uint Align = 128);
 
   template <typename T, MatrixUseEnum UseLocal = Use,
             MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
@@ -194,7 +194,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-       uint Align = sizeof(ElementType));
+       uint Align = 128);
 
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
@@ -805,12 +805,12 @@ Matrix::Splat(WaveReadLaneFirst(Val));
 ```c++
 static Matrix Matrix::Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                            MatrixLayoutEnum Layout,
-                           uint Align = sizeof(ElementType));
+                           uint Align = 128);
 
 // Not available on Thread scope matrices.
 static Matrix Matrix::Load(RWByteAddressBuffer Res, uint StartOffset,
                            uint Stride, MatrixLayoutEnum Layout,
-                           uint Align = sizeof(ElementType));
+                           uint Align = 128);
 
 // Not available on Thread scope matrices.
 template <typename T, SIZE_TYPE Size>
@@ -929,7 +929,7 @@ then the operation is a no-op.
 ```c++
 void Matrix::Store(
     RWByteAddressBuffer Res, uint StartOffset, uint Stride, MatrixLayout Layout,
-    uint Align = sizeof(__detail::ComponentTypeTraits<ComponentTy>::Type));
+    uint Align = 128);
 
 template <typename T, SIZE_TYPE Size>
 typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
@@ -972,7 +972,7 @@ typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                          void>::type
 Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
                               uint Stride, MatrixLayoutEnum Layout,
-                              uint Align = sizeof(ElementType));
+                              uint Align = 128);
 
 template <typename T, MatrixUseEnum UseLocal = Use,
           MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
@@ -1986,10 +1986,10 @@ class Matrix {
   Splat(T Val);
 
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+                     MatrixLayoutEnum Layout, uint Align = 128);
 
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-                     MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+                     MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
   static typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
@@ -2019,7 +2019,7 @@ class Matrix {
   Set(uint Index, ElementType Value);
 
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
-             MatrixLayoutEnum Layout, uint Align = sizeof(ElementType));
+             MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
   typename hlsl::enable_if<hlsl::is_arithmetic<T>::value &&
@@ -2034,7 +2034,7 @@ class Matrix {
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                         MatrixLayoutEnum Layout,
-                        uint Align = sizeof(ElementType));
+                        uint Align = 128);
 
   template <typename T, MatrixUseEnum UseLocal = Use,
             MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
@@ -2075,7 +2075,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
   static typename hlsl::enable_if<Use == MatrixUse::A && UseLocal == Use,
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
-       uint Align = sizeof(ElementType));
+       uint Align = 128);
 
   template <MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
