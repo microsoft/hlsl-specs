@@ -715,7 +715,8 @@ __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::F64, double)
 
 template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
   static const int Value =
-      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar) /
+      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar +
+       ComponentTypeTraits<DstTy>::ElementsPerScalar - 1) /
       ComponentTypeTraits<DstTy>::ElementsPerScalar;
 };
 
@@ -736,6 +737,18 @@ The `linalg::__detail::ComponentTypeTraits` struct is provided as an
 implementation detail to enable mapping `ComponentType` values to their
 native HLSL element types and differentiating between types that have native
 scalar support.
+
+The `linalg::__detail::DstN` struct computes the destination vector size when
+converting between two different component types. `Value` is calculated as the
+number of source vector elements (`SrcN`) multiplied by the source type's
+`ElementsPerScalar`, divided by the destination type's `ElementsPerScalar`,
+rounded up to the nearest integer.
+
+The `linalg::__detail::DimMN` struct conditionally swaps the `M` and `N`
+dimension values based on the `Transposed` parameter. When `false`, `M` and `N`
+are passed through unchanged. When `Transposed` is `true`, `M` and `N` are
+swapped. This is used by `Matrix::Cast` to compute the dimensions of a
+transposed matrix.
 
 #### linalg::Convert
 
@@ -1905,7 +1918,8 @@ __MATRIX_SCALAR_COMPONENT_MAPPING(ComponentType::F64, double)
 
 template <ComponentEnum DstTy, ComponentEnum SrcTy, int SrcN> struct DstN {
   static const int Value =
-      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar) /
+      (SrcN * ComponentTypeTraits<SrcTy>::ElementsPerScalar +
+       ComponentTypeTraits<DstTy>::ElementsPerScalar - 1) /
       ComponentTypeTraits<DstTy>::ElementsPerScalar;
 };
 
