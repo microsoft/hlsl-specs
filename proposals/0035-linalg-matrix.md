@@ -1750,9 +1750,6 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 
 ## Appendix 1: HLSL Header
 
-[Compiler Explorer](https://godbolt.org/z/5qzYaosf1)
-> Note: this mostly works with Clang, but has some issues to work out still.
-
 ```cpp
 namespace hlsl {
 
