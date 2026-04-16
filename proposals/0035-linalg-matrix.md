@@ -269,10 +269,14 @@ MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
             InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
             VectorRef<BiasElTy, M> BiasRef);
 
-// Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
 OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
+
+template <typename InputElTy, SIZE_TYPE M>
+typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
+                      uint StartOffset);
 
 } // namespace linalg
 } // namespace dx
@@ -477,6 +481,7 @@ The following table summarizes the operations supported for each matrix scope:
 | `linalg::Multiply(Matrix, vector)` | ✓ | ✗ | ✗ |
 | `linalg::MultiplyAdd(Matrix, vector, vector)` | ✓ | ✗ | ✗ |
 | `linalg::OuterProduct(vector, vector)` | ✓ | ✗ | ✗ |
+| `linalg::InterlockedAccumulate(RWByteAddressBuffer, vector)` | ✓ | ✗ | ✗ |
 
 Throughout this document a matrix may be described as having a scope as
 specified by the `Scope` parameter (e.g. a matrix with `Scope == Thread` is a
@@ -1054,7 +1059,20 @@ An accumulator matrix with wave or thread group scope has a method `Accumulate`
 which takes as a parameter an M x N `A` or `B` matrix. The method adds the
 provided matrix argument into the accumulator matrix.
 
-#### Matrix::AccumulatorLayout()
+#### linalg::InterlockedAccumulate
+
+```c++
+template <typename InputElTy, SIZE_TYPE M>
+typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
+                      uint StartOffset);
+```
+
+Atomically adds the vector data of `Vec` to the `RWByteAddressBuffer` target
+`Res`. When accumulating to the `RWByteAddressBuffer` object, the accumulation
+addition is performed on the component type of the vector.
+
+#### linalg::AccumulatorLayout()
 
 ```c++
 MatrixUse linalg::AccumulatorLayout();
@@ -1691,6 +1709,20 @@ represent all values of the format used in the shader's DXIL.
 > an F8 type, but the source value can be represented accurately in the emulated
 > FP type, this may cause expected behavior differences.
 
+``` llvm
+declare void @dx.op.vectorAccumulateToDescriptor.v[NUM][TY](
+    immarg i32,       ; opcode
+    <[NUM] x [TY]>,   ; input vector
+    %dx.types.Handle, ; destination RWByteAddressBuffer
+    i32)              ; buffer offset
+```
+
+Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
+element of the vector is added to the corresponding element in the buffer.
+If the data types do not match, the component data is converted to the target
+arithmetic type then added to the existing buffer data. This operation must
+observe [bounds checking behavior](#bounds-checking-behavior) described below.
+
 #### Bounds Checking Behavior
 
 The `@dx.op.linAlgMatrixLoadFromDescriptor` operation loads data from a
@@ -1701,8 +1733,9 @@ full matrix to the default element value if any element is out of bounds, or it
 may perform per-element bounds checking initializing only the out of bounds
 elements to the default value.
 
-The `@dx.op.linAlgMatrixStoreToDescriptor` and
-`@dx.op.linAlgMatrixAccumulateToDescriptor` operations write data to a
+The `@dx.op.linAlgMatrixStoreToDescriptor`,
+`@dx.op.linAlgMatrixAccumulateToDescriptor`, and
+`@dx.op.vectorAccumulateToDescriptor` operations write data to a
 descriptor. Writes to out of bounds memory are a no-op. An implementation may
 either perform bounds checking on the full bounds of the store converting the
 whole store to a no-op if any elelemt is out of bounds, or it may perform
@@ -2147,10 +2180,14 @@ MultiplyAdd(Matrix<MatrixDT, M, K, MatrixUse::A, MatrixScope::Thread> MatrixA,
             InterpretedVector<InputElTy, VecK, InputInterp> InterpVec,
             VectorRef<BiasElTy, M> BiasRef);
 
-// Outer product functions
 template <ComponentEnum OutTy, typename InputElTy, SIZE_TYPE M, SIZE_TYPE N>
 Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread>
 OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
+
+template <typename InputElTy, SIZE_TYPE M>
+typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
+                      uint StartOffset);
 
 } // namespace linalg
 } // namespace dx
