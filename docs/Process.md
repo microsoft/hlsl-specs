@@ -13,7 +13,7 @@ wider community.
 > are being handled in TC57.
 >
 > Similarly HLSL Vulkan extensions are now being developed and managed by the
-> Khronos Vulkan Workin Group. Vulkan features developed in this space are left
+> Khronos Vulkan Working Group. Vulkan features developed in this space are left
 > for historical record, but all new features are being handled in spaces
 > managed by The Khronos Group.
 
