@@ -850,10 +850,14 @@ Not all component types support transposing, it is implementation specific.
 Applications need to query the driver to determine if a matrix transpose is
 supported.
 
-For the `Load` operations on `[RW]ByteAddressBuffers`, the `Stride` argument
-represents the row or column stride in bytes. For the `Load` operations on
-`groupshared` arrays, the `Stride` argument is the count of elements in the
-`groupshared` array.
+For the `Load` operations on `[RW]ByteAddressBuffers`:
+  - the `Stride` argument is the row or column stride in bytes.
+  - the `Offset` argument is the number of bytes to skip before loading.
+For the `Load` operations on `groupshared` arrays:
+  - the `Stride` argument is the row or column stride in the count of `groupshared` array 
+  elements.
+  - the `Offset` argument is the count of `groupshared` array elements to skip
+  before loading.
 
 Reads from memory through `Load` functions are not atomic and may require
 explicit synchronization.
@@ -954,10 +958,14 @@ matrix object. When storing to `groupshared` memory, the matrix component data
 is converted to the target arithmetic or packed data type if the data types do
 not match.
 
-For the `Store` operations on `[RW]ByteAddressBuffers`, the `Stride` argument
-represents the row or column stride in bytes. For the `Store` operations on
-`groupshared` arrays, the `Stride` argument is the count of elements in the
-`groupshared` array.
+For the `Store` operations on `[RW]ByteAddressBuffers`:
+  - the `Stride` argument is the row or column stride in bytes.
+  - the `Offset` argument is the number of bytes to skip before storing.
+For the `Store` operations on `groupshared` arrays:
+  - the `Stride` argument is the row or column stride in the count of `groupshared` array 
+  elements.
+  - the `Offset` argument is the count of `groupshared` array elements to skip
+  before storing.
 
 Writes to memory through `Store` functions are not atomic and may require
 explicit synchronization.
