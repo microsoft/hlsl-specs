@@ -898,6 +898,9 @@ Converts a specified index into row and column coordinates. The valid range of
 range, then the result value is `UINT32_MAX.xx`. The mapping of indices to
 matrix coordinates is implementation-specific.
 
+The `x` component of the result value is the row, and the `y` component is the
+column in that row.
+
 #### Matrix::Get
 
 ```c++
