@@ -1147,6 +1147,10 @@ may also be a `VectorRef` which refers to a vector in memory. Using the
 `VectorRef` overload makes it easier for the backend compiler to optimize the
 bias vector loads with the ALU operations.
 
+If the `Bias` vector's interpretation type differs from the output vector
+type, the `Bias` vector is converted to the output vector type before the
+multiply-add operation.
+
 ### DXIL Types
 
 This feature adds the following new DXIL enumerations, which used as immediate
