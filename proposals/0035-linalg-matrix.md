@@ -854,11 +854,9 @@ For the `Load` operations on `[RW]ByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before loading.
 For the `Load` operations on `groupshared` arrays:
-  - the `Stride` argument is the row or column stride in elements. The element
-  type is the same as the `groupshared` array element type.
-  elements.
-  - the `Offset` argument is the count of `groupshared` array elements to skip
-  before loading.
+  - an element is a type matching the element type of the `groupshared` array.
+  - the `Stride` argument is the row or column stride in elements.
+  - the `Offset` argument is the number of elements to skip before loading.
 
 Reads from memory through `Load` functions are not atomic and may require
 explicit synchronization.
@@ -963,10 +961,9 @@ For the `Store` operations on `[RW]ByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before storing.
 For the `Store` operations on `groupshared` arrays:
-  - the `Stride` argument is the row or column stride in elements. The element
-  type is the same as the `groupshared` array element type.
-  - the `Offset` argument is the count of `groupshared` array elements to skip
-  before storing.
+  - an element is a type matching the element type of the `groupshared` array.
+  - the `Stride` argument is the row or column stride in elements.
+  - the `Offset` argument is the number of elements to skip before storing
 
 Writes to memory through `Store` functions are not atomic and may require
 explicit synchronization.
