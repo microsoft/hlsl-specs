@@ -957,7 +957,7 @@ matrix object. When storing to `groupshared` memory, the matrix component data
 is converted to the target arithmetic or packed data type if the data types do
 not match.
 
-For the `Store` operations on `[RW]ByteAddressBuffers`:
+For the `Store` operations on `RWByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before storing.
 For the `Store` operations on `groupshared` arrays:
