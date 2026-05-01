@@ -3,17 +3,28 @@ title: Proposal Process
 ---
 
 The primary purpose of this repository is to provide visibility into the feature
-development process for HLSL and solicit feedback from the wider community.
+development process for DirectX extensions to HLSL and solicit feedback from the
+wider community.
+
+> Note: As of January 2026, this GitHub project is _only_ for DirectX specific
+> features. Development of the HLSL core language has moved to [Ecma
+> TC57](https://github.com/hlsl-tc57). HLSL core features developed in this
+> space are left for historical record, but all future core language features
+> are being handled in TC57.
+>
+> Similarly HLSL Vulkan extensions are now being developed and managed by the
+> Khronos Vulkan Working Group. Vulkan features developed in this space are left
+> for historical record, but all new features are being handled in spaces
+> managed by The Khronos Group.
+
 Despite the openness of this process there are two significant caveats that
 should be noted:
 
-1. Final decisions about what features are included or excluded from HLSL are
-   made by the MSFT HLSL Team. Our goals are to make HLSL the best programming
-   language across all supported runtime targets, not just DirectX or Vulkan.
+1. Final decisions about what features are included or excluded from DirectX are
+   made by the MSFT HLSL Team.
 2. Some HLSL features may instead go through a
-
-   [Fast-track](#fast-track-for-extensions) process. This process is reserved
-   for platform and vendor extensions and is not suitable to all features.
+   [Fast-track](#fast-track-for-extensions) process, although we aim for
+   openness as early as possible.
 
 Feature proposals from outside the HLSL team will be interpreted as requests,
 and may be considered or rejected based on team and release priorities. You
@@ -43,10 +54,6 @@ helping change proposals through the proposal life cycle. For Vulkan-specific
 features we require at least one _Sponsor_ from the HLSL team and one _Sponsor_
 from the Khronos Vulkan Working Group. If you need assistance finding a
 _Sponsor_ for a proposal reach out to the [HLSL Team](Contact.md).
-
-All feature proposals are evaluated against the goals for the next HLSL language
-revision. The goals for the upcoming HLSL language version can be found
-[here](HLSL202x.md).
 
 When writing a feature proposal you should also familiarize yourself with the
 HLSL [Design Considerations](DesignConsiderations.md).
@@ -122,9 +129,8 @@ New proposals should be merged as **Under Consideration**. After assigning a
 number and merging the PR the author(s) should file issues tracking the work to
 flesh out and complete the detailed design.
 
-PRs introducing new proposals for language features will be reviewed at the
-[Design Meeting](/docs/DesignMeeting.md). PRs introducing new proposals for
-DirectX or DXIL features will be reviewed by Microsoft on a regular cadence.
+PRs introducing new proposals for language features will be reviewed by the
+Microsoft HLSL team on a regular cadence.
 
 #### Completing the Detailed Design
 
