@@ -52,7 +52,7 @@
 
 \begin{grammar}
   \define{function-specifier}\br
-  \texttt{export}\br
+  \terminal{export}
 \end{grammar}
 
 \p The \texttt{export} specifier denotes that the function has program linkage (\ref{Basic.Linkage.Program}).
@@ -64,6 +64,36 @@
 \p If a function is declared with an \texttt{export} specifier then all redeclarations of the same function must also use the \texttt{export} specifier or be part of \textit{export-declaration-group} (\ref{Decl.Export}).
 
 \Sec{Declarators}{Decl.Decl}
+
+\begin{grammar}
+  \define{init-declarator-list}\br
+  init-declarator\br
+  init-declarator-list \terminal{,} init-declarator\br
+
+  \define{init-declarator}\br
+  declarator \opt{initializer}\br
+
+  \define{declarator}\br
+  declarator-id \opt{attribute-specifier-seq}\br
+  declarator parameters-and-qualifiers\br
+  declarator \terminal{\lbrack} \opt{constant-expression} \terminal{\rbrack} \opt{attribute-specifier-seq}\br
+
+  \define{parameters-and-qualifiers}\br
+  \terminal{(} parameter-declaration-clause \terminal{)} \opt{cv-qualifier-seq} \opt{attribute-specifier-seq}\br
+
+  \define{cv-qualifier-seq}\br
+  cv-qualifier \opt{cv-qualifier-seq}\br
+
+  \define{cv-qualifier}\br
+  \terminal{const}\br
+
+  \define{declarator-id}\br
+  id-expression
+
+\end{grammar}
+
+
+
 \Sec{Initializers}{Decl.Init}
 
 \p The process of initialization described in this section applies to all
@@ -180,7 +210,7 @@ Each cbuffer declaration refers to a unique constant buffer resource
 (\ref{Resources.cnbuf}).
 
 \p The cbuffer declaration itself does not declare a declaration scope.
-Declarations within a cbuffer declaration that declare names, declare their names 
+Declarations within a cbuffer declaration that declare names, declare their names
 in the scope containing the cbuffer declaration. A cbuffer declaration may not
 contain a \textit{namespace-declaration} or \textit{cbuffer-declaration}.
 \footnote{These declarations were previously allowed in HLSL reference compilers
