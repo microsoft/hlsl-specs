@@ -1736,10 +1736,17 @@ Basic process:
 * Iterate over specific LinAlg DXIL op calls.
 * If operation is outside minimum requirements, gather detailed usage
   information.
+* Gather usage information on a per-function basis.
+* Aggregate usage information to callers, and ultimately to entry points and
+  exported functions.
+* For library targets (RDAT), intermediate per-function usage information is
+  stored per entry point and per-exported function.
+* For non-library targets (PSV0), all usage in the module can be collected
+  without gathering it on a per-function basis.
 
-Extended usage information is gathered for the following operation groups, where
-"shapes" refer to (M,N,K) operation shapes, and "types" refer to the element
-types of the matrices and vectors.
+Usage information is gathered for the following operation groups, where "shapes"
+refer to (M,N,K) operation shapes, and "types" refer to the element types of the
+matrix or vector operation arguments.
 
 * `ThreadVectorMatrixMultiply`
   * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather types.
