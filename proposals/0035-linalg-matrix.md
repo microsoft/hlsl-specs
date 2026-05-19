@@ -1873,7 +1873,9 @@ matrix or vector operation arguments.
     buffer flag.
   * Iterate `LinAlgMatrixAccumulateToMemory` calls and gather types with
     groupshared flag.
-  * Iterate `VectorAccumulateToDescriptor` calls and gather types. Use
+  * Iterate `VectorAccumulateToDescriptor` calls and gather types from the input
+    vector component type. Since there is no explicit interpretation, so it will
+    interpret integer types as signed, and it does not support packed types. Use
     the same AccumulateStore record with the raw buffer flag for this.
   * For identical component types, but a different memory flag, combine flags on
     the same AccumulateStore record. (one record per unique type)
