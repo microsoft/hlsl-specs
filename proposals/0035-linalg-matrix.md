@@ -1760,7 +1760,7 @@ matrix or vector operation arguments.
 * `AccumulateStore`
   * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather types with raw
     buffer flag.
-  * Iterate `linAlgMatrixAccumulateToMemory` calls and gather types with
+  * Iterate `LinAlgMatrixAccumulateToMemory` calls and gather types with
     groupshared flag.
   * Iterate `VectorAccumulate` calls and gather types.
     * TBD: update with final operation, including whether this uses
@@ -1903,9 +1903,9 @@ PSVLinAlgRuntimeInfo0 record.
   * If `MatrixOperationShapeCount > 0`:
     * `uint32_t LinAlgMatrixOperationShapeSize`
     * `{ (PSVLinAlgMatrixOperationShapeN) char[LinAlgMatrixOperationShapeSize] } * LinAlgMatrixOperationShapeCount`
-  * If `ThreadMatrixConstructionCount > 0`:
-    * `uint32_t LinAlgThreadMatrixConstructionSize`
-    * `{ (PSVLinAlgThreadMatrixConstructionN) char[LinAlgThreadMatrixConstructionSize] } * ThreadMatrixConstructionCount`
+  * If `MatrixConstructionCount > 0`:
+    * `uint32_t LinAlgMatrixConstructionSize`
+    * `{ (PSVLinAlgMatrixConstructionN) char[LinAlgMatrixConstructionSize] } * MatrixConstructionCount`
   * If `ThreadMatrixVectorMultiplyCount > 0`:
     * `uint32_t LinAlgThreadMatrixVectorMultiplySize`
     * `{ (PSVLinAlgThreadMatrixVectorMultiplyN) char[LinAlgThreadMatrixVectorMultiplySize] } * ThreadMatrixVectorMultiplyCount`
