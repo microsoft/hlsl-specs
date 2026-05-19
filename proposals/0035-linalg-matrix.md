@@ -1748,7 +1748,7 @@ Usage information is gathered for the following operation groups, where "shapes"
 refer to (M,N,K) operation shapes, and "types" refer to the element types of the
 matrix or vector operation arguments.
 
-* `ThreadVectorMatrixMultiply`
+* `ThreadMatrixVectorMultiply`
   * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather types.
   * Matrix operand must be traced to `MatrixLoadFromDescriptor` to determine the
     flags from the layout.
@@ -1800,7 +1800,7 @@ struct PSVLinAlgRuntimeInfo0 {
   // stride in bytes, followed by the records.
   uint32_t MatrixOperationShapeCount;
   uint32_t MatrixConstructionCount;
-  uint32_t ThreadVectorMatrixMultiplyCount;
+  uint32_t ThreadMatrixVectorMultiplyCount;
   uint32_t WaveMatrixMultiplyCount;
   uint32_t ThreadGroupMatrixMultiplyCount;
   uint32_t OuterProductCount;
@@ -1826,7 +1826,7 @@ struct PSVLinAlgMatrixConstruction0 {
   uint8_t MatrixType;
 };
 
-enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
+enum class PSVLinAlgThreadMatrixVectorMultiplyFlag : uint8_t {
   None = 0,
   // If neither MatrixTransposed or MatrixNonOptimalLayout is set, the matrix is
   // loaded from MulOptimal layout.
@@ -1837,11 +1837,11 @@ enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
   MatrixNonOptimalLayout = 1 << 1,
 };
 
-struct PSVLinAlgThreadVectorMatrixMultiply0 {
+struct PSVLinAlgThreadMatrixVectorMultiply0 {
   uint8_t ResultType;
   uint8_t MatrixType;
   uint8_t VectorInputType;
-  uint8_t Flags; // PSVLinAlgThreadVectorMatrixMultiplyFlag
+  uint8_t Flags; // PSVLinAlgThreadMatrixVectorMultiplyFlag
 };
 
 struct PSVLinAlgWaveMatrixMultiply0 {
@@ -1903,9 +1903,9 @@ PSVLinAlgRuntimeInfo0 record.
   * If `ThreadMatrixConstructionCount > 0`:
     * `uint32_t LinAlgThreadMatrixConstructionSize`
     * `{ (PSVLinAlgThreadMatrixConstructionN) char[LinAlgThreadMatrixConstructionSize] } * ThreadMatrixConstructionCount`
-  * If `ThreadVectorMatrixMultiplyCount > 0`:
-    * `uint32_t LinAlgThreadVectorMatrixMultiplySize`
-    * `{ (PSVLinAlgThreadVectorMatrixMultiplyN) char[LinAlgThreadVectorMatrixMultiplySize] } * ThreadVectorMatrixMultiplyCount`
+  * If `ThreadMatrixVectorMultiplyCount > 0`:
+    * `uint32_t LinAlgThreadMatrixVectorMultiplySize`
+    * `{ (PSVLinAlgThreadMatrixVectorMultiplyN) char[LinAlgThreadMatrixVectorMultiplySize] } * ThreadMatrixVectorMultiplyCount`
   * If `WaveMatrixMultiplyCount > 0`:
     * `uint32_t LinAlgWaveMatrixMultiplySize`
     * `{ (PSVLinAlgWaveMatrixMultiplyN) char[LinAlgWaveMatrixMultiplySize] } * WaveMatrixMultiplyCount`
@@ -1934,7 +1934,7 @@ enum class RuntimeDataPartType : uint32_t {
   ExtendedFunctionPropertiesTable = 12,
   LinAlgMatrixOperationShapeTable = 13,
   LinAlgMatrixConstructionTable = 14,
-  LinAlgThreadVectorMatrixMultiplyTable = 15,
+  LinAlgThreadMatrixVectorMultiplyTable = 15,
   LinAlgWaveMatrixMultiplyTable = 16,
   LinAlgThreadGroupMatrixMultiplyTable = 17,
   LinAlgOuterProductTable = 18,
@@ -2043,7 +2043,7 @@ semantic meanings.
 // returns the FunctionPropertyType, and compares this with
 // FunctionPropertyType::Flags defined in the enum below.
 
-RDAT_ENUM_START(LinAlgThreadVectorMatrixMultiplyFlag, uint8_t)
+RDAT_ENUM_START(LinAlgThreadMatrixVectorMultiplyFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
   // If neither MatrixTransposed or MatrixNonOptimalLayout is set, the matrix is
   // loaded from MulOptimal layout.
@@ -2076,12 +2076,12 @@ RDAT_STRUCT_TABLE(LinAlgMatrixConstruction, LinAlgMatrixConstructionTable)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
 RDAT_STRUCT_END()
 
-RDAT_STRUCT_TABLE(LinAlgThreadVectorMatrixMultiply,
-                  LinAlgThreadVectorMatrixMultiplyTable)
+RDAT_STRUCT_TABLE(LinAlgThreadMatrixVectorMultiply,
+                  LinAlgThreadMatrixVectorMultiplyTable)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, ResultType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, VectorInputType)
-  RDAT_FLAGS(uint8_t, LinAlgThreadVectorMatrixMultiplyFlag, Flags)
+  RDAT_FLAGS(uint8_t, LinAlgThreadMatrixVectorMultiplyFlag, Flags)
 RDAT_STRUCT_END()
 
 RDAT_STRUCT_TABLE(LinAlgWaveMatrixMultiply, LinAlgWaveMatrixMultiplyTable)
@@ -2125,7 +2125,7 @@ RDAT_STRUCT_END()
 RDAT_ENUM_START(FunctionPropertyType, uint32_t)
   RDAT_ENUM_VALUE(Flags, 0)
   RDAT_ENUM_VALUE(LinAlgMatrixConstruction, 1)
-  RDAT_ENUM_VALUE(LinAlgThreadVectorMatrixMultiply, 2)
+  RDAT_ENUM_VALUE(LinAlgThreadMatrixVectorMultiply, 2)
   RDAT_ENUM_VALUE(LinAlgWaveMatrixMultiply, 3)
   RDAT_ENUM_VALUE(LinAlgThreadGroupMatrixMultiply, 4)
   RDAT_ENUM_VALUE(LinAlgOuterProduct, 5)
@@ -2142,11 +2142,11 @@ RDAT_STRUCT_TABLE(ExtendedFunctionProperties, ExtendedFunctionPropertiesTable)
                       FunctionPropertyType::LinAlgMatrixConstruction)
         RDAT_RECORD_ARRAY_REF(LinAlgMatrixConstruction, MatrixConstructionArray)
       RDAT_UNION_ELIF(
-          LinAlgThreadVectorMatrixMultiply,
+          LinAlgThreadMatrixVectorMultiply,
           getPropertyType() ==
-              FunctionPropertyType::LinAlgThreadVectorMatrixMultiply)
-        RDAT_RECORD_ARRAY_REF(LinAlgThreadVectorMatrixMultiply,
-                              LinAlgThreadVectorMatrixMultiplyArray)
+              FunctionPropertyType::LinAlgThreadMatrixVectorMultiply)
+        RDAT_RECORD_ARRAY_REF(LinAlgThreadMatrixVectorMultiply,
+                              LinAlgThreadMatrixVectorMultiplyArray)
       RDAT_UNION_ELIF(LinAlgWaveMatrixMultiply,
                       getPropertyType() ==
                           FunctionPropertyType::LinAlgWaveMatrixMultiply)
