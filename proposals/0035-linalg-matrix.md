@@ -1751,7 +1751,7 @@ matrix or vector operation arguments.
 * `ThreadVectorMatrixMultiply`
   * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather types.
   * Matrix operand must be traced to `MatrixLoadFromDescriptor` to determine the
-    transposed flag from the layout.
+    flags from the layout.
 * `WaveMatrixMultiply`/`ThreadGroupMatrixMultiply`
   * Iterate `LinAlgMatrixMultiply`/`LinAlgMatrixMultiplyAccumulate` calls and
     gather shapes and types.
@@ -1763,6 +1763,8 @@ matrix or vector operation arguments.
   * Iterate `linAlgMatrixAccumulateToMemory` calls and gather types with
     groupshared flag.
   * Iterate `VectorAccumulate` calls and gather types.
+    * TBD: update with final operation, including whether this uses
+      AccumulateStore structure and necessary flags.
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
 
@@ -1826,8 +1828,13 @@ struct PSVLinAlgMatrixConstruction0 {
 
 enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
   None = 0,
+  // If neither MatrixTransposed or MatrixNonOptimalLayout is set, the matrix is
+  // loaded from MulOptimal layout.
   // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
   MatrixTransposed = 1 << 0,
+  // MatrixNonOptimalLayout: The matrix is loaded from a non-optimal layout.
+  // Can't be combined with MatrixTransposed flag.
+  MatrixNonOptimalLayout = 1 << 1,
 };
 
 struct PSVLinAlgThreadVectorMatrixMultiply0 {
@@ -2045,8 +2052,13 @@ semantic meanings.
 
 RDAT_ENUM_START(LinAlgThreadVectorMatrixMultiplyFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
+  // If neither MatrixTransposed or MatrixNonOptimalLayout is set, the matrix is
+  // loaded from MulOptimal layout.
   // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
   RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
+  // MatrixNonOptimalLayout: The matrix is loaded from a non-optimal layout.
+  // Can't be combined with MatrixTransposed flag.
+  RDAT_ENUM_VALUE(MatrixNonOptimalLayout, 1 << 1)
 RDAT_ENUM_END()
 
 RDAT_ENUM_START(LinAlgAccumulateStoreFlag, uint8_t)
@@ -2065,9 +2077,6 @@ RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
   RDAT_VALUE(uint32_t, N) // Columns in matrix B / Accumulator
   RDAT_VALUE(uint32_t, K) // Columns in matrix A / Rows in matrix B
 RDAT_STRUCT_END()
-
-// In the following, an unused ComponentType would be stored as
-// hlsl::DXIL::ComponentType::Invalid, aka: 0.
 
 RDAT_STRUCT_TABLE(LinAlgMatrixConstruction, LinAlgMatrixConstructionTable)
   RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
