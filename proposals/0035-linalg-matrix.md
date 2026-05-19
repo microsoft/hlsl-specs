@@ -1838,17 +1838,10 @@ enum class PSVLinAlgThreadVectorMatrixMultiplyFlag : uint8_t {
 };
 
 struct PSVLinAlgThreadVectorMatrixMultiply0 {
-  // Do we need shapes? If so, K would be unused (0)
-  PSVLinAlgMatrixShapeArrayReference OperationShapes;
   uint8_t ResultType;
   uint8_t MatrixType;
   uint8_t VectorInputType;
-  // For Bias, 0 could mean unused or same as ResultType, since bias is
-  // optional, and supporting a bias type that's the same as a supported
-  // ResultType is required.
-  uint8_t BiasInputType;
   uint8_t Flags; // PSVLinAlgThreadVectorMatrixMultiplyFlag
-  uint8_t Reserved[3];
 };
 
 struct PSVLinAlgWaveMatrixMultiply0 {
@@ -2088,7 +2081,6 @@ RDAT_STRUCT_TABLE(LinAlgThreadVectorMatrixMultiply,
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, ResultType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, VectorInputType)
-  RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, BiasInputType)
   RDAT_FLAGS(uint8_t, LinAlgThreadVectorMatrixMultiplyFlag, Flags)
 RDAT_STRUCT_END()
 
