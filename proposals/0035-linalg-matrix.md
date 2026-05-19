@@ -1874,16 +1874,17 @@ matrix or vector operation arguments.
   * Iterate `LinAlgMatrixAccumulateToMemory` calls and gather types with
     groupshared flag.
   * Iterate `VectorAccumulateToDescriptor` calls and gather types from the input
-    vector component type. Since there is no explicit interpretation, so it will
-    interpret integer types as signed, and it does not support packed types. Use
-    the same AccumulateStore record with the raw buffer flag for this.
+    vector component type. Without an explicit interpretation, integer types are
+    treated as signed, and packed types are not supported. Use the same
+    `AccumulateStore` record with the raw buffer flag for this.
   * For identical component types, but a different memory flag, combine flags on
-    the same AccumulateStore record. (one record per unique type)
+    the same `AccumulateStore` record. (one record per unique type)
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
-  * Emit only one record per unique type, with minimum M/N/K across all uses
-    with that type.
-  * Thread-scope matrices are excluded from MatrixConstruction gathering,
+  * For each component type, collect each unique shape. For each Use, one
+    dimension is unused and should be set to 0. Shapes with different Uses won't
+    be merged.
+  * Thread-scope matrices are excluded from `MatrixConstruction` gathering,
     because runtime feature info query is defined only for wave/group scope
     matrices.
 
@@ -1941,6 +1942,10 @@ struct PSVLinAlgMatrixShapeArrayReference {
 };
 
 struct PSVLinAlgMatrixConstruction0 {
+  // Each shape collects only the dimensions needed for a single matrix Use.
+  // For instance, an Accumulator only uses M and N, so K will be set to 0.
+  // Different Matrix Use types are not combined to avoid implying uses that
+  // aren't present.
   PSVLinAlgMatrixShapeArrayReference OperationShapes;
   uint8_t MatrixType;
 };
@@ -2191,6 +2196,10 @@ RDAT_STRUCT_TABLE(LinAlgMatrixOperationShape,
 RDAT_STRUCT_END()
 
 RDAT_STRUCT_TABLE(LinAlgMatrixConstruction, LinAlgMatrixConstructionTable)
+  // Each shape collects only the dimensions needed for a single matrix Use.
+  // For instance, an Accumulator only uses M and N, so K will be set to 0.
+  // Different Matrix Use types are not combined to avoid implying uses that
+  // aren't present.
   RDAT_RECORD_ARRAY_REF(LinAlgMatrixOperationShape, OperationShapes)
   RDAT_ENUM(uint8_t, hlsl::DXIL::ComponentType, MatrixType)
 RDAT_STRUCT_END()
