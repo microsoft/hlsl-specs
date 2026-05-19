@@ -1767,6 +1767,9 @@ matrix or vector operation arguments.
       AccumulateStore structure and necessary flags.
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
+  * Thread-scope matrices are excluded from MatrixConstruction gathering,
+    because runtime feature info query is defined only for wave/group scope
+    matrices.
 
 #### Pipeline State Validation (PSV0)
 
