@@ -2188,6 +2188,10 @@ RDAT_STRUCT_END()
 
 #### Open questions for PSV0 and RDAT
 
+For Min M/N/K gathered for matrix construction, is this sufficient, or is there
+a whole multiple rule applied to supported shapes that would require gathering
+more detailed shape information?
+
 Do we need to capture component conversions with CopyConvertMatrix?
 
 Should we collect usages inside the required Tier 1 feature set?
