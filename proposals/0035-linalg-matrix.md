@@ -1957,7 +1957,9 @@ struct PSVLinAlgMatrixConstruction0 {
 
 enum class PSVLinAlgThreadMatrixVectorMultiplyFlag : uint8_t {
   None = 0,
-  // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
+  // If neither MatrixTransposed or MatrixNonMulOptimalLayout is set, the matrix
+  // is only loaded from MulOptimal layout.
+  // MatrixTransposed: The matrix is loaded from MulOptimalTransposed layout.
   MatrixTransposed = 1 << 0,
   // MatrixNonMulOptimalLayout: The matrix is loaded from a non-MulOptimal
   // layout.
@@ -2172,7 +2174,9 @@ semantic meanings.
 
 RDAT_ENUM_START(LinAlgThreadMatrixVectorMultiplyFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
-  // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
+  // If neither MatrixTransposed or MatrixNonMulOptimalLayout is set, the matrix
+  // is only loaded from MulOptimal layout.
+  // MatrixTransposed: The matrix is loaded from MulOptimalTransposed layout.
   RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
   // MatrixNonMulOptimalLayout: The matrix is loaded from a non-MulOptimal
   // layout.
