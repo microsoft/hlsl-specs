@@ -1764,9 +1764,10 @@ matrix or vector operation arguments.
     buffer flag.
   * Iterate `LinAlgMatrixAccumulateToMemory` calls and gather types with
     groupshared flag.
-  * Iterate `VectorAccumulate` calls and gather types.
-    * TBD: update with final operation, including whether this uses
-      AccumulateStore structure and necessary flags.
+  * Iterate `VectorAccumulateToDescriptor` calls and gather types. Use
+    the same AccumulateStore record with the raw buffer flag for this.
+  * For identical component types, but a different memory flag, combine flags on
+    the same AccumulateStore record. (one record per unique type)
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
   * Emit only one record per unique type, with minimum M/N/K across all uses
