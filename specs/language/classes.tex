@@ -1,0 +1,20 @@
+\Ch{Classes}{Classes}
+\Sec{Bit-field}{Classes.Bitfield}
+\p A bit-field is a class member with an explicit size specified in bits. Bit-fields must be of an underflying integer type.
+\begin{HLSL}
+struct Foo {
+  uint A : 10;
+  bool B : 1;
+};
+\end{HLSL}
+\p A bit-field can be unnamed.  Unnamed bit-fields cannot be accessed or initialized.
+\begin{HLSL}
+struct Foo {
+  uint : 10;
+};
+\end{HLSL}
+\p The explicit size of a named bit-field must be a constant expression of integer type, and must resolve to a number greater than zero and less than or equal to the size of the specified type in bits.
+\p The explicit size of an unnamed bit-field can also be zero.
+\p A bit-field cannot be a static member.
+\Sec{Static Members}{Classes.Static}
+\Sec{Conversions}{Classes.Conversions}
