@@ -286,7 +286,7 @@ OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
                       uint StartOffset, uint Align = 64);
 
 } // namespace linalg
@@ -1081,7 +1081,7 @@ provided matrix argument into the accumulator matrix.
 ```c++
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
                       uint StartOffset, uint Align = 64);
 ```
 
@@ -2268,7 +2268,7 @@ OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
                       uint StartOffset, uint Align = 64);
 
 } // namespace linalg
