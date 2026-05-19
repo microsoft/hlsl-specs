@@ -1868,8 +1868,11 @@ matrix or vector operation arguments.
 * `WaveMatrixMultiply`/`ThreadGroupMatrixMultiply`
   * Iterate `LinAlgMatrixMultiply`/`LinAlgMatrixMultiplyAccumulate` calls and
     gather shapes and types.
+  * For each combination of result/matrix A/matrix B types, collect each unique
+    shape.
 * `OuterProduct`
-  * Iterate `LinAlgMatrixOuterProduct` calls and gather types.
+  * Iterate `LinAlgMatrixOuterProduct` calls and gather each unique combination
+    of result and input vector component types.
 * `AccumulateStore`
   * Iterate `LinAlgMatrixAccumulateToDescriptor` calls and gather types with raw
     buffer flag.
