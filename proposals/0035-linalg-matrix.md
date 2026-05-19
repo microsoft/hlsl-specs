@@ -286,8 +286,8 @@ OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset);
+InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+                      uint StartOffset, uint Align = 64);
 
 } // namespace linalg
 } // namespace dx
@@ -1081,8 +1081,8 @@ provided matrix argument into the accumulator matrix.
 ```c++
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset);
+InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+                      uint StartOffset, uint Align = 64);
 ```
 
 Atomically adds the vector data of `Vec` to the `RWByteAddressBuffer` target
@@ -1583,7 +1583,7 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMul.v[NUMo][TYo].[MatTy].v[NUMi][TYi
   immarg i1,                         ; is output signed
   <[NUMi] x [TYi]>,                  ; input vector
   immarg i32                         ; input interpretation type (DXIL::ComponentType)
-)
+  )
 ```
 
 This operation implements a column-vector multiplication against an `A` matrix
@@ -1607,7 +1607,7 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgMatVecMulAdd.v[NUMo][TYo].[MatTy].v[NUMi][
   immarg i32,                         ; input interpretation type (DXIL::ComponentType)
   <[NUMo] x [TYb]>,                   ; bias vector
   immarg i32                          ; bias interpretation type (DXIL::ComponentType)
-)
+  )
 ```
 
 This operation implements a column-vector multiplication against an `A` matrix
@@ -1695,7 +1695,7 @@ declare <[NUMo] x [TYo]> @dx.op.linAlgConvert.v[NUMo][TYo].v[NUMi][TYi](
   <[NUMi] x [TYi]>,                   ; input vector
   immarg i32,                         ; input interpretation type (DXIL::ComponentType)
   immarg i32                          ; output interpretation type (DXIL::ComponentType)
-)
+  )
 ```
 
 Converts an input vector containing data of the input interpretation type to a
@@ -1776,11 +1776,13 @@ represent all values of the format used in the shader's DXIL.
 > FP type, this may cause expected behavior differences.
 
 ``` llvm
-declare void @dx.op.vectorAccumulateToDescriptor.v[NUM][TY](
-    immarg i32,       ; opcode
-    <[NUM] x [TY]>,   ; input vector
-    %dx.types.Handle, ; destination RWByteAddressBuffer
-    i32)              ; buffer offset
+declare void @dx.op.linAlgVectorAccumulateToDescriptor.v[NUM][TY](
+  immarg i32,       ; opcode
+  <[NUM] x [TY]>,   ; input vector
+  %dx.types.Handle, ; destination RWByteAddressBuffer
+  i32,              ; buffer offset
+  i32               ; vector element alignment
+  )
 ```
 
 Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
@@ -1801,7 +1803,7 @@ elements to the default value.
 
 The `@dx.op.linAlgMatrixStoreToDescriptor`,
 `@dx.op.linAlgMatrixAccumulateToDescriptor`, and
-`@dx.op.vectorAccumulateToDescriptor` operations write data to a
+`@dx.op.linAlgVectorAccumulateToDescriptor` operations write data to a
 descriptor. Writes to out of bounds memory are a no-op. An implementation may
 either perform bounds checking on the full bounds of the store converting the
 whole store to a no-op if any elelemt is out of bounds, or it may perform
@@ -2266,8 +2268,8 @@ OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
 template <typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset);
+InterlockedAccumulate(RWByteAddressBuffer Res, vector<InputElTy, M> Vec,
+                      uint StartOffset, uint Align = 64);
 
 } // namespace linalg
 } // namespace dx
