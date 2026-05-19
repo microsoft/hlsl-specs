@@ -1785,9 +1785,8 @@ declare void @dx.op.vectorAccumulateToDescriptor.v[NUM][TY](
 
 Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
 element of the vector is added to the corresponding element in the buffer.
-If the data types do not match, the component data is converted to the target
-arithmetic type then added to the existing buffer data. This operation must
-observe [bounds checking behavior](#bounds-checking-behavior) described below.
+Accumulation occurs in the type of the input vector. This operation must observe
+[bounds checking behavior](#bounds-checking-behavior) described below.
 
 #### Bounds Checking Behavior
 
