@@ -1740,7 +1740,9 @@ Basic process:
 * Aggregate usage information to callers, and ultimately to entry points and
   exported functions.
 * For library targets (RDAT), intermediate per-function usage information is
-  stored per entry point and per-exported function.
+  stored per entry point and per-exported function. The runtime will aggregate
+  usage information from exported functions to entry points for call graphs
+  constructed by linking at runtime (DXR).
 * For non-library targets (PSV0), all usage in the module can be collected
   without gathering it on a per-function basis.
 
@@ -1767,6 +1769,8 @@ matrix or vector operation arguments.
       AccumulateStore structure and necessary flags.
 * `MatrixConstruction`
   * Iterate all other wave/group scope matrix calls and gather shapes and types.
+  * Emit only one record per unique type, with minimum M/N/K across all uses
+    with that type.
   * Thread-scope matrices are excluded from MatrixConstruction gathering,
     because runtime feature info query is defined only for wave/group scope
     matrices.
