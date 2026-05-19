@@ -1863,6 +1863,8 @@ matrix or vector operation arguments.
   * Iterate `LinAlgMatVecMul`/`LinAlgMatVecMulAdd` calls and gather types.
   * Matrix operand must be traced to `MatrixLoadFromDescriptor` to determine the
     flags from the layout.
+  * Make one record per unique combination of result/matrix/vector types. Flags
+    are merged (OR'd) across operations with the same type combination.
 * `WaveMatrixMultiply`/`ThreadGroupMatrixMultiply`
   * Iterate `LinAlgMatrixMultiply`/`LinAlgMatrixMultiplyAccumulate` calls and
     gather shapes and types.
@@ -1952,12 +1954,10 @@ struct PSVLinAlgMatrixConstruction0 {
 
 enum class PSVLinAlgThreadMatrixVectorMultiplyFlag : uint8_t {
   None = 0,
-  // If neither MatrixTransposed or MatrixNonMulOptimalLayout is set, the matrix
-  // is loaded from MulOptimal layout.
   // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
   MatrixTransposed = 1 << 0,
   // MatrixNonMulOptimalLayout: The matrix is loaded from a non-MulOptimal
-  // layout. Can't be combined with MatrixTransposed flag.
+  // layout.
   MatrixNonMulOptimalLayout = 1 << 1,
 };
 
@@ -2169,12 +2169,10 @@ semantic meanings.
 
 RDAT_ENUM_START(LinAlgThreadMatrixVectorMultiplyFlag, uint8_t)
   RDAT_ENUM_VALUE(None, 0)
-  // If neither MatrixTransposed or MatrixNonMulOptimalLayout is set, the matrix
-  // is loaded from MulOptimal layout.
   // MatrixTransposed: The matrix is loaded from MulOptimalTranspose layout.
   RDAT_ENUM_VALUE(MatrixTransposed, 1 << 0)
   // MatrixNonMulOptimalLayout: The matrix is loaded from a non-MulOptimal
-  // layout. Can't be combined with MatrixTransposed flag.
+  // layout.
   RDAT_ENUM_VALUE(MatrixNonMulOptimalLayout, 1 << 1)
 RDAT_ENUM_END()
 
