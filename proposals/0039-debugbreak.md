@@ -58,16 +58,16 @@ bool dx::IsDebuggingEnabled(); // Query if debugging is enabled (DirectX only).
 ```hlsl
 [numthreads(8,1,1)]
 void main(uint GI : SV_GroupIndex) {
-    // Conditional expensive debug checks
+  // Conditional expensive debug checks
   if (dx::IsDebuggingEnabled()) {
-        // Expensive validation only when debugging
-        ValidateComplexInvariants();
-    }
+    // Expensive validation only when debugging
+    ValidateComplexInvariants();
+  }
 
-    // Manual breakpoint for debugging specific conditions
-    if (someRareCondition) {
-        DebugBreak();
-    }
+  // Manual breakpoint for debugging specific conditions
+  if (someRareCondition) {
+    DebugBreak();
+  }
 }
 ```
 
@@ -122,12 +122,10 @@ This change introduces two new DXIL operations:
 ```llvm
 declare void @dx.op.debugBreak(
   immarg i32             ; opcode
-) convergent
+)
 ```
 
-Triggers a debugger breakpoint. Must be treated as `convergent` to prevent code
-motion. Should not be marked `readonly` or `readnone`. If debugging is not
-enabled, this is a no-op.
+Triggers a debugger breakpoint. If debugging is not enabled, this is a no-op.
 
 #### `dx.op.IsDebuggingEnabled`
 
@@ -139,14 +137,6 @@ declare i1 @dx.op.IsDebuggingEnabled(
 
 Returns `true` (1) if debugging is enabled, `false` (0) otherwise. Marked
 `readonly` as it only queries state.
-
-### Convergence Requirements
-
-`debugBreak` operations must be treated as `convergent` to prevent
-code motion that could change their observable behavior:
-- `debugBreak`: Must break at the exact location specified by the programmer
-
-These operations should not be hoisted, sunk, or duplicated by optimizers.
 
 ### Shader Model Requirements
 
@@ -195,17 +185,9 @@ No SPIR-V lowering is defined for `dx::IsDebuggingEnabled()`.
 
 - Confirm validation accepts the new operations in SM 6.10+
 - Confirm validation rejects operations in earlier shader models
-- Verify convergence requirements are properly validated
 
 ### Execution Testing
 
 - Test `DebugBreak()` triggers breakpoint when debugging is enabled
 - Test `DebugBreak()` is no-op when debugging is not enabled
 - Test `dx::IsDebuggingEnabled()` returns correct value based on runtime state
-
-## Open Questions
-
-* Consider introducing the `convergent` attribute to DXIL.
-  * This should be "cheap" and would potentially address pre-existing bugs.
-  * This would preserve the requirement that these operations not be moved
-    during optimization in the final DXIL.
