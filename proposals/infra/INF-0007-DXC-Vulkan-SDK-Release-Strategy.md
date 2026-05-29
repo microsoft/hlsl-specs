@@ -1,5 +1,5 @@
 ---
-title: "INF-NNNN - DXC Vulkan SDK Release Strategy"
+title: "INF-0007 - DXC Vulkan SDK Release Strategy"
 params:
   authors:
     - damyanp: Damyan Pepper
