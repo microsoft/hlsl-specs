@@ -101,12 +101,12 @@ code only when debugging is enabled:
 
 ```hlsl
 if (dx::IsDebuggingEnabled()) {
-    // Expensive bounds checking, validation, etc.
-    for (uint i = 0; i < arraySize; ++i) {
-        if (data[i] < 0.0f || data[i] > 1.0f) {
-            DebugBreak();
-        }
+  // Expensive bounds checking, validation, etc.
+  for (uint i = 0; i < arraySize; ++i) {
+    if (data[i] < 0.0f || data[i] > 1.0f) {
+      DebugBreak();
     }
+  }
 }
 ```
 
@@ -152,7 +152,7 @@ per-pipeline basis.
 
 Behavioral changes may include:
 
-- Breaking regardless of a debugging enabled
+- Breaking regardless of debugging being enabled
 - Disabling debug break instructions entirely
 
 It is expected that the driver compiler will alter behavior during lowering
