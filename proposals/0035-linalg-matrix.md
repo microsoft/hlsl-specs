@@ -1486,7 +1486,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 ```
 
 Populates a matrix with data from a `groupshared` array. If the output matrix's
-compnent type has a native HLSL representation the input groupshared array must
+component type has a native HLSL representation the input groupshared array must
 match that type, otherwise the input groupshared array must be `i32`. Validation
 will verify this requirement.
 
@@ -1567,7 +1567,7 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
 ```
 
 Store a matrix to groupshared memory. If the input matrix's
-compnent type has a native HLSL representation the groupshared array must
+component type has a native HLSL representation the groupshared array must
 match that type, otherwise the input groupshared array must be `i32`. Validation
 will verify this requirement.
 
