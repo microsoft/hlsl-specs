@@ -866,6 +866,7 @@ supported.
 For the `Load` operations on `[RW]ByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before loading.
+
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
   - the `Stride` argument is the row or column stride in elements.
@@ -976,6 +977,7 @@ not match.
 For the `Store` operations on `RWByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before storing.
+
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
   - the `Stride` argument is the row or column stride in elements.
@@ -1716,6 +1718,21 @@ Validation will ensure that:
   elements per scalar in the output interpretation (see the `__detail::DstN`
   template).
 
+``` llvm
+declare void @dx.op.linAlgVectorAccumulateToDescriptor.v[NUM][TY](
+  immarg i32,       ; opcode
+  <[NUM] x [TY]>,   ; input vector
+  %dx.types.Handle, ; destination RWByteAddressBuffer
+  i32,              ; buffer offset
+  i32               ; vector element alignment
+  )
+```
+
+Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
+element of the vector is added to the corresponding element in the buffer.
+Accumulation occurs in the type of the input vector. This operation must observe
+[bounds checking behavior](#bounds-checking-behavior) described below.
+
 #### Data Conversion Rules
 
 All APIs introduced in this specification which may apply conversions shall obey
@@ -1774,21 +1791,6 @@ represent all values of the format used in the shader's DXIL.
 > infinity (see: [conversion rules](#data-conversion-rules)) when converting to
 > an F8 type, but the source value can be represented accurately in the emulated
 > FP type, this may cause expected behavior differences.
-
-``` llvm
-declare void @dx.op.linAlgVectorAccumulateToDescriptor.v[NUM][TY](
-  immarg i32,       ; opcode
-  <[NUM] x [TY]>,   ; input vector
-  %dx.types.Handle, ; destination RWByteAddressBuffer
-  i32,              ; buffer offset
-  i32               ; vector element alignment
-  )
-```
-
-Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
-element of the vector is added to the corresponding element in the buffer.
-Accumulation occurs in the type of the input vector. This operation must observe
-[bounds checking behavior](#bounds-checking-behavior) described below.
 
 #### Bounds Checking Behavior
 
