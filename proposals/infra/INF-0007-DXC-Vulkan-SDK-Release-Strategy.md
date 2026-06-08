@@ -3,8 +3,10 @@ title: "INF-0007 - DXC Vulkan SDK Release Strategy"
 params:
   authors:
     - damyanp: Damyan Pepper
+    - joaosaffran: João Saffran
   sponsors:
     - damyanp: Damyan Pepper
+    - joaosaffran: João Saffran
   status: Under Consideration
 ---
 
@@ -30,40 +32,74 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-TODO
+The automation is a single pipeline that prepares a release candidate, validates
+it, and publishes it as a build artifact for further testing. The SDK builders 
+do not consume that artifact; they are given the candidate's DXC commit, 
+which the manifest records. The dependencies a candidate is built against are 
+captured in a checked-in `known_good.json` file, which is the single source of 
+truth for which SPIRV-Headers and SPIRV-Tools revisions are shipped.
 
-<!-- Describe your solution to the problem. Provide examples and describe how
-they work. Show how your solution is better than current workarounds: is it
-cleaner, safer, or more efficient? -->
+### Pipeline
 
+The pipeline has two triggers: creating a `release/vulkan/<version>` branch, or a
+manual run from the GitHub UI. The pipeline performs the following actions:
 
-<!--
+1. **Update dependencies.** SPIRV-Headers and SPIRV-Tools are updated
+   to the commit recorded in `known_good.json`.
 
-## Detailed design
+2. **Build.** DXC is configured and built with SPIRV code generation and the SPIRV
+   tests enabled. It also builds the tools the tests depend on, such as `spirv-val`.
 
-_The detailed design is not required until the feature is under review._
+3. **Test.** All of the SPIRV tests available in the DXC repo are run in this
+   stage: the lit tests, the googletest unit tests, and the TAEF tests. The
+   generated code is also validated with `spirv-val`. This stage is non-blocking: a
+   release candidate is published as a pipeline artifact even if some tests fail.
 
-This section should grow into a full specification that will provide enough
-information for someone who isn't the proposal author to implement the feature.
-It should also serve as the basis for documentation for the feature. Each
-feature will need different levels of detail here, but some common things to
-think through are:
+4. **Publish.** The DXC binary, a machine-readable manifest, and the per-tool test
+   reports are published as a single artifact, named `dxc_rc_<version>`.
 
-* Is there any potential for changed behavior?
-* Will this expose new interfaces that will have support burden?
-* How will this proposal be tested?
-* Does this require additional hardware/software/human resources?
-* What documentation should be updated or authored?
+### Release manifest
 
-## Alternatives considered (Optional)
+The manifest records the DXC commit, the SPIRV-Headers and SPIRV-Tools commits the
+candidate was built against, the per-tool results, and a single `validated` flag
+that is true only when every tool passed:
 
-If alternative solutions were considered, please provide a brief overview. This
-section can also be populated based on conversations that occur during
-reviewing.
+```json
+{
+  "dxc_commit": "<sha>",
+  "spirv_dependencies": {
+    "SPIRV-Headers": "<sha>",
+    "SPIRV-Tools": "<sha>"
+  },
+  "test_suites": [
+    { "name": "spirv-unit", "passed": 105, "failed": 0 },
+    { "name": "spirv-codegen", "passed": 1564, "failed": 0 },
+    { "name": "spirv-taef", "passed": 1, "failed": 0 },
+    { "name": "spirv-val", "passed": 6, "failed": 0 }
+  ],
+  "validated": true
+}
+```
 
-## Acknowledgments (Optional)
+### Release Steps
 
-Take a moment to acknowledge the contributions of people other than the author
-and sponsor.
+These steps are performed by whoever is currently responsible for monitoring the
+llvm-build, and may be repeated as needed:
 
+1. Update `known_good.json` to the SPIRV-Headers and SPIRV-Tools commits specified
+   by LunarG.
+2. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
+3. Check whether the resulting candidate is validated (see
+   [Release Candidate readiness](#release-candidate-readiness)).
+4. Report the validated DXC commit to LunarG.
 
+### Release Candidate readiness
+
+The following must be true and validated for a release candidate to be considered
+ready for the Vulkan SDK.
+
+* It builds against the SPIRV-Headers and SPIRV-Tools commits recorded in
+  `known_good.json`.
+* Every SPIRV testing tool passes, and the SPIRV the binary emits validates under
+  `spirv-val`.
+* The manifest records the result, with `validated` set to `true`.
