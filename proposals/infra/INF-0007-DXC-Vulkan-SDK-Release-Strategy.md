@@ -32,8 +32,8 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-The automation is a single pipeline that: prepares a release candidate; validates
-it; and publishes it as a build artifact for further testing. The SDK builders 
+The automation is a single pipeline that prepares a release candidate, validates
+it, and publishes it as a build artifact for further testing. The SDK builders 
 do not consume that artifact; they are given the candidate's DXC commit, 
 which the manifest records. The dependencies a candidate is built against are 
 captured in a checked-in `known_good.json` file, which is the single source of 
@@ -41,31 +41,24 @@ truth for which SPIRV-Headers and SPIRV-Tools revisions are shipped.
 
 ### Pipeline
 
-The pipeline has two triggers: Creating a `release/vulkan/<version>` branch; 
-or manually in the github UI. When creating a new branch, SPIRV-Headers and 
-SPIRV-Tools, will automatically update to the most recent commit. When 
-triggering manually this step is optional. The pipelines performs the following
-actions:
+The pipeline has two triggers: creating a `release/vulkan/<version>` branch, or a
+manual run from the GitHub UI. The pipeline performs the following actions:
 
-1. **Update dependencies (optional).** SPIRV-Headers and SPIRV-Tools are updated
-   to the most common commit and such reference is updated in `known_good.json`.
-   This step is executed automatically when creating a release branch, or it can
-   be opted in when triggered manually.
+1. **Update dependencies.** SPIRV-Headers and SPIRV-Tools are updated
+   to the commit recorded in `known_good.json`.
 
 2. **Build.** DXC is configured and built with SPIRV code generation and the SPIRV
-   tests enabled, it also builds required test dependent tools, such as: `spirv-val`.
+   tests enabled. It also builds the tools the tests depend on, such as `spirv-val`.
 
-3. **Test.** All tests available for SPIRV in DXC repo are run in this stage. 
-   This includes: lit tests, google tests and TAEF tests. The generated code is 
-   also validated by `spirv-val`. This stage is non blocking, meaning a release
-   candidate will be published in the pipeline artifact section even if test fails.
-   This is done to not block further testing that might be unaffected by such tests failures.
-
+3. **Test.** All of the SPIRV tests available in the DXC repo are run in this
+   stage: the lit tests, the googletest unit tests, and the TAEF tests. The
+   generated code is also validated with `spirv-val`. This stage is non-blocking: a
+   release candidate is published as a pipeline artifact even if some tests fail.
 
 4. **Publish.** The DXC binary, a machine-readable manifest, and the per-tool test
    reports are published as a single artifact, named `dxc_rc_<version>`.
 
-### Release Manifest
+### Release manifest
 
 The manifest records the DXC commit, the SPIRV-Headers and SPIRV-Tools commits the
 candidate was built against, the per-tool results, and a single `validated` flag
@@ -88,7 +81,19 @@ that is true only when every tool passed:
 }
 ```
 
-### Release readiness
+### Release Steps
+
+These steps are performed by whoever is currently responsible for monitoring the
+llvm-build, and may be repeated as needed:
+
+1. Update `known_good.json` to the SPIRV-Headers and SPIRV-Tools commits specified
+   by LunarG.
+2. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
+3. Check whether the resulting candidate is validated (see
+   [Release Candidate readiness](#release-candidate-readiness)).
+4. Report the validated DXC commit to LunarG.
+
+### Release Candidate readiness
 
 The following must be true and validated for a release candidate to be considered
 ready for the Vulkan SDK.
