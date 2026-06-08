@@ -2,11 +2,11 @@
 title: "INF-0007 - DXC Vulkan SDK Release Strategy"
 params:
   authors:
-    - damyanp: Damyan Pepper
-    - joaosaffran: João Saffran
+    - Damyan Pepper
+    - João Saffran
   sponsors:
-    - damyanp: Damyan Pepper
-    - joaosaffran: João Saffran
+    - Damyan Pepper
+    - João Saffran
   status: Under Consideration
 ---
 
@@ -32,47 +32,40 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-We automate this as a single pipeline that prepares a release candidate, validates
-it, and publishes it as a build artifact for the SDK builders to consume. We
-capture the dependencies a candidate is built against in a checked-in
-`known_good.json` file, which is the single source of truth for which SPIRV-Headers
-and SPIRV-Tools revisions we ship. The pipeline keeps that file current
-automatically when a new release branch is cut, so candidates track the latest
-SPIRV changes without a manual submodule bump.
+The automation is a single pipeline that: prepares a release candidate; validates
+it; and publishes it as a build artifact for further testing. The SDK builders 
+do not consume that artifact; they are given the candidate's DXC commit, 
+which the manifest records. The dependencies a candidate is built against are 
+captured in a checked-in `known_good.json` file, which is the single source of 
+truth for which SPIRV-Headers and SPIRV-Tools revisions are shipped.
 
 ### Pipeline
 
-The pipeline has two triggers. Creating a `release/vulkan/<version>` branch starts
-it automatically; it can also be started manually against an existing branch. The
-trigger only affects how the SPIRV dependencies are resolved (step 1); the
-remaining steps are identical. It performs the following steps:
+The pipeline has two triggers: Creating a `release/vulkan/<version>` branch; 
+or manually in the github UI. When creating a new branch, SPIRV-Headers and 
+SPIRV-Tools, will automatically update to the most recent commit. When 
+triggering manually this step is optional. The pipelines performs the following
+actions:
 
-1. **Update dependencies.** We take SPIRV-Headers and SPIRV-Tools to the commits
-   recorded in `known_good.json`. When a `release/vulkan/<version>` branch is
-   created we first advance `known_good.json` to the latest upstream commit of
-   each dependency, so a freshly cut candidate always picks up the most recent
-   SPIRV changes. On a manual run this update is optional and off by default: we
-   use the commits already recorded in `known_good.json` unchanged, so a specific
-   candidate can be reproduced or re-tested, unless the run asks for a refresh. In
-   every case we write the resolved commits back to `known_good.json` and record
-   them in the manifest, which keeps the build deterministic and the choice of
-   revisions reviewable.
+1. **Update dependencies (optional).** SPIRV-Headers and SPIRV-Tools are updated
+   to the most common commit and such reference is updated in `known_good.json`.
+   This step is executed automatically when creating a release branch, or it can
+   be opted in when triggered manually.
 
-2. **Build.** We configure and build DXC with SPIRV code generation and the SPIRV
-   tests enabled, together with the SPIRV-Tools validator (`spirv-val`) that we use
-   to independently check the generated SPIRV. A build failure is fatal — there is
-   no release candidate without a binary.
+2. **Build.** DXC is configured and built with SPIRV code generation and the SPIRV
+   tests enabled, it also builds required test dependent tools, such as: `spirv-val`.
 
-3. **Test.** After a successful build, we run the SPIRV tests using all of the
-   testing tools the DXC repo provides — the lit tests, the TAEF tests, and the
-   googletest unit tests — and we additionally validate the SPIRV the binary emits
-   with `spirv-val`. All of these run against that single build, on the worker that
-   produced it, and we run every SPIRV test regardless of which tool hosts it so
-   that "the SPIRV tests" means the complete set rather than one tool's subset.
+3. **Test.** All tests available for SPIRV in DXC repo are run in this stage. 
+   This includes: lit tests, google tests and TAEF tests. The generated code is 
+   also validated by `spirv-val`. This stage is non blocking, meaning a release
+   candidate will be published in the pipeline artifact section even if test fails.
+   This is done to not block further testing that might be unaffected by such tests failures.
 
-4. **Publish.** We publish the DXC binary, a machine-readable manifest, and the
-   per-tool test reports as a single artifact, named `dxc_rc_<version>` after the
-   SDK version the release branch targets, for downstream consumption.
+
+4. **Publish.** The DXC binary, a machine-readable manifest, and the per-tool test
+   reports are published as a single artifact, named `dxc_rc_<version>`.
+
+### Release Manifest
 
 The manifest records the DXC commit, the SPIRV-Headers and SPIRV-Tools commits the
 candidate was built against, the per-tool results, and a single `validated` flag
@@ -95,9 +88,6 @@ that is true only when every tool passed:
 }
 ```
 
-The manifest is the handoff to the SDK builders: it is the automated replacement
-for manually communicating the commit identifiers.
-
 ### Release readiness
 
 The following must be true and validated for a release candidate to be considered
@@ -108,62 +98,3 @@ ready for the Vulkan SDK.
 * Every SPIRV testing tool passes, and the SPIRV the binary emits validates under
   `spirv-val`.
 * The manifest records the result, with `validated` set to `true`.
-
-The `validated` flag is the single, machine-readable gate. An SDK builder consumes
-a candidate only when it is `true`.
-
-### Key decisions
-
-* **Determinism through `known_good.json`.** Whatever revisions a run resolves —
-  the recorded commits or a fresh upstream bump — we write back to
-  `known_good.json`, so every candidate is reproducible from that file alone and
-  the choice of SPIRV revisions stays an explicit, reviewable record rather than a
-  moving branch tip.
-
-* **Dependency refresh is tied to the trigger.** Cutting a release branch
-  refreshes the SPIRV dependencies to the latest upstream commits automatically,
-  so new candidates track upstream without a manual bump. Manual runs instead
-  default to the recorded commits — so any candidate can be reproduced or
-  re-tested exactly — and can opt into a refresh when wanted. The recorded
-  `known_good.json` keeps both paths auditable.
-
-* **Test failures do not block publication.** Only build failures stop the
-  pipeline. We record test failures in the manifest and surface them through the
-  `validated` flag, but still publish the candidate. The decision to release a
-  candidate rests with the team making the release, not with the CI/CD tooling:
-  the pipeline reports the results, and the team gates on `validated` when deciding
-  whether a candidate is acceptable.
-
-* **A single build feeds every test tool.** DXC's SPIRV coverage is spread across
-  multiple testing tools. The build is the expensive step, and CMake's outputs are
-  tied to the worker that produced them, so we run all of the tools against that
-  one build on the same worker rather than distributing them across runners. Being
-  otherwise independent, they can be run concurrently on that worker.
-
-* **The handoff goes through the manifest.** The handoff to the SDK builders and
-  the readiness decision are both driven by the manifest, so the integration does
-  not depend on out-of-band communication of commit identifiers.
-
-## Detailed design
-
-### Changed behavior
-
-This proposal adds release automation around DXC and does not change the
-compiler's behavior or any of its interfaces. The only repository additions are
-the `known_good.json` dependency pin, the pipeline definition, and the helper
-scripts that drive build, test, and validation.
-
-### How this is tested
-
-The pipeline is self-validating: its test step is the regression gate for SPIRV
-generation against the pinned dependencies, covering every SPIRV testing tool plus
-an independent `spirv-val` check of the SPIRV the binary emits. The
-`validated` flag in the manifest is the single signal both humans and downstream
-automation read.
-
-### Resources
-
-The pipeline requires CI capacity for a DXC build plus the SPIRV test run on the
-platform DXC ships from. No additional hardware or human resources are required,
-and no per-release manual coordination is expected beyond reviewing a
-`known_good.json` update.
