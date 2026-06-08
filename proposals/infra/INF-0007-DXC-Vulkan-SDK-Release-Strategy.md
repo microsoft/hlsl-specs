@@ -2,11 +2,11 @@
 title: "INF-0007 - DXC Vulkan SDK Release Strategy"
 params:
   authors:
-    - Damyan Pepper
-    - João Saffran
+    - damyanp: Damyan Pepper
+    - joaosaffran: João Saffran
   sponsors:
-    - Damyan Pepper
-    - João Saffran
+    - damyanp: Damyan Pepper
+    - joaosaffran: João Saffran
   status: Under Consideration
 ---
 
