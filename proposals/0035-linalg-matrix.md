@@ -1544,10 +1544,13 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
   )
 ```
 
-Populates a matrix with data from a `groupshared` array. If the output matrix's
-component type has a native HLSL representation the input groupshared array must
-match that type, otherwise the input groupshared array must be `i32`. Validation
-will verify this requirement.
+Populates a matrix with data from a `groupshared` array. If the groupshared
+memory is any type other than `i32` the matrix's component type must match the
+scalar ype of the groupshared array. If the groupshared memory is `i32` the
+matrix may be of any type. Validation will verify this requirement.
+
+No data conversions are applied during this operation, the data in the
+groupshared array is written in the format of the input matrix element.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
@@ -1625,10 +1628,14 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   )
 ```
 
-Store a matrix to groupshared memory. If the input matrix's
-component type has a native HLSL representation the groupshared array must
-match that type, otherwise the input groupshared array must be `i32`. Validation
-will verify this requirement.
+Store a matrix to groupshared memory. If the groupshared memory is any type
+other than `i32` the matrix's component type must match the scalar ype of the
+groupshared array. If the groupshared memory is `i32` the matrix may be of any
+type. Validation will verify this requirement.
+
+No data conversions are applied during this operation, the data in the
+groupshared array is assumed to be in the format of the destination matrix
+element.
 
 The validator will ensure that the group shared target memory is large enough
 for the write.
