@@ -34,15 +34,15 @@ releases and can be ingested into Godbolt.
 
 The SPIRV-Headers and SPIRV-Tools submodules are the single source of truth for the
 SPIRV revisions a candidate is built against. Once a week a workflow bumps them to the
-latest upstream commit and opens a pull request to merge that bump into `main`. The
+latest upstream commit and opens a pull request to merge that update into `main`. The
 pull request runs the release-candidate pipeline, building DXC against
-the bumped submodules and running the SPIRV tests.
+the updated submodules and running the SPIRV tests.
 
 For an SDK release, the pipeline also publishes the candidate as an artifact and runs
 the LLVM [offload-test-suite](https://github.com/llvm/offload-test-suite) against it,
 using lavapipe as the SPIRV driver and WARP as the DXIL driver. DXC from the Vulkan SDK
-is also used for DirectX, so its DXIL output is worth testing too. The SDK builders are
-handed the validated DXC commit, recorded in the manifest, not the artifact.
+is also used to compile shader targeting DirectX, so its DXIL output is worth testing too. 
+LunarG is handed the validated DXC commit, recorded in the release candidate manifest.
 
 The automation is split into three workflows, each shown below starting from its triggers:
 
@@ -107,17 +107,16 @@ opts in.
    tests enabled. The build also produces the tools the tests need, including
    `spirv-val`.
 
-2. **Test.** Every SPIRV test in the DXC repo runs here, across all of its harnesses:
-   the googletest unit tests, the lit CodeGenSPIRV tests, and the TAEF tests; the
-   binary's output is then checked with `spirv-val`. Each result is recorded
-   in the manifest, including failed tests. The logs also contain further information
-   where each file is located and what was exected. This stage is non-blocking —
-   a release candidate is published even if some tests fail.
+2. **Test.** Googletest unit tests, the lit CodeGenSPIRV tests, and the TAEF tests are
+   all run in this stage; the binary's output is then checked with `spirv-val`. Each
+   result is recorded in the manifest, including failed tests. The logs also contain
+   further information where each file is located and what was exected. This stage is
+   non-blocking — a release candidate is published even if some tests fail.
 
-4. **Publish.** The DXC binaries (`dxc`, `dxv`, and `dxcompiler.dll`), the manifest,
+3. **Publish.** The DXC binaries (`dxc`, `dxv`, and `dxcompiler.dll`), the manifest,
    and the test reports are uploaded as a single artifact named `dxc_rc_<version>`.
 
-5. **Offload tests.** A separate job runs the LLVM offload-test-suite against the
+4. **Offload tests.** A separate job runs the LLVM offload-test-suite against the
    published artifact, with DXC as the only compiler (the in-tree clang compiler is
    disabled). The Vulkan tests (`check-hlsl-vk`) on lavapipe and the Direct3D 12
    tests (`check-hlsl-warp-d3d12`) on WARP. Because it consumes the published artifact
@@ -126,12 +125,13 @@ opts in.
 ### Release manifest
 
 The manifest records the DXC commit, the SPIRV-Headers and SPIRV-Tools commits the
-candidate was built against, the tests results, and a single `validated` flag
-that is true only when every test passed:
+candidate was built against and the tests results:
 
 ```json
 {
   "dxc_commit": "<sha>",
+  "lavapipe_version": "<version>",
+  "warp_version": "<version>",
   "spirv_dependencies": {
     "SPIRV-Headers": "<sha>",
     "SPIRV-Tools": "<sha>"
@@ -141,8 +141,7 @@ that is true only when every test passed:
     { "name": "spirv-codegen", "passed": 1564, "failed": 0 },
     { "name": "spirv-taef", "passed": 1, "failed": 0 },
     { "name": "spirv-val", "passed": 6, "failed": 0 }
-  ],
-  "validated": true
+  ]
 }
 ```
 
@@ -156,7 +155,7 @@ llvm-build, and may be repeated as needed:
 2. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
 3. Check whether the resulting candidate is validated (see
    [Release Candidate readiness](#release-candidate-readiness)).
-4. Report the validated DXC commit to LunarG.
+4. Email the validated DXC commit back to LunarG.
 
 ### Release Candidate readiness
 
@@ -169,4 +168,3 @@ ready for the Vulkan SDK.
   SPIRV the binary emits validates under `spirv-val`.
 * The shaders the candidate compiles execute on the offload-test-suite under both
   software renderers: the SPIRV on lavapipe (Vulkan) and the DXIL on WARP (Direct3D 12).
-* The manifest records the result, with `validated` set to `true`.
