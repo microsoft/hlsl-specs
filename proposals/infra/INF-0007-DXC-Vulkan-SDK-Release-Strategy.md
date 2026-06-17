@@ -119,7 +119,8 @@ opts in.
 4. **Offload tests.** A separate job runs the LLVM offload-test-suite against the
    published artifact, with DXC as the only compiler (the in-tree clang compiler is
    disabled). The Vulkan tests (`check-hlsl-vk`) on lavapipe and the Direct3D 12
-   tests (`check-hlsl-warp-d3d12`) on WARP. Because it consumes the published artifact
+   tests (`check-hlsl-warp-d3d12`) on WARP (developers still use the dxc which ships
+   in the Vulkan SDK to compile dx shaders). Because it consumes the published artifact
    rather than the build tree, this job can also be run on its own against any earlier candidate.
 
 ### Release manifest
@@ -150,12 +151,16 @@ candidate was built against and the tests results:
 These steps are performed by whoever is currently responsible for monitoring the
 llvm-build, and may be repeated as needed:
 
-1. Update the SPIRV-Headers and SPIRV-Tools submodules to the commits specified by
+1. File an issue in DXC repository using the `vk_release_checklist.md` issue template,
+   assign this to yourself. This should be handed off at the end of rotation. 
+3. Update the SPIRV-Headers and SPIRV-Tools submodules to the commits specified by
    LunarG.
-2. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
-3. Check whether the resulting candidate is validated (see
+4. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
+5. Check whether the resulting candidate is validated (see
    [Release Candidate readiness](#release-candidate-readiness)).
-4. Email the validated DXC commit back to LunarG.
+6. Tag the validated commit, `vulkan-sdk-<version>-rc`, as a release candidate
+7. Report that tag to LunarG. This can be done through email
+   or by updating Khronos GitLab release issue with the validated commit.
 
 ### Release Candidate readiness
 
