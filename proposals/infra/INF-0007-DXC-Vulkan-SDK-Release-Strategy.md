@@ -42,7 +42,9 @@ For an SDK release, the pipeline also publishes the candidate as an artifact and
 the LLVM [offload-test-suite](https://github.com/llvm/offload-test-suite) against it,
 using lavapipe as the SPIRV driver and WARP as the DXIL driver. DXC from the Vulkan SDK
 is also used to compile shader targeting DirectX, so its DXIL output is worth testing too. 
-LunarG is handed the validated DXC commit, recorded in the release candidate manifest.
+Each validated candidate handed to LunarG is tagged as a release candidate (its
+results recorded in the manifest); the latest is promoted to a release once the Vulkan
+SDK ships.
 
 The automation is split into three workflows, each shown below starting from its triggers:
 
@@ -146,6 +148,20 @@ candidate was built against and the tests results:
 }
 ```
 
+### Release tagging
+
+A release is prepared on a branch and shipped to LunarG as a series of release
+candidate tags. The branch carries the Vulkan SDK's major and minor version; each tag
+adds the patch version and a release-candidate number. For SDK version `1.4.360`, for
+example, the release branch is `release/vulkan/1.4.360`, the candidates sent to LunarG
+are tagged `1.4.360.0rc1`, `1.4.360.0rc2`, and so on, and once the Vulkan SDK is
+published the latest candidate is promoted to a release tag with no `rc` suffix:
+`1.4.360.0`.
+
+A single SDK release might involves more than one handoff: LunarG may surface an
+issue, which is fixed on the branch and re-validated before the next candidate tag is
+cut. Only the final, shipped candidate becomes the release.
+
 ### Release Steps
 
 These steps are performed by whoever is currently responsible for monitoring the
@@ -153,14 +169,19 @@ llvm-build, and may be repeated as needed:
 
 1. File an issue in DXC repository using the `vk_release_checklist.md` issue template,
    assign this to yourself. This should be handed off at the end of rotation. 
-3. Update the SPIRV-Headers and SPIRV-Tools submodules to the commits specified by
+2. Update the SPIRV-Headers and SPIRV-Tools submodules to the commits specified by
    LunarG.
-4. Create the `release/vulkan/<version>` branch, which triggers the pipeline.
-5. Check whether the resulting candidate is validated (see
+3. Create the `release/vulkan/<version>` branch — named for the SDK major and minor
+   version, e.g. `release/vulkan/1.4.360` — which triggers the pipeline.
+4. Check whether the resulting candidate is validated (see
    [Release Candidate readiness](#release-candidate-readiness)).
-6. Tag the validated commit, `vulkan-sdk-<version>-rc`, as a release candidate
-7. Report that tag to LunarG. This can be done through email
-   or by updating Khronos GitLab release issue with the validated commit.
+5. Tag the validated commit with the next release-candidate tag (e.g. `1.4.360.0rc1`)
+   and report that tag to LunarG — by email, or by updating the Khronos GitLab release
+   issue with the validated commit.
+6. If LunarG reports a problem, fix it on the release branch and re-validate, then cut
+   the next release-candidate tag (`...rc2`, and so on) and report it.
+7. Once the Vulkan SDK is published, promote the latest release-candidate tag to a
+   release tag with no `rc` suffix, e.g. `1.4.360.0`.
 
 ### Release Candidate readiness
 
