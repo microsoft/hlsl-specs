@@ -152,15 +152,14 @@ candidate was built against and the tests results:
 
 A release is prepared on a branch and shipped to LunarG as a series of release
 candidate tags. The branch carries the Vulkan SDK's major and minor version; each tag
-adds the patch version and a release-candidate number. For SDK version `1.4.360`, for
-example, the release branch is `release/vulkan/1.4.360`, the candidates sent to LunarG
-are tagged `1.4.360.0rc1`, `1.4.360.0rc2`, and so on, and once the Vulkan SDK is
-published the latest candidate is promoted to a release tag with no `rc` suffix:
-`1.4.360.0`.
-
-A single SDK release might involves more than one handoff: LunarG may surface an
-issue, which is fixed on the branch and re-validated before the next candidate tag is
-cut. Only the final, shipped candidate becomes the release.
+records the full Vulkan SDK version and a release-candidate number, and is prefixed
+`vulkan-sdk-` so it reads as a Vulkan SDK version rather than being confused with DXC's
+own release tags (`v<major>.<minor>.YYMM.<patch>`). This matches the `vulkan-sdk-`
+tags SPIRV-Tools already uses for the SDK. For SDK version `1.4.360`, for example, the
+release branch is `release/vulkan/1.4.360`, the candidates sent to LunarG are tagged
+`vulkan-sdk-1.4.360.0rc1`, `vulkan-sdk-1.4.360.0rc2`, and so on, and once the Vulkan
+SDK is published the latest candidate is promoted to a release tag with no `rc` suffix:
+`vulkan-sdk-1.4.360.0`.
 
 ### Release Steps
 
@@ -175,13 +174,13 @@ llvm-build, and may be repeated as needed:
    version, e.g. `release/vulkan/1.4.360` — which triggers the pipeline.
 4. Check whether the resulting candidate is validated (see
    [Release Candidate readiness](#release-candidate-readiness)).
-5. Tag the validated commit with the next release-candidate tag (e.g. `1.4.360.0rc1`)
-   and report that tag to LunarG — by email, or by updating the Khronos GitLab release
-   issue with the validated commit.
+5. Tag the validated commit with the next release-candidate tag (e.g.
+   `vulkan-sdk-1.4.360.0rc1`) and report that tag to LunarG — by email, or by updating
+   the Khronos GitLab release issue with the validated commit.
 6. If LunarG reports a problem, fix it on the release branch and re-validate, then cut
    the next release-candidate tag (`...rc2`, and so on) and report it.
 7. Once the Vulkan SDK is published, promote the latest release-candidate tag to a
-   release tag with no `rc` suffix, e.g. `1.4.360.0`.
+   release tag with no `rc` suffix, e.g. `vulkan-sdk-1.4.360.0`.
 
 ### Release Candidate readiness
 
