@@ -14,182 +14,89 @@ params:
 
 ## Introduction
 
-DXC is included in the Vulkan SDK. Before each SDK release, the DXC submodule
-references (SPIRV-Headers, SPIRV-Tools) need to be updated and the product needs
-to be tested. This process has previously been mostly performed manually. This
-document details the requirements for ensuring DXC is ready for inclusion in the
-Vulkan SDK and proposes the changes required in order to satisfy them.
+DXC is included in the Vulkan SDK. Before each SDK release, the DXC submodule references
+(SPIRV-Headers and SPIRV-Tools) need to be updated and the product needs to be tested.
+This has previously been done mostly by hand. This document describes the strategy for
+ensuring DXC is ready for inclusion in the Vulkan SDK. It is concerned with the policy
+for how we manage these releases, not with the details of how the tests are run.
 
 ## Motivation
 
-SPIRV-Headers and SPIRV-Tools need to be kept up to date so that the most recent
-SPIRV features are available in DXC. We need to verify that DXC is generating
-valid SPIRV code and that there are no regressions. The process needs to be
-documented and automated enough so that it does not rely on individuals with
-special knowledge. Additionally, we want to align the version included in the
-Vulkan SDK with a formal DXC release so that it matches up with GitHub and NuGet
-releases and can be ingested into Godbolt.
+SPIRV-Headers and SPIRV-Tools need to be kept up to date so that the most recent SPIRV
+features are available in DXC. We need to verify that DXC generates valid SPIRV and that
+there are no regressions. The process needs to be documented and automated enough that it
+does not rely on individuals with special knowledge. We also want to align the version
+included in the Vulkan SDK with a formal DXC release, so that it matches the GitHub and
+NuGet releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-The SPIRV-Headers and SPIRV-Tools submodules are the single source of truth for the
-SPIRV revisions a candidate is built against. Once a week a workflow bumps them to the
-latest upstream commit and opens a pull request to merge that update into `main`. The
-pull request runs the release-candidate pipeline, building DXC against
-the updated submodules and running the SPIRV tests.
+This proposal describes how the SPIRV dependencies are kept current, which dependency
+versions a release is built against, when a build is considered ready, and how the Vulkan
+SDK release relates to the other DXC releases. 
 
-For an SDK release, the pipeline also publishes the candidate as an artifact and runs
-the LLVM [offload-test-suite](https://github.com/llvm/offload-test-suite) against it,
-using lavapipe as the SPIRV driver and WARP as the DXIL driver. DXC from the Vulkan SDK
-is also used to compile shader targeting DirectX, so its DXIL output is worth testing too. 
-Each validated candidate handed to LunarG is tagged as a release candidate (its
-results recorded in the manifest); the latest is promoted to a release once the Vulkan
-SDK ships.
+The guiding principle is that the Vulkan SDK is not a new release process. It is an
+additional consumer of the existing DXC release, with one extra constraint on which SPIRV
+commits the build is pinned to. The sections below first summarize how DXC releases work
+today, then describe where the Vulkan SDK fits.
 
-The automation is split into three workflows, each shown below starting from its triggers:
+### How DXC releases work today
 
-**1. Weekly submodule update** — keeps the SPIRV dependencies updated.
+DXC currently ships as a GitHub release, a NuGet package, and Windows/DirectX Vpacks. The
+GitHub release is produced from a release branch in GitHub, while the NuGet package and the
+Vpacks are produced from a release branch in Azure DevOps.
 
-```mermaid
-flowchart TD
-    cron(["Trigger: weekly schedule"]) --> bump
-    md1(["Trigger: manual dispatch"]) --> bump
-    bump["Bump SPIRV-Headers / SPIRV-Tools<br/>submodules to latest upstream"] --> changed{"Anything changed?"}
-    changed -->|no| stop(["Done — already current"])
-    changed -->|yes| pr["Open a vk-update PR"]
-    pr -. "branch push starts" .-> rc(["Release-candidate pipeline"])
-```
+A release starts by preparing these release branches: the DXC version is bumped, the
+release notes are labelled, the branch is cut from main, the shader model is set, and the
+branch policies are locked down. The submodules are pinned on the branch at this point. The
+build, submodule-update, report, and release pipelines are then pointed at the new branch
+so that subsequent builds run against it.
 
-**2. Release-candidate pipeline** — builds and tests DXC; for a release candidate it
-also publishes the artifact and runs the offload tests.
+The release builds run from those branches and are marked for retention. The build and
+report pipelines that run here are what we today treat as the validation that gates the
+release. Once the builds pass, the artifacts are published: the GitHub release is drafted
+and published, the NuGet package is uploaded, the Windows and DirectX Vpacks are updated,
+the VCPKG mapping is updated, and the new compiler is registered in Compiler Explorer
+(Godbolt).
 
-```mermaid
-flowchart TD
-    push(["Trigger: push to a<br/>vk-update or release/vulkan branch"]) --> build
-    md2(["Trigger: manual dispatch"]) --> build
-    build["Build DXC against the<br/>submodule pointers, plus spirv-val"] --> test
-    test["Run every SPIRV test:<br/>googletest, lit, TAEF, spirv-val"] --> gate{"Release candidate?<br/>release/vulkan branch<br/>or manual opt-in"}
-    gate -->|no| prchecks(["Validation only — checks surface<br/>on the vk-update PR, merge when green"])
-    gate -->|yes| publish["Publish dxc_rc artifact + manifest"]
-    publish -. "consumed by" .-> offload(["Offload tests"])
-```
+### Where the Vulkan SDK fits
 
-**3. Offload tests** — runs the offload-test-suite against the published candidate on
-software renderers, split by API.
+The Vulkan SDK build is the same DXC release described above, with a single added
+constraint: it is built against the specific SPIRV-Headers and SPIRV-Tools commits that
+LunarG specifies for that SDK, rather than against whatever the branch happened to pin.
+We keep the two pinning cases separate:
 
-```mermaid
-flowchart TD
-    called(["Trigger: called by the pipeline"]) --> get
-    md3(["Trigger: manual dispatch —<br/>run_id + artifact name"]) --> get
-    get["Download the dxc_rc artifact"] --> conf["Build offload-test-suite against<br/>the candidate's DXC — DXC only"]
-    conf --> vk["Vulkan: check-hlsl-vk on lavapipe<br/>runs the candidate's SPIRV"]
-    conf --> d3d["Direct3D 12: check-hlsl-warp-d3d12 on WARP<br/>runs the candidate's DXIL"]
-```
+* Continuous integration builds against the latest SPIRV-Headers and SPIRV-Tools, so
+  regressions against upstream are found early. This is independent of any release.
+* A release is built against pinned SPIRV commits. For the Vulkan SDK those commits are
+  the ones LunarG gives us; we do not choose them, we validate DXC against them.
 
-### Dependency update
+Concretely this adds one decision to "Prepare the release branch" — pin the SPIRV
+submodules to the LunarG-specified commits — and one step to "Publish" — submit the
+validated build to LunarG for inclusion in the SDK. Everything else in the existing
+process is unchanged.
 
-A scheduled job runs once a week (and can be triggered on demand). Such advances the
-SPIRV-Headers and SPIRV-Tools submodules to their latest upstream commit and, if
-anything changed, commits the new pointers onto a fresh `vk-update/<date>` branch and
-opens a pull request against the default branch. Pushing that branch starts the
-release-candidate pipeline, whose checks attach to the commit and show on the pull
-request, so the bump is reviewed and merged only once the candidate is green. 
+### Validation
 
-### Release Pipeline
+A build is included in the Vulkan SDK only after it passes validation against the
+LunarG-specified SPIRV commits. That validation is the full DXC test suite — everything we
+already run today for a release — plus the offload tests run against lavapipe. The Vulkan
+SDK is therefore a superset of the existing release validation, not a separate process:
+the same tests we already run, on the LunarG-pinned submodules, with the lavapipe offload
+tests added. 
 
-The release pipeline runs on every push to a `vk-update/<date>` branch (the weekly job
-creates these) or a `release/vulkan/<version>` branch (cut by hand for a release;
-see [Release Steps](#Release Steps)), and can be started manually from the GitHub UI. 
-The build and test stages run on every push; the publish and offload stages run only 
-for a release candidate — a `release/vulkan/<version>` branch, or a manual run that 
-opts in.
+## Decisions and remaining actions
 
-1. **Build.** DXC is checked out with its submodules, so it builds against exactly
-   the SPIRV the pointers name, configured with SPIRV code generation and the SPIRV
-   tests enabled. The build also produces the tools the tests need, including
-   `spirv-val`.
+This strategy makes the Vulkan SDK fit the existing process rather than introduce a new
+one. The decisions that follow from that, and the actions still outstanding, are below.
 
-2. **Test.** Googletest unit tests, the lit CodeGenSPIRV tests, and the TAEF tests are
-   all run in this stage; the binary's output is then checked with `spirv-val`. Each
-   result is recorded in the manifest, including failed tests. The logs also contain
-   further information where each file is located and what was exected. This stage is
-   non-blocking — a release candidate is published even if some tests fail.
+1. **Validation is unified.** The Vulkan SDK reuses the existing release validation rather
+   than introducing a separate one. The only outstanding action is to write down, in one
+   place, the validation currently run for the NuGet and Vpack releases so it can be confirmed sufficient for the Vulkan SDK. 
 
-3. **Publish.** The DXC binaries (`dxc`, `dxv`, and `dxcompiler.dll`), the manifest,
-   and the test reports are uploaded as a single artifact named `dxc_rc_<version>`.
+2. **The releases are aligned.** The Vulkan SDK version is a formal DXC release: the same
+   artifact shipped to GitHub, NuGet, and Vpacks, built against the LunarG-specified SPIRV
+   commits. 
 
-4. **Offload tests.** A separate job runs the LLVM offload-test-suite against the
-   published artifact, with DXC as the only compiler (the in-tree clang compiler is
-   disabled). The Vulkan tests (`check-hlsl-vk`) on lavapipe and the Direct3D 12
-   tests (`check-hlsl-warp-d3d12`) on WARP (developers still use the dxc which ships
-   in the Vulkan SDK to compile dx shaders). Because it consumes the published artifact
-   rather than the build tree, this job can also be run on its own against any earlier candidate.
-
-### Release manifest
-
-The manifest records the DXC commit, the SPIRV-Headers and SPIRV-Tools commits the
-candidate was built against and the tests results:
-
-```json
-{
-  "dxc_commit": "<sha>",
-  "lavapipe_version": "<version>",
-  "warp_version": "<version>",
-  "spirv_dependencies": {
-    "SPIRV-Headers": "<sha>",
-    "SPIRV-Tools": "<sha>"
-  },
-  "test_suites": [
-    { "name": "spirv-unit", "passed": 105, "failed": 0 },
-    { "name": "spirv-codegen", "passed": 1564, "failed": 0 },
-    { "name": "spirv-taef", "passed": 1, "failed": 0 },
-    { "name": "spirv-val", "passed": 6, "failed": 0 }
-  ]
-}
-```
-
-### Release tagging
-
-A release is prepared on a branch and shipped to LunarG as a series of release
-candidate tags. The branch carries the Vulkan SDK's major and minor version; each tag
-records the full Vulkan SDK version and a release-candidate number, and is prefixed
-`vulkan-sdk-` so it reads as a Vulkan SDK version rather than being confused with DXC's
-own release tags (`v<major>.<minor>.YYMM.<patch>`). This matches the `vulkan-sdk-`
-tags SPIRV-Tools already uses for the SDK. For SDK version `1.4.360`, for example, the
-release branch is `release/vulkan/1.4.360`, the candidates sent to LunarG are tagged
-`vulkan-sdk-1.4.360.0rc1`, `vulkan-sdk-1.4.360.0rc2`, and so on, and once the Vulkan
-SDK is published the latest candidate is promoted to a release tag with no `rc` suffix:
-`vulkan-sdk-1.4.360.0`.
-
-### Release Steps
-
-These steps are performed by whoever is currently responsible for monitoring the
-llvm-build, and may be repeated as needed:
-
-1. File an issue in DXC repository using the `vk_release_checklist.md` issue template,
-   assign this to yourself. This should be handed off at the end of rotation. 
-2. Update the SPIRV-Headers and SPIRV-Tools submodules to the commits specified by
-   LunarG.
-3. Create the `release/vulkan/<version>` branch — named for the SDK major and minor
-   version, e.g. `release/vulkan/1.4.360` — which triggers the pipeline.
-4. Check whether the resulting candidate is validated (see
-   [Release Candidate readiness](#release-candidate-readiness)).
-5. Tag the validated commit with the next release-candidate tag (e.g.
-   `vulkan-sdk-1.4.360.0rc1`) and report that tag to LunarG — by email, or by updating
-   the Khronos GitLab release issue with the validated commit.
-6. If LunarG reports a problem, fix it on the release branch and re-validate, then cut
-   the next release-candidate tag (`...rc2`, and so on) and report it.
-7. Once the Vulkan SDK is published, promote the latest release-candidate tag to a
-   release tag with no `rc` suffix, e.g. `vulkan-sdk-1.4.360.0`.
-
-### Release Candidate readiness
-
-The following must be true and validated for a release candidate to be considered
-ready for the Vulkan SDK.
-
-* It builds against the SPIRV-Headers and SPIRV-Tools commits the submodules are
-  pinned to.
-* Every SPIRV test harness passes — the googletest, lit, and TAEF tests — and the
-  SPIRV the binary emits validates under `spirv-val`.
-* The shaders the candidate compiles execute on the offload-test-suite under both
-  software renderers: the SPIRV on lavapipe (Vulkan) and the DXIL on WARP (Direct3D 12).
+3. **Broader submodule automation is out of scope.** CI keeping the SPIRV submodules
+   current is enough for this proposal. 
