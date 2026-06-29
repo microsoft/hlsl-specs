@@ -14,20 +14,21 @@ params:
 
 ## Introduction
 
-DXC is included in the Vulkan SDK. Before each SDK release, the DXC submodule references
-(SPIRV-Headers and SPIRV-Tools) need to be updated and the product needs to be tested.
-This has previously been done mostly by hand. This document describes the strategy for
-ensuring DXC is ready for inclusion in the Vulkan SDK. It is concerned with the policy
-for how we manage these releases, not with the details of how the tests are run.
+DXC is included in the Vulkan SDK. Before each SDK release, the DXC submodule
+references (SPIRV-Headers, SPIRV-Tools) need to be updated and the product needs
+to be tested. This process has previously been mostly performed manually. This
+document details the requirements for ensuring DXC is ready for inclusion in the
+Vulkan SDK and proposes the changes required in order to satisfy them.
 
 ## Motivation
 
-SPIRV-Headers and SPIRV-Tools need to be kept up to date so that the most recent SPIRV
-features are available in DXC. We need to verify that DXC generates valid SPIRV and that
-there are no regressions. The process needs to be documented and automated enough that it
-does not rely on individuals with special knowledge. We also want to align the version
-included in the Vulkan SDK with a formal DXC release, so that it matches the GitHub and
-NuGet releases and can be ingested into Godbolt.
+SPIRV-Headers and SPIRV-Tools need to be kept up to date so that the most recent
+SPIRV features are available in DXC. We need to verify that DXC is generating
+valid SPIRV code and that there are no regressions. The process needs to be
+documented and automated enough so that it does not rely on individuals with
+special knowledge. Additionally, we want to align the version included in the
+Vulkan SDK with a formal DXC release so that it matches up with GitHub and NuGet
+releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
