@@ -1546,7 +1546,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 
 Populates a matrix with data from a `groupshared` array. If the groupshared
 memory is any type other than `i32` the matrix's component type must match the
-scalar ype of the groupshared array. If the groupshared memory is `i32` the
+scalar type of the groupshared array. If the groupshared memory is `i32` the
 matrix may be of any type. Validation will verify this requirement.
 
 No data conversions are applied during this operation, the data in the
