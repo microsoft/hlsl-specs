@@ -864,8 +864,14 @@ Applications need to query the driver to determine if a matrix transpose is
 supported.
 
 For the `Load` operations on `[RW]ByteAddressBuffers`:
-  - the `Stride` argument is the row or column stride in bytes.
+  - the `Stride` argument is the row or column stride in bytes, and must be a
+    multiple of 16.
   - the `Offset` argument is the number of bytes to skip before loading.
+
+For overloads operating on device memory (`RWByteAddressBuffer`), the address of
+the first element of the matrix (base address of the resource + the offset) must
+be 128-byte aligned. The `Stride` argument must refer to 16-byte aligned byte
+offsets.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
@@ -975,8 +981,14 @@ is converted to the target arithmetic or packed data type if the data types do
 not match.
 
 For the `Store` operations on `RWByteAddressBuffers`:
-  - the `Stride` argument is the row or column stride in bytes.
+  - the `Stride` argument is the row or column stride in bytes, and must be a
+    multiple of 16.
   - the `Offset` argument is the number of bytes to skip before storing.
+
+For overloads operating on device memory (`RWByteAddressBuffer`), the address of
+the first element of the matrix (base address of the resource + the offset) must
+be 128-byte aligned. The `Stride` argument must refer to 16-byte aligned byte
+offsets.
 
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
@@ -1027,6 +1039,10 @@ target `RWByteAddressBuffer` or `groupshared` array. These methods are only
 available for matrices with `MatrixUse::Accumulator` use. The
 `RWByteAddressBuffer` overload is available for all matrix scopes, while the
 `groupshared` overload is only available for `Wave` scope matrices.
+
+For overloads operating on device memory (`RWByteAddressBuffer`), the address of
+the first element of the matrix (base address of the resource + the offset) must
+be 64-byte aligned.
 
 When accumulating to `RWByteAddressBuffer` objects, the accumulation is
 performed on the component type of the matrix object. When accumulating to
