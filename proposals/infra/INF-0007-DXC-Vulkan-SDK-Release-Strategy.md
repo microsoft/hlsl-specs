@@ -48,14 +48,13 @@ of these are produced from an internal Azure DevOps (ADO) release branch.
 
 A release starts by preparing that branch: the DXC version is bumped, the release notes are
 labelled, the branch is cut from main, the shader model is set, and the branch policies are
-locked down. The build, submodule-update, report, and release pipelines are then pointed at
-the new branch so that subsequent builds run against it.
+locked down. The build, report, and release pipelines are then pointed at the new branch so
+that subsequent builds run against it.
 
 Submodules are not otherwise part of this process. A submodule stays at whatever commit it
-is already set to; advancing SPIRV-Headers and SPIRV-Tools is a manual step, done the same
-way on main and on release branches — there is no automatic update. The submodule-update
-pipeline updates the submodules on the internal branch, which is how changes from GitHub
-are picked up.
+is already set to; advancing SPIRV-Headers and SPIRV-Tools is a manual, optional step, not
+something the release does on its own. We assume here that the submodules are left as they
+are unless they are deliberately updated.
 
 The release builds run from those branches and are marked for retention. The build and
 report pipelines that run here are what we today treat as the validation that gates the
@@ -66,48 +65,22 @@ the VCPKG mapping is updated, and the new compiler is registered in Compiler Exp
 
 ### Where the Vulkan SDK fits
 
-The Vulkan SDK does not get its own binaries. It ships the same DXC release described
-above; there is no separate build artifact for it. What the SDK does add is a handful of
-optional stages in the nightly build, created to accommodate the release — mainly running
-the offload-tests against the build (see [Validation](#validation)).
+DXC does not build or ship the Vulkan SDK binary. Our deliverable is a validated commit,
+not an artifact: once a build passes validation, the commit is tagged as a release
+candidate (RC) and that tag is reported to LunarG. LunarG build DXC from that tag and ship
+the resulting binary as part of the Vulkan SDK.
 
-The other difference is which SPIRV-Headers and SPIRV-Tools commits the release is built
-against: for the Vulkan SDK, the submodules are advanced to the specific commits LunarG
-specifies for that SDK before the release branch is built. This is a deliberate, manual
-submodule update — the same kind of update already done on main — the only difference being
-that the target commits come from LunarG rather than being chosen by us. It is worth keeping
-two cases distinct:
+The build we validate is the same one that validates every PR — there is no special Vulkan
+SDK build. The only addition is a handful of optional stages, created to accommodate the
+release — mainly running the offload-tests against the build (see [Validation](#validation)).
 
-* Continuous integration builds against the latest SPIRV-Headers and SPIRV-Tools, so
-  regressions against upstream are found early. This is independent of any release.
-* A Vulkan SDK release is built against the SPIRV commits LunarG gives us. We do not choose
-  them; we update the submodules to them and validate DXC against them.
-
-Concretely this adds one step to preparing the release branch — update the SPIRV submodules
-to the LunarG-specified commits — and one step to publishing — submit the validated release
-to LunarG for inclusion in the SDK. Everything else in the existing process is unchanged.
+The other difference is which SPIRV-Headers and SPIRV-Tools commits the build is built against:
+for the Vulkan SDK, the submodules are advanced to the specific commits LunarG specifies
+for that SDK before the build is validated. This is a deliberate, manual submodule update. 
 
 ### Validation
 
-A release is included in the Vulkan SDK only after it passes validation against the
-LunarG-specified SPIRV commits. That validation is the full DXC test suite — everything we
-already run today for a release — plus the offload tests run against lavapipe. The Vulkan
-SDK is therefore a superset of the existing release validation, not a separate process:
-the same tests we already run, on the submodules set to the LunarG-specified commits, with
-the lavapipe offload tests added. 
-
-## Decisions and remaining actions
-
-This strategy makes the Vulkan SDK fit the existing process rather than introduce a new
-one. The decisions that follow from that, and the actions still outstanding, are below.
-
-1. **Validation is unified.** The Vulkan SDK reuses the existing release validation rather
-   than introducing a separate one. The only outstanding action is to write down, in one
-   place, the validation currently run for the NuGet and Vpack releases so it can be confirmed sufficient for the Vulkan SDK. 
-
-2. **The releases are aligned.** The Vulkan SDK version is a formal DXC release: the same
-   artifact shipped to GitHub, NuGet, and Vpacks, built against the LunarG-specified SPIRV
-   commits. 
-
-3. **Broader submodule automation is out of scope.** CI keeping the SPIRV submodules
-   current is enough for this proposal. 
+A commit is tagged as a Vulkan SDK release candidate and reported to LunarG only after it
+passes validation against the LunarG-specified SPIRV commits. That validation is the full 
+DXC test suite — everything we already run today for a release — plus the offload tests 
+run against lavapipe. 
