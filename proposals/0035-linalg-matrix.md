@@ -947,7 +947,8 @@ read from `[RW]ByteAddressBuffer` objects or `groupshared` arrays. When read
 from `[RW]ByteAddressBuffer` objects the data is assumed to already be in the
 expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. The type of the array must match the
-type of the matrix being loaded into.
+type of the matrix being loaded into, or it must be a `uint8_t4_packed` which
+may be used to represent matrix data at rest in any format.
 
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
@@ -1552,6 +1553,11 @@ matrix may be of any type. Validation will verify this requirement.
 No data conversions are applied during this operation, the data in the
 groupshared array is written in the format of the input matrix element.
 
+For the Load operation on groupshared arrays the `Offset` and `Stride`
+parameters are the number of scalar elements of the scalar element type of the
+matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
+and Stride are in terms of 8-bit elements.
+
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
   immarg i32,                        ; opcode
@@ -1636,6 +1642,11 @@ type. Validation will verify this requirement.
 No data conversions are applied during this operation, the data in the
 groupshared array is assumed to be in the format of the destination matrix
 element.
+
+For the Store operation on groupshared arrays the `Offset` and `Stride`
+parameters are the number of scalar elements of the scalar element type of the
+matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
+and Stride are in terms of 8-bit elements.
 
 The validator will ensure that the group shared target memory is large enough
 for the write.
@@ -1811,6 +1822,11 @@ Accumulates a matrix to groupshared memory. This operation is only available for
 matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
 conversions between opaque matrices and groupshared memory are defined in the
 [Conversions](#data-conversion-rules) section below.
+
+For the Accumulate operation on groupshared arrays the `Offset` and `Stride`
+parameters are the number of scalar elements of the scalar element type of the
+matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
+and Stride are in terms of 8-bit elements.
 
 The validator will ensure that the group shared target memory is large enough
 for the write, and that the target data type matches the groupshared array type,
