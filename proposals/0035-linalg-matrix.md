@@ -1629,7 +1629,7 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
 ```
 
 Store a matrix to groupshared memory. If the groupshared memory is any type
-other than `i32` the matrix's component type must match the scalar ype of the
+other than `i32` the matrix's component type must match the scalar type of the
 groupshared array. If the groupshared memory is `i32` the matrix may be of any
 type. Validation will verify this requirement.
 
