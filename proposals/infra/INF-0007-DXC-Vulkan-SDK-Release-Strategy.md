@@ -32,29 +32,29 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-Currently, DXC releases on Nuget, Windows through VPacks and on Github. There is
-infrastructure setup in place to make sure those releases are happening. The Vulkan SDK
-will not modify those release, it will just append to then. 
+Currently, DXC releases on NuGet, on Windows through VPacks, and on GitHub. There is
+infrastructure in place to make sure those releases are happening. The Vulkan SDK
+will not modify those releases, it will just append to them.
 
-Vulkan SDK release should start with LunarG reaching to HLSL team, informing the SPIRV-Headers
-and SPIRV-Tools commit that shall be used to create a release from. From that point
+A Vulkan SDK release should start with LunarG reaching out to the HLSL team, informing them of the
+SPIRV-Headers and SPIRV-Tools commits that shall be used to create a release from. From that point
 onwards, the Vulkan SDK release is just a process used to build and validate that a
-DXC binary is generating valid and correct SPIRV from such submodules.
+DXC binary is generating valid and correct SPIRV from those submodules.
 
-Validation is done through testing, which is divided into 2 types: 
-- **Unit Testing**: DXC codebase contains a series of lit, TAEF and googletests.
-- **Functional Tests**: The offload-test repository inside the LLVM org is the 
-functional tests build by the HLSL team to validate clang and DXC generated code.
+Validation is done through testing, which is divided into 2 types:
+- **Unit Testing**: The DXC codebase contains a series of lit, TAEF and googletests.
+- **Functional Tests**: The offload-test repository inside the LLVM org contains the
+functional tests built by the HLSL team to validate clang and DXC generated code.
 
 In order for a release candidate to be considered valid, all tests should pass.
 
 Once a valid candidate is reached, the commit that generated the candidate should
-be tagged and sent back to LunarG, they will be responsible to actually build, package
-and ship the binary that goes into the Vulkan SDK.
+be tagged and sent back to LunarG, who will be responsible for actually building, packaging
+and shipping the binary that goes into the Vulkan SDK.
 
 ### Submodule Management
 
 The HLSL team will implement automation to make sure the SPIRV-Headers and SPIRV-Tools
-submodules stay up to date. This will allow to detect issues related to such submodules
+submodules stay up to date. This will allow issues related to such submodules to be detected
 earlier than an actual release date. The details of such automation are not within
 the scope of this release.
