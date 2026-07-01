@@ -33,24 +33,24 @@ releases and can be ingested into Godbolt.
 ## Proposed solution
 
 Currently, DXC releases on Nuget, Windows through VPacks and on Github. There is
-infrastructure setup in place to make sure those releases are happening. The VK SDK
+infrastructure setup in place to make sure those releases are happening. The Vulkan SDK
 will not modify those release, it will just append to then. 
 
-VK SDK release should start with LunarG reaching to HLSL team, informing the SPIRV-Headers
+Vulkan SDK release should start with LunarG reaching to HLSL team, informing the SPIRV-Headers
 and SPIRV-Tools commit that shall be used to create a release from. From that point
-onwards, the VK SDK release is just a process used to build and validate that a
-DXC binary is generating valid and correct spirv from such submodules.
+onwards, the Vulkan SDK release is just a process used to build and validate that a
+DXC binary is generating valid and correct SPIRV from such submodules.
 
 Validation is done through testing, which is divided into 2 types: 
 - **Unit Testing**: DXC codebase contains a series of lit, TAEF and googletests.
-- **Execution Tests**: The offload-test repository inside the LLVM org is the 
-execution tests build by the HLSL team to validate clang and DXC generated code.
+- **Functional Tests**: The offload-test repository inside the LLVM org is the 
+functional tests build by the HLSL team to validate clang and DXC generated code.
 
 In order for a release candidate to be considered valid, all tests should pass.
 
 Once a valid candidate is reached, the commit that generated the candidate should
 be tagged and sent back to LunarG, they will be responsible to actually build, package
-and ship the binary that goes into the VK SDK.
+and ship the binary that goes into the Vulkan SDK.
 
 ### Submodule Management
 
