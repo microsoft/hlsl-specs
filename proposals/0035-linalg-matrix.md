@@ -284,10 +284,10 @@ typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
                          Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread> >::type
 OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
-template <typename InputElTy, SIZE_TYPE M>
+template <uint Align = 64, typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset, uint Align = 64);
+InterlockedAccumulate(RWByteAddressBuffer Res,
+                      uint StartOffset, vector<InputElTy, M> Vec);
 
 } // namespace linalg
 } // namespace dx
@@ -372,6 +372,7 @@ void CoopVec() {
       MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
+  InterlockedAccumulate</*Align=*/128>(B, 128, Layer3);
 }
 ```
 
@@ -1081,10 +1082,10 @@ provided matrix argument into the accumulator matrix.
 #### linalg::InterlockedAccumulate
 
 ```c++
-template <typename InputElTy, SIZE_TYPE M>
+template <uint Align = 64, typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset, uint Align = 64);
+InterlockedAccumulate(RWByteAddressBuffer Res,
+                      uint StartOffset, vector<InputElTy, M> Vec);
 ```
 
 Atomically adds the vector data of `Vec` to the `RWByteAddressBuffer` target
@@ -1721,10 +1722,10 @@ Validation will ensure that:
 ``` llvm
 declare void @dx.op.linAlgVectorAccumulateToDescriptor.v[NUM][TY](
   immarg i32,       ; opcode
-  <[NUM] x [TY]>,   ; input vector
   %dx.types.Handle, ; destination RWByteAddressBuffer
   i32,              ; buffer offset
-  i32               ; vector element alignment
+  immarg i32,       ; vector base alignment
+  <[NUM] x [TY]>    ; input vector
   )
 ```
 
@@ -1732,6 +1733,8 @@ Accumulates a vector to a RWByteAddressBuffer at a specified offset. Each
 element of the vector is added to the corresponding element in the buffer.
 Accumulation occurs in the type of the input vector. This operation must observe
 [bounds checking behavior](#bounds-checking-behavior) described below.
+
+The base alignment of the vector must be at least 64-bytes.
 
 #### Data Conversion Rules
 
@@ -2267,10 +2270,10 @@ typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value,
                          Matrix<OutTy, M, N, MatrixUse::Accumulator, MatrixScope::Thread> >::type
 OuterProduct(vector<InputElTy, M> VecA, vector<InputElTy, N> VecB);
 
-template <typename InputElTy, SIZE_TYPE M>
+template <uint Align = 64, typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
-InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
-                      uint StartOffset, uint Align = 64);
+InterlockedAccumulate(RWByteAddressBuffer Res,
+                      uint StartOffset, vector<InputElTy, M> Vec);
 
 } // namespace linalg
 } // namespace dx
@@ -2347,6 +2350,7 @@ void CoopVec() {
       MatA, Convert<ComponentType::F8_E4M3FN, ComponentType::U32>(SomeData2),
       MemBias);
 #endif
+  InterlockedAccumulate</*Align=*/128>(Buf, 128, Layer3);
 }
 
 RWByteAddressBuffer Buf : register(u1);
