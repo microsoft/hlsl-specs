@@ -122,13 +122,14 @@ class Matrix {
                      MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
-  static
-      typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                                   (__detail::ScalarCountFromPackedComponents<
-                                        ComponentTy, M * N>::Value <= Size),
-                               Matrix>::type
-      Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
-           MatrixLayoutEnum Layout);
+  static typename hlsl::enable_if<
+      (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     ElementType>::value ||
+       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     uint8_t4_packed>::value),
+      Matrix>::type
+  Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
+       MatrixLayoutEnum Layout);
 
   template <ComponentEnum LocalComp = ComponentTy>
   typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
@@ -154,10 +155,12 @@ class Matrix {
              MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
-  typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                               (__detail::ScalarCountFromPackedComponents<
-                                    ComponentTy, M * N>::Value <= Size),
-                           void>::type
+  typename hlsl::enable_if<
+      (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     ElementType>::value ||
+       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     uint8_t4_packed>::value),
+      Matrix>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
 
@@ -171,28 +174,24 @@ class Matrix {
   template <typename T, MatrixUseEnum UseLocal = Use,
             MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
   typename hlsl::enable_if<
-      hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
-          UseLocal == Use &&
-          (__detail::ScalarCountFromPackedComponents<ComponentTy,
-                                                     M * N>::Value <= Size) &&
-          Scope == MatrixScope::Wave && ScopeLocal == Scope,
+      hlsl::is_arithmetic_vector<T>::value && Use == MatrixUse::Accumulator &&
+          UseLocal == Use && Scope == MatrixScope::Wave && ScopeLocal == Scope,
       void>::type
   InterlockedAccumulate(groupshared T Arr[Size], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
 #ifdef __hlsl_dx_compiler
-  template <ComponentEnum TargetCompTy = ComponentTy,
+  template <ComponentEnum TargetCompTy = ComponentTy, typename T,
             MatrixUseEnum UseLocal = Use, MatrixScopeEnum ScopeLocal = Scope,
             SIZE_TYPE Size>
   typename hlsl::enable_if<
-      !__detail::ComponentTypeTraits<TargetCompTy>::IsNativeScalar &&
+      hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                    uint8_t4_packed>::value &&
           Use == MatrixUse::Accumulator && UseLocal == Use &&
-          (__detail::ScalarCountFromPackedComponents<TargetCompTy,
-                                                     M * N>::Value <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
       void>::type
-  InterlockedAccumulate(groupshared uint8_t4_packed Arr[Size], uint StartIdx,
-                        uint Stride, MatrixLayoutEnum Layout);
+  InterlockedAccumulate(groupshared T Arr[Size], uint StartIdx, uint Stride,
+                        MatrixLayoutEnum Layout);
 #endif
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
@@ -331,8 +330,10 @@ InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
 RWByteAddressBuffer B : register(u0);
 
 groupshared float GSMat[128];
+groupshared vector<float, 8> GSMatVec[16];
 #ifdef __hlsl_dx_compiler
 groupshared uint8_t4_packed GSMatPacked[32];
+groupshared vector<uint8_t4_packed, 4> GSMatPackedVec[16];
 #endif
 
 void WaveMatrixExample() {
@@ -364,9 +365,17 @@ void WaveMatrixExample() {
 
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<ComponentType::F32>(MatA, MatB);
-#ifdef __hlsl_dx_compiler
   MatrixAccum32Ty M =
       MatrixAccum32Ty::Load(GSMat, 0, 8, MatrixLayout::RowMajor);
+  M.Store(GSMat, 0, 8, MatrixLayout::RowMajor);
+
+  MatrixAccum32Ty M2 =
+      MatrixAccum32Ty::Load(GSMatVec, 0, 8, MatrixLayout::RowMajor);
+  M2.MultiplyAccumulate(MatA, MatB);
+  M2.Store(GSMatVec, 0, 8, MatrixLayout::RowMajor);
+#ifdef __hlsl_dx_compiler
+  MatrixAccumTy M16 =
+      MatrixAccumTy::Load(GSMatPackedVec, 0, 8, MatrixLayout::RowMajor);
 
   // The next line is an error because the groupshared array isn't the right
   // type for the matrix component.
@@ -378,6 +387,8 @@ void WaveMatrixExample() {
   M.InterlockedAccumulate(GSMat, 0, 8, MatrixLayout::RowMajor);
 
   M.InterlockedAccumulate<ComponentType::I8>(GSMatPacked, 0, 2,
+                                             MatrixLayout::RowMajor);
+  M.InterlockedAccumulate<ComponentType::I8>(GSMatPackedVec, 0, 2,
                                              MatrixLayout::RowMajor);
 #endif
 }
@@ -1546,9 +1557,10 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 ```
 
 Populates a matrix with data from a `groupshared` array. If the groupshared
-memory is any type other than `i32` the matrix's component type must match the
-scalar type of the groupshared array. If the groupshared memory is `i32` the
-matrix may be of any type. Validation will verify this requirement.
+memory is any type other than `i32` or vector of `i32`, the matrix's component
+type must match the scalar type or vector component type of the groupshared
+array. If the groupshared memory is `i32` or vector of _N_ by `i32` (`< N x
+i32 >`) the matrix may be of any type. Validation will verify this requirement.
 
 No data conversions are applied during this operation, the data in the
 groupshared array is written in the format of the input matrix element.
@@ -1557,6 +1569,9 @@ For the Load operation on groupshared arrays the `Offset` and `Stride`
 parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
+
+The offset value must be 128-byte aligned from the base offset, and the stride
+must be 16-byte aligned.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
@@ -1635,9 +1650,10 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
 ```
 
 Store a matrix to groupshared memory. If the groupshared memory is any type
-other than `i32` the matrix's component type must match the scalar type of the
-groupshared array. If the groupshared memory is `i32` the matrix may be of any
-type. Validation will verify this requirement.
+other than `i32` or vector of `i32`, the matrix's component type must match the
+scalar type or vector component type of the groupshared array. If the
+groupshared memory is `i32` or vector of _N_ by `i32` (`< N x i32 >`) the matrix
+may be of any type. Validation will verify this requirement.
 
 No data conversions are applied during this operation, the data in the
 groupshared array is assumed to be in the format of the destination matrix
@@ -1647,6 +1663,9 @@ For the Store operation on groupshared arrays the `Offset` and `Stride`
 parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
+
+The offset value must be 128-byte aligned from the base offset, and the stride
+must be 16-byte aligned.
 
 The validator will ensure that the group shared target memory is large enough
 for the write.
@@ -1819,14 +1838,20 @@ declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
 ```
 
 Accumulates a matrix to groupshared memory. This operation is only available for
-matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. Data
-conversions between opaque matrices and groupshared memory are defined in the
-[Conversions](#data-conversion-rules) section below.
+matrices with `MatrixUse::Accumulator` and `Wave` or `ThreadGroup` scope. The
+accumulation occurs in the matrix component type. If the groupshared memory is
+any type other than `i32` or vector of `i32`, the matrix's component type must
+match the scalar type or vector component type of the groupshared array. If the
+groupshared memory is `i32` or vector of _N_ by `i32` (`< N x i32 >`) the matrix
+may be of any type. Validation will verify this requirement.
 
 For the Accumulate operation on groupshared arrays the `Offset` and `Stride`
 parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
+
+The offset value must be 128-byte aligned from the base offset, and the stride
+must be 16-byte aligned.
 
 The validator will ensure that the group shared target memory is large enough
 for the write, and that the target data type matches the groupshared array type,
@@ -2058,6 +2083,29 @@ __ARITHMETIC_TYPE(int64_t)
 __ARITHMETIC_TYPE(half)
 __ARITHMETIC_TYPE(float)
 __ARITHMETIC_TYPE(double)
+
+template <typename T> struct is_vector {
+  static const bool value = false;
+};
+
+template <typename T, uint N> struct is_vector<vector<T, N>> {
+  static const bool value = true;
+};
+
+template <typename T> struct strip_vector_type {
+  using type = T;
+};
+
+template <typename T, SIZE_TYPE N> struct strip_vector_type<vector<T, N>> {
+  using type = T;
+};
+
+template <typename T> struct is_arithmetic_vector {
+  static const bool value =
+      is_arithmetic<T>::value ||
+      (is_vector<T>::value &&
+       is_arithmetic<typename strip_vector_type<T>::type>::value);
+};
 
 template <bool B, typename T> struct enable_if {};
 
@@ -2301,13 +2349,14 @@ class Matrix {
                      MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
-  static
-      typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                                   (__detail::ScalarCountFromPackedComponents<
-                                        ComponentTy, M * N>::Value <= Size),
-                               Matrix>::type
-      Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
-           MatrixLayoutEnum Layout);
+  static typename hlsl::enable_if<
+      (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     ElementType>::value ||
+       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     uint8_t4_packed>::value),
+      Matrix>::type
+  Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
+       MatrixLayoutEnum Layout);
 
   template <ComponentEnum LocalComp = ComponentTy>
   typename hlsl::enable_if<LocalComp == ComponentTy && IsNativeScalar,
@@ -2333,10 +2382,12 @@ class Matrix {
              MatrixLayoutEnum Layout, uint Align = 128);
 
   template <typename T, SIZE_TYPE Size>
-  typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                               (__detail::ScalarCountFromPackedComponents<
-                                    ComponentTy, M * N>::Value <= Size),
-                           void>::type
+  typename hlsl::enable_if<
+      (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     ElementType>::value ||
+       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                     uint8_t4_packed>::value),
+      Matrix>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
 
@@ -2350,28 +2401,24 @@ class Matrix {
   template <typename T, MatrixUseEnum UseLocal = Use,
             MatrixScopeEnum ScopeLocal = Scope, SIZE_TYPE Size>
   typename hlsl::enable_if<
-      hlsl::is_arithmetic<T>::value && Use == MatrixUse::Accumulator &&
-          UseLocal == Use &&
-          (__detail::ScalarCountFromPackedComponents<ComponentTy,
-                                                     M * N>::Value <= Size) &&
-          Scope == MatrixScope::Wave && ScopeLocal == Scope,
+      hlsl::is_arithmetic_vector<T>::value && Use == MatrixUse::Accumulator &&
+          UseLocal == Use && Scope == MatrixScope::Wave && ScopeLocal == Scope,
       void>::type
   InterlockedAccumulate(groupshared T Arr[Size], uint StartIdx, uint Stride,
                         MatrixLayoutEnum Layout);
 
 #ifdef __hlsl_dx_compiler
-  template <ComponentEnum TargetCompTy = ComponentTy,
+  template <ComponentEnum TargetCompTy = ComponentTy, typename T,
             MatrixUseEnum UseLocal = Use, MatrixScopeEnum ScopeLocal = Scope,
             SIZE_TYPE Size>
   typename hlsl::enable_if<
-      !__detail::ComponentTypeTraits<TargetCompTy>::IsNativeScalar &&
+      hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                    uint8_t4_packed>::value &&
           Use == MatrixUse::Accumulator && UseLocal == Use &&
-          (__detail::ScalarCountFromPackedComponents<TargetCompTy,
-                                                     M * N>::Value <= Size) &&
           Scope == MatrixScope::Wave && ScopeLocal == Scope,
       void>::type
-  InterlockedAccumulate(groupshared uint8_t4_packed Arr[Size], uint StartIdx,
-                        uint Stride, MatrixLayoutEnum Layout);
+  InterlockedAccumulate(groupshared T Arr[Size], uint StartIdx, uint Stride,
+                        MatrixLayoutEnum Layout);
 #endif
 
   template <ComponentEnum CompTy, MatrixUseEnum UseLocal = Use>
@@ -2506,8 +2553,10 @@ InterlockedAccumulate(vector<InputElTy, M> Vec, RWByteAddressBuffer Res,
 RWByteAddressBuffer B : register(u0);
 
 groupshared float GSMat[128];
+groupshared vector<float, 8> GSMatVec[16];
 #ifdef __hlsl_dx_compiler
 groupshared uint8_t4_packed GSMatPacked[32];
+groupshared vector<uint8_t4_packed, 4> GSMatPackedVec[16];
 #endif
 
 void WaveMatrixExample() {
@@ -2539,9 +2588,17 @@ void WaveMatrixExample() {
 
   MatrixAccumTy Accum = Multiply(MatA, MatB);
   MatrixAccum32Ty Accum32 = Multiply<ComponentType::F32>(MatA, MatB);
-#ifdef __hlsl_dx_compiler
   MatrixAccum32Ty M =
       MatrixAccum32Ty::Load(GSMat, 0, 8, MatrixLayout::RowMajor);
+  M.Store(GSMat, 0, 8, MatrixLayout::RowMajor);
+
+  MatrixAccum32Ty M2 =
+      MatrixAccum32Ty::Load(GSMatVec, 0, 8, MatrixLayout::RowMajor);
+  M2.MultiplyAccumulate(MatA, MatB);
+  M2.Store(GSMatVec, 0, 8, MatrixLayout::RowMajor);
+#ifdef __hlsl_dx_compiler
+  MatrixAccumTy M16 =
+      MatrixAccumTy::Load(GSMatPackedVec, 0, 8, MatrixLayout::RowMajor);
 
   // The next line is an error because the groupshared array isn't the right
   // type for the matrix component.
@@ -2553,6 +2610,8 @@ void WaveMatrixExample() {
   M.InterlockedAccumulate(GSMat, 0, 8, MatrixLayout::RowMajor);
 
   M.InterlockedAccumulate<ComponentType::I8>(GSMatPacked, 0, 2,
+                                             MatrixLayout::RowMajor);
+  M.InterlockedAccumulate<ComponentType::I8>(GSMatPackedVec, 0, 2,
                                              MatrixLayout::RowMajor);
 #endif
 }
