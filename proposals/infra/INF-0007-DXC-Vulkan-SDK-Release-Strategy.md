@@ -32,7 +32,7 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-Currently, DXC releases on NuGet, on Windows through VPacks, and on GitHub. There is
+Currently, DXC releases on NuGet and GitHub. For Windows, DXC is consumed internally through Microsoft's VPack package management system. There is
 infrastructure in place to make sure those releases are happening. The Vulkan SDK
 will not modify those releases, it will just append to them.
 
