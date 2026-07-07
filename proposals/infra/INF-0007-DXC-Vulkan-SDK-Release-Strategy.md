@@ -47,6 +47,9 @@ Validation is done through testing, which is divided into 2 types:
 functional tests built by the HLSL team to validate clang and DXC generated code.
 
 In order for a release candidate to be considered valid, all tests should pass.
+In case of test failures, the person responsible for the release, along side other 
+members of HLSL team, have the autonomy to classify a release candidate valid,
+after proper;y triagging the fail tests.
 
 Once a valid candidate is reached, the commit that generated the candidate should
 be tagged and sent back to LunarG, who will be responsible for actually building, packaging
