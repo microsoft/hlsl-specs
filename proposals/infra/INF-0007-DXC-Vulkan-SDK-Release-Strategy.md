@@ -39,7 +39,7 @@ process is additive and does not modify or replace the existing DXC release chan
 Instead, it validates a DXC release candidate and produces an additional distribution for 
 inclusion in the Vulkan SDK.
 
-A Vulkan SDK release should start with LunarG reaching out to the HLSL team, informing them of the
+A Vulkan SDK release starts with LunarG reaching out to the HLSL team, informing them of the
 [SPIRV-Headers](https://github.com/KhronosGroup/Spirv-headers) and [SPIRV-Tools](https://github.com/KhronosGroup/Spirv-tools) 
 commits that shall be used to create a release from. From that point onwards, the Vulkan SDK release is 
 just a process used to build and validate that a DXC binary is generating valid and correct SPIRV 
