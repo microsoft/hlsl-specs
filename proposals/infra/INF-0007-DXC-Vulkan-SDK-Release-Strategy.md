@@ -32,10 +32,12 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-Currently, DXC releases on NuGet and GitHub. For Windows, DXC is consumed internally 
-through Microsoft's VPack package management system. There is infrastructure in place 
-to make sure those releases are happening. The Vulkan SDK will not modify those releases, 
-it will just append to them.
+Currently, DXC releases through GitHub, NuGet, and via the Windows SDK. Within Windows, 
+DXC is consumed through Microsoft's VPack package management system. All of these release 
+channels already have established release processes and automation. The Vulkan SDK release 
+process is additive and does not modify or replace the existing DXC release channels. 
+Instead, it validates a DXC release candidate and produces an additional distribution for 
+inclusion in the Vulkan SDK.
 
 A Vulkan SDK release should start with LunarG reaching out to the HLSL team, informing them of the
 SPIRV-Headers and SPIRV-Tools commits that shall be used to create a release from. From that point
@@ -44,8 +46,9 @@ DXC binary is generating valid and correct SPIRV from those submodules.
 
 Validation is done through testing, which is divided into 2 types:
 - **Unit Testing**: The DXC codebase contains a series of lit, TAEF and googletests.
-- **Functional Tests**: The offload-test repository inside the LLVM org contains the
-functional tests built by the HLSL team to validate clang and DXC generated code.
+- **Functional Tests**: The [offload-test repository](https://github.com/llvm/offload-test-suite/)
+  inside the LLVM org contains the functional tests built by the HLSL team to validate clang
+  and DXC generated code.
 
 In order for a release candidate to be considered valid, all tests should pass.
 In case of test failures, the person responsible for the release, along side other 
