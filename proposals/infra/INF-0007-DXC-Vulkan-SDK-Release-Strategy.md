@@ -39,12 +39,7 @@ process is additive and does not modify or replace the existing DXC release chan
 Instead, it validates a DXC release candidate and produces an additional distribution for 
 inclusion in the Vulkan SDK.
 
-The DXC Vulkan SDK release process starts with LunarG reaching out to the HLSL team, informing them of the
-[SPIRV-Headers](https://github.com/KhronosGroup/Spirv-headers) and [SPIRV-Tools](https://github.com/KhronosGroup/Spirv-tools) 
-commits that shall be used to create a release from. From that point onwards, the Vulkan SDK release is 
-just a process used to build and validate that a DXC binary is generating valid and correct SPIRV 
-from those submodules. The commit within the DXC repository used to generate such valid binary
-will be considered as a release candidate.
+DXC Vulkan SDK qualification begins when LunarG notifies the HLSL team of the [SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) and [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) commits to build against. The HLSL team builds DXC against those submodules and validates that it generates valid, correct SPIRV. The DXC commit used to produce a validated binary is a *release candidate*.
 
 Validation is done through testing, which is divided into 2 types:
 - **Unit Testing**: The DXC codebase contains a series of lit, TAEF and googletests.
