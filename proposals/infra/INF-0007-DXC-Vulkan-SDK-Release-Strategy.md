@@ -32,12 +32,7 @@ releases and can be ingested into Godbolt.
 
 ## Proposed solution
 
-Currently, DXC releases through GitHub, NuGet, and via the Windows SDK. Within Windows, 
-DXC is consumed through Microsoft's VPack package management system. All of these release 
-channels already have established release processes and automation. The Vulkan SDK release 
-process is additive and does not modify or replace the existing DXC release channels. 
-Instead, it validates a DXC release candidate and produces an additional distribution for 
-inclusion in the Vulkan SDK.
+DXC releases on NuGet, GitHub, and via the Windows SDK. For Windows, DXC is consumed internally through Microsoft's VPack package management system. These channels already have established release processes and automation. LunarG owns the Vulkan SDK and its release. The HLSL team's role is to *qualify* the build of DXC from a specific commit by validating against the specified SPIRV submodules and tag it, so LunarG can include it in a Vulkan SDK release. This is additive and does not change the existing DXC release channels.
 
 DXC Vulkan SDK qualification begins when LunarG notifies the HLSL team of the [SPIRV-Headers](https://github.com/KhronosGroup/SPIRV-Headers) and [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools) commits to build against. The HLSL team builds DXC against those submodules and validates that it generates valid, correct SPIRV. The DXC commit used to produce a validated binary is a *release candidate*.
 
