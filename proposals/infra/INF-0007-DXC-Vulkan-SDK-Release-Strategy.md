@@ -59,7 +59,7 @@ after determining that shipping with the failed tests is acceptable.
 
 Once a valid candidate is reached, the commit that generated the candidate should
 be tagged and sent back to LunarG, who will be responsible for actually building, packaging
-and shipping the binary that goes into the Vulkan SDK.
+and shipping the DXC binary that goes into the Vulkan SDK.
 
 ### Submodule Management
 
