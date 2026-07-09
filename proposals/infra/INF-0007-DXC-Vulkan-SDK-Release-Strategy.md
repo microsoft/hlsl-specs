@@ -56,4 +56,4 @@ and shipping the DXC binary that goes into the Vulkan SDK.
 The HLSL team will implement automation to make sure the SPIRV-Headers and SPIRV-Tools
 submodules stay up to date. This will allow issues related to such submodules to be detected
 before an official qualification run. The details of such automation are not within
-the scope of this release.
+the scope of this release strategy.
