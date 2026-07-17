@@ -110,8 +110,11 @@ if (dx::IsDebuggingEnabled()) {
 }
 ```
 
-The value returned is uniform across all threads in a dispatch/draw and remains
-constant for the duration of shader execution.
+Each call observes whether debugging is enabled for the current thread at the
+point the intrinsic executes. The result may differ between threads or between
+calls if debugging state changes while a shader is executing. Compilers must not
+assume the result is uniform or invariant for a dispatch, draw, or shader
+invocation.
 
 ### DXIL Lowering
 
@@ -127,16 +130,18 @@ declare void @dx.op.debugBreak(
 
 Triggers a debugger breakpoint. If debugging is not enabled, this is a no-op.
 
-#### `dx.op.IsDebuggingEnabled`
+#### `dx.op.isDebuggingEnabled`
 
 ```llvm
-declare i1 @dx.op.IsDebuggingEnabled(
+declare i1 @dx.op.isDebuggingEnabled(
   immarg i32             ; opcode
-) readonly
+)
 ```
 
-Returns `true` (1) if debugging is enabled, `false` (0) otherwise. Marked
-`readonly` as it only queries state.
+Returns `true` (1) if debugging is enabled, `false` (0) otherwise. This
+operation queries mutable runtime state and must not be marked `readonly` or
+`readnone`. Optimizers must not assume that separate calls return the same value
+or hoist a call to a point where it observes different runtime state.
 
 ### Shader Model Requirements
 
@@ -191,3 +196,5 @@ No SPIR-V lowering is defined for `dx::IsDebuggingEnabled()`.
 - Test `DebugBreak()` triggers breakpoint when debugging is enabled
 - Test `DebugBreak()` is no-op when debugging is not enabled
 - Test `dx::IsDebuggingEnabled()` returns correct value based on runtime state
+- Test runtime state changes during shader execution are visible to subsequent
+  `dx::IsDebuggingEnabled()` calls
