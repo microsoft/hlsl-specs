@@ -1216,8 +1216,7 @@ provided matrix argument into the accumulator matrix.
 template <uint Align = 64, typename InputElTy, SIZE_TYPE M>
 typename hlsl::enable_if<hlsl::is_arithmetic<InputElTy>::value, void>::type
 linalg::InterlockedAccumulate(RWByteAddressBuffer Res,
-                              uint StartOffset, vector<InputElTy, M> Vec,
-                              uint Align = 64);
+                              uint StartOffset, vector<InputElTy, M> Vec);
 ```
 
 Atomically adds the vector data of `Vec` to the `RWByteAddressBuffer` target
