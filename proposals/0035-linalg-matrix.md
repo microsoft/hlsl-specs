@@ -160,7 +160,7 @@ class Matrix {
                      ElementType>::value ||
        hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      uint8_t4_packed>::value),
-      Matrix>::type
+      void>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
 
@@ -2408,7 +2408,7 @@ class Matrix {
                      ElementType>::value ||
        hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      uint8_t4_packed>::value),
-      Matrix>::type
+      void>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
 
