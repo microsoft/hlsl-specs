@@ -1753,12 +1753,12 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixAccumulate.[MatTyC].
 ```
 
 This operation accumulates an `A` or `B` matrix into an accumulator following
-the form `LHS = LHS + RHS`.
+the form `RET = LHS + RHS`.
 
 Validation rules will enforce that:
-* Argument RHS is an `A` or `B` matrix
-* Argument LHS is an `Accumulator` matrix
-* Type of LHS is the same as the return type
+* RHS is an `A` or `B` matrix
+* RET and LHS are `Accumulator` matrices
+* Type of LHS and RET are the same
 * All three matrices have the same scope (Wave or ThreadGroup)
 * All three matrices have the same dimensions
 * The element types are compatible
