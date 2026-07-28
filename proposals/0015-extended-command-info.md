@@ -1,10 +1,15 @@
-# Extended Command Information
+---
+title: 0015 - Extended Command Information
+params:
+  authors:
+  - pow2clk: Greg Roth
+  sponsors:
+  - pow2clk: Greg Roth
+  status: Completed
+---
 
-* Proposal: [0015](0015-extended-command-info.md)
-* Author(s): [Greg Roth](https://github.com/pow2clk)
-* Sponsor: [Greg Roth](https://github.com/pow2clk)
-* Status: Complete
-* Version: Shader Model 6.8
+ 
+* Version: SM 6.8
 
 ## Introduction
 

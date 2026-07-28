@@ -1,12 +1,14 @@
-<!-- {% raw %} -->
+---
+title: "INF-0004 - Validator Hashing"
+params:
+    authors:
+        - llvm-beanz: Chris Bieneman
+        - amarpMSFT: Amar Patel
+    sponsors:
+        - llvm-beanz: Chris Bieneman
+    status: Accepted
+---
 
-# Validator Hashing
-
-* Proposal: [INF-0004](INF-0004-validator-hashing.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz),
-*            [Amar Patel](https://github.com/amarpMSFT)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Accepted**
 
 ## Introduction
 
@@ -672,4 +674,4 @@ is enabled.
 5. The MD5 Message-Digest Algorithm. R. Rivest. April 1992. (Format: TXT, HTML) (Updated by RFC6151) (Status: INFORMATIONAL) (DOI:10.17487/RFC1321) 
 
 
-<!-- {% endraw %} -->
+

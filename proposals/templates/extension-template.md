@@ -1,9 +1,16 @@
-<!-- {% raw %} -->
+---
+title: "NNNN - Feature name"
+draft: true
+params:
+  authors:
+    - author_username: Author 1
+  sponsors:
+    - tbd: TBD
+  status: Under Consideration
+---
 
-# Feature name
 
 ## Instructions
-
 > This template is a guideline for documenting a platform or vendor extension.
 > For a feature to be a conforming extension it must not change language
 > behaviors. It can introduce new builtin functions, data types, and annotating
@@ -16,15 +23,6 @@
 > Delete this Instructions section including the line below.
 
 ---
-
-* Proposal: [NNNN](NNNN-filename.md)
-* Author(s): [Author 1](https://github.com/author_username)
-* Sponsor: TBD
-* Status: **Accepted**
-* Required Version: Shader Model X.Y, Vulkan X.Y, and/or HLSL 20XY
-* PRs: [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/pull/NNNN)
-* Issues:
-  [#NNNN](https://github.com/microsoft/DirectXShaderCompiler/issues/NNNN)
 
 ## Introduction
 
@@ -113,4 +111,4 @@ might build on this on. Even variations on the chosen solution can be interestin
 Take a moment to acknowledge the contributions of people other than the author
 and sponsor.
 
-<!-- {% endraw %} -->
+

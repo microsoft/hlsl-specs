@@ -1,12 +1,15 @@
-<!-- {% raw %} -->
+---
+title: 0011 - Inline SPIR-V
+params:
+    authors:
+    - s-perron: Steven Perron
+    sponsors:
+    - s-perron: Steven Perron
+    status: Under Review
+---
 
-# Inline SPIR-V
 
 *   Proposal: [0011](0011-inline-spirv.md)
-*   Author(s): [Steven Perron](https://github.com/s-perron)
-*   Sponsor: [Chris B](https://github.com/llvm-beanz) and
-    [Steven Perron](https://github.com/s-perron)
-*   Status: **Under Review**
 
 ## Introduction
 
@@ -387,4 +390,3 @@ If we can hide all of the cases that could be implicitly added in a header file,
 then there is very little burden on users. This is why we chose to not have
 implicit inclusion of the capabilities and extensions.
 
-<!-- {% endraw %} -->

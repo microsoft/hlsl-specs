@@ -1,9 +1,14 @@
-# Reference Data Types
+---
+title: 0006 - Reference Data Types
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-* Proposal: [0006](0006-reference-types.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Planned Version: 202y
 
 ## Introduction

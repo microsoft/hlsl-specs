@@ -1,14 +1,20 @@
-<!-- {% raw %} -->
+---
+title: 0010 - Buffer Pointers in HLSL With vk::BufferPointer
+params:
+        authors:
+        - greg-lunarg: Greg Fischer
+        sponsors:
+        - llvm-beanz: Chris Bieneman
+        - s-perron: Steven Perron
+        - dnovillo: Diego Novillo
+        status: Completed
+---
 
-# Buffer Pointers in HLSL With vk::BufferPointer
 
-*   Author(s): [Greg Fischer](https://github.com/greg-lunarg)
-*   Sponsor(s): [Chris Bieneman](https://github.com/llvm-beanz),
-    [Steven Perron](https://github.com/s-perron),
-    [Diego Novillo](https://github.com/dnovillo)
-*   Status: **Accepted**
-*   Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3.
+ 
+* Planned Version: Retroactive addition to Vulkan 1.2 (requires SPIR-V 1.3).
     Some language details require HLSL 202x
+* PRs: [#7163](https://github.com/microsoft/DirectXShaderCompiler/pull/7163)
 
 ## Introduction
 
@@ -531,4 +537,3 @@ float4 MainPs(void) : SV_Target0
 
 ```
 
-<!-- {% endraw %} -->

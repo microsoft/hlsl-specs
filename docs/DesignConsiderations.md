@@ -1,7 +1,74 @@
-# HLSL Design Considerations
+---
+title: HLSL Design Considerations
+---
 
 When designing and proposing a feature for HLSL there are some design
 considerations that should be taken into account.
+
+## Goal Statement
+
+HLSL seeks to be a powerful portable GPU programming language that enables high
+performance applications to target GPUs across a wide variety of end user
+devices. HLSL is explicitly not limited to Microsoft hardware and software
+environments.
+
+## Core Priorities
+
+The following set of core priorities guides the HLSL design process.
+
+### Portability and safety by default
+
+HLSL language features should be portable and safe by default. HLSL strives to
+be portable across APIs, hardware vendors, and hardware versions. Non-portable
+features should be explicitly marked as such in the source representations (e.g.
+in an API-specific namespace, or otherwise explicitly denoted).
+
+Enhancing portability and safety also means curbing undefined behavior and not
+sacrificing portability or safety features for performance.
+
+### Public and open-source by default
+
+HLSL depends on industry collaboration, and must prioritize open and equitable
+collaboration. We must continue evolving our process and designs to be fully
+open and to treat all participants equitably.
+
+### Principle of least astonishment
+
+We should aim to not surprise our users with unexpected behaviors. This means
+recognizing our place in larger tooling ecosystems and considering that as we
+adopt changes to HLSL.
+
+Most HLSL users are C++ users. Acknowledging that certain aspects of C++ don't
+map efficiently to GPUs (such as `virtual`, RTTI, and exceptions), we should
+strive for alignment with C++ wherever possible and follow the [principle of
+least astonishment](https://en.wikipedia.org/wiki/Principle_of_least_astonishment).
+
+For example, adopting C++'s best-match algorithm for overload resolution aligns
+behavior with C++ user expectations.
+
+Similarly, most HLSL users aren't new to the language. We should avoid changing
+the meaning of existing valid HLSL code, unless the benefits outweigh the costs
+and we can support the transition with adequate tooling. An example of when we
+didn't do as well as we could have here is HLSL 2021's short-circuiting
+operators. While we did make some decisions to avoid changing the meaning of
+syntax (removing boolean operators for non-scalar types), we didn't provide
+diagnostics to catch behavior changes or performance impacting changes.
+
+### We do not exist in a vacuum
+
+Many of the problems we're solving are not unique to HLSL. We will look
+to other languages, tools, and ecosystems as we consider how to evolve our own.
+
+Consider python's ["The Zen of Python"](https://peps.python.org/pep-0020/) -
+while Python's particular design decisions aren't always applicable to HLSL
+many of their principles apply broadly to programming language design. We
+should embrace their wisdom where it applies to us.
+
+### Design for users
+
+HLSL exists to serve users. Consider the experience of users and all the ways
+HLSL can empower them to be more productive and creative. HLSL inherits a lot of
+sharp edges both from its history and from C++; we strive to reduce those cases.
 
 ## Style Conventions
 
@@ -9,7 +76,8 @@ HLSL's built-in types and methods should conform to a consistent coding style.
 
 * Data types, methods and built-in functions should all be `CamelCase`.
 * Namespaces and keywords are lowercase, `_` separated.
-* Vulkan-specific functionality should be added to the `vk` namespace.
+* API-specific functionality should be added to an API namespace (e.g. `dx`,
+  `vk`, etc.)
 * Microsoft-style attributes interchangably use `CamelCase` and `_` separation,
   but should prefer `CamelCase`
 * System Value semantics are case insensitive, should be specified `CamelCase`

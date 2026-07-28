@@ -1,0 +1,30 @@
+{{/*
+  Partial: children-list
+  Recursively renders a nested <ul> of pages and sections under the given page.
+  Params:
+    - Page: the current page/section
+    - Depth: current recursion depth (int)
+    - MaxDepth: maximum depth to traverse; 0 means unlimited
+*/}}
+{{- $page := .Page -}}
+{{- $depth := .Depth | default 0 -}}
+{{- $max := .MaxDepth | default 0 -}}
+
+{{- if or (gt (len $page.Pages) 0) (gt (len $page.Sections) 0) -}}
+<ul>
+  {{- /* List regular pages in this section */ -}}
+  {{- range $page.Pages.ByTitle -}}
+    <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+  {{- end -}}
+
+  {{- /* List subsections and recurse if allowed */ -}}
+  {{- range $page.Sections.ByTitle -}}
+    <li>
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      {{- if or (eq $max 0) (lt $depth $max) -}}
+        {{- partial "children-list.html" (dict "Page" . "Depth" (add $depth 1) "MaxDepth" $max) -}}
+      {{- end -}}
+    </li>
+  {{- end -}}
+</ul>
+{{- end -}}

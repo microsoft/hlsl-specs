@@ -665,59 +665,17 @@ Removes and returns a value of the template parameter types from the end of the 
 
 \Sec{Constant Buffers}{Resources.cnbuf}
 
-Constant buffers represent resources that contain read-only constant data in a
-well-defined memory layout.
-
-\Sub{Constant Buffer Declaration Block}{Resources.cnbuf.cb}
-
-\p A constant buffer can be declared using the \texttt{cbuffer} specifier.
-
-\begin{grammar}
-  \define{cbuffer-declaration-group}\br
-  \terminal{cbuffer} name \opt{resource-binding} \terminal{\{}
-  \opt{cbuffer-declaration-seq} \terminal {\}}
-
-  \define{cbuffer-declaration-seq}\br
-  \textit{cbuffer-declaration}\br
-  \textit{cbuffer-declaration-seq cbuffer-declaration}
-
-  \define{cbuffer-declaration}\br
-  \textit{variable-declaration}\br
-  \textit{empty-declaration}
-\end{grammar}
-
-\p The name of the \texttt{cbuffer} declaration group cannot be referenced from within the translation unit and is not required to be unique.
-
-\p Variable declarations in the \texttt{cbuffer} declaration group are called \textit{shader constants}.
-
-\p Shader constants can be referenced from anywhere in the translation unit after they are declared by directly using the declaration name. This implies that all shader constants declared in a translation unit must have unique names, even though they might be declared in different \texttt{cbuffer} declaration groups.
-
-\p Variable declarations in the \texttt{cbuffer} declaration group cannot have \texttt{groupshared} or \texttt{static} variable modifiers.
-
-\p Other declarations in the \texttt{cbuffer} declaration group such as
-\textit{namespace-declaration}, \textit{record-declaration} or
-\textit{function-declaration} are not allowed.
-
-\p Nesting of \texttt{cbuffer} declaration groups is not allowed.
-
-\p For example:
-
-\begin{HLSL}
-  cbuffer MyConstants {
-    float4 CameraPos;
-  };
-
-  float4 getCameraPosition() {
-    return CameraPos;
-  }
-\end{HLSL}
+\p Constant buffers represent resources that contain read-only constant data in a
+well-defined memory layout. A constant buffer is declared either as a
+cbuffer-declaration (\ref{Decl.cbuffer}) or as a declaration of Constant Buffer
+Class type (\ref{Resources.cnbuf.cbclass}).
 
 \Sub{Constant Buffer Class}{Resources.cnbuf.cbclass}
 
 \p Another way of declaring constant buffers is by using the
 \texttt{ConstantBuffer<T>} resource class.
 
-\p The template parameter \texttt{T} must be a class type (\ref{Classes}). 
+\p The template parameter \texttt{T} must be a class type (\ref{Classes}).
 
 \begin{HLSL}
   template <typename T>

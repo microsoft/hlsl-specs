@@ -1,10 +1,15 @@
-<!-- {% raw %} -->
-# `const`-qualified Non-`static` Member Functions
+---
+title: 0007 - const-qualified Non-static Member Functions
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Accepted
+---
 
-* Proposal: [0007](0007-const-member-functions.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: TBD
-* Status: **Under Consideration**
+
+ 
 * Planned Version: 202y
 
 ## Introduction
@@ -148,11 +153,58 @@ RWBuffer<T>` via copy-initialization (standard copy construction), allowing
 `setValueConst` to call `setValue`. This does not violate const-correctness
 since the handle is treated as const while the data it references is not.
 
-### Detailed Description of Overload Resolution Rules
+### Language Specification Updates
 
-TBD: HLSL's current overload resolution rules are not fully codified anywhere
-I'm aware of. For this design to be complete we need to fully specify the
-overload resolution and standard argument conversions.
+> The HLSL specification chapter on
+> [**Overloading**](https://microsoft.github.io/hlsl-specs/specs/hlsl.html#Overload)
+> specifies the overload resolution behavior for HLSL aligning with C++ behavior.
+> [microsoft/hlsl-specs#408](https://github.com/microsoft/hlsl-specs/pull/408)
+> provides an analysis of the impact of this behavior change on existing HLSL
+> sources.
+
+#### **Overload.Res.Sets**
+
+For a given expression, the set of candidate functions may contain both member
+and non-member functions. Member functions have an additional _implicit object
+parameter_, which represents the object the function is called on. For the
+purposes of overload resolution all member functions (static and non-static) are
+considered to have implicit object parameters; constructors and destructors are
+not.
+
+When appropriate, an _implied object argument_ can be inferred from the context
+in which overload resolution is occurring to denote the object being operated on.
+
+The type of the implicit object parameter for non-static member functions of
+type `T` is lvalue reference to cv-qualified `T`.
+
+For conversion functions that have an implicit object parameter, the type of the
+implicit object parameter will match the type of the implicit object argument in
+the unresolved expression. For non-conversion functions that are included in the
+candidate set by a _using-declaration_ in a derived class, the implicit object
+parameter shall be of the type of the derived class. The implicit object
+parameter of a static member function can match any object.
+
+> Note: Conversion functions and _using-declaration_ surfaced member functions
+> behave as if they are members of derived classes in overload resolution. The
+> wording in the C++ spec is a bit convoluted, but that intent is carried over
+> here.
+
+No user-defined conversion sequences may be implicitly applied to an implicit
+object parameter during overload resolution. In all other regards, the implied
+object argument shall be treated identical to other arguments.
+
+Arguments to the implied object parameter must not be held in temporary objects
+and may not have user-defined conversions applied to match the implicit object
+parameter type. An rvalue may only be converted to an implicit object parameter
+if all other aspects of the type match.
+
+If a candidate function is a function template, template argument deduction
+generates a list of candidate function template specializations, which are then
+handled the same as non-template function candidates. A single name may both
+refer to one or more overloaded non-template functions and one or more function
+templates. The candidate set for an unresolved expression shall combine all
+function overloads and template function specializations to form a complete
+overload set.
 
 ### Other Considerations
 
@@ -160,4 +212,3 @@ This change should have no impact on code generation through SPIR-V or DXIL
 assuming that the existing parameter mangling for constant implicit object
 parameters works as expected.
 
-<!-- {% endraw %} -->

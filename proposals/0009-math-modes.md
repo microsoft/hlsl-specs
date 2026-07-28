@@ -1,9 +1,14 @@
-# Math Modes
+---
+title: 0009 - Math Modes
+params:
+  authors:
+  - llvm-beanz: Chris Bieneman
+  sponsors:
+  - llvm-beanz: Chris Bieneman
+  status: Under Review
+---
 
-* Proposal: [0009](0009-math-modes.md)
-* Author(s): [Chris Bieneman](https://github.com/llvm-beanz)
-* Sponsor: [Chris Bieneman](https://github.com/llvm-beanz)
-* Status: **Under Consideration**
+ 
 * Planned Version: 202y
 * Dependencies: [0002 C++ Attributes](0002-cxx-attributes.md)
 

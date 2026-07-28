@@ -1,4 +1,6 @@
-# HLSL 202x
+---
+title: HLSL 202x
+---
 
 HLSL 202x is the working name for the language version that will succeed HLSL
 2021.
