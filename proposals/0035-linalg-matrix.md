@@ -1099,7 +1099,7 @@ The matrix `Store` methods store the matrix data to a target
 `RWByteAddressBuffer` objects the data is stored in the component type of the
 matrix object. When storing to `groupshared` memory, the array may be of any
 arithmetic or packed data type. The type of the array must match the type of the
-matrix being stored into the array, or the array it must be an integer or packed
+matrix being stored into the array, or the array must be of integer or packed
 integer type which may be used to represent matrix data at rest in any format.
 No conversion is applied to the data.
 
