@@ -1810,8 +1810,8 @@ of `Thread` scope with a bias vector added to the result.
 
 Validation will enforce that:
 * The input vector length matches the `K` matrix dimension
-* The bias vector length matches the `M` matrix dimension
-* The bias vector's element type and length must match the output vector type.
+* The bias vector and output vector length matches the `M` matrix dimension
+* The bias vector's element type matches the output vector type.
 * The matrix A is an `A` matrix of `Thread` scope
 * The input and bias interpretation type must be one of the valid linalg
   component types specified in the list in the
