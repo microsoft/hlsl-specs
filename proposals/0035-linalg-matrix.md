@@ -1528,6 +1528,9 @@ Fills a matrix with a scalar value. The scalar's type does not need to match the
 matrix component's type, a type conversion is applied following the rules
 documented in the [Conversions](#data-conversion-rules) section.
 
+Validation shall enforce that:
+* The output matrix scope must be `Wave` or `ThreadGroup`
+
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
   immarg i32,                         ; opcode
@@ -1541,7 +1544,7 @@ use type of the returned matrix have been converted to `MatTy1` from `MatTy2`.
 The source matrix remains valid and unmodified after this operation is applied.
 
 Validation shall enforce that:
-* Both matrix types have the same scope
+* Both matrix types have the same scope, which must be `Wave` or `ThreadGroup`
 * If the transpose argument is `0` both matrices must have the same dimensions.
 * If the transpose argument is `1` the dimensions of `MatTy1` and `MatTy2` are
   swapped (the `M` dimension of `MatTy2` will match the `N` dimension of
@@ -1568,6 +1571,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
   or `ThreadGroup`
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+* If the matrix scope is `Thread` the resource handle must be an SRV ByteAddressBuffer
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
@@ -1596,6 +1600,9 @@ and Stride are in terms of 8-bit elements.
 The offset value must be 128-byte aligned from the base offset, and the stride
 must be 16-byte aligned.
 
+Validation rules will enforce that:
+* The output matrix scope must be `Wave` or `ThreadGroup`
+
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
   immarg i32,                        ; opcode
@@ -1617,6 +1624,9 @@ declare <2 x i32> @dx.op.linAlgMatrixGetCoordinate.[MatTy](
 Returns a two element vector containing the column and row of the matrix that
 the thread-local index corresponds to.
 
+Validation rules will enforce that:
+* The matrix scope must be `Wave` or `ThreadGroup`
+
 ```llvm
 declare [Ty] @dx.op.linAlgMatrixGetElement.[Ty].[MatTy](
   immarg i32,                         ; opcode
@@ -1628,6 +1638,9 @@ declare [Ty] @dx.op.linAlgMatrixGetElement.[Ty].[MatTy](
 Gets the element of the matrix corresponding to the thread local index provided.
 If the index is out of range for the values stored in this thread the result is
 0.
+
+Validation rules will enforce that:
+* The matrix scope must be `Wave` or `ThreadGroup`
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixSetElement.[MatTy].[MatTy].[Ty](
@@ -1641,6 +1654,9 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixSetElement.[MatTy].[
 Sets the element of the matrix corresponding to the thread local index provided
 to the value provided. If the index is out of range for the values stored in
 this thread the result is a no-op.
+
+Validation rules will enforce that:
+* The matrix scope must be `Wave` or `ThreadGroup`
 
 ```llvm
 declare void @dx.op.linAlgMatrixStoreToDescriptor.[MatTy](
@@ -1660,6 +1676,8 @@ below.
 
 Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
+* The matrix scope must be `Wave` or `ThreadGroup`
+* The resource handle must be an UAV RWByteAddressBuffer
 
 ```llvm
 declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
@@ -1690,8 +1708,9 @@ and Stride are in terms of 8-bit elements.
 The offset value must be 128-byte aligned from the base offset, and the stride
 must be 16-byte aligned.
 
-The validator will ensure that the group shared target memory is large enough
-for the write.
+Validation rules will enforce that:
+* The matrix scope must be `Wave` or `ThreadGroup`
+* group shared target memory is large enough for the write
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixQueryAccumulatorLayout(
@@ -1738,14 +1757,14 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixAccumulate.[MatTyC].
 ```
 
 This operation accumulates an `A` or `B` matrix into an accumulator following
-the form `LHS = LHS + RHS`.
+the form `RET = LHS + RHS`.
 
 Validation rules will enforce that:
-* Argument RHS is an `A` or `B` matrix
-* Argument LHS is an `Accumulator` matrix
-* Type of LHS is the same as the return type
-* Both matrices have the same scope (Wave or ThreadGroup)
-* Both matrices have the same dimensions
+* RHS is an `A` or `B` matrix
+* RET and LHS are `Accumulator` matrices
+* Type of LHS and RET are the same
+* All three matrices have the same scope (Wave or ThreadGroup)
+* All three matrices have the same dimensions
 * The element types are compatible
 
 Must be called from wave-uniform control flow.
@@ -1847,6 +1866,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
   or `ThreadGroup`
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
+* The resource handle must be an UAV RWByteAddressBuffer
 
 ```llvm
 declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
@@ -1876,10 +1896,12 @@ and Stride are in terms of 8-bit elements.
 The offset value must be 128-byte aligned from the base offset, and the stride
 must be 16-byte aligned.
 
-The validator will ensure that the group shared target memory is large enough
-for the write, and that the target data type matches the groupshared array type,
-or that the input array type is `i32` if the target is a type not natively
-representable in DXIL.
+Validation rules will enforce that:
+* The matrix scope must be `Wave` or `ThreadGroup`
+* The groupshared array target must be big enough for the write
+* The target data type must match the groupshared array type, or the array must
+  be i32
+
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixOuterProduct.[MatTy].v[M][TY].v[N][TY](
@@ -1946,6 +1968,9 @@ Accumulation occurs in the type of the input vector. This operation must observe
 [bounds checking behavior](#bounds-checking-behavior) described below.
 
 The base alignment of the vector must be at least 64-bytes.
+
+Validation rules will enforce that:
+* The resource handle must be an UAV RWByteAddressBuffer
 
 #### Data Conversion Rules
 
