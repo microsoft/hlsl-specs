@@ -1081,7 +1081,7 @@ static typename hlsl::enable_if<
                    ElementType>::value ||
      hlsl::is_integral_or_packed_integral<
          typename hlsl::strip_vector_type<T>::type>::value),
-    Matrix>::type
+    void>::type
 Matrix::Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
               MatrixLayoutEnum Layout);
 ```
