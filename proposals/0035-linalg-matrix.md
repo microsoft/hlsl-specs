@@ -647,6 +647,7 @@ enum class ComponentType : uint32_t {
   U8 = 20,
   F8_E4M3FN = 21,
   F8_E5M2 = 22,
+  BFloat16 = 23,
   // END
 
   LastEntry
@@ -682,6 +683,7 @@ struct ComponentType {
     __COMPONENT_TYPE(F16),
     __COMPONENT_TYPE(F32),
     __COMPONENT_TYPE(F64),
+    __COMPONENT_TYPE(BFloat16),
   };
 };
 
