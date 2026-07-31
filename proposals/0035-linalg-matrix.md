@@ -1572,7 +1572,7 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromDescriptor.[
   i32,                   ; Offset
   i32,                   ; Stride
   i32,                   ; matrix layout
-  i32                    ; alignment
+  immarg i32             ; alignment
   )
 ```
 
@@ -1586,7 +1586,9 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor` for matrix with `MatrixScope` of `Wave`
   or `ThreadGroup`
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
-* If the matrix scope is `Thread` the resource handle must be an SRV ByteAddressBuffer
+* If the matrix scope is `Thread` the resource handle must be an SRV
+  ByteAddressBuffer
+* Alignment must be a multiple of 128
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
@@ -1683,7 +1685,7 @@ declare void @dx.op.linAlgMatrixStoreToDescriptor.[MatTy](
   i32,                                ; Offset
   i32,                                ; Stride
   i32,                                ; matrix layout
-  i32                                 ; alignment
+  immarg i32                          ; alignment
   )
 ```
 
@@ -1695,6 +1697,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 * The matrix scope must be `Wave` or `ThreadGroup`
 * The resource handle must be an UAV RWByteAddressBuffer
+* Alignment must be a multiple of 128
 
 ```llvm
 declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
@@ -1869,7 +1872,7 @@ declare void @dx.op.linAlgMatrixAccumulateToDescriptor.[MatTy](
   i32,                                ; Offset
   i32,                                ; Stride
   i32,                                ; matrix layout
-  i32                                 ; alignment
+  immarg i32                          ; alignment
   )
 ```
 
@@ -1886,6 +1889,7 @@ Validation rules will enforce that:
   or `ThreadGroup`
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 * The resource handle must be an UAV RWByteAddressBuffer
+* Alignment must be a multiple of 128
 
 ```llvm
 declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
