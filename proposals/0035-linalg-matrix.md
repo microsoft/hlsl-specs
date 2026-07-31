@@ -1573,7 +1573,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 * If the matrix scope is `Thread` the resource handle must be an SRV
   ByteAddressBuffer
-* alignment must be a multiple of 128
+* Alignment must be a multiple of 128
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatTy].[Ty](
