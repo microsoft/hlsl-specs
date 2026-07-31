@@ -127,8 +127,8 @@ class Matrix {
   static typename hlsl::enable_if<
       (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      ElementType>::value ||
-       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
-                     uint8_t4_packed>::value),
+       hlsl::is_integral_or_packed_integral<
+           typename hlsl::strip_vector_type<T>::type>::value),
       Matrix>::type
   Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
@@ -161,8 +161,8 @@ class Matrix {
   typename hlsl::enable_if<
       (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      ElementType>::value ||
-       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
-                     uint8_t4_packed>::value),
+       hlsl::is_integral_or_packed_integral<
+           typename hlsl::strip_vector_type<T>::type>::value),
       void>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
@@ -941,10 +941,12 @@ static Matrix Matrix::Load(RWByteAddressBuffer Res, uint StartOffset,
 
 // Not available on Thread scope matrices.
 template <typename T, SIZE_TYPE Size>
-static typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                                    (__detail::ScalarCountFromPackedComponents<
-                                         ComponentTy, M * N>::Value <= Size),
-                                Matrix>::type
+static typename hlsl::enable_if<
+    (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                   ElementType>::value ||
+     hlsl::is_integral_or_packed_integral<
+         typename hlsl::strip_vector_type<T>::type>::value),
+    Matrix>::type
 Matrix::Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
              MatrixLayoutEnum Layout);
 ```
@@ -965,8 +967,8 @@ read from `[RW]ByteAddressBuffer` objects or `groupshared` arrays. When read
 from `[RW]ByteAddressBuffer` objects the data is assumed to already be in the
 expected target data format. When read from `groupshared` memory, the data may
 be in any arithmetic or packed data type. The type of the array must match the
-type of the matrix being loaded into, or it must be a `uint8_t4_packed` which
-may be used to represent matrix data at rest in any format.
+type of the matrix being loaded into, or it must be an integer or packed integer
+type which may be used to represent matrix data at rest in any format.
 
 This operation may be called in divergent control flow when loading a thread
 scope matrix, and must be called in uniform control flow when loading a wave
@@ -991,6 +993,8 @@ offsets.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
+  - the `Stride` and `Offset` arguments are in terms of elements of the matrix's
+    type, not the groupshared array's type.
   - the `Stride` argument is the row or column stride in elements.
   - the `Offset` argument is the number of elements to skip before loading.
 
@@ -1074,10 +1078,12 @@ void Matrix::Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                    MatrixLayoutEnum Layout);
 
 template <typename T, SIZE_TYPE Size>
-typename hlsl::enable_if<(hlsl::is_same<T, ElementType>::value) &&
-                             (__detail::ScalarCountFromPackedComponents<
-                                  ComponentTy, M * N>::Value <= Size),
-                         void>::type
+static typename hlsl::enable_if<
+    (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
+                   ElementType>::value ||
+     hlsl::is_integral_or_packed_integral<
+         typename hlsl::strip_vector_type<T>::type>::value),
+    void>::type
 Matrix::Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
               MatrixLayoutEnum Layout);
 ```
@@ -1093,9 +1099,11 @@ unsupported:
 The matrix `Store` methods store the matrix data to a target
 `RWByteAddressBuffer` or `groupshared` array. When storing to
 `RWByteAddressBuffer` objects the data is stored in the component type of the
-matrix object. When storing to `groupshared` memory, the matrix component data
-is converted to the target arithmetic or packed data type if the data types do
-not match.
+matrix object. When storing to `groupshared` memory, the array may be of any
+arithmetic or packed data type. The type of the array must match the type of the
+matrix being stored into the array, or the array must be of integer or packed
+integer type which may be used to represent matrix data at rest in any format.
+No conversion is applied to the data.
 
 For the `Store` operations on `RWByteAddressBuffers`:
   - the `Stride` argument is the row or column stride in bytes, and must be a
@@ -1108,7 +1116,10 @@ be 128-byte aligned. The `Stride` argument must refer to 16-byte aligned byte
 offsets.
 
 For the `Store` operations on `groupshared` arrays:
-  - an element is a type matching the element type of the `groupshared` array.
+  - an element is a type matching the element type of the `groupshared` array,
+    or of an integral or packed integer type.
+  - the `Stride` and `Offset` arguments are in terms of elements of the matrix's
+    type, not the groupshared array's type.
   - the `Stride` argument is the row or column stride in elements.
   - the `Offset` argument is the number of elements to skip before storing
 
@@ -1606,6 +1617,8 @@ must be 16-byte aligned.
 
 Validation rules will enforce that:
 * The output matrix scope must be `Wave` or `ThreadGroup`
+* If the groupshared array's elements are of floating point type, they must
+  match the component type of the matrix.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixLength.[MatTy](
@@ -1715,6 +1728,8 @@ must be 16-byte aligned.
 Validation rules will enforce that:
 * The matrix scope must be `Wave` or `ThreadGroup`
 * group shared target memory is large enough for the write
+* If the groupshared array's elements are of floating point type, they must
+  match the component type of the matrix.
 
 ```llvm
 declare i32 @dx.op.linAlgMatrixQueryAccumulatorLayout(
@@ -2138,6 +2153,43 @@ __ARITHMETIC_TYPE(half)
 __ARITHMETIC_TYPE(float)
 __ARITHMETIC_TYPE(double)
 
+template <typename T> struct is_integral {
+  static const bool value = false;
+};
+
+#define __INTEGRAL_TYPE(type)                                                  \
+  template <> struct is_integral<type> {                                       \
+    static const bool value = true;                                            \
+  };
+
+#if __HLSL_ENABLE_16_BIT
+__INTEGRAL_TYPE(uint16_t)
+__INTEGRAL_TYPE(int16_t)
+#endif
+__INTEGRAL_TYPE(uint)
+__INTEGRAL_TYPE(int)
+__INTEGRAL_TYPE(uint64_t)
+__INTEGRAL_TYPE(int64_t)
+
+template <typename T> struct is_packed_integral {
+  static const bool value = false;
+};
+
+#if __hlsl_dx_compiler
+#define __PACKED_TYPE(type)                                                    \
+  template <> struct is_integral<type> {                                       \
+    static const bool value = true;                                            \
+  };
+
+__PACKED_TYPE(uint8_t4_packed)
+__PACKED_TYPE(uint8_t4_packed)
+#endif // __hlsl_dx_compiler
+
+template <typename T> struct is_integral_or_packed_integral {
+  static const bool value =
+      is_integral<T>::value || is_packed_integral<T>::value;
+};
+
 template <typename T> struct is_vector {
   static const bool value = false;
 };
@@ -2410,8 +2462,8 @@ class Matrix {
   static typename hlsl::enable_if<
       (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      ElementType>::value ||
-       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
-                     uint8_t4_packed>::value),
+       hlsl::is_integral_or_packed_integral<
+           typename hlsl::strip_vector_type<T>::type>::value),
       Matrix>::type
   Load(groupshared T Arr[Size], uint StartIdx, uint Stride,
        MatrixLayoutEnum Layout);
@@ -2444,8 +2496,8 @@ class Matrix {
   typename hlsl::enable_if<
       (hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                      ElementType>::value ||
-       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
-                     uint8_t4_packed>::value),
+       hlsl::is_integral_or_packed_integral<
+           typename hlsl::strip_vector_type<T>::type>::value),
       void>::type
   Store(groupshared T Arr[Size], uint StartIdx, uint Stride,
         MatrixLayoutEnum Layout);
