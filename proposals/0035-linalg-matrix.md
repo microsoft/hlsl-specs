@@ -799,6 +799,12 @@ template <typename T> struct TypeTraits {
       (ComponentEnum)dxil::ComponentType::Invalid;
 };
 
+template<> struct ComponentTypeTraits<ComponentType::BFloat16> {
+  using Type = uint;
+  static const bool IsNativeScalar = false;
+  static const uint ElementsPerScalar = 2;
+};
+
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
   template <> struct ComponentTypeTraits<enum_val> {                           \
     using Type = type;                                                         \
@@ -2339,6 +2345,12 @@ template <ComponentEnum CompTy> struct ComponentTypeTraits {
 template <typename T> struct TypeTraits {
   static const ComponentEnum CompType =
       (ComponentEnum)dxil::ComponentType::Invalid;
+};
+
+template<> struct ComponentTypeTraits<ComponentType::BFloat16> {
+  using Type = uint;
+  static const bool IsNativeScalar = false;
+  static const uint ElementsPerScalar = 2;
 };
 
 #define __MATRIX_SCALAR_COMPONENT_MAPPING(enum_val, type)                      \
