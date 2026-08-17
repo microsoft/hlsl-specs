@@ -228,7 +228,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride);
 
-  template <MatrixUseEnum UseLocal = Use>
+  template <uint Align = 128, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
@@ -458,7 +458,7 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0);
+  MatAcc.InterlockedAccumulate</*Align=*/128>(Buf, 0);
 }
 ```
 
@@ -1169,7 +1169,7 @@ Matrix::InterlockedAccumulate(groupshared uint8_t4_packed Arr[Size],
                               MatrixLayoutEnum Layout);
 
 // When Scope == Thread, the following overload is available:
-template <MatrixUseEnum UseLocal = Use>
+template <uint Align = 128, MatrixUseEnum UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                          void>::type
 Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
@@ -1637,6 +1637,9 @@ declare i32 @dx.op.linAlgMatrixLength.[MatTy](
 
 Returns the number of elements stored in thread-local storage on the active
 thread for the provided matrix.
+
+Validation rules will enforce that:
+* The output matrix scope must be `Wave` or `ThreadGroup`
 
 ```llvm
 declare <2 x i32> @dx.op.linAlgMatrixGetCoordinate.[MatTy](
@@ -2579,7 +2582,7 @@ class Matrix<ComponentTy, M, N, Use, MatrixScope::Thread> {
                                   Matrix>::type
   Load(ByteAddressBuffer Res, uint StartOffset, uint Stride);
 
-  template <MatrixUseEnum UseLocal = Use>
+  template <uint Align = 128, MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset);
@@ -2797,6 +2800,6 @@ void OuterProdAccum() {
   vector<float16_t, 8> VecB = (vector<float16_t, 8>)0;
   MatrixAccumTy MatAcc = OuterProduct<ComponentType::F16>(VecA, VecB);
 
-  MatAcc.InterlockedAccumulate(Buf, 0);
+  MatAcc.InterlockedAccumulate</*Align=*/128>(Buf, 0);
 }
 ```
