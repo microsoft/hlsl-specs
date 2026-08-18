@@ -10,9 +10,12 @@ params:
   status: Completed
 ---
 
+* Version: SM 6.8
+* Removed: SM 6.10
 
- 
-* Planned Version: SM 6.8
+> Work Graphs was introduced in Shader Model 6.8, and has been removed effective
+> Shader Model 6.10. Driver support for Work Graphs is still available and
+> supported on many devices.
 
 ## Introduction
 
