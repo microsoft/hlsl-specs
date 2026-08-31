@@ -2070,16 +2070,19 @@ descriptor. For load operations a default element value of zero casted to the
 element type is substituted for out of bounds reads. An implementation may
 either perform bounds checking on the full bounds of the load initializing the
 full matrix to the default element value if any element is out of bounds, or it
-may perform per-element bounds checking initializing only the out of bounds
-elements to the default value.
+may perform per-element bounds checking at a 4-byte granularity, initializing to
+the default value elements that fall partially or entirely within an
+out-of-bounds 4-byte memory block.
 
 The `@dx.op.linAlgMatrixStoreToDescriptor`,
 `@dx.op.linAlgMatrixAccumulateToDescriptor`, and
 `@dx.op.linAlgVectorAccumulateToDescriptor` operations write data to a
 descriptor. Writes to out of bounds memory are a no-op. An implementation may
 either perform bounds checking on the full bounds of the store converting the
-whole store to a no-op if any elelemt is out of bounds, or it may perform
-per-element bounds checking only converting the out of bounds stores to no-ops.
+whole store to a no-op if any element is out of bounds, or it may perform
+per-element bounds checking at a 4-byte granularity, converting to no-ops the
+stores of elements that fall partially or entirely within an out-of-bounds
+4-byte memory block.
 
 > Note: bounds checking is not required for reads and writes to root descriptors
 > as D3D does not attach dimensions to root descriptors.
