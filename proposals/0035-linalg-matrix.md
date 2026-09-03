@@ -1947,13 +1947,8 @@ Writes the outer product of the two input vectors into the provided matrix.
 The matrix scope must be `Thread`.
 
 Validation will ensure that:
-* The `M` dimension of the matrix matches the length of vector `A`, or 1/4th the
-  length for packed types.
-* The `N` dimension of the matrix matches the length of vector `B`, or 1/4th the
-  length for packed types.
-* The element type of the matrix argument matches the element type of the input
-  vectors, or the input vectors are `i32` if the matrix uses types not directly
-  representable in DXIL.
+* The `M` dimension of the matrix matches the length of vector `A`.
+* The `N` dimension of the matrix matches the length of vector `B`.
 * The element type of vector A and vector B must be the same.
 * The matrix output type must be `Thread` scope.
 
