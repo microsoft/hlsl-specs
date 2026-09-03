@@ -1901,8 +1901,8 @@ match the scalar type or vector component type of the groupshared array. If the
 groupshared memory is `i32` or vector of _N_ by `i32` (`< N x i32 >`) the matrix
 may be of any type. Validation will verify this requirement.
 
-Matrix accumullation occurs in the data type of the matrix element with data in
-groupshared memory being treated as-if it were bitcast to the element type.
+Matrix accumulation occurs in the data type of the matrix element with data in
+groupshared memory being treated as if it were bitcast to the element type.
 
 For the Accumulate operation on groupshared arrays the `Offset` and `Stride`
 parameters are the number of scalar elements of the scalar element type of the
