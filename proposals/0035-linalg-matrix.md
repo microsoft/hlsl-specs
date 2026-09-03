@@ -995,8 +995,8 @@ For the `Load` operations on `[RW]ByteAddressBuffers`:
 For overloads operating on device memory (`[RW]ByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
 be 128-byte aligned for `Thread` scope matrices. For `Wave` and `ThreadGroup`
-scope matrices alignment must be at least 16. The `Stride` argument must
-refer to 16-byte aligned byte offsets.
+scope matrices alignment must be at least 16. The `Stride` argument must be a
+multiple of 16 bytes.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
@@ -1119,8 +1119,7 @@ For the `Store` operations on `RWByteAddressBuffers`:
 
 For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
-be 16-byte aligned. The `Stride` argument must refer to 16-byte aligned byte
-offsets.
+be 16-byte aligned. The `Stride` argument must be a multiple of 16 bytes.
 
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array,
@@ -1622,8 +1621,8 @@ parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
 
-The offset value must be 16-byte aligned from the base offset, and the stride
-must be 16-byte aligned.
+The `Offset` must be 16-byte aligned, and `Stride` value must be a multiple of
+16 bytes.
 
 Validation rules will enforce that:
 * The output matrix scope must be `Wave` or `ThreadGroup`
@@ -1736,8 +1735,8 @@ parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
 
-The offset value must be 16-byte aligned from the base offset, and the stride
-must be 16-byte aligned.
+The `Offset` must be 16-byte aligned, and `Stride` value must be a multiple of
+16 bytes.
 
 Validation rules will enforce that:
 * The matrix scope must be `Wave` or `ThreadGroup`
@@ -1928,8 +1927,8 @@ parameters are the number of scalar elements of the scalar element type of the
 matrix. Meaning if the array is an i32 array, and the matrix is i8, the Offset
 and Stride are in terms of 8-bit elements.
 
-The offset value must be 16-byte aligned from the base offset, and the stride
-must be 16-byte aligned.
+The `Offset` must be 16-byte aligned, and `Stride` value must be a multiple of
+16 bytes.
 
 Validation rules will enforce that:
 * The matrix scope must be `Wave` or `ThreadGroup`
