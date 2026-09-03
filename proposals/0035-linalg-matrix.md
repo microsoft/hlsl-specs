@@ -1915,7 +1915,7 @@ must be 16-byte aligned.
 Validation rules will enforce that:
 * The matrix scope must be `Wave` or `ThreadGroup`
 * The groupshared array target must be big enough for the write
-* The target data type must match the groupshared array type, or the array must
+* The matrix element type must match the groupshared array type, or the array must
   be i32
 
 
