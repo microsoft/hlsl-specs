@@ -4,7 +4,15 @@ params:
   authors:
   - llvm-beanz: Chris Bieneman
   - mapodaca-nv: Mike Apodaca
-  status: Under Review
+  - V-FEXrt: Ashley Coleman
+  - damyanp: Damyan Pepper
+  - pow2clk: Gregory Roth
+  - tex3d: Tex Riddell
+  - hekota: Helena Kotas
+  - jenatali: Jesse Natalie
+  - anupamachandra: Anupama Chandrasekhar
+  - mjbedy: Michael Bedy
+  status: Accepted
 ---
 
 * Planned Version: SM 6.10
@@ -2118,6 +2126,22 @@ in the [`DXIL::ComponentType` enumeration](#dxil-enumerations).
 > 2) Do we need both operand types, or should we expect the operands to be the
 >    same type?
 > 3) What flags do we need?
+
+## Acknowledgments
+
+A big thank you to all of the contributing authors of this specification, but in
+particular to [Ashley Coleman](https://github.com/V-FEXrt) who drove much of the
+implementaiton in DXC, and [Jack Elliott](https://github.com/JoeCitizen), who
+drove the conformance testing and worked with [Jesse
+Natalie](https://github.com/jenatali) on the D3D API specification.
+
+This was a huge feature with a lot of moving parts and took a monumental effort
+to get here.
+
+Also thank you to [Jeff Bolz](https://github.com/jeffbolznv), [Alan
+Baker](https://github.com/alan-baker), [David Neto](https://github.com/dneto0),
+and [Justin Stoecker](https://github.com/jstoecker) for all their feedback and
+patience.
 
 ## Appendix 1: HLSL Header
 
