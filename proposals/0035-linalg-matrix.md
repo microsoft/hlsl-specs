@@ -115,11 +115,11 @@ class Matrix {
       typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
       Splat(T Val);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayoutEnum Layout);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayoutEnum Layout);
 
@@ -153,7 +153,7 @@ class Matrix {
                            void>::type
   Set(uint Index, ElementType Value);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout);
 
@@ -168,7 +168,8 @@ class Matrix {
         MatrixLayoutEnum Layout);
 
   // Accumulate methods
-  template <uint Align = 16, MatrixUseEnum UseLocal = Use>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value,
+            MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
@@ -855,6 +856,15 @@ struct ScalarCountFromPackedComponents {
       (PackedComponentCount + ElementsPerScalar - 1) / ElementsPerScalar;
 };
 
+template <ComponentEnum ElementType, SIZE_TYPE M, SIZE_TYPE N>
+struct DefaultAlign {
+  static const SIZE_TYPE MinDim = M < N ? M : N;
+  static const uint ElementAlign =
+      ScalarCountFromPackedComponents<ElementType, MinDim>::Value;
+  static const uint MinElementAlign = ElementAlign < 4 ? 4 : ElementAlign;
+  static const uint Value = MinElementAlign < 16 ? MinElementAlign : 16;
+};
+
 } // namespace __detail
 ```
 
@@ -941,7 +951,7 @@ static Matrix Matrix::Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                            MatrixLayoutEnum Layout);
 
 // Not available on Thread scope matrices.
-template <uint Align = 16>
+template <uint Align>
 static Matrix Matrix::Load(RWByteAddressBuffer Res, uint StartOffset,
                            uint Stride, MatrixLayoutEnum Layout);
 
@@ -995,8 +1005,9 @@ For the `Load` operations on `[RW]ByteAddressBuffers`:
 For overloads operating on device memory (`[RW]ByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
 be 128-byte aligned for `Thread` scope matrices. For `Wave` and `ThreadGroup`
-scope matrices alignment must be at least 16. The `Stride` argument must be a
-multiple of 16 bytes.
+scope matrices alignment must be at least 4, but will aim to default to a wider
+alignment for better performance. The `Stride` argument must be a multiple of 16
+bytes.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
@@ -1080,7 +1091,7 @@ then the operation is a no-op.
 #### Matrix::Store
 
 ```c++
-template <uint Align = 16>
+template <uint Align>
 void Matrix::Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                    MatrixLayoutEnum Layout);
 
@@ -1119,7 +1130,8 @@ For the `Store` operations on `RWByteAddressBuffers`:
 
 For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
-be 16-byte aligned. The `Stride` argument must be a multiple of 16 bytes.
+be at least 4-byte aligned, but will default to a wider alignment for better
+performance. The `Stride` argument must be a multiple of 16 bytes.
 
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array,
@@ -1137,7 +1149,7 @@ explicit synchronization.
 ```c++
 
 // When Scope != Thread, the following overloads are available:
-template <uint Align = 16, MatrixUseEnum UseLocal = Use>
+template <uint Align, MatrixUseEnum UseLocal = Use>
 typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                          void>::type
 Matrix::InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset,
@@ -1190,7 +1202,9 @@ available for matrices with `MatrixUse::Accumulator` use. The
 
 For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
-be 64-byte aligned.
+be 128-byte aligned for `Thread`-scope matrices, and 4-byte aligned for `Wave`
+and `ThreadGroup` scope matrices. 16-byte alignment is recommended for `Wave`
+and `ThreadGroup` scope matrices for better performance.
 
 When accumulating to groupshared memory, a data conversion to the destination
 type following the [conversion rules](#data-conversion-rules) may occur if the
@@ -1261,6 +1275,9 @@ linalg::InterlockedAccumulate(RWByteAddressBuffer Res,
 Atomically adds the vector data of `Vec` to the `RWByteAddressBuffer` target
 `Res`. When accumulating to the `RWByteAddressBuffer` object, the accumulation
 addition is performed on the component type of the vector.
+
+The alignment of the target memory (base offset + `StartOffset`) must be at
+least 64-byte aligned.
 
 #### linalg::AccumulatorLayout()
 
@@ -1594,7 +1611,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 * If the matrix scope is `Thread` the resource handle must be an SRV
   ByteAddressBuffer
-* Alignment must be a multiple of 128 for thread-scope matrices, and 16 for all
+* Alignment must be a multiple of 128 for thread-scope matrices, and 4 for all
   other matrix scopes.
 
 ```llvm
@@ -1707,7 +1724,7 @@ Validation rules will enforce that:
 * `Layout` is `RowMajor` or `ColMajor`
 * The matrix scope must be `Wave` or `ThreadGroup`
 * The resource handle must be an UAV RWByteAddressBuffer
-* Alignment must be a multiple of 16
+* Alignment must be a multiple of 4
 
 ```llvm
 declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
@@ -1900,7 +1917,7 @@ Validation rules will enforce that:
 * `Stride` is `0` if the `Layout` is not `RowMajor` or `ColMajor`
 * The resource handle must be an UAV RWByteAddressBuffer
 * If scope is `Thread`, alignment must be a multiple of 128, otherwise it must
-  be a multiple of 16.
+  be a multiple of 4.
 
 ```llvm
 declare void @dx.op.linAlgMatrixAccumulateToMemory.[MatTy].[Ty](
@@ -2196,7 +2213,7 @@ template <typename T> struct is_packed_integral {
     static const bool value = true;                                            \
   };
 
-__PACKED_TYPE(uint8_t4_packed)
+__PACKED_TYPE(int8_t4_packed)
 __PACKED_TYPE(uint8_t4_packed)
 #endif // __hlsl_dx_compiler
 
@@ -2408,6 +2425,15 @@ struct ScalarCountFromPackedComponents {
       (PackedComponentCount + ElementsPerScalar - 1) / ElementsPerScalar;
 };
 
+template <ComponentEnum ElementType, SIZE_TYPE M, SIZE_TYPE N>
+struct DefaultAlign {
+  static const SIZE_TYPE MinDim = M < N ? M : N;
+  static const uint ElementAlign =
+      ScalarCountFromPackedComponents<ElementType, MinDim>::Value;
+  static const uint MinElementAlign = ElementAlign < 4 ? 4 : ElementAlign;
+  static const uint Value = MinElementAlign < 16 ? MinElementAlign : 16;
+};
+
 } // namespace __detail
 
 template <ComponentEnum ElementType, uint DimA> struct VectorRef {
@@ -2471,11 +2497,11 @@ class Matrix {
       typename hlsl::enable_if<hlsl::is_arithmetic<T>::value, Matrix>::type
       Splat(T Val);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   static Matrix Load(ByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayoutEnum Layout);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   static Matrix Load(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
                      MatrixLayoutEnum Layout);
 
@@ -2509,7 +2535,7 @@ class Matrix {
                            void>::type
   Set(uint Index, ElementType Value);
 
-  template <uint Align = 16>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value>
   void Store(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
              MatrixLayoutEnum Layout);
 
@@ -2524,7 +2550,8 @@ class Matrix {
         MatrixLayoutEnum Layout);
 
   // Accumulate methods
-  template <uint Align = 16, MatrixUseEnum UseLocal = Use>
+  template <uint Align = __detail::DefaultAlign<ComponentTy, M, N>::Value,
+            MatrixUseEnum UseLocal = Use>
   typename hlsl::enable_if<Use == MatrixUse::Accumulator && UseLocal == Use,
                            void>::type
   InterlockedAccumulate(RWByteAddressBuffer Res, uint StartOffset, uint Stride,
