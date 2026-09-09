@@ -1197,7 +1197,7 @@ The matrix `InterlockedAccumulate` methods atomically add the matrix data to a
 target `RWByteAddressBuffer` or `groupshared` array. These methods are only
 available for matrices with `MatrixUse::Accumulator` use. The
 `RWByteAddressBuffer` overload is available for all matrix scopes, while the
-`groupshared` overload is only available for `Wave` scope matrices.
+`groupshared` overload is only available for `Wave` and `ThreadGroup` scope matrices.
 
 For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
