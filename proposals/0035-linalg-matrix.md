@@ -192,8 +192,7 @@ class Matrix {
                         MatrixLayoutEnum Layout);
 
 #ifdef __hlsl_dx_compiler
-  template <ComponentEnum TargetCompTy = ComponentTy, typename T,
-            MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
+  template <typename T, MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
   typename hlsl::enable_if<
       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                     uint8_t4_packed>::value &&
@@ -1171,8 +1170,7 @@ typename hlsl::enable_if<
 Matrix::InterlockedAccumulate(groupshared T Arr[Size], uint StartIdx,
                               uint Stride, MatrixLayoutEnum Layout);
 
-template <ComponentEnum TargetCompTy = ComponentTy, typename T,
-          MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
+template <typename T, MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
 typename hlsl::enable_if<
     hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                   uint8_t4_packed>::value &&
@@ -2578,8 +2576,7 @@ class Matrix {
                         MatrixLayoutEnum Layout);
 
 #ifdef __hlsl_dx_compiler
-  template <ComponentEnum TargetCompTy = ComponentTy, typename T,
-            MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
+  template <typename T, MatrixUseEnum UseLocal = Use, SIZE_TYPE Size>
   typename hlsl::enable_if<
       hlsl::is_same<typename hlsl::strip_vector_type<T>::type,
                     uint8_t4_packed>::value &&
