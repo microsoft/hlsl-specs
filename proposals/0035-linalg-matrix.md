@@ -1008,7 +1008,7 @@ the first element of the matrix (base address of the resource + the offset) must
 be 128-byte aligned for `Thread` scope matrices. For `Wave` and `ThreadGroup`
 scope matrices alignment must be at least 4, but will aim to default to a wider
 alignment for better performance. The `Stride` argument must be a multiple of 16
-bytes.
+bytes for `Thread` scope matrices and 4 bytes for `Wave` and `ThreadGroup`.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
