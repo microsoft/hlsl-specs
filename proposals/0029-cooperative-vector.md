@@ -258,9 +258,13 @@ row/column of the matrix is valid memory.
 
 The **matrix stride** is 16-byte aligned.
 
-This operation doesn't perform bounds checking for matrix loads. If any part of
-the matrix load is out of bounds then the entire matrix load will return zero.
+When the **matrix resource** has bounds checking, bounds are only checked at
+matrix granularity. If any part of the matrix load is out of bounds then the
+entire matrix load will return zero.
 
+If the **matrix resource** does not have bounds checking, such as when it is
+supplied through a root descriptor, and any part of the matrix load is out of
+bounds, the operation is undefined.
 
 ##### Bias Vector
 
@@ -274,8 +278,13 @@ Only non-packed interpretations are valid for bias vectors.
 The base address of **bias vector resource** and **bias vector offset** must be
 64-byte aligned.
 
-This operation doesn't perform bounds checking for bias loads. If any part of
-the vector load is out of bounds then the entire vector load will return zero.
+When the **bias vector resource** has bounds checking, bounds are only checked
+at bias vector granularity. If any part of the bias vector load is out of bounds
+then the entire bias vector load will return zero.
+
+If the **bias vector resource** does not have bounds checking, such as when it
+is supplied through a root descriptor, and any part of the bias vector load is
+out of bounds, the operation is undefined.
 
 #### Return Type
 
@@ -345,8 +354,12 @@ row/column of the matrix is valid memory. Implementations may write to the
 contents of the padding between the end of the matrix and the 16-byte boundary,
 so developers should not use this padding space for anything else.
 
-If any part of the matrix write is out-of-bounds, the whole operation is
-skipped.
+When the **matrix resource** has bounds checking, if any part of the matrix
+write is out-of-bounds, the whole operation is skipped.
+
+If the **matrix resource** does not have bounds checking, such as when it is
+supplied through a root descriptor, and any part of the matrix store is out of
+bounds, the operation is undefined.
 
 Not all combinations of vector element type and matrix interpretations are
 supported by all implementations. [CheckFeatureSupport] can be used to
@@ -395,8 +408,12 @@ Implementations may write to the contents of the padding between the end of the
 matrix and the 16-byte boundary, so developers should not use this padding space
 for anything else.
 
-If any part of the vector write is out-of-bounds, the whole operation is
-skipped.
+When the **output array resource** bas bounds checking, if any part of the
+output array write is out-of-bounds, the whole operation is skipped.
+
+If the **output array resource** does not have bounds checking, such as when it
+is supplied through a root descriptor, and any part of the bias vector store is
+out of bounds, the operation is undefined.
 
 [CheckFeatureSupport] can be used to determine which vector element types can be
 accumulated. A list of types that are guaranteed to be supported on all devices
