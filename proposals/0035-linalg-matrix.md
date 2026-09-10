@@ -862,11 +862,13 @@ struct ScalarCountFromPackedComponents {
 
 template <ComponentEnum ElementType, SIZE_TYPE M, SIZE_TYPE N>
 struct DefaultAlign {
-  static const SIZE_TYPE MinDim = M < N ? M : N;
-  static const uint ElementAlign =
-      ScalarCountFromPackedComponents<ElementType, MinDim>::Value;
-  static const uint MinElementAlign = ElementAlign < 4 ? 4 : ElementAlign;
-  static const uint Value = MinElementAlign < 16 ? MinElementAlign : 16;
+  enum {
+    MinDim = M < N ? M : N,
+    ScalarCount = ScalarCountFromPackedComponents<ElementType, MinDim>::Value,
+    ByteAlign = ScalarCount * 4,
+    MinByteAlign = ByteAlign < 4 ? 4 : ByteAlign,
+    Value = MinByteAlign < 16 ? MinByteAlign : 16
+  };
 };
 
 } // namespace __detail
@@ -2435,11 +2437,13 @@ struct ScalarCountFromPackedComponents {
 
 template <ComponentEnum ElementType, SIZE_TYPE M, SIZE_TYPE N>
 struct DefaultAlign {
-  static const SIZE_TYPE MinDim = M < N ? M : N;
-  static const uint ElementAlign =
-      ScalarCountFromPackedComponents<ElementType, MinDim>::Value;
-  static const uint MinElementAlign = ElementAlign < 4 ? 4 : ElementAlign;
-  static const uint Value = MinElementAlign < 16 ? MinElementAlign : 16;
+  enum {
+    MinDim = M < N ? M : N,
+    ScalarCount = ScalarCountFromPackedComponents<ElementType, MinDim>::Value,
+    ByteAlign = ScalarCount * 4,
+    MinByteAlign = ByteAlign < 4 ? 4 : ByteAlign,
+    Value = MinByteAlign < 16 ? MinByteAlign : 16
+  };
 };
 
 } // namespace __detail
