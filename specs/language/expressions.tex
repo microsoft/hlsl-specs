@@ -168,8 +168,9 @@ vector, or matrix of \texttt{T[]}, or an object of type \texttt{T} where
 (\ref{Overload}).\footnote{HLSL does not support the base address of a subscript
 operator being the expression inside the braces, which is valid in C and C++.}
 
-\p If the postfix expression \texttt{E1} is of vector type, the expression
-\textit{E2} must be a value of integer type. If the value is known at compile
+\p If the postfix expression \texttt{E1} is of array, vector or matrix type, the
+expression \textit{E2} must be a value of integer type, or of a type that is
+implicitly convertible to integer type. If the value is known at compile
 time to be outside the range \texttt{[0, N-1]} where \texttt{N} is the number of
 elements in the vector, the program is ill-formed. If the value is outside the
 range at runtime, the behavior is undefined.
@@ -213,7 +214,7 @@ components of either the \textit{swizzle-component-rgba} or
 \textit{swizzle-component-xyzw} forms; the two forms may not be mixed in the
 same \textit{vector-swizzle-component-sequence}. The type of a swizzle expression is a
 vector of the same element type as the postfix expression before the dot, with a
-number of elements equal to the number of components in the \textit{vector-swizzle-component-sequence}. 
+number of elements equal to the number of components in the \textit{vector-swizzle-component-sequence}.
 
 \p Vector swizzle components map to elements of the vector in the following way:
 
@@ -270,7 +271,7 @@ postfix expression before the dot.
 \p A \textit{matrix-swizzle-component-sequence} is a sequence of one but less
 than or equal to four swizzle components of either the
 \textit{matrix-zero-indexed-swizzle} or \textit{matrix-one-indexed-swizzle}
-forms; the two forms may not be mixed in the same 
+forms; the two forms may not be mixed in the same
 \textit{matrix-swizzle-component-sequence}. The type of a swizzle expression is
 a vector of the same element type as the postfix expression before the dot,
 with a number of elements equal to the number of components in the
