@@ -60,7 +60,7 @@ With the introduction of variadic templates in [TC57 proposal
 
 This proposal requires four key changes to DXC:
 
-1. Variadic templates - proposed in [TC57-0010 Moder C++
+1. Variadic templates - proposed in [TC57-0010 Modern C++
    Features](https://hlsl-tc57.github.io/tc57/proposal/0010/)
 2. Clarified `string` type rules.
 3. A method to convert a string to an implementation-specific integer identifier.
@@ -89,7 +89,7 @@ its stored value). This makes it trivial to feed strings through functions, and
 through control flow (a `phi` on strings becomes a `phi` on integers).
 
 The 32-bit unsigned integer identifier (in DXIL's case an offset) can be written
-to a UAV buffer in place of the actual string. The offset can be converted the
+to a UAV buffer in place of the actual string. The offset can be converted to the
 string by the CPU.
 
 ### DXIL Container
