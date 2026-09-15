@@ -39,9 +39,9 @@ feature set for HLSL 2026:
 | [0012 - HLSL Loop Unroll Factor](https://hlsl-tc57.github.io/tc57/proposal/0012/) | Refinement | Completed | Completed |
 | [0013 - Named Casts](https://hlsl-tc57.github.io/tc57/proposal/0013/) | Refinement | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8919) | Not Started |
 | [0014 - `groupshared` arguments](https://hlsl-tc57.github.io/tc57/proposal/0014/) | Refinement | Completed | Completed |
-| [0015 - const-qualified Non-Static Member Functions](https://hlsl-tc57.github.io/tc57/proposal/0015/) | Accepted | Not Started | Completed |
-| [0016 - Non-member Operator Overloading](https://hlsl-tc57.github.io/tc57/proposal/0016/) | Accepted | Not Started | Completed |
-| [0018 - User-defined Conversion Functions](https://hlsl-tc57.github.io/tc57/proposal/0018/) | Accepted | Not Started | Completed |
+| [0015 - const-qualified Non-Static Member Functions](https://hlsl-tc57.github.io/tc57/proposal/0015/) | Accepted | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8923) | Completed |
+| [0016 - Non-member Operator Overloading](https://hlsl-tc57.github.io/tc57/proposal/0016/) | Accepted | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8924) | Completed |
+| [0018 - User-defined Conversion Functions](https://hlsl-tc57.github.io/tc57/proposal/0018/) | Accepted | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8925) | Completed |
 | [0017 - HLSL Ternary Operator Behavior](https://hlsl-tc57.github.io/tc57/proposal/0017/) | Under Consideration | Not Started | Not Started |
 | [0019 - Size Type](https://hlsl-tc57.github.io/tc57/proposal/0019/) | Under Consideration | Not Started | Not Started |
 
