@@ -34,7 +34,7 @@ feature set for HLSL 2026:
 | [0004 - 202x Feature Removals](https://hlsl-tc57.github.io/tc57/proposal/0004/) | Accepted | [In Progress](https://github.com/microsoft/DirectXShaderCompiler/issues/8479) | Competed |
 | [0005 - Refined cbuffer Contexts](https://hlsl-tc57.github.io/tc57/proposal/0005/) | Accepted | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8484) | Completed |
 | [0006 - Restricted Unbound Arrays](https://hlsl-tc57.github.io/tc57/proposal/0006/) | Accepted | Not Started | Not Started |
-| [0009 - HLSL namespace](https://hlsl-tc57.github.io/tc57/proposal/0009/) | Accepted | [In Progress](https://github.com/microsoft/DirectXShaderCompiler/issues/8918) | In Progress |
+| [0009 - HLSL namespace](https://hlsl-tc57.github.io/tc57/proposal/0009/) | Accepted | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8918) | In Progress |
 | [0010 - Modern C++ Features](https://hlsl-tc57.github.io/tc57/proposal/0010/) | Refinement | [In Progress](https://github.com/microsoft/DirectXShaderCompiler/issues/8904) | Partial |
 | [0012 - HLSL Loop Unroll Factor](https://hlsl-tc57.github.io/tc57/proposal/0012/) | Refinement | Completed | Completed |
 | [0013 - Named Casts](https://hlsl-tc57.github.io/tc57/proposal/0013/) | Refinement | [Not Started](https://github.com/microsoft/DirectXShaderCompiler/issues/8919) | Not Started |
