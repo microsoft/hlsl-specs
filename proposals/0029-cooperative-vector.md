@@ -93,10 +93,10 @@ this should give a sense of how these new operations can be used.
 > NOTE: see proposal [0031] for full details on the HLSL API.
 
 ```c++
-ByteAddressBuffer inputMatrix0; 
-ByteAddressBuffer inputMatrix1; 
-ByteAddressBuffer biasVector0; 
-ByteAddressBuffer biasVector1;
+ByteAddressBuffer inputMatrix0; // note read-only buffer
+ByteAddressBuffer inputMatrix1; // note read-only buffer
+ByteAddressBuffer biasVector0;  // note read-only buffer
+ByteAddressBuffer biasVector1;  // note read-only buffer
 
 void ps_main(args) // args: texture, normal, position
 {   
@@ -238,9 +238,11 @@ an unsigned integer.
 
 ##### Matrix
 
-The matrix is loaded from a raw-buffer, **matrix resource**,  starting at
-**matrix offset**. The **matrix interpretation** argument specifies the element
-type of the matrix (see [Type Interpretations]), no conversion is performed.
+The matrix is loaded from a read-only raw-buffer, **matrix resource**,  starting
+at **matrix offset**. The **matrix interpretation** argument specifies the
+element type of the matrix (see [Type Interpretations]), no conversion is
+performed.
+
 The **matrix M dimension** and **matrix K dimension** arguments specify the
 dimensions of the matrix. The **matrix layout** argument specifies the layout
 of the matrix (see [Matrix Layouts]). If the **matrix transpose** is non-zero
@@ -264,10 +266,10 @@ the matrix load is out of bounds then the entire matrix load will return zero.
 
 ##### Bias Vector
 
-The bias vector is loaded from the raw-buffer, **bias vector resource**,
-starting at **bias vector offset**. The **bias vector interpretation** argument
-specifies the element type of the bias vector (see [Type Interpretations]), no
-conversion is performed.
+The bias vector is loaded from the read-only raw-buffer, **bias vector
+resource**, starting at **bias vector offset**. The **bias vector
+interpretation** argument specifies the element type of the bias vector (see
+[Type Interpretations]), no conversion is performed.
 
 Only non-packed interpretations are valid for bias vectors.
 
