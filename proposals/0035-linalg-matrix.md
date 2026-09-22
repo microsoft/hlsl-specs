@@ -1481,10 +1481,10 @@ enum class ComponentType : uint32_t {
 } // namespace dxil
 ```
 
-The compiler will generate a permutation of typed matrix handles with names of
-the format `%dx.types.LinAlgMatrix<mangling>`. The mangling scheme for
-each type name will capture the type parameterization with the tokens `C`,
-`M`, `N`, `U` and `S` denoting each encoded property.
+The compiler will generate a typed matrix handle for each permutation, with
+names of the format `%dx.types.LinAlgMatrix<mangling>`. The mangling scheme for
+each type name will capture the type parameterization with the tokens `C`, `M`,
+`N`, `U` and `S` denoting each encoded property.
 
 ```
   ; Matrix<ComponentType::F16, 16, 16, MatrixUse::A, MatrixScope::Wave>
@@ -1497,6 +1497,18 @@ each type name will capture the type parameterization with the tokens `C`,
 
 DXIL validation will enforce that a `LinAlgMatrix` of any type may not
 be bitcast to any other type.
+
+A matrix has value semantics: copying a matrix copies its value.
+[Operations](#dxil-operations) that create or modify a matrix return a new
+matrix value and do not modify their operands. The pointer field is an opaque
+placeholder that the driver compiler replaces during lowering.
+
+It is valid to store a matrix object in an array, and to select matrices from an
+array. It is also valid for matrix objects to be selected through `phi` and
+`select` instructions. An implementation must trace matrix values through these
+constructs. Resulting values remain subject to matrix scope requirements; for
+Thread-scope matrices, implementations must preserve non-uniform values
+independently for each thread.
 
 ### LinAlg Component Types
 
@@ -2040,8 +2052,11 @@ If the source is an integer type and the destination is a floating point type
 the result is a _round to nearest ties to even_ (RTNE) conversion.
 
 If the source type is a floating point type and the destination is an integer
-type the conversion is a _round to nearest ties to even_ (RTNE) saturating
-conversion.
+type, the floating point value is rounded to the nearest integer using an
+implementation-defined tie-breaking rule, then saturated to the range of the
+destination integer type. Positive and negative infinity are converted to the
+maximum and minimum representable values, respectively. NaNs are converted to
+zero.
 
 #### FP8 Types
 
