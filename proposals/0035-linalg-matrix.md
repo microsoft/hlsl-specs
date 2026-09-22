@@ -1549,6 +1549,7 @@ by the letter `m`.
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgFillMatrix.[MatTy].[TY](
   immarg i32,            ; opcode
+  immarg i1,             ; IsInputSigned
   [Ty]                   ; fill value
   )
 ```
@@ -1559,6 +1560,7 @@ documented in the [Conversions](#data-conversion-rules) section.
 
 Validation shall enforce that:
 * The output matrix scope must be `Wave` or `ThreadGroup`
+* If the fill value's type is a floating point type, `IsInputSigned` must be 1.
 
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgCopyConvertMatrix.[MatTy1].[MatTy2](
@@ -1953,6 +1955,7 @@ Validation rules will enforce that:
 ```llvm
 declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixOuterProduct.[MatTy].v[M][TY].v[N][TY](
   immarg i32,            ; opcode
+  immarg i1,             ; IsInputSigned
   <[M] x [Ty]>,          ; vector A
   <[N] x [Ty]>           ; vector B
   )
@@ -1966,6 +1969,8 @@ Validation will ensure that:
 * The `N` dimension of the matrix matches the length of vector `B`.
 * The element type of vector A and vector B must be the same.
 * The matrix output type must be `Thread` scope.
+* If the element type of vector A or B is a floating point type, `IsInputSigned`
+  must be 1.
 
 ```llvm
 declare <[NUMo] x [TYo]> @dx.op.linAlgConvert.v[NUMo][TYo].v[NUMi][TYi](
