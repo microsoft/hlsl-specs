@@ -1004,17 +1004,15 @@ Applications need to query the driver to determine if a matrix transpose is
 supported.
 
 For the `Load` operations on `[RW]ByteAddressBuffers`:
-  - the `Stride` argument is the row or column stride in bytes, and must be a
-    multiple of 16 for `Thread` scope matrices, or 4 for `Wave` or `ThreadGroup`
-    scope matrices.
+  - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before loading.
 
 For overloads operating on device memory (`[RW]ByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
 be 128-byte aligned for `Thread` scope matrices. For `Wave` and `ThreadGroup`
 scope matrices alignment must be at least 4, but will aim to default to a wider
-alignment for better performance. The `Stride` argument must be a multiple of 16
-bytes for `Thread` scope matrices and 4 bytes for `Wave` and `ThreadGroup`.
+alignment for better performance. The `Stride` argument must be a multiple of
+the base alignment of the matrix, otherwise the behavior is undefined.
 
 For the `Load` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array.
@@ -1131,14 +1129,14 @@ integer type which may be used to represent matrix data at rest in any format.
 No conversion is applied to the data.
 
 For the `Store` operations on `RWByteAddressBuffers`:
-  - the `Stride` argument is the row or column stride in bytes, and must be a
-    multiple of 4.
+  - the `Stride` argument is the row or column stride in bytes.
   - the `Offset` argument is the number of bytes to skip before storing.
 
 For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
 be at least 4-byte aligned, but will default to a wider alignment for better
-performance. The `Stride` argument must be a multiple of 4 bytes.
+performance. The `Stride` argument must be a multiple of the base alignment of
+the matrix or the behaviro is undefined.
 
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array,
