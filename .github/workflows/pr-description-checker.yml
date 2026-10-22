@@ -9,9 +9,18 @@ on:
       - unlabeled
 jobs:
   check-pr-description:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      # Only check out trusted .github config from the base repository; never PR-head files.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: /.github/
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - uses: jadrol/pr-description-checker-action@c659fed338a52d657d34462c8bc7fc1f65d25758 # v1.0.0
         id: description-checker
         with:
