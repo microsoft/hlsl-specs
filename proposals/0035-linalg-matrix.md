@@ -1974,7 +1974,10 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixOuterProduct.[MatTy]
 ```
 
 Writes the outer product of the two input vectors into the provided matrix.
-The matrix scope must be `Thread`.
+The matrix scope must be `Thread`. An implementation may convert the inputs to
+output types at any point during the operation, so there are no strict precision
+guarantees. Data conversions must follow the documented [conversion
+rules](#data-conversion-rules).
 
 Validation will ensure that:
 * The `M` dimension of the matrix matches the length of vector `A`.
