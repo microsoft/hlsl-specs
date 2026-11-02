@@ -1630,10 +1630,10 @@ declare %dx.types.LinAlgMatrix<mangling> @dx.op.linAlgMatrixLoadFromMemory.[MatT
 ```
 
 Populates a matrix with data from a `groupshared` array. If the groupshared
-memory is any type other than `i32` or vector of `i32`, the matrix's component
-type must match the scalar type or vector component type of the groupshared
-array. If the groupshared memory is `i32` or vector of _N_ by `i32` (`< N x
-i32 >`) the matrix may be of any type. Validation will verify this requirement.
+memory is an integer type or vector of integer types, the matrix's component
+type may be of any type. Otherwise the component type must match the scalar
+type or vector element type of the groupshared array. Validation will verify
+this requirement.
 
 No data conversions are applied during this operation, the data in the
 groupshared array is written in the format of the input matrix element.
@@ -1743,11 +1743,10 @@ declare void @dx.op.linAlgMatrixStoreToMemory.[MatTy].[Ty](
   )
 ```
 
-Store a matrix to groupshared memory. If the groupshared memory is any type
-other than `i32` or vector of `i32`, the matrix's component type must match the
-scalar type or vector component type of the groupshared array. If the
-groupshared memory is `i32` or vector of _N_ by `i32` (`< N x i32 >`) the matrix
-may be of any type. Validation will verify this requirement.
+Store a matrix to groupshared memory. If the groupshared memory is an integer
+type or vector of integer types, the matrix's component type may be of any type.
+Otherwise the component type must match the scalar type or vector element type
+of the groupshared array. Validation will verify this requirement.
 
 No data conversions are applied during this operation, the data in the
 groupshared array is assumed to be in the format of the destination matrix
