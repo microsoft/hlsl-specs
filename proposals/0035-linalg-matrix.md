@@ -1136,7 +1136,7 @@ For overloads operating on device memory (`RWByteAddressBuffer`), the address of
 the first element of the matrix (base address of the resource + the offset) must
 be at least 4-byte aligned, but will default to a wider alignment for better
 performance. The `Stride` argument must be a multiple of the base alignment of
-the matrix or the behaviro is undefined.
+the matrix or the behavior is undefined.
 
 For the `Store` operations on `groupshared` arrays:
   - an element is a type matching the element type of the `groupshared` array,
