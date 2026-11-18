@@ -2,6 +2,8 @@
 
 # HLSL Specifications
 
+<!-- Temporary Actions event-policy smoke test. Do not merge. -->
+
 [![Documentation Build Status](https://github.com/microsoft/hlsl-specs/actions/workflows/hugo.yml/badge.svg)](https://github.com/microsoft/hlsl-specs/actions/workflows/hugo.yml)
 
 This repository contains documentation for HLSL feature proposals and specifications. Please see the documentation for
